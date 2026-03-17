@@ -446,6 +446,15 @@ export default function AdminPage() {
                   </div>
 
                   <div>
+                    <label className={labelClass}>Subcategory (optional)</label>
+                    <select value={trackForm.subcategory_id} onChange={e => setTrackForm(f => ({ ...f, subcategory_id: e.target.value }))}
+                      className={inputClass}>
+                      <option value="">— None —</option>
+                      {subcategories.filter((s: any) => s.category === trackForm.category).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
                     <label className={labelClass}>Course (optional)</label>
                     <select value={trackForm.course_id} onChange={e => setTrackForm(f => ({ ...f, course_id: e.target.value }))}
                       className={inputClass}>
