@@ -29,6 +29,15 @@ const CATEGORY_ICONS: Record<string, typeof Sparkles> = {
   mastery: GraduationCap,
 };
 
+const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  meditation: "Guided & unguided practices for presence and clarity",
+  rapid_resets: "Under 10 minutes — instant returns to calm",
+  breathwork: "Breath-based techniques to shift your nervous system",
+  tapping: "EFT tapping sequences to clear stress",
+  journaling: "Guided prompts and reflections",
+  mastery: "Immersive audio experiences",
+};
+
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
@@ -48,7 +57,6 @@ export default function HomePage() {
   const { user, profile } = useAuth();
   const firstName = profile?.full_name?.split(" ")[0];
 
-  // Fetch tracks for category counts and featured
   const { data: tracks = [] } = useQuery({
     queryKey: ["tracks"],
     queryFn: async () => {
@@ -57,7 +65,14 @@ export default function HomePage() {
     },
   });
 
-  // Fetch user progress for stats
+  const { data: courses = [] } = useQuery({
+    queryKey: ["courses-home"],
+    queryFn: async () => {
+      const { data } = await supabase.from("courses").select("*").order("order_index").limit(4);
+      return data || [];
+    },
+  });
+
   const { data: progress = [] } = useQuery({
     queryKey: ["userProgress", user?.id],
     queryFn: async () => {
@@ -68,7 +83,6 @@ export default function HomePage() {
     enabled: !!user,
   });
 
-  // Fetch today's prompt
   const { data: prompts = [] } = useQuery({
     queryKey: ["prompts"],
     queryFn: async () => {
@@ -77,11 +91,9 @@ export default function HomePage() {
     },
   });
 
-  // Category counts from real data
+  // Stats
   const categoryCounts: Record<string, number> = {};
-  (tracks as any[]).forEach((t) => {
-    categoryCounts[t.category] = (categoryCounts[t.category] || 0) + 1;
-  });
+  (tracks as any[]).forEach((t) => { categoryCounts[t.category] = (categoryCounts[t.category] || 0) + 1; });
 
   const categories = [
     { key: "meditation", label: "Meditation" },
@@ -89,23 +101,30 @@ export default function HomePage() {
     { key: "breathwork", label: "Breathwork" },
     { key: "tapping", label: "Tapping" },
     { key: "journaling", label: "Journaling" },
-  ].map(c => ({ ...c, icon: CATEGORY_ICONS[c.key] || Sparkles, count: categoryCounts[c.key] || 0 }));
+    { key: "mastery", label: "Mastery Classes" },
+  ].map(c => ({ ...c, icon: CATEGORY_ICONS[c.key] || Sparkles, count: categoryCounts[c.key] || 0, description: CATEGORY_DESCRIPTIONS[c.key] || "" }));
 
   const featuredTracks = (tracks as any[]).filter(t => t.is_featured).slice(0, 5);
   const totalSessions = progress.length;
   const totalMinutes = progress.reduce((sum: number, p: any) => sum + (p.progress_seconds || 0), 0) / 60;
 
-  // Simple streak calc
+  // Streak
   const completedDates = new Set(progress.map((p: any) => p.completed_date));
   let streak = 0;
   const today = new Date();
   for (let i = 0; i < 365; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
-    if (completedDates.has(dateStr)) streak++;
+    if (completedDates.has(d.toISOString().split("T")[0])) streak++;
     else if (i > 0) break;
   }
+
+  // Continue journey
+  const completedTrackIds = new Set(progress.map((p: any) => p.track_id));
+  const isNewUser = progress.length === 0;
+  const nextTrack = (tracks as any[]).find(t => !completedTrackIds.has(t.id));
+  const nextCourse = nextTrack?.course_id ? courses.find((c: any) => c.id === nextTrack.course_id) : null;
+  const quickResetTrack = (tracks as any[]).filter(t => t.category === "breathwork" && t.duration_minutes < 5).sort((a, b) => a.duration_minutes - b.duration_minutes)[0];
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
@@ -146,12 +165,19 @@ export default function HomePage() {
 
       {/* Category Grid */}
       <div className="grid grid-cols-2 gap-3 mb-8">
-        {categories.map(({ key, label, icon: Icon, count }) => (
-          <Link key={key} to={`/library?category=${key}`} className="velum-card p-5 flex flex-col gap-3 group">
-            <Icon className="w-5 h-5 text-accent" />
+        {categories.map(({ key, label, icon: Icon, count, description }) => (
+          <Link
+            key={key}
+            to={key === "mastery" ? "/library?tab=mastery" : `/library?category=${key}`}
+            className="velum-card p-5 flex flex-col justify-between min-h-[130px] group"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <Icon className="w-5 h-5 text-accent" />
+              <span className="text-accent text-[10px] font-sans bg-surface px-2.5 py-0.5 rounded-full">{count} sessions</span>
+            </div>
             <div>
-              <p className="text-foreground text-sm font-sans font-medium">{label}</p>
-              <p className="text-ui text-xs">{count} sessions</p>
+              <p className="text-foreground text-sm font-sans font-medium mb-1">{label}</p>
+              <p className="text-ui text-[11px] leading-snug">{description}</p>
             </div>
           </Link>
         ))}
@@ -180,7 +206,74 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {/* Featured */}
+      {/* Continue Your Journey / Start Here */}
+      <div className="mb-8">
+        <p className="text-ui text-[11px] tracking-[2.5px] uppercase mb-4">
+          {isNewUser ? "Start Here" : "Continue Your Journey"}
+        </p>
+        {isNewUser ? (
+          <div className="velum-card p-6">
+            <p className="text-accent text-[11px] font-sans font-bold tracking-wide uppercase mb-2">Your Journey Begins</p>
+            <h3 className="text-display text-xl mb-3">Welcome to Velum</h3>
+            <p className="text-foreground text-sm font-sans leading-relaxed mb-5">Your first step is simple. Explore the library and begin any practice that calls to you.</p>
+            <Link to="/library" className="inline-block px-5 py-2.5 rounded-lg gold-gradient text-primary-foreground text-sm font-sans font-bold">
+              Begin orientation →
+            </Link>
+          </div>
+        ) : nextTrack ? (
+          <div className="velum-card p-6">
+            {nextCourse && <p className="text-ui text-xs tracking-wide uppercase mb-1">{(nextCourse as any).title}</p>}
+            <h3 className="text-display text-xl mb-3">{nextTrack.title}</h3>
+            <span className="text-foreground text-xs border border-foreground/20 rounded-full px-3 py-1 font-sans">{nextTrack.duration_minutes} min</span>
+            <div className="mt-4">
+              <Link to={`/player?trackId=${nextTrack.id}`} className="inline-block px-5 py-2.5 rounded-lg gold-gradient text-primary-foreground text-sm font-sans font-bold">
+                Continue →
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Quick Reset */}
+        {quickResetTrack && (
+          <div className="velum-card-flat p-4 mt-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-foreground text-[11px] font-sans font-bold tracking-wide uppercase mb-1">Quick Reset</p>
+              <p className="text-display text-base">{quickResetTrack.title}</p>
+              <p className="text-ui text-xs mt-0.5">{quickResetTrack.duration_minutes} min · Breathwork</p>
+            </div>
+            <Link to="/breathe" className="shrink-0 px-4 py-2.5 rounded-lg border border-accent/50 text-accent text-sm font-sans font-bold whitespace-nowrap">
+              Breathe now →
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Featured Courses */}
+      {courses.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-ui text-[11px] tracking-[2.5px] uppercase">Featured Courses</p>
+            <Link to="/library?tab=courses" className="text-accent text-xs font-sans">View all →</Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {courses.slice(0, 2).map((course: any) => (
+              <Link key={course.id} to={`/course/${course.id}`} className="velum-card overflow-hidden">
+                <div className="h-24 bg-surface-light relative">
+                  {(course.cover_image_url || course.thumbnail_url) && (
+                    <img src={course.cover_image_url || course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
+                  )}
+                </div>
+                <div className="p-4">
+                  <p className="text-foreground text-sm font-sans font-medium">{course.title}</p>
+                  <p className="text-ui text-xs mt-1">{course.description}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Featured Sessions */}
       {featuredTracks.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-4">
