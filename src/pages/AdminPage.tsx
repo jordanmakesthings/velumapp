@@ -5,14 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, Plus, Upload, Trash2, Edit2, X, Check, Music, BookOpen,
-  GraduationCap, Feather, Settings, Users, GripVertical
+  GraduationCap, Feather, Settings, Users, GripVertical, Layers
 } from "lucide-react";
 import { toast } from "sonner";
 
-type AdminTab = "tracks" | "courses" | "mastery" | "prompts" | "settings";
+type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "settings";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
+  { key: "subcategories", label: "Subcategories", icon: Layers },
   { key: "courses", label: "Courses", icon: BookOpen },
   { key: "mastery", label: "Mastery", icon: GraduationCap },
   { key: "prompts", label: "Prompts", icon: Feather },
@@ -31,7 +32,7 @@ const CATEGORIES: Record<string, string> = {
 const emptyTrackForm = {
   title: "", description: "", category: "meditation",
   duration_minutes: 10, is_premium: false, is_featured: false,
-  audio_url: "", thumbnail_url: "", course_id: "", order_index: 0,
+  audio_url: "", thumbnail_url: "", course_id: "", subcategory_id: "", order_index: 0,
 };
 
 export default function AdminPage() {
@@ -57,8 +58,13 @@ export default function AdminPage() {
 
   // --- Mastery state ---
   const [showMasteryForm, setShowMasteryForm] = useState(false);
-  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "" });
+  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "" });
   const [editingMastery, setEditingMastery] = useState<any>(null);
+
+  // --- Subcategory state ---
+  const [showSubcatForm, setShowSubcatForm] = useState(false);
+  const [subcatForm, setSubcatForm] = useState({ name: "", category: "meditation", thumbnail_url: "", order_index: 0 });
+  const [editingSubcat, setEditingSubcat] = useState<any>(null);
 
   const { isAdmin } = useAuth();
 
@@ -83,6 +89,14 @@ export default function AdminPage() {
     queryKey: ["adminMastery"],
     queryFn: async () => {
       const { data } = await supabase.from("mastery_classes").select("*").order("order_index");
+      return data || [];
+    },
+  });
+
+  const { data: subcategories = [] } = useQuery({
+    queryKey: ["adminSubcategories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("subcategories").select("*").order("category").order("order_index");
       return data || [];
     },
   });
@@ -142,6 +156,7 @@ export default function AdminPage() {
         audio_url: data.audio_url || null,
         thumbnail_url: data.thumbnail_url || null,
         course_id: data.course_id || null,
+        subcategory_id: data.subcategory_id || null,
         order_index: data.order_index,
       };
       if (editingTrack) {
@@ -209,7 +224,7 @@ export default function AdminPage() {
   // Mastery mutations
   const saveMasteryMutation = useMutation({
     mutationFn: async (data: typeof masteryForm) => {
-      const saveData = { title: data.title, description: data.description || null, duration_minutes: data.duration_minutes, is_premium: data.is_premium, audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null };
+      const saveData = { title: data.title, description: data.description || null, duration_minutes: data.duration_minutes, is_premium: data.is_premium, audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null, theme: data.theme || null };
       if (editingMastery) {
         const { error } = await supabase.from("mastery_classes").update(saveData).eq("id", editingMastery.id);
         if (error) throw error;
@@ -222,7 +237,7 @@ export default function AdminPage() {
       queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
       setShowMasteryForm(false);
       setEditingMastery(null);
-      setMasteryForm({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "" });
+      setMasteryForm({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "" });
       toast.success(editingMastery ? "Class updated" : "Class created");
     },
     onError: (err: any) => toast.error(err.message),
@@ -236,6 +251,39 @@ export default function AdminPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
       toast.success("Class deleted");
+    },
+  });
+
+  // Subcategory mutations
+  const saveSubcatMutation = useMutation({
+    mutationFn: async (data: typeof subcatForm) => {
+      const saveData = { name: data.name, category: data.category, thumbnail_url: data.thumbnail_url || null, order_index: data.order_index };
+      if (editingSubcat) {
+        const { error } = await supabase.from("subcategories").update(saveData).eq("id", editingSubcat.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("subcategories").insert(saveData);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminSubcategories"] });
+      setShowSubcatForm(false);
+      setEditingSubcat(null);
+      setSubcatForm({ name: "", category: "meditation", thumbnail_url: "", order_index: 0 });
+      toast.success(editingSubcat ? "Subcategory updated" : "Subcategory created");
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const deleteSubcatMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("subcategories").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminSubcategories"] });
+      toast.success("Subcategory deleted");
     },
   });
 
@@ -279,6 +327,7 @@ export default function AdminPage() {
       audio_url: track.audio_url || "",
       thumbnail_url: track.thumbnail_url || "",
       course_id: track.course_id || "",
+      subcategory_id: track.subcategory_id || "",
       order_index: track.order_index,
     });
     setShowTrackForm(true);
@@ -394,6 +443,15 @@ export default function AdminPage() {
                     <input type="number" value={trackForm.duration_minutes}
                       onChange={e => setTrackForm(f => ({ ...f, duration_minutes: Number(e.target.value) || 0 }))}
                       className={inputClass} />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Subcategory (optional)</label>
+                    <select value={trackForm.subcategory_id} onChange={e => setTrackForm(f => ({ ...f, subcategory_id: e.target.value }))}
+                      className={inputClass}>
+                      <option value="">— None —</option>
+                      {subcategories.filter((s: any) => s.category === trackForm.category).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
                   </div>
 
                   <div>
@@ -514,6 +572,90 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ============ SUBCATEGORIES TAB ============ */}
+        {activeTab === "subcategories" && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-display text-2xl">Subcategories</h2>
+              <button onClick={() => { setEditingSubcat(null); setSubcatForm({ name: "", category: "meditation", thumbnail_url: "", order_index: 0 }); setShowSubcatForm(true); }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
+                <Plus className="w-4 h-4" /> Add Subcategory
+              </button>
+            </div>
+
+            {showSubcatForm && (
+              <div className="velum-card p-6 mb-6">
+                <div className="flex justify-between mb-4">
+                  <h3 className="text-display text-lg">{editingSubcat ? "Edit Subcategory" : "New Subcategory"}</h3>
+                  <button onClick={() => setShowSubcatForm(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Name *</label>
+                    <input value={subcatForm.name} onChange={e => setSubcatForm(f => ({ ...f, name: e.target.value }))} className={inputClass} placeholder="e.g. Guided Visualizations" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Category</label>
+                    <select value={subcatForm.category} onChange={e => setSubcatForm(f => ({ ...f, category: e.target.value }))} className={inputClass}>
+                      {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Order Index</label>
+                    <input type="number" value={subcatForm.order_index} onChange={e => setSubcatForm(f => ({ ...f, order_index: Number(e.target.value) || 0 }))} className={inputClass} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Thumbnail URL</label>
+                    <input value={subcatForm.thumbnail_url} onChange={e => setSubcatForm(f => ({ ...f, thumbnail_url: e.target.value }))} className={inputClass} placeholder="Paste image URL" />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button onClick={() => setShowSubcatForm(false)} className="px-5 py-2 rounded-full text-sm border border-foreground/10 text-muted-foreground">Cancel</button>
+                  <button onClick={() => saveSubcatMutation.mutate(subcatForm)} disabled={!subcatForm.name || saveSubcatMutation.isPending}
+                    className="px-5 py-2 rounded-full text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50">
+                    {saveSubcatMutation.isPending ? "Saving..." : editingSubcat ? "Save" : "Create"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-8">
+              {Object.entries(CATEGORIES).map(([catKey, catLabel]) => {
+                const catSubcats = subcategories.filter((s: any) => s.category === catKey);
+                if (catSubcats.length === 0) return null;
+                return (
+                  <div key={catKey}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <h3 className="text-display text-lg">{catLabel}</h3>
+                      <span className="text-xs text-muted-foreground bg-card px-2 py-0.5 rounded-full">{catSubcats.length}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {catSubcats.map((sc: any) => (
+                        <div key={sc.id} className="velum-card p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {sc.thumbnail_url && <img src={sc.thumbnail_url} alt="" className="w-10 h-10 rounded-lg object-cover" />}
+                            <div>
+                              <p className="text-foreground text-sm font-sans font-medium">{sc.name}</p>
+                              <p className="text-ui text-xs">Order: {sc.order_index}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => { setEditingSubcat(sc); setSubcatForm({ name: sc.name, category: sc.category, thumbnail_url: sc.thumbnail_url || "", order_index: sc.order_index }); setShowSubcatForm(true); }}
+                              className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
+                            <button onClick={() => { if (confirm("Delete this subcategory?")) deleteSubcatMutation.mutate(sc.id); }}
+                              className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              {subcategories.length === 0 && <p className="text-muted-foreground text-sm text-center py-8">No subcategories yet.</p>}
+            </div>
+          </div>
+        )}
+
         {/* ============ COURSES TAB ============ */}
         {activeTab === "courses" && (
           <div>
@@ -580,7 +722,7 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-display text-2xl">Mastery Classes</h2>
-              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "" }); setShowMasteryForm(true); }}
+              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "" }); setShowMasteryForm(true); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
                 <Plus className="w-4 h-4" /> Add Class
               </button>
@@ -598,6 +740,7 @@ export default function AdminPage() {
                   <div><label className={labelClass}>Duration (min)</label><input type="number" value={masteryForm.duration_minutes} onChange={e => setMasteryForm(f => ({ ...f, duration_minutes: Number(e.target.value) }))} className={inputClass} /></div>
                   <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={masteryForm.is_premium} onChange={e => setMasteryForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium</label>
                   <div><label className={labelClass}>Audio URL</label><input value={masteryForm.audio_url} onChange={e => setMasteryForm(f => ({ ...f, audio_url: e.target.value }))} className={inputClass} placeholder="Paste URL or upload" /></div>
+                  <div><label className={labelClass}>Theme</label><input value={masteryForm.theme} onChange={e => setMasteryForm(f => ({ ...f, theme: e.target.value }))} className={inputClass} placeholder="e.g. Emotional Mastery" /></div>
                   <div className="flex justify-end gap-3">
                     <button onClick={() => setShowMasteryForm(false)} className="px-5 py-2 rounded-full text-sm border border-foreground/10 text-muted-foreground">Cancel</button>
                     <button onClick={() => saveMasteryMutation.mutate(masteryForm)} disabled={!masteryForm.title || saveMasteryMutation.isPending}
@@ -619,7 +762,7 @@ export default function AdminPage() {
                     <p className="text-ui text-xs">{mc.duration_minutes} min{mc.is_premium ? " · Premium" : ""}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => { setEditingMastery(mc); setMasteryForm({ title: mc.title, description: mc.description || "", duration_minutes: mc.duration_minutes, is_premium: mc.is_premium, audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "" }); setShowMasteryForm(true); }}
+                    <button onClick={() => { setEditingMastery(mc); setMasteryForm({ title: mc.title, description: mc.description || "", duration_minutes: mc.duration_minutes, is_premium: mc.is_premium, audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "", theme: mc.theme || "" }); setShowMasteryForm(true); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => { if (confirm("Delete?")) deleteMasteryMutation.mutate(mc.id); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
