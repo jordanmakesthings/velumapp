@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap } from "lucide-react";
 import { useState } from "react";
 import { SessionFinderModal } from "@/components/home/SessionFinderModal";
+import { useAuth } from "@/contexts/AuthContext";
 import logoLotus from "@/assets/logo-lotus.jpg";
 
 const QUOTES = [
@@ -42,6 +43,8 @@ function getTodayQuote() {
 
 export default function HomePage() {
   const [finderOpen, setFinderOpen] = useState(false);
+  const { profile } = useAuth();
+  const firstName = profile?.full_name?.split(" ")[0];
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
@@ -54,7 +57,7 @@ export default function HomePage() {
           </span>
         </div>
         <h1 className="text-display text-4xl lg:text-5xl leading-tight mb-4">
-          {getGreeting()}.
+          {getGreeting()}{firstName ? `, ${firstName}` : ""}.
         </h1>
         <p className="text-ui text-sm italic leading-relaxed opacity-70">
           "{getTodayQuote()}"
