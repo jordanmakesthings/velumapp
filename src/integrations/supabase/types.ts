@@ -184,6 +184,10 @@ export type Database = {
           id: string
           onboarding_answers: Json | null
           onboarding_completed: boolean
+          stripe_customer_id: string | null
+          subscription_expires_at: string | null
+          subscription_plan: string | null
+          subscription_status: string | null
           updated_at: string
         }
         Insert: {
@@ -194,6 +198,10 @@ export type Database = {
           id: string
           onboarding_answers?: Json | null
           onboarding_completed?: boolean
+          stripe_customer_id?: string | null
+          subscription_expires_at?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           updated_at?: string
         }
         Update: {
@@ -204,6 +212,10 @@ export type Database = {
           id?: string
           onboarding_answers?: Json | null
           onboarding_completed?: boolean
+          stripe_customer_id?: string | null
+          subscription_expires_at?: string | null
+          subscription_plan?: string | null
+          subscription_status?: string | null
           updated_at?: string
         }
         Relationships: []
