@@ -24,6 +24,7 @@ import HomeScreenSetupPage from "./pages/HomeScreenSetupPage";
 import AdminPage from "./pages/AdminPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import SubcategoryPage from "./pages/SubcategoryPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
