@@ -93,6 +93,14 @@ export default function AdminPage() {
     },
   });
 
+  const { data: subcategories = [] } = useQuery({
+    queryKey: ["adminSubcategories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("subcategories").select("*").order("category").order("order_index");
+      return data || [];
+    },
+  });
+
   const { data: prompts = [] } = useQuery({
     queryKey: ["adminPrompts"],
     queryFn: async () => {
