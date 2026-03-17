@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Home, Library, Wind, BookOpen, User, Feather } from "lucide-react";
+import logoLotus from "@/assets/logo-lotus.jpg";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
