@@ -14,7 +14,292 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_settings: {
+        Row: {
+          id: string
+          key: string
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      courses: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_premium: boolean
+          order_index: number
+          thumbnail_url: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_premium?: boolean
+          order_index?: number
+          thumbnail_url?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_premium?: boolean
+          order_index?: number
+          thumbnail_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      daily_reflections: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          prompt: string | null
+          reflection_date: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          prompt?: string | null
+          reflection_date?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          prompt?: string | null
+          reflection_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          track_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          track_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          track_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journaling_prompts: {
+        Row: {
+          category: string | null
+          id: string
+          order_index: number
+          prompt: string
+        }
+        Insert: {
+          category?: string | null
+          id?: string
+          order_index?: number
+          prompt: string
+        }
+        Update: {
+          category?: string | null
+          id?: string
+          order_index?: number
+          prompt?: string
+        }
+        Relationships: []
+      }
+      mastery_classes: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_premium: boolean
+          order_index: number
+          thumbnail_url: string | null
+          title: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_premium?: boolean
+          order_index?: number
+          thumbnail_url?: string | null
+          title: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_premium?: boolean
+          order_index?: number
+          thumbnail_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          onboarding_answers: Json | null
+          onboarding_completed: boolean
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          onboarding_answers?: Json | null
+          onboarding_completed?: boolean
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          onboarding_answers?: Json | null
+          onboarding_completed?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tracks: {
+        Row: {
+          audio_url: string | null
+          category: string
+          course_id: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_featured: boolean
+          is_premium: boolean
+          order_index: number
+          subcategory_id: string | null
+          thumbnail_url: string | null
+          title: string
+        }
+        Insert: {
+          audio_url?: string | null
+          category: string
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_featured?: boolean
+          is_premium?: boolean
+          order_index?: number
+          subcategory_id?: string | null
+          thumbnail_url?: string | null
+          title: string
+        }
+        Update: {
+          audio_url?: string | null
+          category?: string
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_featured?: boolean
+          is_premium?: boolean
+          order_index?: number
+          subcategory_id?: string | null
+          thumbnail_url?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tracks_course"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_progress: {
+        Row: {
+          completed: boolean
+          completed_date: string | null
+          created_at: string
+          id: string
+          progress_seconds: number
+          stress_after: number | null
+          stress_before: number | null
+          track_id: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_date?: string | null
+          created_at?: string
+          id?: string
+          progress_seconds?: number
+          stress_after?: number | null
+          stress_before?: number | null
+          track_id: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          completed_date?: string | null
+          created_at?: string
+          id?: string
+          progress_seconds?: number
+          stress_after?: number | null
+          stress_before?: number | null
+          track_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
