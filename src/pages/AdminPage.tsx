@@ -636,7 +636,7 @@ export default function AdminPage() {
                     <p className="text-ui text-xs">{mc.duration_minutes} min{mc.is_premium ? " · Premium" : ""}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => { setEditingMastery(mc); setMasteryForm({ title: mc.title, description: mc.description || "", duration_minutes: mc.duration_minutes, is_premium: mc.is_premium, audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "" }); setShowMasteryForm(true); }}
+                    <button onClick={() => { setEditingMastery(mc); setMasteryForm({ title: mc.title, description: mc.description || "", duration_minutes: mc.duration_minutes, is_premium: mc.is_premium, audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "", theme: mc.theme || "" }); setShowMasteryForm(true); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => { if (confirm("Delete?")) deleteMasteryMutation.mutate(mc.id); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
