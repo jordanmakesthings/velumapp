@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, Crown, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, Crown, Sparkles, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const FEATURES = [
   "Full library of meditations, breathwork & EFT sessions",
@@ -14,12 +17,39 @@ const FEATURES = [
 
 export default function PremiumPage() {
   const navigate = useNavigate();
+  const { session } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "lifetime">("monthly");
   const [promoCode, setPromoCode] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubscribe = () => {
-    // Will connect to Stripe via edge function
-    console.log("Subscribe:", selectedPlan, promoCode);
+  const handleSubscribe = async () => {
+    if (!session) {
+      navigate("/auth");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: {
+          plan: selectedPlan,
+          promoCode: promoCode || undefined,
+          returnUrl: window.location.origin,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (err: any) {
+      console.error("Checkout error:", err);
+      toast.error(err.message || "Failed to start checkout");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -113,10 +143,17 @@ export default function PremiumPage() {
           {/* CTA */}
           <button
             onClick={handleSubscribe}
-            className="w-full py-4 rounded-xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+            disabled={loading}
+            className="w-full py-4 rounded-xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2 disabled:opacity-70"
           >
-            <Sparkles className="w-4 h-4" />
-            {selectedPlan === "monthly" ? "Start Free Trial" : "Get Lifetime Access"}
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                {selectedPlan === "monthly" ? "Start Free Trial" : "Get Lifetime Access"}
+              </>
+            )}
           </button>
 
           <p className="text-center text-muted-foreground text-[10px] font-sans mt-4">
