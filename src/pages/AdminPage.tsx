@@ -13,6 +13,7 @@ type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" |
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
+  { key: "subcategories", label: "Subcategories", icon: Layers },
   { key: "courses", label: "Courses", icon: BookOpen },
   { key: "mastery", label: "Mastery", icon: GraduationCap },
   { key: "prompts", label: "Prompts", icon: Feather },
