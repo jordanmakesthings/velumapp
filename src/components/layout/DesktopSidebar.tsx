@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Home, Library, Wind, BookOpen, User, Feather } from "lucide-react";
+import logoLotus from "@/assets/logo-lotus.jpg";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
@@ -15,7 +16,8 @@ export function DesktopSidebar() {
 
   return (
     <div className="flex flex-col h-full py-8 px-5">
-      <div className="mb-12">
+      <div className="mb-12 flex items-center gap-3">
+        <img src={logoLotus} alt="Velum" className="w-8 h-8 rounded-md object-cover" />
         <span className="text-accent text-[10px] font-sans font-medium tracking-[4px] uppercase">
           VELUM
         </span>
