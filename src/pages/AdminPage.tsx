@@ -156,6 +156,7 @@ export default function AdminPage() {
         audio_url: data.audio_url || null,
         thumbnail_url: data.thumbnail_url || null,
         course_id: data.course_id || null,
+        subcategory_id: data.subcategory_id || null,
         order_index: data.order_index,
       };
       if (editingTrack) {
