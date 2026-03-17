@@ -34,30 +34,81 @@ export type Database = {
       }
       courses: {
         Row: {
+          category: string | null
+          cover_image_url: string | null
           created_at: string
           description: string | null
+          estimated_weeks: number | null
           id: string
           is_premium: boolean
           order_index: number
+          tags: Json | null
           thumbnail_url: string | null
           title: string
         }
         Insert: {
+          category?: string | null
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          estimated_weeks?: number | null
           id?: string
           is_premium?: boolean
           order_index?: number
+          tags?: Json | null
           thumbnail_url?: string | null
           title: string
         }
         Update: {
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_weeks?: number | null
+          id?: string
+          is_premium?: boolean
+          order_index?: number
+          tags?: Json | null
+          thumbnail_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      courses_v2: {
+        Row: {
+          course_type: string
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_premium: boolean
+          is_published: boolean
+          modules: Json | null
+          order_index: number
+          title: string
+        }
+        Insert: {
+          course_type?: string
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
           is_premium?: boolean
+          is_published?: boolean
+          modules?: Json | null
           order_index?: number
-          thumbnail_url?: string | null
+          title: string
+        }
+        Update: {
+          course_type?: string
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_premium?: boolean
+          is_published?: boolean
+          modules?: Json | null
+          order_index?: number
           title?: string
         }
         Relationships: []
@@ -139,37 +190,182 @@ export type Database = {
         }
         Relationships: []
       }
+      lesson_progress: {
+        Row: {
+          completed: boolean
+          completed_date: string | null
+          course_id: string
+          created_at: string
+          id: string
+          lesson_id: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_date?: string | null
+          course_id: string
+          created_at?: string
+          id?: string
+          lesson_id: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          completed_date?: string | null
+          course_id?: string
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string | null
+          downloadable_files: Json | null
+          duration_minutes: number
+          id: string
+          is_free_preview: boolean
+          media_url: string | null
+          order_index: number
+          title: string
+          written_content: string | null
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string | null
+          downloadable_files?: Json | null
+          duration_minutes?: number
+          id?: string
+          is_free_preview?: boolean
+          media_url?: string | null
+          order_index?: number
+          title: string
+          written_content?: string | null
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          downloadable_files?: Json | null
+          duration_minutes?: number
+          id?: string
+          is_free_preview?: boolean
+          media_url?: string | null
+          order_index?: number
+          title?: string
+          written_content?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mastery_class_responses: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          mastery_class_id: string
+          mastery_class_theme: string | null
+          mastery_class_title: string | null
+          responses: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          mastery_class_id: string
+          mastery_class_theme?: string | null
+          mastery_class_title?: string | null
+          responses?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          mastery_class_id?: string
+          mastery_class_theme?: string | null
+          mastery_class_title?: string | null
+          responses?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mastery_class_responses_mastery_class_id_fkey"
+            columns: ["mastery_class_id"]
+            isOneToOne: false
+            referencedRelation: "mastery_classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mastery_classes: {
         Row: {
           audio_url: string | null
+          cover_image_url: string | null
           created_at: string
           description: string | null
           duration_minutes: number
           id: string
           is_premium: boolean
           order_index: number
+          pause_prompts: Json | null
+          theme: string | null
           thumbnail_url: string | null
           title: string
         }
         Insert: {
           audio_url?: string | null
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
           duration_minutes?: number
           id?: string
           is_premium?: boolean
           order_index?: number
+          pause_prompts?: Json | null
+          theme?: string | null
           thumbnail_url?: string | null
           title: string
         }
         Update: {
           audio_url?: string | null
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
           duration_minutes?: number
           id?: string
           is_premium?: boolean
           order_index?: number
+          pause_prompts?: Json | null
+          theme?: string | null
           thumbnail_url?: string | null
           title?: string
         }
@@ -231,6 +427,9 @@ export type Database = {
           id: string
           is_featured: boolean
           is_premium: boolean
+          lock_days: number
+          lock_type: string
+          order_in_course: number
           order_index: number
           subcategory_id: string | null
           thumbnail_url: string | null
@@ -246,6 +445,9 @@ export type Database = {
           id?: string
           is_featured?: boolean
           is_premium?: boolean
+          lock_days?: number
+          lock_type?: string
+          order_in_course?: number
           order_index?: number
           subcategory_id?: string | null
           thumbnail_url?: string | null
@@ -261,6 +463,9 @@ export type Database = {
           id?: string
           is_featured?: boolean
           is_premium?: boolean
+          lock_days?: number
+          lock_type?: string
+          order_in_course?: number
           order_index?: number
           subcategory_id?: string | null
           thumbnail_url?: string | null
