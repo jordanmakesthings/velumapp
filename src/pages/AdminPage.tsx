@@ -572,6 +572,90 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ============ SUBCATEGORIES TAB ============ */}
+        {activeTab === "subcategories" && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-display text-2xl">Subcategories</h2>
+              <button onClick={() => { setEditingSubcat(null); setSubcatForm({ name: "", category: "meditation", thumbnail_url: "", order_index: 0 }); setShowSubcatForm(true); }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
+                <Plus className="w-4 h-4" /> Add Subcategory
+              </button>
+            </div>
+
+            {showSubcatForm && (
+              <div className="velum-card p-6 mb-6">
+                <div className="flex justify-between mb-4">
+                  <h3 className="text-display text-lg">{editingSubcat ? "Edit Subcategory" : "New Subcategory"}</h3>
+                  <button onClick={() => setShowSubcatForm(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Name *</label>
+                    <input value={subcatForm.name} onChange={e => setSubcatForm(f => ({ ...f, name: e.target.value }))} className={inputClass} placeholder="e.g. Guided Visualizations" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Category</label>
+                    <select value={subcatForm.category} onChange={e => setSubcatForm(f => ({ ...f, category: e.target.value }))} className={inputClass}>
+                      {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Order Index</label>
+                    <input type="number" value={subcatForm.order_index} onChange={e => setSubcatForm(f => ({ ...f, order_index: Number(e.target.value) || 0 }))} className={inputClass} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Thumbnail URL</label>
+                    <input value={subcatForm.thumbnail_url} onChange={e => setSubcatForm(f => ({ ...f, thumbnail_url: e.target.value }))} className={inputClass} placeholder="Paste image URL" />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button onClick={() => setShowSubcatForm(false)} className="px-5 py-2 rounded-full text-sm border border-foreground/10 text-muted-foreground">Cancel</button>
+                  <button onClick={() => saveSubcatMutation.mutate(subcatForm)} disabled={!subcatForm.name || saveSubcatMutation.isPending}
+                    className="px-5 py-2 rounded-full text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50">
+                    {saveSubcatMutation.isPending ? "Saving..." : editingSubcat ? "Save" : "Create"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-8">
+              {Object.entries(CATEGORIES).map(([catKey, catLabel]) => {
+                const catSubcats = subcategories.filter((s: any) => s.category === catKey);
+                if (catSubcats.length === 0) return null;
+                return (
+                  <div key={catKey}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <h3 className="text-display text-lg">{catLabel}</h3>
+                      <span className="text-xs text-muted-foreground bg-card px-2 py-0.5 rounded-full">{catSubcats.length}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {catSubcats.map((sc: any) => (
+                        <div key={sc.id} className="velum-card p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {sc.thumbnail_url && <img src={sc.thumbnail_url} alt="" className="w-10 h-10 rounded-lg object-cover" />}
+                            <div>
+                              <p className="text-foreground text-sm font-sans font-medium">{sc.name}</p>
+                              <p className="text-ui text-xs">Order: {sc.order_index}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => { setEditingSubcat(sc); setSubcatForm({ name: sc.name, category: sc.category, thumbnail_url: sc.thumbnail_url || "", order_index: sc.order_index }); setShowSubcatForm(true); }}
+                              className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
+                            <button onClick={() => { if (confirm("Delete this subcategory?")) deleteSubcatMutation.mutate(sc.id); }}
+                              className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              {subcategories.length === 0 && <p className="text-muted-foreground text-sm text-center py-8">No subcategories yet.</p>}
+            </div>
+          </div>
+        )}
+
         {/* ============ COURSES TAB ============ */}
         {activeTab === "courses" && (
           <div>
