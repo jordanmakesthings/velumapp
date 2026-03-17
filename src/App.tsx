@@ -19,6 +19,8 @@ import PremiumPage from "./pages/PremiumPage";
 import PlayerPage from "./pages/PlayerPage";
 import MasteryPlayerPage from "./pages/MasteryPlayerPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
+import CourseExperiencePage from "./pages/CourseExperiencePage";
+import HomeScreenSetupPage from "./pages/HomeScreenSetupPage";
 import AdminPage from "./pages/AdminPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -45,6 +47,7 @@ const App = () => (
               <Route path="/breathe" element={<BreathePage />} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/course/:id" element={<CourseDetailPage />} />
+              <Route path="/course-v2" element={<CourseExperiencePage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
               <Route path="/blueprint" element={<ProtectedRoute><BlueprintPage /></ProtectedRoute>} />
@@ -56,6 +59,7 @@ const App = () => (
             <Route path="/premium" element={<PremiumPage />} />
             <Route path="/player" element={<PlayerPage />} />
             <Route path="/mastery-player" element={<MasteryPlayerPage />} />
+            <Route path="/home-setup" element={<HomeScreenSetupPage />} />
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />

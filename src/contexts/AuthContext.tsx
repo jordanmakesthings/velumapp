@@ -9,6 +9,10 @@ interface Profile {
   avatar_url: string | null;
   onboarding_completed: boolean;
   onboarding_answers: Record<string, unknown> | null;
+  subscription_status: string | null;
+  subscription_plan: string | null;
+  subscription_expires_at: string | null;
+  stripe_customer_id: string | null;
 }
 
 interface AuthContextType {
