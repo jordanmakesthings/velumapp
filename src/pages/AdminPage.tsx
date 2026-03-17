@@ -58,8 +58,13 @@ export default function AdminPage() {
 
   // --- Mastery state ---
   const [showMasteryForm, setShowMasteryForm] = useState(false);
-  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "" });
+  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "" });
   const [editingMastery, setEditingMastery] = useState<any>(null);
+
+  // --- Subcategory state ---
+  const [showSubcatForm, setShowSubcatForm] = useState(false);
+  const [subcatForm, setSubcatForm] = useState({ name: "", category: "meditation", thumbnail_url: "", order_index: 0 });
+  const [editingSubcat, setEditingSubcat] = useState<any>(null);
 
   const { isAdmin } = useAuth();
 
