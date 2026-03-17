@@ -24,6 +24,7 @@ import HomeScreenSetupPage from "./pages/HomeScreenSetupPage";
 import AdminPage from "./pages/AdminPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import SubcategoryPage from "./pages/SubcategoryPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/course/:id" element={<CourseDetailPage />} />
               <Route path="/course-v2" element={<CourseExperiencePage />} />
+              <Route path="/subcategory" element={<SubcategoryPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
               <Route path="/blueprint" element={<ProtectedRoute><BlueprintPage /></ProtectedRoute>} />

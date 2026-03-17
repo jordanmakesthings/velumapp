@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Crown, Sparkles, Wind, Heart, BookOpen, BarChart3, Compass, Feather } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Crown, Sparkles, Wind, Heart, BookOpen, BarChart3, Compass, Feather, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import logoLotus from "@/assets/logo-lotus.jpg";
 
 const GOAL_OPTIONS = [
@@ -16,10 +19,10 @@ const GOAL_OPTIONS = [
 ];
 
 const EXPERIENCE_OPTIONS = [
-  { key: "beginner", label: "Complete beginner", description: "New to meditation and breathwork" },
-  { key: "some", label: "Some experience", description: "Tried it a few times" },
-  { key: "regular", label: "Regular practice", description: "I practice consistently" },
-  { key: "advanced", label: "Advanced practitioner", description: "Deep, established practice" },
+  { key: "beginner", label: "Complete beginner", description: "These tools are new to me" },
+  { key: "some", label: "Some experience", description: "I've dipped in but never gone deep" },
+  { key: "regular", label: "Regular practice", description: "I show up, but I know there's more" },
+  { key: "advanced", label: "Advanced practitioner", description: "I live this — I'm here to go further" },
 ];
 
 const PREMIUM_FEATURES = [
@@ -32,8 +35,73 @@ const PREMIUM_FEATURES = [
   "Blueprint — your personalized nervous system map",
 ];
 
+function StressSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const getInfo = (v: number) => {
+    if (v <= 2) return { label: "Very calm" };
+    if (v <= 4) return { label: "Mild tension" };
+    if (v <= 6) return { label: "Moderate stress" };
+    if (v <= 8) return { label: "High stress" };
+    return { label: "Overwhelmed" };
+  };
+  const info = getInfo(value);
+
+  return (
+    <div className="w-full text-center">
+      <p className="text-display text-6xl text-accent mb-2">{value}</p>
+      <p className="text-ui text-xs uppercase tracking-widest mb-8">{info.label}</p>
+      <div className="px-4">
+        <input
+          type="range" min={1} max={10} value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-foreground"
+        />
+        <div className="flex justify-between mt-3">
+          <span className="text-ui text-xs">1 · Completely calm</span>
+          <span className="text-ui text-xs">10 · Overwhelmed</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmotionSplit({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const getLabel = (v: number) => {
+    if (v >= 80) return "Mostly positive";
+    if (v >= 60) return "More positive than not";
+    if (v >= 45) return "About even";
+    if (v >= 25) return "More negative than not";
+    return "Mostly negative";
+  };
+
+  return (
+    <div className="w-full text-center">
+      <div className="rounded-xl overflow-hidden h-12 flex mb-4">
+        <div className="bg-accent/60 flex items-center justify-center transition-all" style={{ width: `${value}%` }}>
+          {value > 15 && <span className="text-xs font-bold text-background">{value}% positive</span>}
+        </div>
+        <div className="bg-muted flex-1 flex items-center justify-center">
+          {(100 - value) > 15 && <span className="text-xs font-bold text-foreground">{100 - value}% negative</span>}
+        </div>
+      </div>
+      <p className="text-display text-xl text-foreground mb-6">{getLabel(value)}</p>
+      <div className="px-4">
+        <input
+          type="range" min={0} max={100} value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-lg"
+        />
+        <div className="flex justify-between mt-3">
+          <span className="text-ui text-xs">← All negative</span>
+          <span className="text-ui text-xs">All positive →</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const { user, session, refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [goals, setGoals] = useState<string[]>([]);
@@ -42,8 +110,19 @@ export default function OnboardingPage() {
   const [emotional, setEmotional] = useState(50);
   const [vision, setVision] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "lifetime">("monthly");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const totalSteps = 7;
+
+  // Handle Stripe success redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") === "true") {
+      saveOnboardingData(true).then(() => {
+        navigate("/welcome");
+      });
+    }
+  }, []);
 
   const toggleGoal = (key: string) => {
     setGoals((prev) =>
@@ -64,21 +143,61 @@ export default function OnboardingPage() {
     }
   };
 
+  const saveOnboardingData = async (markComplete = false) => {
+    if (!user) return;
+    const onboardingAnswers = { goals, experience, stress, emotional, vision };
+    const updates: Record<string, unknown> = {
+      onboarding_answers: onboardingAnswers,
+    };
+    if (name.trim()) updates.full_name = name.trim();
+    if (markComplete) updates.onboarding_completed = true;
+
+    await supabase.from("profiles").update(updates).eq("id", user.id);
+    await refreshProfile();
+  };
+
   const handleNext = () => {
     if (step < totalSteps - 1) setStep(step + 1);
     else handleComplete();
   };
 
-  const handleComplete = () => {
-    // Save onboarding data (will connect to backend later)
-    const onboardingData = {
-      name, goals, experience, stress, emotional, vision, selectedPlan,
-    };
-    console.log("Onboarding complete:", onboardingData);
+  const handleComplete = async () => {
+    await saveOnboardingData(true);
     navigate("/welcome");
   };
 
-  const handleSkip = () => {
+  const handleCheckout = async () => {
+    if (!session) {
+      navigate("/auth");
+      return;
+    }
+    setCheckoutLoading(true);
+    try {
+      // Save onboarding data before checkout redirect
+      await saveOnboardingData(true);
+
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: {
+          plan: selectedPlan,
+          returnUrl: `${window.location.origin}/onboarding?success=true`,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (err: any) {
+      console.error("Checkout error:", err);
+      toast.error(err.message || "Failed to start checkout");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    await saveOnboardingData(true);
     navigate("/welcome");
   };
 
@@ -115,8 +234,8 @@ export default function OnboardingPage() {
           {step === 0 && (
             <motion.div key="name" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
               <img src={logoLotus} alt="Velum" className="w-12 h-12 rounded-xl object-cover mx-auto mb-8" />
-              <h1 className="text-display text-3xl mb-2">What should we call you?</h1>
-              <p className="text-ui text-sm mb-10">This is the beginning of something meaningful.</p>
+              <h1 className="text-display text-3xl mb-2">Before we begin.</h1>
+              <p className="text-ui text-sm mb-10">Tell us a little about yourself.</p>
               <input
                 type="text"
                 value={name}
@@ -131,8 +250,8 @@ export default function OnboardingPage() {
           {/* Step 1: Goals */}
           {step === 1 && (
             <motion.div key="goals" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-              <h1 className="text-display text-3xl mb-2 text-center">Why are you here?</h1>
-              <p className="text-ui text-sm mb-8 text-center">Select all that resonate with you.</p>
+              <h1 className="text-display text-3xl mb-2 text-center">Something brought you here.</h1>
+              <p className="text-ui text-sm mb-8 text-center">Whatever it is — it was right to listen. Choose everything that resonates.</p>
               <div className="grid grid-cols-1 gap-3">
                 {GOAL_OPTIONS.map(({ key, label, icon: Icon }) => {
                   const isSelected = goals.includes(key);
@@ -155,14 +274,17 @@ export default function OnboardingPage() {
                   );
                 })}
               </div>
+              <button onClick={handleNext} className="w-full text-center text-muted-foreground text-xs font-sans mt-4 hover:text-foreground transition-colors">
+                Skip this question
+              </button>
             </motion.div>
           )}
 
           {/* Step 2: Experience */}
           {step === 2 && (
             <motion.div key="experience" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-              <h1 className="text-display text-3xl mb-2 text-center">Your experience level</h1>
-              <p className="text-ui text-sm mb-8 text-center">There is no wrong answer here.</p>
+              <h1 className="text-display text-3xl mb-2 text-center">Where are you starting from?</h1>
+              <p className="text-ui text-sm mb-8 text-center">There's no right answer. Every path through Velum begins exactly where you are.</p>
               <div className="flex flex-col gap-3">
                 {EXPERIENCE_OPTIONS.map(({ key, label, description }) => (
                   <button
@@ -183,48 +305,18 @@ export default function OnboardingPage() {
           {/* Step 3: Stress level */}
           {step === 3 && (
             <motion.div key="stress" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
-              <h1 className="text-display text-3xl mb-2">Daily stress level</h1>
-              <p className="text-ui text-sm mb-12">How stressed do you feel on a typical day?</p>
-              <p className="text-display text-6xl text-accent mb-8">{stress}</p>
-              <div className="px-4">
-                <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  value={stress}
-                  onChange={(e) => setStress(Number(e.target.value))}
-                  className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-lg"
-                />
-                <div className="flex justify-between mt-3">
-                  <span className="text-ui text-xs">Low stress</span>
-                  <span className="text-ui text-xs">High stress</span>
-                </div>
-              </div>
+              <h1 className="text-display text-3xl mb-2">How stressed do you feel on a typical day?</h1>
+              <p className="text-ui text-sm mb-12">Be honest with yourself. This is just between you and Velum.</p>
+              <StressSlider value={stress} onChange={setStress} />
             </motion.div>
           )}
 
           {/* Step 4: Emotional landscape */}
           {step === 4 && (
             <motion.div key="emotional" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
-              <h1 className="text-display text-3xl mb-2">Emotional landscape</h1>
-              <p className="text-ui text-sm mb-12">How does your inner world usually feel?</p>
-              <p className="text-display text-2xl text-accent mb-8">
-                {emotional < 30 ? "Chaotic" : emotional < 50 ? "Unsettled" : emotional < 70 ? "Balanced" : "Peaceful"}
-              </p>
-              <div className="px-4">
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={emotional}
-                  onChange={(e) => setEmotional(Number(e.target.value))}
-                  className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-lg"
-                />
-                <div className="flex justify-between mt-3">
-                  <span className="text-ui text-xs">Chaotic</span>
-                  <span className="text-ui text-xs">Peaceful</span>
-                </div>
-              </div>
+              <h1 className="text-display text-3xl mb-2">How does your inner world usually feel?</h1>
+              <p className="text-ui text-sm mb-12">Drag the scale to reflect the balance of your emotional life.</p>
+              <EmotionSplit value={emotional} onChange={setEmotional} />
             </motion.div>
           )}
 
@@ -232,7 +324,12 @@ export default function OnboardingPage() {
           {step === 5 && (
             <motion.div key="vision" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
               <h1 className="text-display text-3xl mb-2">Your 30-day vision</h1>
-              <p className="text-ui text-sm mb-8">In one sentence — what would a true mark of success look like for you 30 days from now?</p>
+              <p className="text-ui text-sm mb-4">In one sentence — what would a true mark of success look like for you 30 days from now?</p>
+              <div className="velum-card-flat p-4 mb-4 text-left">
+                <p className="text-ui text-xs italic leading-relaxed">
+                  "The people who transform their lives aren't the ones who tried the hardest — they're the ones who finally got honest about what they truly wanted."
+                </p>
+              </div>
               <textarea
                 value={vision}
                 onChange={(e) => setVision(e.target.value)}
@@ -245,23 +342,8 @@ export default function OnboardingPage() {
           {/* Step 6: Paywall */}
           {step === 6 && (
             <motion.div key="paywall" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-              <h1 className="text-display text-3xl mb-2 text-center">You're ready.</h1>
-              <p className="text-display text-xl text-center mb-8 text-accent">Let's begin.</p>
-
-              {/* Features */}
-              <div className="velum-card p-6 mb-6">
-                <p className="text-ui text-xs tracking-wide uppercase mb-4">What's included</p>
-                <div className="flex flex-col gap-3">
-                  {PREMIUM_FEATURES.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3">
-                      <div className="w-5 h-5 rounded-full gold-gradient flex items-center justify-center shrink-0">
-                        <Check className="w-3 h-3 text-primary-foreground" />
-                      </div>
-                      <span className="text-foreground text-sm font-sans">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <h1 className="text-display text-3xl mb-2 text-center">Final Step.</h1>
+              <p className="text-ui text-sm text-center mb-8">Full access to everything in Velum. Free for 7 days.</p>
 
               {/* Plans */}
               <div className="grid grid-cols-2 gap-3 mb-6">
@@ -296,13 +378,38 @@ export default function OnboardingPage() {
                 </button>
               </div>
 
+              {/* Features */}
+              <div className="velum-card p-6 mb-6">
+                <p className="text-ui text-xs tracking-wide uppercase mb-4">Everything Included</p>
+                <div className="flex flex-col gap-3">
+                  {PREMIUM_FEATURES.map((feature) => (
+                    <div key={feature} className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full gold-gradient flex items-center justify-center shrink-0">
+                        <Check className="w-3 h-3 text-primary-foreground" />
+                      </div>
+                      <span className="text-foreground text-sm font-sans">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* CTA */}
               <button
-                onClick={handleComplete}
-                className="w-full py-4 rounded-xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform mb-4"
+                onClick={handleCheckout}
+                disabled={checkoutLoading}
+                className="w-full py-4 rounded-xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform mb-3 flex items-center justify-center gap-2 disabled:opacity-70"
               >
-                Begin My Journey
+                {checkoutLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  selectedPlan === "monthly" ? "Start Free Trial" : "Claim Lifetime Access"
+                )}
               </button>
+              <p className="text-center text-muted-foreground text-[10px] font-sans mb-4">
+                {selectedPlan === "monthly"
+                  ? "7 days free then $29/mo · Cancel anytime"
+                  : "One-time payment of $299. Access forever."}
+              </p>
 
               <button
                 onClick={handleSkip}
@@ -323,7 +430,7 @@ export default function OnboardingPage() {
             disabled={!canProceed()}
             className="w-full max-w-lg mx-auto flex items-center justify-center gap-2 py-4 rounded-xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-30 active:scale-[0.98] transition-transform"
           >
-            Continue <ArrowRight className="w-4 h-4" />
+            {step === 5 ? "Almost there →" : "Continue"} <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       )}
