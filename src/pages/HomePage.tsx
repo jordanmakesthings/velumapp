@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap } from "lucide-react";
 import { useState } from "react";
 import { SessionFinderModal } from "@/components/home/SessionFinderModal";
+import { useAuth } from "@/contexts/AuthContext";
 import logoLotus from "@/assets/logo-lotus.jpg";
 
 const QUOTES = [
