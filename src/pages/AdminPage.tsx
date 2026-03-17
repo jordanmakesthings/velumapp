@@ -254,6 +254,39 @@ export default function AdminPage() {
     },
   });
 
+  // Subcategory mutations
+  const saveSubcatMutation = useMutation({
+    mutationFn: async (data: typeof subcatForm) => {
+      const saveData = { name: data.name, category: data.category, thumbnail_url: data.thumbnail_url || null, order_index: data.order_index };
+      if (editingSubcat) {
+        const { error } = await supabase.from("subcategories").update(saveData).eq("id", editingSubcat.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("subcategories").insert(saveData);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminSubcategories"] });
+      setShowSubcatForm(false);
+      setEditingSubcat(null);
+      setSubcatForm({ name: "", category: "meditation", thumbnail_url: "", order_index: 0 });
+      toast.success(editingSubcat ? "Subcategory updated" : "Subcategory created");
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const deleteSubcatMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("subcategories").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminSubcategories"] });
+      toast.success("Subcategory deleted");
+    },
+  });
+
   // Prompt mutations
   const addPromptMutation = useMutation({
     mutationFn: async () => {
