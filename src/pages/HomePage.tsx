@@ -43,6 +43,8 @@ function getTodayQuote() {
 
 export default function HomePage() {
   const [finderOpen, setFinderOpen] = useState(false);
+  const { profile } = useAuth();
+  const firstName = profile?.full_name?.split(" ")[0];
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
