@@ -294,6 +294,7 @@ export default function AdminPage() {
       audio_url: track.audio_url || "",
       thumbnail_url: track.thumbnail_url || "",
       course_id: track.course_id || "",
+      subcategory_id: track.subcategory_id || "",
       order_index: track.order_index,
     });
     setShowTrackForm(true);
