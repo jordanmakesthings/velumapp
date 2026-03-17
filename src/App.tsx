@@ -47,6 +47,7 @@ const App = () => (
               <Route path="/breathe" element={<BreathePage />} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/course/:id" element={<CourseDetailPage />} />
+              <Route path="/course-v2" element={<CourseExperiencePage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
               <Route path="/blueprint" element={<ProtectedRoute><BlueprintPage /></ProtectedRoute>} />
