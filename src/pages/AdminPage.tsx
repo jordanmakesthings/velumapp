@@ -614,6 +614,7 @@ export default function AdminPage() {
                   <div><label className={labelClass}>Duration (min)</label><input type="number" value={masteryForm.duration_minutes} onChange={e => setMasteryForm(f => ({ ...f, duration_minutes: Number(e.target.value) }))} className={inputClass} /></div>
                   <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={masteryForm.is_premium} onChange={e => setMasteryForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium</label>
                   <div><label className={labelClass}>Audio URL</label><input value={masteryForm.audio_url} onChange={e => setMasteryForm(f => ({ ...f, audio_url: e.target.value }))} className={inputClass} placeholder="Paste URL or upload" /></div>
+                  <div><label className={labelClass}>Theme</label><input value={masteryForm.theme} onChange={e => setMasteryForm(f => ({ ...f, theme: e.target.value }))} className={inputClass} placeholder="e.g. Emotional Mastery" /></div>
                   <div className="flex justify-end gap-3">
                     <button onClick={() => setShowMasteryForm(false)} className="px-5 py-2 rounded-full text-sm border border-foreground/10 text-muted-foreground">Cancel</button>
                     <button onClick={() => saveMasteryMutation.mutate(masteryForm)} disabled={!masteryForm.title || saveMasteryMutation.isPending}
