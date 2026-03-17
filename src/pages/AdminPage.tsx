@@ -224,7 +224,7 @@ export default function AdminPage() {
   // Mastery mutations
   const saveMasteryMutation = useMutation({
     mutationFn: async (data: typeof masteryForm) => {
-      const saveData = { title: data.title, description: data.description || null, duration_minutes: data.duration_minutes, is_premium: data.is_premium, audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null };
+      const saveData = { title: data.title, description: data.description || null, duration_minutes: data.duration_minutes, is_premium: data.is_premium, audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null, theme: data.theme || null };
       if (editingMastery) {
         const { error } = await supabase.from("mastery_classes").update(saveData).eq("id", editingMastery.id);
         if (error) throw error;
