@@ -416,6 +416,33 @@ export type Database = {
         }
         Relationships: []
       }
+      subcategories: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+          order_index: number
+          thumbnail_url: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          name: string
+          order_index?: number
+          thumbnail_url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number
+          thumbnail_url?: string | null
+        }
+        Relationships: []
+      }
       tracks: {
         Row: {
           audio_url: string | null
