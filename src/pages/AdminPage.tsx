@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-type AdminTab = "tracks" | "courses" | "mastery" | "prompts" | "settings";
+type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "settings";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
