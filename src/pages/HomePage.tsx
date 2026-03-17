@@ -57,7 +57,7 @@ export default function HomePage() {
           </span>
         </div>
         <h1 className="text-display text-4xl lg:text-5xl leading-tight mb-4">
-          {getGreeting()}.
+          {getGreeting()}{firstName ? `, ${firstName}` : ""}.
         </h1>
         <p className="text-ui text-sm italic leading-relaxed opacity-70">
           "{getTodayQuote()}"
