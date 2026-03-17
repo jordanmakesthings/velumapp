@@ -60,6 +60,8 @@ export default function AdminPage() {
   const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "" });
   const [editingMastery, setEditingMastery] = useState<any>(null);
 
+  const { isAdmin } = useAuth();
+
   // Queries
   const { data: tracks = [], isLoading: tracksLoading } = useQuery({
     queryKey: ["adminTracks"],
@@ -295,6 +297,14 @@ export default function AdminPage() {
 
   const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
   const labelClass = "block text-xs text-muted-foreground mb-1.5 uppercase tracking-wider";
+
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-muted-foreground">Admin access required.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
