@@ -47,9 +47,12 @@ export default function HomePage() {
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <span className="text-accent text-[10px] font-sans font-medium tracking-[4px] uppercase block mb-3">
-          VELUM
-        </span>
+        <div className="flex items-center gap-3 mb-3">
+          <img src={logoLotus} alt="Velum" className="w-7 h-7 rounded-md object-cover" />
+          <span className="text-accent text-[10px] font-sans font-medium tracking-[4px] uppercase">
+            VELUM
+          </span>
+        </div>
         <h1 className="text-display text-4xl lg:text-5xl leading-tight mb-4">
           {getGreeting()}.
         </h1>
