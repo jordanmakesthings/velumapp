@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, Crown, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Crown, Sparkles, Loader2, Shield, Infinity, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -17,10 +17,17 @@ const FEATURES = [
 
 export default function PremiumPage() {
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session, profile, refreshProfile } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "lifetime">("monthly");
   const [promoCode, setPromoCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [canceling, setCanceling] = useState(false);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
+
+  const isPremium = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
+  const isLifetime = profile?.subscription_plan === "lifetime";
+  const isCanceling = profile?.subscription_status === "canceling";
 
   const handleSubscribe = async () => {
     if (!session) {
@@ -29,6 +36,7 @@ export default function PremiumPage() {
     }
 
     setLoading(true);
+    setError(null);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: {
@@ -46,11 +54,87 @@ export default function PremiumPage() {
       }
     } catch (err: any) {
       console.error("Checkout error:", err);
-      toast.error(err.message || "Failed to start checkout");
+      setError(err.message || "Failed to start checkout");
     } finally {
       setLoading(false);
     }
   };
+
+  const handleCancel = async () => {
+    if (!window.confirm("Are you sure you want to cancel? You'll keep access until the end of your billing period.")) return;
+    setCanceling(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("stripe-webhook", {
+        body: { action: "cancel" },
+      });
+      if (error) throw error;
+      setCancelSuccess(true);
+      await refreshProfile();
+    } catch (err: any) {
+      setError(err.message || "Could not cancel subscription.");
+    } finally {
+      setCanceling(false);
+    }
+  };
+
+  // Already premium view
+  if (isPremium) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="fixed top-0 inset-x-0 z-50 flex items-center px-4 py-4">
+          <button onClick={() => navigate(-1)} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="px-6 pt-20 pb-12 max-w-lg mx-auto text-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", delay: 0.2 }}
+            className="w-20 h-20 rounded-3xl gold-gradient flex items-center justify-center mx-auto mb-6"
+          >
+            <Crown className="w-9 h-9 text-primary-foreground" />
+          </motion.div>
+
+          <h1 className="text-display text-3xl mb-3">You're Premium</h1>
+          <p className="text-ui text-sm mb-2">You have full access to everything in Velum.</p>
+          {profile?.subscription_plan && (
+            <p className="text-ui text-xs mb-6 capitalize">
+              Plan: {profile.subscription_plan} · Status: {profile.subscription_status}
+            </p>
+          )}
+
+          {cancelSuccess ? (
+            <div className="velum-card p-4 text-sm text-muted-foreground">
+              Your subscription will cancel at the end of the current billing period. You'll retain full access until then.
+            </div>
+          ) : isCanceling ? (
+            <div className="velum-card-flat p-4 text-sm text-muted-foreground">
+              Your subscription is set to cancel at the end of the billing period.
+            </div>
+          ) : !isLifetime && (
+            <div className="mt-4">
+              <button
+                onClick={handleCancel}
+                disabled={canceling}
+                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+              >
+                {canceling ? "Canceling..." : "Cancel subscription"}
+              </button>
+              {error && (
+                <div className="flex items-center gap-2 text-destructive text-xs mt-2 justify-center">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {error}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -73,8 +157,8 @@ export default function PremiumPage() {
             >
               <Crown className="w-7 h-7 text-primary-foreground" />
             </motion.div>
-            <h1 className="text-display text-3xl mb-2">Unlock Full Access</h1>
-            <p className="text-ui text-sm">Everything you need to regulate your nervous system.</p>
+            <h1 className="text-display text-3xl mb-2">Invest in your<br /><span className="text-accent">nervous system</span></h1>
+            <p className="text-ui text-sm">Unlock the full library of meditations, breathwork, and EFT tapping practices designed for deep transformation.</p>
           </div>
 
           {/* Plans */}
@@ -113,6 +197,14 @@ export default function PremiumPage() {
               </div>
             </button>
           </div>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-center gap-2 text-destructive text-sm mb-4 justify-center">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </div>
+          )}
 
           {/* Features */}
           <div className="velum-card p-6 mb-8">
@@ -158,9 +250,21 @@ export default function PremiumPage() {
 
           <p className="text-center text-muted-foreground text-[10px] font-sans mt-4">
             {selectedPlan === "monthly"
-              ? "7-day free trial, then $29/month. Cancel anytime."
+              ? "Free for 7 days, then $29/month. Cancel anytime."
               : "One-time payment of $299. Lifetime access."}
           </p>
+
+          {/* Trust */}
+          <div className="mt-8 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5" />
+              Secure payment
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Infinity className="w-3.5 h-3.5" />
+              Cancel anytime
+            </span>
+          </div>
         </motion.div>
       </div>
     </div>
