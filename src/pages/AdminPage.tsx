@@ -60,6 +60,8 @@ export default function AdminPage() {
   const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "" });
   const [editingMastery, setEditingMastery] = useState<any>(null);
 
+  const { isAdmin } = useAuth();
+
   // Queries
   const { data: tracks = [], isLoading: tracksLoading } = useQuery({
     queryKey: ["adminTracks"],
