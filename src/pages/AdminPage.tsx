@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, Plus, Upload, Trash2, Edit2, X, Check, Music, BookOpen,
-  GraduationCap, Feather, Settings, Users, GripVertical
+  GraduationCap, Feather, Settings, Users, GripVertical, Layers
 } from "lucide-react";
 import { toast } from "sonner";
 
