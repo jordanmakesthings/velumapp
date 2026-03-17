@@ -2,7 +2,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
 
-const HIDDEN_NAV_PATHS = ["/onboarding", "/premium", "/welcome", "/player", "/mastery-player", "/auth", "/reset-password"];
+const HIDDEN_NAV_PATHS = ["/onboarding", "/premium", "/welcome", "/player", "/mastery-player", "/auth", "/reset-password", "/course-v2", "/home-setup"];
 
 export function AppLayout() {
   const location = useLocation();

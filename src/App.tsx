@@ -59,6 +59,7 @@ const App = () => (
             <Route path="/premium" element={<PremiumPage />} />
             <Route path="/player" element={<PlayerPage />} />
             <Route path="/mastery-player" element={<MasteryPlayerPage />} />
+            <Route path="/home-setup" element={<HomeScreenSetupPage />} />
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
