@@ -6,10 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Stripe Price IDs (USD)
 const PRICE_IDS = {
-  monthly: "price_1TC9J5Lv0dyfXaxONNpQ9wHV",  // $29/mo recurring
-  lifetime: "price_1TC9JLLv0dyfXaxOM4HC5j8l",  // $299 one-time
+  monthly: "price_1TC9J5Lv0dyfXaxONNpQ9wHV",
+  lifetime: "price_1TC9JLLv0dyfXaxOM4HC5j8l",
 };
 
 Deno.serve(async (req) => {
@@ -49,7 +48,6 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
 
-    // Get or create Stripe customer
     const { data: profile } = await supabase
       .from("profiles")
       .select("stripe_customer_id")
@@ -73,8 +71,8 @@ Deno.serve(async (req) => {
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
-      success_url: `${returnUrl || "https://velum.app"}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${returnUrl || "https://velum.app"}/premium`,
+      success_url: `${returnUrl || "https://velumapp.lovable.app"}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${returnUrl || "https://velumapp.lovable.app"}/premium`,
       metadata: { supabase_user_id: userId, plan },
       line_items: [{ price: priceId, quantity: 1 }],
     };
@@ -82,14 +80,12 @@ Deno.serve(async (req) => {
     if (plan === "monthly") {
       sessionParams.mode = "subscription";
       sessionParams.subscription_data = {
-        trial_period_days: 7,
         metadata: { supabase_user_id: userId },
       };
     } else {
       sessionParams.mode = "payment";
     }
 
-    // Apply promo code if provided
     if (promoCode) {
       try {
         const promotionCodes = await stripe.promotionCodes.list({ code: promoCode, active: true, limit: 1 });

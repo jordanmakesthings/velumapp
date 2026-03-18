@@ -1,9 +1,20 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import logoCircle from "@/assets/logo-circle.png";
 
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
+  const { user, refreshProfile } = useAuth();
+
+  // Refresh profile to pick up new subscription status
+  useEffect(() => {
+    if (user) {
+      refreshProfile();
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-6">
@@ -32,17 +43,10 @@ export default function PaymentSuccessPage() {
         </p>
 
         <button
-          onClick={() => navigate("/home-setup")}
+          onClick={() => navigate("/")}
           className="w-full h-14 rounded-full gold-gradient text-primary-foreground text-[15px] font-sans font-bold tracking-wide active:scale-[0.98] transition-transform mb-4"
         >
-          Set Up Your App →
-        </button>
-
-        <button
-          onClick={() => navigate("/")}
-          className="text-muted-foreground text-sm font-sans text-center w-full p-2 hover:text-foreground transition-colors"
-        >
-          Skip to home
+          Enter Velum →
         </button>
       </motion.div>
     </div>

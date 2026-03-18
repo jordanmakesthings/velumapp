@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Heart, Sparkles, Wind, Zap, GraduationCap, Feather, BookOpen, Crown, Check, Play } from "lucide-react";
+import { Search, Heart, Sparkles, Wind, Zap, GraduationCap, Feather, BookOpen, Check, Play } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,7 +30,6 @@ export default function LibraryPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Fetch tracks
   const { data: tracks = [] } = useQuery({
     queryKey: ["tracks"],
     queryFn: async () => {
@@ -39,7 +38,6 @@ export default function LibraryPage() {
     },
   });
 
-  // Fetch courses
   const { data: courses = [] } = useQuery({
     queryKey: ["courses"],
     queryFn: async () => {
@@ -48,7 +46,6 @@ export default function LibraryPage() {
     },
   });
 
-  // Fetch mastery classes
   const { data: masteryClasses = [] } = useQuery({
     queryKey: ["masteryClasses"],
     queryFn: async () => {
@@ -57,7 +54,6 @@ export default function LibraryPage() {
     },
   });
 
-  // Fetch user favorites
   const { data: favorites = [] } = useQuery({
     queryKey: ["favorites", user?.id],
     queryFn: async () => {
@@ -68,7 +64,6 @@ export default function LibraryPage() {
     enabled: !!user,
   });
 
-  // Fetch user progress
   const { data: progress = [] } = useQuery({
     queryKey: ["userProgress", user?.id],
     queryFn: async () => {
@@ -79,7 +74,6 @@ export default function LibraryPage() {
     enabled: !!user,
   });
 
-  // Fetch journaling prompts
   const { data: prompts = [] } = useQuery({
     queryKey: ["prompts"],
     queryFn: async () => {
@@ -91,7 +85,6 @@ export default function LibraryPage() {
   const favoriteTrackIds = new Set(favorites.map((f: any) => f.track_id));
   const completedTrackIds = new Set(progress.map((p: any) => p.track_id));
 
-  // Toggle favorite
   const toggleFavMutation = useMutation({
     mutationFn: async (trackId: string) => {
       if (!user) return;
@@ -105,7 +98,6 @@ export default function LibraryPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
   });
 
-  // Category counts
   const categoryCounts = CATEGORIES.map(c => ({
     ...c,
     count: tracks.filter((t: any) => t.category === c.key).length,
@@ -123,7 +115,6 @@ export default function LibraryPage() {
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
       <h1 className="text-display text-3xl mb-6">Library</h1>
 
-      {/* Tabs */}
       <div className="flex gap-1 mb-6 overflow-x-auto pb-1 -mx-4 px-4">
         {TABS.map(({ key, label }) => (
           <button
@@ -138,7 +129,6 @@ export default function LibraryPage() {
         ))}
       </div>
 
-      {/* Sessions Tab */}
       {activeTab === "sessions" && (
         <>
           <div className="relative mb-6">
@@ -183,7 +173,6 @@ export default function LibraryPage() {
                           <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
                         </div>
                       </div>
-                      {track.is_premium && <div className="absolute top-2 right-2"><Crown className="w-3.5 h-3.5 text-accent" /></div>}
                       {completedTrackIds.has(track.id) && (
                         <div className="absolute top-2 left-2 w-5 h-5 rounded-full gold-gradient flex items-center justify-center">
                           <Check className="w-3 h-3 text-primary-foreground" />
@@ -211,7 +200,6 @@ export default function LibraryPage() {
         </>
       )}
 
-      {/* Favorites Tab */}
       {activeTab === "favorites" && (
         favoriteTracks.length === 0 ? (
           <div className="velum-card p-12 text-center">
@@ -244,7 +232,6 @@ export default function LibraryPage() {
         )
       )}
 
-      {/* Courses Tab */}
       {activeTab === "courses" && (
         <div className="flex flex-col gap-4">
           {courses.length === 0 ? (
@@ -253,7 +240,6 @@ export default function LibraryPage() {
             <Link key={course.id} to={`/course/${course.id}`} className="velum-card overflow-hidden group">
               <div className="h-32 bg-surface-light relative">
                 {course.thumbnail_url && <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />}
-                {course.is_premium && <div className="absolute top-3 right-3"><Crown className="w-4 h-4 text-accent" /></div>}
               </div>
               <div className="p-5">
                 <h3 className="text-foreground font-serif text-lg mb-1">{course.title}</h3>
@@ -264,7 +250,6 @@ export default function LibraryPage() {
         </div>
       )}
 
-      {/* Mastery Tab */}
       {activeTab === "mastery" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {masteryClasses.length === 0 ? (
@@ -273,7 +258,6 @@ export default function LibraryPage() {
             <Link key={mc.id} to={`/mastery-player?id=${mc.id}`} className="velum-card overflow-hidden group">
               <div className="aspect-video bg-surface-light relative">
                 {mc.thumbnail_url && <img src={mc.thumbnail_url} alt={mc.title} className="w-full h-full object-cover" />}
-                {mc.is_premium && <div className="absolute top-2 right-2"><Crown className="w-3.5 h-3.5 text-accent" /></div>}
               </div>
               <div className="p-4">
                 <p className="text-foreground text-sm font-sans">{mc.title}</p>
@@ -284,7 +268,6 @@ export default function LibraryPage() {
         </div>
       )}
 
-      {/* Journal Tab */}
       {activeTab === "journal" && (
         <div>
           {prompts.length > 0 && (

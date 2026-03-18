@@ -61,7 +61,6 @@ function StressCheckin({ title, subtitle, onSubmit, submitLabel }: {
   );
 }
 
-// Steps: "before" → "playing" → "after" → "done"
 export default function PlayerPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -79,9 +78,8 @@ export default function PlayerPage() {
   const [showPaywall, setShowPaywall] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const isPremiumUser = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
+  const hasSubscription = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
 
-  // Fetch track
   const { data: track, isLoading } = useQuery({
     queryKey: ["track", trackId],
     queryFn: async () => {
@@ -91,7 +89,6 @@ export default function PlayerPage() {
     enabled: !!trackId,
   });
 
-  // Fetch favorite status
   const { data: favorites = [] } = useQuery({
     queryKey: ["favorites", user?.id],
     queryFn: async () => {
@@ -106,14 +103,13 @@ export default function PlayerPage() {
     setIsFavorited(favorites.some((f: any) => f.track_id === trackId));
   }, [favorites, trackId]);
 
-  // Premium gate check
+  // Subscription gate: if no subscription, show paywall
   useEffect(() => {
-    if (track && track.is_premium && !isPremiumUser) {
+    if (track && !hasSubscription) {
       setShowPaywall(true);
     }
-  }, [track, isPremiumUser]);
+  }, [track, hasSubscription]);
 
-  // Toggle favorite
   const toggleFavMutation = useMutation({
     mutationFn: async () => {
       if (!user) return;
@@ -130,11 +126,9 @@ export default function PlayerPage() {
     },
   });
 
-  // Save progress on completion
   const saveProgressMutation = useMutation({
     mutationFn: async (stressAfter: number) => {
       if (!user || !track) return;
-      // Check if progress exists
       const { data: existing } = await supabase
         .from("user_progress")
         .select("id")
@@ -171,7 +165,6 @@ export default function PlayerPage() {
     },
   });
 
-  // Audio event handlers
   const handleTimeUpdate = () => {
     if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
   };
@@ -252,8 +245,8 @@ export default function PlayerPage() {
     );
   }
 
-  // Premium gate
-  if (track.is_premium && !isPremiumUser) {
+  // Subscription gate
+  if (!hasSubscription) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="px-4 py-4">
@@ -277,16 +270,16 @@ export default function PlayerPage() {
             onClick={() => navigate("/premium")}
             className="px-8 py-3.5 rounded-xl gold-gradient text-primary-foreground font-sans font-medium text-sm active:scale-95 transition-transform"
           >
-            Unlock Premium Access
+            Begin My Journey
           </button>
-          <p className="text-muted-foreground text-[10px] font-sans mt-3">7-day free trial, then $29/month</p>
+          <p className="text-muted-foreground text-[10px] font-sans mt-3">Subscribe to access all content</p>
         </div>
         <PaywallModal open={showPaywall} onClose={() => setShowPaywall(false)} />
       </div>
     );
   }
 
-  // Journaling tracks use a different player
+  // Journaling tracks
   if (track.content_type === "journaling" && track.steps) {
     return (
       <JournalingPlayer
@@ -329,7 +322,6 @@ export default function PlayerPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      {/* Hidden audio element */}
       {track.audio_url && (
         <audio
           ref={audioRef}
@@ -340,11 +332,9 @@ export default function PlayerPage() {
         />
       )}
 
-      {/* Blurred background */}
       <div className="absolute inset-0 bg-surface opacity-40" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(42,53%,54%,0.08)_0%,_transparent_60%)]" />
 
-      {/* Header */}
       <div className="relative z-10 flex items-center justify-between px-4 py-4">
         <button onClick={() => navigate(-1)} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-5 h-5" />
@@ -357,11 +347,9 @@ export default function PlayerPage() {
         </button>
       </div>
 
-      {/* Content */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6">
         {step === "before" ? (
           <>
-            {/* Artwork */}
             <div className="w-48 h-48 rounded-3xl bg-card overflow-hidden mb-6 shadow-2xl">
               {track.thumbnail_url ? (
                 <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
@@ -382,7 +370,6 @@ export default function PlayerPage() {
           </>
         ) : step === "playing" ? (
           <>
-            {/* Artwork */}
             <motion.div
               animate={{ scale: isPlaying ? [1, 1.02, 1] : 1 }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -400,7 +387,6 @@ export default function PlayerPage() {
             <h2 className="text-display text-2xl mb-1 text-center">{track.title}</h2>
             <p className="text-ui text-sm mb-10">{track.duration_minutes} min</p>
 
-            {/* Seek bar */}
             <div className="w-full max-w-sm mb-3">
               <div className="h-1.5 bg-surface-light rounded-full cursor-pointer relative" onClick={handleSeek}>
                 <div className="absolute inset-y-0 left-0 gold-gradient rounded-full transition-all duration-100" style={{ width: `${progress}%` }} />
@@ -412,7 +398,6 @@ export default function PlayerPage() {
               </div>
             </div>
 
-            {/* Controls */}
             <div className="flex items-center gap-8 mb-8">
               <button onClick={() => skip(-15)} className="text-muted-foreground hover:text-foreground transition-colors">
                 <SkipBack className="w-6 h-6" />
@@ -425,7 +410,6 @@ export default function PlayerPage() {
               </button>
             </div>
 
-            {/* Speed */}
             <button
               onClick={cycleSpeed}
               className="text-muted-foreground hover:text-foreground text-xs font-sans font-medium px-3 py-1.5 rounded-full bg-card transition-colors"
