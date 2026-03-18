@@ -114,7 +114,7 @@ export default function BreathePage() {
   const [totalElapsed, setTotalElapsed] = useState(0);
   const [orbScale, setOrbScale] = useState(0.65); // Start SMALL
   const [orbTransitionDur, setOrbTransitionDur] = useState(4);
-  const [musicEnabled, setMusicEnabled] = useState(false); // OFF by default
+  const [musicEnabled, setMusicEnabled] = useState(true); // ON by default
   const [musicPlaying, setMusicPlaying] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -191,13 +191,25 @@ export default function BreathePage() {
   const totalSeconds = selectedDuration * 60;
   const phases = selectedTech.phases;
 
+  // Dedicated effect: when session first starts, trigger first inhale after a brief pause
+  const sessionStartedRef = useRef(false);
+  useEffect(() => {
+    if (step === "session" && !sessionStartedRef.current) {
+      sessionStartedRef.current = true;
+      // Orb is at 0.65 (small). After 100ms, animate to inhale size over the inhale duration.
+      const t = setTimeout(() => {
+        setOrbScale(getOrbScale(phases[0].label, 0.65));
+        setOrbTransitionDur(getOrbTransitionDur(phases[0].label, phases[0].duration));
+      }, 100);
+      return () => clearTimeout(t);
+    }
+    if (step !== "session") {
+      sessionStartedRef.current = false;
+    }
+  }, [step, phases]);
+
   useEffect(() => {
     if (step !== "session") { clearInterval(timerRef.current); return; }
-    // Always start orb small at beginning of session
-    const initDelay = setTimeout(() => {
-      setOrbScale(prev => getOrbScale(phases[phaseIndex].label, prev));
-      setOrbTransitionDur(getOrbTransitionDur(phases[phaseIndex].label, phases[phaseIndex].duration));
-    }, 50);
 
     timerRef.current = setInterval(() => {
       setPhaseTime(prev => {
@@ -205,7 +217,7 @@ export default function BreathePage() {
         if (prev + 1 >= phaseDur) {
           const nextIndex = (phaseIndex + 1) % phases.length;
           setPhaseIndex(nextIndex);
-          setOrbScale(prev => getOrbScale(phases[nextIndex].label, prev));
+          setOrbScale(prevScale => getOrbScale(phases[nextIndex].label, prevScale));
           setOrbTransitionDur(getOrbTransitionDur(phases[nextIndex].label, phases[nextIndex].duration));
           return 0;
         }
@@ -220,7 +232,7 @@ export default function BreathePage() {
         return prev + 1;
       });
     }, 1000);
-    return () => { clearInterval(timerRef.current); clearTimeout(initDelay); };
+    return () => { clearInterval(timerRef.current); };
   }, [step, phaseIndex, phases, totalSeconds]);
 
   const handleStart = () => {

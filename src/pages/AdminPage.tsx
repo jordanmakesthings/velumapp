@@ -100,7 +100,7 @@ const emptyTrackForm = {
   title: "", description: "", category: "meditation",
   duration_minutes: 10, is_premium: false, is_featured: false,
   audio_url: "", thumbnail_url: "", course_id: "", subcategory_id: "", order_index: 0,
-  content_type: "audio", steps: "",
+  content_type: "audio", steps: "", tags: "",
 };
 
 export default function AdminPage() {
@@ -269,12 +269,13 @@ export default function AdminPage() {
     mutationFn: async (data: typeof emptyTrackForm) => {
       let parsedSteps: any = null;
       try { if (data.steps) parsedSteps = JSON.parse(data.steps); } catch { /* keep null */ }
+      const parsedTags = data.tags ? data.tags.split(",").map(t => t.trim()).filter(Boolean) : null;
       const saveData = {
         title: data.title, description: data.description || null, category: data.category,
         duration_minutes: data.duration_minutes, is_premium: data.is_premium, is_featured: data.is_featured,
         audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
         course_id: data.course_id || null, subcategory_id: data.subcategory_id || null, order_index: data.order_index,
-        content_type: data.content_type || "audio", steps: parsedSteps,
+        content_type: data.content_type || "audio", steps: parsedSteps, tags: parsedTags,
       };
       if (editingTrack) {
         const { error } = await supabase.from("tracks").update(saveData).eq("id", editingTrack.id);
@@ -414,6 +415,7 @@ export default function AdminPage() {
       audio_url: track.audio_url || "", thumbnail_url: track.thumbnail_url || "",
       course_id: track.course_id || "", subcategory_id: track.subcategory_id || "", order_index: track.order_index,
       content_type: track.content_type || "audio", steps: track.steps ? JSON.stringify(track.steps, null, 2) : "",
+      tags: track.tags ? (Array.isArray(track.tags) ? track.tags.join(", ") : String(track.tags)) : "",
     });
     setShowTrackForm(true);
   };
@@ -576,6 +578,22 @@ export default function AdminPage() {
                       <option value="journaling">Journaling</option>
                     </select>
                   </div>
+                  <div>
+                    <label className={labelClass}>Tags (comma-separated)</label>
+                    <input value={trackForm.tags} onChange={e => setTrackForm(f => ({ ...f, tags: e.target.value }))}
+                      className={inputClass} placeholder="e.g. stress, anxiety, focus" />
+                  </div>
+
+                  {/* Thumbnail Generator at top */}
+                  <div className="md:col-span-2 border-b border-foreground/5 pb-4">
+                    <ThumbnailGenerator
+                      title={trackForm.title}
+                      category={trackForm.category}
+                    />
+                  </div>
+
+                  <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
+                    setForm={setTrackFormWrapped} uploadKey="trackImage" />
 
                   {trackForm.content_type === "audio" && (
                     <>
@@ -583,9 +601,6 @@ export default function AdminPage() {
                         setForm={setTrackFormWrapped} uploadKey="trackAudio" accept="audio/*" preview="audio" />
                     </>
                   )}
-
-                  <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
-                    setForm={setTrackFormWrapped} uploadKey="trackImage" />
 
                   {trackForm.content_type === "journaling" && (
                     <div className="md:col-span-2">
@@ -596,13 +611,6 @@ export default function AdminPage() {
                       />
                     </div>
                   )}
-
-                  <div className="md:col-span-2 border-t border-foreground/5 pt-4">
-                    <ThumbnailGenerator
-                      title={trackForm.title}
-                      category={trackForm.category}
-                    />
-                  </div>
                 </div>
 
                 <div className="flex justify-end gap-3 mt-6">
