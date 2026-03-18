@@ -577,15 +577,23 @@ export default function AdminPage() {
                     </select>
                   </div>
 
+                  {/* Thumbnail Generator at top */}
+                  <div className="md:col-span-2 border-b border-foreground/5 pb-4">
+                    <ThumbnailGenerator
+                      title={trackForm.title}
+                      category={trackForm.category}
+                    />
+                  </div>
+
+                  <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
+                    setForm={setTrackFormWrapped} uploadKey="trackImage" />
+
                   {trackForm.content_type === "audio" && (
                     <>
                       <UploadRow label="Audio File" field="audio_url" folder="audio" value={trackForm.audio_url}
                         setForm={setTrackFormWrapped} uploadKey="trackAudio" accept="audio/*" preview="audio" />
                     </>
                   )}
-
-                  <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
-                    setForm={setTrackFormWrapped} uploadKey="trackImage" />
 
                   {trackForm.content_type === "journaling" && (
                     <div className="md:col-span-2">
@@ -596,13 +604,6 @@ export default function AdminPage() {
                       />
                     </div>
                   )}
-
-                  <div className="md:col-span-2 border-t border-foreground/5 pt-4">
-                    <ThumbnailGenerator
-                      title={trackForm.title}
-                      category={trackForm.category}
-                    />
-                  </div>
                 </div>
 
                 <div className="flex justify-end gap-3 mt-6">

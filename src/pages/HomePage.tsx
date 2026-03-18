@@ -248,7 +248,7 @@ export default function HomePage() {
           {categories.map(({ key, label, icon: Icon, count, description }) => (
             <Link
               key={key}
-              to={key === "mastery" ? "/library?tab=mastery" : `/library?category=${key}`}
+              to={key === "mastery" ? "/library?tab=mastery" : key === "journaling" ? "/journal" : key === "breathwork" ? "/breathe" : `/library?category=${key}`}
               className="velum-card p-5 flex flex-col justify-between min-h-[130px] group"
             >
               <div className="flex items-start justify-between mb-3">
