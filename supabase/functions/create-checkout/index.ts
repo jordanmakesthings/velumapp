@@ -8,8 +8,8 @@ const corsHeaders = {
 
 // Stripe Price IDs (USD)
 const PRICE_IDS = {
-  monthly: "price_1TC9J5Lv0dyfXaxONNpQ9wHV",  // $29/mo recurring
-  lifetime: "price_1TC9JLLv0dyfXaxOM4HC5j8l",  // $299 one-time
+  monthly: "price_1TB2YXLv0dyfXaxO0FzOjSgf",  // $29/mo recurring
+  lifetime: "price_1T6ateLv0dyfXaxO0pk10YMb",  // $299 one-time
 };
 
 Deno.serve(async (req) => {
