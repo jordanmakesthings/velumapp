@@ -21,6 +21,7 @@ import MasteryPlayerPage from "./pages/MasteryPlayerPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import CourseExperiencePage from "./pages/CourseExperiencePage";
 import HomeScreenSetupPage from "./pages/HomeScreenSetupPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import AdminPage from "./pages/AdminPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
