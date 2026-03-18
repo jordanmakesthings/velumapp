@@ -62,6 +62,7 @@ const getOrbScale = (label: string, prevScale: number) => {
   if (l === "inhale again") return Math.min((prevScale || 1.45) + 0.2, 1.65);
   if (l.includes("inhale")) return 1.45;
   if (l.includes("exhale")) return 0.65;
+  if (l.includes("hold")) return prevScale; // Hold stays at current size
   return prevScale;
 };
 
