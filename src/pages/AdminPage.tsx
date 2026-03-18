@@ -1,13 +1,14 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, Plus, Upload, Trash2, Edit2, X, Check, Music, BookOpen,
-  GraduationCap, Feather, Settings, Users, GripVertical, Layers
+  GraduationCap, Feather, Settings, Layers
 } from "lucide-react";
 import { toast } from "sonner";
+import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
 
 type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "settings";
 
@@ -37,7 +38,7 @@ const emptyTrackForm = {
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<AdminTab>("tracks");
 
@@ -45,7 +46,7 @@ export default function AdminPage() {
   const [showTrackForm, setShowTrackForm] = useState(false);
   const [editingTrack, setEditingTrack] = useState<any>(null);
   const [trackForm, setTrackForm] = useState(emptyTrackForm);
-  const [uploading, setUploading] = useState({ audio: false, image: false });
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
 
   // --- Prompts state ---
   const [newPrompt, setNewPrompt] = useState("");
@@ -53,20 +54,18 @@ export default function AdminPage() {
 
   // --- Course state ---
   const [showCourseForm, setShowCourseForm] = useState(false);
-  const [courseForm, setCourseForm] = useState({ title: "", description: "", is_premium: true, thumbnail_url: "" });
+  const [courseForm, setCourseForm] = useState({ title: "", description: "", is_premium: true, thumbnail_url: "", category: "", cover_image_url: "" });
   const [editingCourse, setEditingCourse] = useState<any>(null);
 
   // --- Mastery state ---
   const [showMasteryForm, setShowMasteryForm] = useState(false);
-  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "" });
+  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" });
   const [editingMastery, setEditingMastery] = useState<any>(null);
 
   // --- Subcategory state ---
   const [showSubcatForm, setShowSubcatForm] = useState(false);
   const [subcatForm, setSubcatForm] = useState({ name: "", category: "meditation", thumbnail_url: "", order_index: 0 });
   const [editingSubcat, setEditingSubcat] = useState<any>(null);
-
-  const { isAdmin } = useAuth();
 
   // Queries
   const { data: tracks = [], isLoading: tracksLoading } = useQuery({
@@ -109,7 +108,7 @@ export default function AdminPage() {
     },
   });
 
-  // File upload helper
+  // Generic file upload helper
   const uploadFile = async (file: File, folder: string): Promise<string | null> => {
     const ext = file.name.split(".").pop();
     const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
@@ -119,14 +118,20 @@ export default function AdminPage() {
     return data.publicUrl;
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: "audio_url" | "thumbnail_url") => {
+  // Generic upload handler for any form
+  const handleUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: string,
+    folder: string,
+    setForm: (fn: (prev: any) => any) => void,
+    uploadKey: string
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const key = field === "audio_url" ? "audio" : "image";
-    setUploading(u => ({ ...u, [key]: true }));
+    setUploading(u => ({ ...u, [uploadKey]: true }));
     try {
-      // Auto-detect duration for audio
-      if (field === "audio_url" && file.type.startsWith("audio")) {
+      // Auto-detect duration for audio files on track form
+      if (field === "audio_url" && file.type.startsWith("audio") && setForm === setTrackFormWrapped) {
         const url = URL.createObjectURL(file);
         const audio = document.createElement("audio");
         audio.preload = "metadata";
@@ -136,28 +141,35 @@ export default function AdminPage() {
           URL.revokeObjectURL(url);
         };
       }
-      const publicUrl = await uploadFile(file, field === "audio_url" ? "audio" : "images");
-      if (publicUrl) setTrackForm(f => ({ ...f, [field]: publicUrl }));
+      if (field === "audio_url" && file.type.startsWith("audio") && setForm === setMasteryFormWrapped) {
+        const url = URL.createObjectURL(file);
+        const audio = document.createElement("audio");
+        audio.preload = "metadata";
+        audio.src = url;
+        audio.onloadedmetadata = () => {
+          setMasteryForm(f => ({ ...f, duration_minutes: Math.round(audio.duration / 60) }));
+          URL.revokeObjectURL(url);
+        };
+      }
+      const publicUrl = await uploadFile(file, folder);
+      if (publicUrl) setForm((f: any) => ({ ...f, [field]: publicUrl }));
     } finally {
-      setUploading(u => ({ ...u, [key]: false }));
+      setUploading(u => ({ ...u, [uploadKey]: false }));
     }
   };
+
+  // Wrapper functions for type safety
+  const setTrackFormWrapped = (fn: (prev: any) => any) => setTrackForm(fn);
+  const setMasteryFormWrapped = (fn: (prev: any) => any) => setMasteryForm(fn);
 
   // Track mutations
   const saveTrackMutation = useMutation({
     mutationFn: async (data: typeof emptyTrackForm) => {
       const saveData = {
-        title: data.title,
-        description: data.description || null,
-        category: data.category,
-        duration_minutes: data.duration_minutes,
-        is_premium: data.is_premium,
-        is_featured: data.is_featured,
-        audio_url: data.audio_url || null,
-        thumbnail_url: data.thumbnail_url || null,
-        course_id: data.course_id || null,
-        subcategory_id: data.subcategory_id || null,
-        order_index: data.order_index,
+        title: data.title, description: data.description || null, category: data.category,
+        duration_minutes: data.duration_minutes, is_premium: data.is_premium, is_featured: data.is_featured,
+        audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
+        course_id: data.course_id || null, subcategory_id: data.subcategory_id || null, order_index: data.order_index,
       };
       if (editingTrack) {
         const { error } = await supabase.from("tracks").update(saveData).eq("id", editingTrack.id);
@@ -169,9 +181,7 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminTracks"] });
-      setShowTrackForm(false);
-      setEditingTrack(null);
-      setTrackForm(emptyTrackForm);
+      setShowTrackForm(false); setEditingTrack(null); setTrackForm(emptyTrackForm);
       toast.success(editingTrack ? "Track updated" : "Track created");
     },
     onError: (err: any) => toast.error(err.message),
@@ -182,16 +192,13 @@ export default function AdminPage() {
       const { error } = await supabase.from("tracks").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminTracks"] });
-      toast.success("Track deleted");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminTracks"] }); toast.success("Track deleted"); },
   });
 
   // Course mutations
   const saveCourseMutation = useMutation({
     mutationFn: async (data: typeof courseForm) => {
-      const saveData = { title: data.title, description: data.description || null, is_premium: data.is_premium, thumbnail_url: data.thumbnail_url || null };
+      const saveData = { title: data.title, description: data.description || null, is_premium: data.is_premium, thumbnail_url: data.thumbnail_url || null, category: data.category || null, cover_image_url: data.cover_image_url || null };
       if (editingCourse) {
         const { error } = await supabase.from("courses").update(saveData).eq("id", editingCourse.id);
         if (error) throw error;
@@ -202,9 +209,8 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
-      setShowCourseForm(false);
-      setEditingCourse(null);
-      setCourseForm({ title: "", description: "", is_premium: true, thumbnail_url: "" });
+      setShowCourseForm(false); setEditingCourse(null);
+      setCourseForm({ title: "", description: "", is_premium: true, thumbnail_url: "", category: "", cover_image_url: "" });
       toast.success(editingCourse ? "Course updated" : "Course created");
     },
     onError: (err: any) => toast.error(err.message),
@@ -215,16 +221,19 @@ export default function AdminPage() {
       const { error } = await supabase.from("courses").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
-      toast.success("Course deleted");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminCourses"] }); toast.success("Course deleted"); },
   });
 
   // Mastery mutations
   const saveMasteryMutation = useMutation({
     mutationFn: async (data: typeof masteryForm) => {
-      const saveData = { title: data.title, description: data.description || null, duration_minutes: data.duration_minutes, is_premium: data.is_premium, audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null, theme: data.theme || null };
+      let parsedPrompts: any[] = [];
+      try { parsedPrompts = JSON.parse(data.pause_prompts); } catch { /* keep empty */ }
+      const saveData = {
+        title: data.title, description: data.description || null, duration_minutes: data.duration_minutes,
+        is_premium: data.is_premium, audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
+        theme: data.theme || null, cover_image_url: data.cover_image_url || null, pause_prompts: parsedPrompts,
+      };
       if (editingMastery) {
         const { error } = await supabase.from("mastery_classes").update(saveData).eq("id", editingMastery.id);
         if (error) throw error;
@@ -235,9 +244,8 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
-      setShowMasteryForm(false);
-      setEditingMastery(null);
-      setMasteryForm({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "" });
+      setShowMasteryForm(false); setEditingMastery(null);
+      setMasteryForm({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" });
       toast.success(editingMastery ? "Class updated" : "Class created");
     },
     onError: (err: any) => toast.error(err.message),
@@ -248,10 +256,7 @@ export default function AdminPage() {
       const { error } = await supabase.from("mastery_classes").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
-      toast.success("Class deleted");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminMastery"] }); toast.success("Class deleted"); },
   });
 
   // Subcategory mutations
@@ -268,8 +273,7 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminSubcategories"] });
-      setShowSubcatForm(false);
-      setEditingSubcat(null);
+      setShowSubcatForm(false); setEditingSubcat(null);
       setSubcatForm({ name: "", category: "meditation", thumbnail_url: "", order_index: 0 });
       toast.success(editingSubcat ? "Subcategory updated" : "Subcategory created");
     },
@@ -281,27 +285,16 @@ export default function AdminPage() {
       const { error } = await supabase.from("subcategories").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminSubcategories"] });
-      toast.success("Subcategory deleted");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminSubcategories"] }); toast.success("Subcategory deleted"); },
   });
 
   // Prompt mutations
   const addPromptMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("journaling_prompts").insert({
-        prompt: newPrompt,
-        category: newPromptCategory || null,
-        order_index: prompts.length,
-      });
+      const { error } = await supabase.from("journaling_prompts").insert({ prompt: newPrompt, category: newPromptCategory || null, order_index: prompts.length });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminPrompts"] });
-      setNewPrompt("");
-      toast.success("Prompt added");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminPrompts"] }); setNewPrompt(""); toast.success("Prompt added"); },
   });
 
   const deletePromptMutation = useMutation({
@@ -309,31 +302,20 @@ export default function AdminPage() {
       const { error } = await supabase.from("journaling_prompts").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminPrompts"] });
-      toast.success("Prompt deleted");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminPrompts"] }); toast.success("Prompt deleted"); },
   });
 
   const openEditTrack = (track: any) => {
     setEditingTrack(track);
     setTrackForm({
-      title: track.title,
-      description: track.description || "",
-      category: track.category,
-      duration_minutes: track.duration_minutes,
-      is_premium: track.is_premium,
-      is_featured: track.is_featured,
-      audio_url: track.audio_url || "",
-      thumbnail_url: track.thumbnail_url || "",
-      course_id: track.course_id || "",
-      subcategory_id: track.subcategory_id || "",
-      order_index: track.order_index,
+      title: track.title, description: track.description || "", category: track.category,
+      duration_minutes: track.duration_minutes, is_premium: track.is_premium, is_featured: track.is_featured,
+      audio_url: track.audio_url || "", thumbnail_url: track.thumbnail_url || "",
+      course_id: track.course_id || "", subcategory_id: track.subcategory_id || "", order_index: track.order_index,
     });
     setShowTrackForm(true);
   };
 
-  // Grouped tracks by category
   const tracksByCategory = useMemo(() => {
     const grouped: Record<string, any[]> = {};
     tracks.forEach((t: any) => {
@@ -346,6 +328,30 @@ export default function AdminPage() {
 
   const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
   const labelClass = "block text-xs text-muted-foreground mb-1.5 uppercase tracking-wider";
+
+  // Reusable upload row component
+  const UploadRow = ({ label, field, folder, value, setForm, uploadKey, accept = "image/*", preview = "image" }: {
+    label: string; field: string; folder: string; value: string;
+    setForm: (fn: (p: any) => any) => void; uploadKey: string;
+    accept?: string; preview?: "image" | "audio";
+  }) => (
+    <div className="md:col-span-2">
+      <label className={labelClass}>{label}</label>
+      <div className="flex gap-3 items-center flex-wrap">
+        <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm cursor-pointer border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-accent/30 transition-all">
+          <Upload className="w-4 h-4" />
+          {uploading[uploadKey] ? "Uploading..." : `Upload ${preview === "audio" ? "audio" : "image"}`}
+          <input type="file" accept={accept} className="hidden"
+            onChange={e => handleUpload(e, field, folder, setForm, uploadKey)}
+            disabled={!!uploading[uploadKey]} />
+        </label>
+        {value && preview === "image" && <img src={value} alt="thumb" className="w-16 h-10 rounded-lg object-cover border border-foreground/10" />}
+        {value && preview === "audio" && <span className="text-xs text-muted-foreground flex items-center gap-1"><Check className="w-3 h-3 text-accent" /> Audio uploaded</span>}
+      </div>
+      <input value={value} onChange={e => setForm((f: any) => ({ ...f, [field]: e.target.value }))}
+        className={inputClass + " mt-2 text-xs"} placeholder={`Or paste ${preview === "audio" ? "audio" : "image"} URL`} />
+    </div>
+  );
 
   if (!isAdmin) {
     return (
@@ -364,7 +370,7 @@ export default function AdminPage() {
         </button>
         <div>
           <h1 className="text-display text-xl">Content Manager</h1>
-          <p className="text-xs text-muted-foreground">Upload and manage sessions</p>
+          <p className="text-xs text-muted-foreground">Upload and manage all content</p>
         </div>
       </div>
 
@@ -407,7 +413,6 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* Track form */}
             {showTrackForm && (
               <div className="velum-card p-6 mb-8">
                 <div className="flex items-center justify-between mb-5">
@@ -423,102 +428,71 @@ export default function AdminPage() {
                     <input value={trackForm.title} onChange={e => setTrackForm(f => ({ ...f, title: e.target.value }))}
                       className={inputClass} placeholder="Session title" />
                   </div>
-
                   <div className="md:col-span-2">
                     <label className={labelClass}>Description</label>
                     <textarea value={trackForm.description} onChange={e => setTrackForm(f => ({ ...f, description: e.target.value }))}
                       rows={2} className={inputClass + " resize-none"} placeholder="Brief description" />
                   </div>
-
                   <div>
                     <label className={labelClass}>Category</label>
-                    <select value={trackForm.category} onChange={e => setTrackForm(f => ({ ...f, category: e.target.value }))}
-                      className={inputClass}>
+                    <select value={trackForm.category} onChange={e => setTrackForm(f => ({ ...f, category: e.target.value }))} className={inputClass}>
                       {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
                   </div>
-
                   <div>
                     <label className={labelClass}>Duration (minutes)</label>
                     <input type="number" value={trackForm.duration_minutes}
-                      onChange={e => setTrackForm(f => ({ ...f, duration_minutes: Number(e.target.value) || 0 }))}
-                      className={inputClass} />
+                      onChange={e => setTrackForm(f => ({ ...f, duration_minutes: Number(e.target.value) || 0 }))} className={inputClass} />
                   </div>
-
                   <div>
-                    <label className={labelClass}>Subcategory (optional)</label>
-                    <select value={trackForm.subcategory_id} onChange={e => setTrackForm(f => ({ ...f, subcategory_id: e.target.value }))}
-                      className={inputClass}>
+                    <label className={labelClass}>Subcategory</label>
+                    <select value={trackForm.subcategory_id} onChange={e => setTrackForm(f => ({ ...f, subcategory_id: e.target.value }))} className={inputClass}>
                       <option value="">— None —</option>
                       {subcategories.filter((s: any) => s.category === trackForm.category).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   </div>
-
                   <div>
-                    <label className={labelClass}>Course (optional)</label>
-                    <select value={trackForm.course_id} onChange={e => setTrackForm(f => ({ ...f, course_id: e.target.value }))}
-                      className={inputClass}>
+                    <label className={labelClass}>Course</label>
+                    <select value={trackForm.course_id} onChange={e => setTrackForm(f => ({ ...f, course_id: e.target.value }))} className={inputClass}>
                       <option value="">— Standalone —</option>
                       {courses.map((c: any) => <option key={c.id} value={c.id}>{c.title}</option>)}
                     </select>
                   </div>
-
                   <div>
                     <label className={labelClass}>Order Index</label>
                     <input type="number" value={trackForm.order_index}
-                      onChange={e => setTrackForm(f => ({ ...f, order_index: Number(e.target.value) || 0 }))}
-                      className={inputClass} />
+                      onChange={e => setTrackForm(f => ({ ...f, order_index: Number(e.target.value) || 0 }))} className={inputClass} />
                   </div>
-
                   <div className="flex items-center gap-6">
                     <label className="flex items-center gap-2 text-foreground text-sm font-sans cursor-pointer">
-                      <input type="checkbox" checked={trackForm.is_premium}
-                        onChange={e => setTrackForm(f => ({ ...f, is_premium: e.target.checked }))}
-                        className="accent-accent" /> Premium
+                      <input type="checkbox" checked={trackForm.is_premium} onChange={e => setTrackForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium
                     </label>
                     <label className="flex items-center gap-2 text-foreground text-sm font-sans cursor-pointer">
-                      <input type="checkbox" checked={trackForm.is_featured}
-                        onChange={e => setTrackForm(f => ({ ...f, is_featured: e.target.checked }))}
-                        className="accent-accent" /> Featured
+                      <input type="checkbox" checked={trackForm.is_featured} onChange={e => setTrackForm(f => ({ ...f, is_featured: e.target.checked }))} className="accent-accent" /> Featured
                     </label>
                   </div>
 
-                  {/* Audio upload */}
-                  <div className="md:col-span-2">
-                    <label className={labelClass}>Audio File</label>
-                    <div className="flex gap-3 items-center">
-                      <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm cursor-pointer border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-accent/30 transition-all">
-                        <Upload className="w-4 h-4" />
-                        {uploading.audio ? "Uploading..." : "Upload audio"}
-                        <input type="file" accept="audio/*" className="hidden" onChange={e => handleFileUpload(e, "audio_url")} disabled={uploading.audio} />
-                      </label>
-                      {trackForm.audio_url && <span className="text-xs text-muted-foreground flex items-center gap-1"><Check className="w-3 h-3 text-accent" /> Uploaded</span>}
-                    </div>
-                    <input value={trackForm.audio_url} onChange={e => setTrackForm(f => ({ ...f, audio_url: e.target.value }))}
-                      className={inputClass + " mt-2 text-xs"} placeholder="Or paste audio URL" />
-                  </div>
+                  <UploadRow label="Audio File" field="audio_url" folder="audio" value={trackForm.audio_url}
+                    setForm={setTrackFormWrapped} uploadKey="trackAudio" accept="audio/*" preview="audio" />
+                  <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
+                    setForm={setTrackFormWrapped} uploadKey="trackImage" />
 
-                  {/* Thumbnail upload */}
-                  <div className="md:col-span-2">
-                    <label className={labelClass}>Thumbnail Image</label>
-                    <div className="flex gap-3 items-center">
-                      <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm cursor-pointer border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-accent/30 transition-all">
-                        <Upload className="w-4 h-4" />
-                        {uploading.image ? "Uploading..." : "Upload image"}
-                        <input type="file" accept="image/*" className="hidden" onChange={e => handleFileUpload(e, "thumbnail_url")} disabled={uploading.image} />
-                      </label>
-                      {trackForm.thumbnail_url && <img src={trackForm.thumbnail_url} alt="thumb" className="w-16 h-9 rounded-lg object-cover border border-foreground/10" />}
-                    </div>
-                    <input value={trackForm.thumbnail_url} onChange={e => setTrackForm(f => ({ ...f, thumbnail_url: e.target.value }))}
-                      className={inputClass + " mt-2 text-xs"} placeholder="Or paste image URL" />
+                  {/* Thumbnail Generator */}
+                  <div className="md:col-span-2 border-t border-foreground/5 pt-4">
+                    <label className={labelClass}>Auto-Generate Thumbnail</label>
+                    <ThumbnailGenerator
+                      title={trackForm.title}
+                      category={trackForm.category}
+                      onGenerated={(landscapeUrl, squareUrl) => {
+                        setTrackForm(f => ({ ...f, thumbnail_url: landscapeUrl }));
+                      }}
+                    />
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-3 mt-6">
                   <button onClick={() => { setShowTrackForm(false); setEditingTrack(null); }}
-                    className="px-5 py-2.5 rounded-full text-sm border border-foreground/10 text-muted-foreground hover:text-foreground transition-colors">
-                    Cancel
-                  </button>
+                    className="px-5 py-2.5 rounded-full text-sm border border-foreground/10 text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
                   <button onClick={() => saveTrackMutation.mutate(trackForm)}
                     disabled={!trackForm.title || saveTrackMutation.isPending}
                     className="px-5 py-2.5 rounded-full text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50 active:scale-95 transition-transform">
@@ -544,13 +518,17 @@ export default function AdminPage() {
                     <div className="space-y-2">
                       {catTracks.map((track: any) => (
                         <div key={track.id} className="flex items-center gap-4 p-4 rounded-xl bg-card border border-foreground/5">
-                          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-surface-light">
-                            <Music className="w-4 h-4 text-muted-foreground" />
-                          </div>
+                          {track.thumbnail_url ? (
+                            <img src={track.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover shrink-0" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-surface-light">
+                              <Music className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground truncate">{track.title}</p>
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                              {track.duration_minutes} min{track.is_premium ? " · Premium" : ""}{!track.audio_url ? " · No file" : ""}
+                              {track.duration_minutes} min{track.is_premium ? " · Premium" : ""}{!track.audio_url ? " · No audio" : ""}{track.is_featured ? " · ★" : ""}
                             </p>
                           </div>
                           <div className="flex gap-2 shrink-0">
@@ -604,10 +582,8 @@ export default function AdminPage() {
                     <label className={labelClass}>Order Index</label>
                     <input type="number" value={subcatForm.order_index} onChange={e => setSubcatForm(f => ({ ...f, order_index: Number(e.target.value) || 0 }))} className={inputClass} />
                   </div>
-                  <div className="md:col-span-2">
-                    <label className={labelClass}>Thumbnail URL</label>
-                    <input value={subcatForm.thumbnail_url} onChange={e => setSubcatForm(f => ({ ...f, thumbnail_url: e.target.value }))} className={inputClass} placeholder="Paste image URL" />
-                  </div>
+                  <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={subcatForm.thumbnail_url}
+                    setForm={(fn) => setSubcatForm(fn)} uploadKey="subcatImage" />
                 </div>
                 <div className="flex justify-end gap-3 mt-6">
                   <button onClick={() => setShowSubcatForm(false)} className="px-5 py-2 rounded-full text-sm border border-foreground/10 text-muted-foreground">Cancel</button>
@@ -642,7 +618,7 @@ export default function AdminPage() {
                           <div className="flex gap-2">
                             <button onClick={() => { setEditingSubcat(sc); setSubcatForm({ name: sc.name, category: sc.category, thumbnail_url: sc.thumbnail_url || "", order_index: sc.order_index }); setShowSubcatForm(true); }}
                               className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
-                            <button onClick={() => { if (confirm("Delete this subcategory?")) deleteSubcatMutation.mutate(sc.id); }}
+                            <button onClick={() => { if (confirm("Delete?")) deleteSubcatMutation.mutate(sc.id); }}
                               className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </div>
@@ -661,7 +637,7 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-display text-2xl">Courses</h2>
-              <button onClick={() => { setEditingCourse(null); setCourseForm({ title: "", description: "", is_premium: true, thumbnail_url: "" }); setShowCourseForm(true); }}
+              <button onClick={() => { setEditingCourse(null); setCourseForm({ title: "", description: "", is_premium: true, thumbnail_url: "", category: "", cover_image_url: "" }); setShowCourseForm(true); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
                 <Plus className="w-4 h-4" /> Add Course
               </button>
@@ -673,25 +649,38 @@ export default function AdminPage() {
                   <h3 className="text-display text-lg">{editingCourse ? "Edit Course" : "New Course"}</h3>
                   <button onClick={() => setShowCourseForm(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
                 </div>
-                <div className="space-y-4">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
                     <label className={labelClass}>Title *</label>
                     <input value={courseForm.title} onChange={e => setCourseForm(f => ({ ...f, title: e.target.value }))} className={inputClass} placeholder="Course title" />
                   </div>
-                  <div>
+                  <div className="md:col-span-2">
                     <label className={labelClass}>Description</label>
                     <textarea value={courseForm.description} onChange={e => setCourseForm(f => ({ ...f, description: e.target.value }))} rows={2} className={inputClass + " resize-none"} />
                   </div>
-                  <label className="flex items-center gap-2 text-foreground text-sm font-sans cursor-pointer">
-                    <input type="checkbox" checked={courseForm.is_premium} onChange={e => setCourseForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium
-                  </label>
-                  <div className="flex justify-end gap-3">
-                    <button onClick={() => setShowCourseForm(false)} className="px-5 py-2 rounded-full text-sm border border-foreground/10 text-muted-foreground">Cancel</button>
-                    <button onClick={() => saveCourseMutation.mutate(courseForm)} disabled={!courseForm.title || saveCourseMutation.isPending}
-                      className="px-5 py-2 rounded-full text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50">
-                      {saveCourseMutation.isPending ? "Saving..." : editingCourse ? "Save" : "Create"}
-                    </button>
+                  <div>
+                    <label className={labelClass}>Category</label>
+                    <select value={courseForm.category} onChange={e => setCourseForm(f => ({ ...f, category: e.target.value }))} className={inputClass}>
+                      <option value="">— None —</option>
+                      {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
                   </div>
+                  <div className="flex items-center">
+                    <label className="flex items-center gap-2 text-foreground text-sm font-sans cursor-pointer">
+                      <input type="checkbox" checked={courseForm.is_premium} onChange={e => setCourseForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium
+                    </label>
+                  </div>
+                  <UploadRow label="Thumbnail" field="thumbnail_url" folder="images" value={courseForm.thumbnail_url}
+                    setForm={(fn) => setCourseForm(fn)} uploadKey="courseThumb" />
+                  <UploadRow label="Cover Image" field="cover_image_url" folder="images" value={courseForm.cover_image_url}
+                    setForm={(fn) => setCourseForm(fn)} uploadKey="courseCover" />
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button onClick={() => setShowCourseForm(false)} className="px-5 py-2 rounded-full text-sm border border-foreground/10 text-muted-foreground">Cancel</button>
+                  <button onClick={() => saveCourseMutation.mutate(courseForm)} disabled={!courseForm.title || saveCourseMutation.isPending}
+                    className="px-5 py-2 rounded-full text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50">
+                    {saveCourseMutation.isPending ? "Saving..." : editingCourse ? "Save" : "Create"}
+                  </button>
                 </div>
               </div>
             )}
@@ -701,12 +690,15 @@ export default function AdminPage() {
                 <p className="text-muted-foreground text-sm text-center py-8">No courses yet.</p>
               ) : courses.map((course: any) => (
                 <div key={course.id} className="velum-card p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-foreground text-sm font-sans font-medium">{course.title}</p>
-                    <p className="text-ui text-xs">{course.description}{course.is_premium ? " · Premium" : ""}</p>
+                  <div className="flex items-center gap-3">
+                    {course.thumbnail_url && <img src={course.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
+                    <div>
+                      <p className="text-foreground text-sm font-sans font-medium">{course.title}</p>
+                      <p className="text-ui text-xs">{course.category ? CATEGORIES[course.category] || course.category : "No category"}{course.is_premium ? " · Premium" : ""}</p>
+                    </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", is_premium: course.is_premium, thumbnail_url: course.thumbnail_url || "" }); setShowCourseForm(true); }}
+                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", is_premium: course.is_premium, thumbnail_url: course.thumbnail_url || "", category: course.category || "", cover_image_url: course.cover_image_url || "" }); setShowCourseForm(true); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => { if (confirm("Delete?")) deleteCourseMutation.mutate(course.id); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
@@ -722,7 +714,7 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-display text-2xl">Mastery Classes</h2>
-              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "" }); setShowMasteryForm(true); }}
+              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" }); setShowMasteryForm(true); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
                 <Plus className="w-4 h-4" /> Add Class
               </button>
@@ -734,20 +726,49 @@ export default function AdminPage() {
                   <h3 className="text-display text-lg">{editingMastery ? "Edit Class" : "New Class"}</h3>
                   <button onClick={() => setShowMasteryForm(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
                 </div>
-                <div className="space-y-4">
-                  <div><label className={labelClass}>Title *</label><input value={masteryForm.title} onChange={e => setMasteryForm(f => ({ ...f, title: e.target.value }))} className={inputClass} /></div>
-                  <div><label className={labelClass}>Description</label><textarea value={masteryForm.description} onChange={e => setMasteryForm(f => ({ ...f, description: e.target.value }))} rows={2} className={inputClass + " resize-none"} /></div>
-                  <div><label className={labelClass}>Duration (min)</label><input type="number" value={masteryForm.duration_minutes} onChange={e => setMasteryForm(f => ({ ...f, duration_minutes: Number(e.target.value) }))} className={inputClass} /></div>
-                  <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={masteryForm.is_premium} onChange={e => setMasteryForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium</label>
-                  <div><label className={labelClass}>Audio URL</label><input value={masteryForm.audio_url} onChange={e => setMasteryForm(f => ({ ...f, audio_url: e.target.value }))} className={inputClass} placeholder="Paste URL or upload" /></div>
-                  <div><label className={labelClass}>Theme</label><input value={masteryForm.theme} onChange={e => setMasteryForm(f => ({ ...f, theme: e.target.value }))} className={inputClass} placeholder="e.g. Emotional Mastery" /></div>
-                  <div className="flex justify-end gap-3">
-                    <button onClick={() => setShowMasteryForm(false)} className="px-5 py-2 rounded-full text-sm border border-foreground/10 text-muted-foreground">Cancel</button>
-                    <button onClick={() => saveMasteryMutation.mutate(masteryForm)} disabled={!masteryForm.title || saveMasteryMutation.isPending}
-                      className="px-5 py-2 rounded-full text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50">
-                      {saveMasteryMutation.isPending ? "Saving..." : editingMastery ? "Save" : "Create"}
-                    </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Title *</label>
+                    <input value={masteryForm.title} onChange={e => setMasteryForm(f => ({ ...f, title: e.target.value }))} className={inputClass} />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Description</label>
+                    <textarea value={masteryForm.description} onChange={e => setMasteryForm(f => ({ ...f, description: e.target.value }))} rows={2} className={inputClass + " resize-none"} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Theme</label>
+                    <input value={masteryForm.theme} onChange={e => setMasteryForm(f => ({ ...f, theme: e.target.value }))} className={inputClass} placeholder="e.g. Emotional Mastery" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Duration (min)</label>
+                    <input type="number" value={masteryForm.duration_minutes} onChange={e => setMasteryForm(f => ({ ...f, duration_minutes: Number(e.target.value) }))} className={inputClass} />
+                  </div>
+                  <div className="flex items-center">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input type="checkbox" checked={masteryForm.is_premium} onChange={e => setMasteryForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium
+                    </label>
+                  </div>
+                  <div>{/* spacer */}</div>
+
+                  <UploadRow label="Audio File" field="audio_url" folder="audio" value={masteryForm.audio_url}
+                    setForm={setMasteryFormWrapped} uploadKey="masteryAudio" accept="audio/*" preview="audio" />
+                  <UploadRow label="Thumbnail" field="thumbnail_url" folder="images" value={masteryForm.thumbnail_url}
+                    setForm={setMasteryFormWrapped} uploadKey="masteryThumb" />
+                  <UploadRow label="Cover Image" field="cover_image_url" folder="images" value={masteryForm.cover_image_url}
+                    setForm={setMasteryFormWrapped} uploadKey="masteryCover" />
+
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Pause Prompts (JSON array)</label>
+                    <textarea value={masteryForm.pause_prompts} onChange={e => setMasteryForm(f => ({ ...f, pause_prompts: e.target.value }))}
+                      rows={3} className={inputClass + " resize-none font-mono text-xs"} placeholder='[{"time_seconds": 300, "prompt": "Reflect on..."}]' />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button onClick={() => setShowMasteryForm(false)} className="px-5 py-2 rounded-full text-sm border border-foreground/10 text-muted-foreground">Cancel</button>
+                  <button onClick={() => saveMasteryMutation.mutate(masteryForm)} disabled={!masteryForm.title || saveMasteryMutation.isPending}
+                    className="px-5 py-2 rounded-full text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50">
+                    {saveMasteryMutation.isPending ? "Saving..." : editingMastery ? "Save" : "Create"}
+                  </button>
                 </div>
               </div>
             )}
@@ -757,13 +778,24 @@ export default function AdminPage() {
                 <p className="text-muted-foreground text-sm text-center py-8">No mastery classes yet.</p>
               ) : masteryClasses.map((mc: any) => (
                 <div key={mc.id} className="velum-card p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-foreground text-sm font-sans font-medium">{mc.title}</p>
-                    <p className="text-ui text-xs">{mc.duration_minutes} min{mc.is_premium ? " · Premium" : ""}</p>
+                  <div className="flex items-center gap-3">
+                    {mc.thumbnail_url && <img src={mc.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
+                    <div>
+                      <p className="text-foreground text-sm font-sans font-medium">{mc.title}</p>
+                      <p className="text-ui text-xs">{mc.duration_minutes} min{mc.is_premium ? " · Premium" : ""}{mc.theme ? ` · ${mc.theme}` : ""}{!mc.audio_url ? " · No audio" : ""}</p>
+                    </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => { setEditingMastery(mc); setMasteryForm({ title: mc.title, description: mc.description || "", duration_minutes: mc.duration_minutes, is_premium: mc.is_premium, audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "", theme: mc.theme || "" }); setShowMasteryForm(true); }}
-                      className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={() => {
+                      setEditingMastery(mc);
+                      setMasteryForm({
+                        title: mc.title, description: mc.description || "", duration_minutes: mc.duration_minutes,
+                        is_premium: mc.is_premium, audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "",
+                        theme: mc.theme || "", cover_image_url: mc.cover_image_url || "",
+                        pause_prompts: JSON.stringify(mc.pause_prompts || [], null, 2),
+                      });
+                      setShowMasteryForm(true);
+                    }} className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => { if (confirm("Delete?")) deleteMasteryMutation.mutate(mc.id); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
                   </div>
@@ -779,7 +811,6 @@ export default function AdminPage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-display text-2xl">Journaling Prompts</h2>
             </div>
-
             <div className="velum-card p-5 mb-6">
               <label className={labelClass}>New Prompt</label>
               <textarea value={newPrompt} onChange={e => setNewPrompt(e.target.value)}
@@ -794,7 +825,6 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
-
             <div className="flex flex-col gap-2">
               {prompts.map((prompt: any) => (
                 <div key={prompt.id} className="velum-card p-4 flex items-start justify-between gap-4">
