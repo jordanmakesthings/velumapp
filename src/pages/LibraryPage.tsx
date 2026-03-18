@@ -270,16 +270,45 @@ export default function LibraryPage() {
 
       {activeTab === "journal" && (
         <div>
-          {prompts.length > 0 && (
-            <Link to="/journal" className="velum-card p-6 block mb-4 group">
-              <p className="text-ui text-xs tracking-wide uppercase mb-2">Today's prompt</p>
-              <p className="text-foreground font-serif text-lg mb-3">{prompts[0]?.prompt}</p>
-              <span className="text-accent text-xs font-sans">Write your reflection →</span>
-            </Link>
-          )}
-          <div className="velum-card p-8 text-center">
-            <Feather className="w-6 h-6 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">Past entries will appear here.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {tracks.filter((t: any) => t.category === "journaling").length === 0 ? (
+              <div className="col-span-2 velum-card p-8 text-center">
+                <Feather className="w-6 h-6 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm">No journaling sessions yet.</p>
+              </div>
+            ) : (
+              tracks.filter((t: any) => t.category === "journaling").map((track: any) => (
+                <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card overflow-hidden group">
+                  <div className="aspect-video bg-surface-light relative">
+                    {track.thumbnail_url ? (
+                      <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
+                        <Feather className="w-4 h-4 text-primary-foreground" />
+                      </div>
+                    </div>
+                    {completedTrackIds.has(track.id) && (
+                      <div className="absolute top-2 left-2 w-5 h-5 rounded-full gold-gradient flex items-center justify-center">
+                        <Check className="w-3 h-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4 flex items-start justify-between">
+                    <div>
+                      <p className="text-foreground text-sm font-sans">{track.title}</p>
+                      <p className="text-ui text-xs mt-1">{track.duration_minutes} min</p>
+                    </div>
+                    <button onClick={(e) => { e.preventDefault(); toggleFavMutation.mutate(track.id); }}
+                      className={`transition-colors ${favoriteTrackIds.has(track.id) ? "text-accent" : "text-muted-foreground hover:text-accent"}`}>
+                      <Heart className={`w-4 h-4 ${favoriteTrackIds.has(track.id) ? "fill-current" : ""}`} />
+                    </button>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       )}

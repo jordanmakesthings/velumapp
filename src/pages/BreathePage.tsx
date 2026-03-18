@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Headphones, X } from "lucide-react";
 
 interface Technique {
   id: string;
@@ -57,12 +58,15 @@ const techniques: Technique[] = [
 
 type Stage = "setup" | "checkin_before" | "session" | "checkin_after" | "done";
 
+// AMBIENT MUSIC URL (Google Drive direct download link)
+const AMBIENT_MUSIC_URL = "https://drive.google.com/uc?export=download&id=1sXeRiZUQJQ2E1T4_FfhKDGmE8L4wyZ5W";
+
 const getOrbScale = (label: string, prevScale: number) => {
   const l = label.toLowerCase();
-  if (l === "inhale again") return Math.min((prevScale || 1.45) + 0.2, 1.65);
+  if (l === "inhale again") return Math.min((prevScale || 0.65) + 0.4, 1.45);
   if (l.includes("inhale")) return 1.45;
   if (l.includes("exhale")) return 0.65;
-  if (l.includes("hold")) return prevScale; // Hold stays at current size
+  if (l.includes("hold")) return prevScale;
   return prevScale;
 };
 
@@ -108,10 +112,12 @@ export default function BreathePage() {
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [phaseTime, setPhaseTime] = useState(0);
   const [totalElapsed, setTotalElapsed] = useState(0);
-  const [orbScale, setOrbScale] = useState(0.65);
+  const [orbScale, setOrbScale] = useState(0.65); // Start SMALL
   const [orbTransitionDur, setOrbTransitionDur] = useState(4);
-  const [musicEnabled, setMusicEnabled] = useState(true);
+  const [musicEnabled, setMusicEnabled] = useState(false); // OFF by default
+  const [musicPlaying, setMusicPlaying] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const { data: progress = [] } = useQuery({
     queryKey: ["breathProgress", user?.id],
@@ -143,11 +149,51 @@ export default function BreathePage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["breathProgress"] }),
   });
 
+  // Audio management
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio(AMBIENT_MUSIC_URL);
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0.3;
+    }
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Toggle music based on musicEnabled and session state
+  useEffect(() => {
+    if (!audioRef.current) return;
+    const isInSession = step === "session";
+    if (musicEnabled && isInSession) {
+      audioRef.current.play().catch(() => {});
+      setMusicPlaying(true);
+    } else {
+      audioRef.current.pause();
+      setMusicPlaying(false);
+    }
+  }, [musicEnabled, step]);
+
+  // Stop music on exit/completion
+  useEffect(() => {
+    if (step === "done" || step === "checkin_after") {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        setMusicPlaying(false);
+      }
+    }
+  }, [step]);
+
   const totalSeconds = selectedDuration * 60;
   const phases = selectedTech.phases;
 
   useEffect(() => {
     if (step !== "session") { clearInterval(timerRef.current); return; }
+    // Always start orb small at beginning of session
     const initDelay = setTimeout(() => {
       setOrbScale(prev => getOrbScale(phases[phaseIndex].label, prev));
       setOrbTransitionDur(getOrbTransitionDur(phases[phaseIndex].label, phases[phaseIndex].duration));
@@ -181,7 +227,7 @@ export default function BreathePage() {
     setPhaseIndex(0);
     setPhaseTime(0);
     setTotalElapsed(0);
-    setOrbScale(0.65);
+    setOrbScale(0.65); // Always start SMALL
     setOrbTransitionDur(phases[0].duration);
     setStep("checkin_before");
   };
@@ -206,6 +252,10 @@ export default function BreathePage() {
     setStep("done");
   };
 
+  const handleToggleMusic = () => {
+    setMusicEnabled(v => !v);
+  };
+
   const phaseDur = phases[phaseIndex]?.duration || 4;
   const breathworkSessions = progress.filter((p: any) => p.track_id?.startsWith("breathwork_"));
   const validSessions = breathworkSessions.filter((p: any) => p.stress_before && p.stress_after);
@@ -214,17 +264,19 @@ export default function BreathePage() {
     : null;
 
   return (
-    <div className="min-h-screen font-sans">
-      <div className="max-w-[520px] mx-auto px-5 pt-10 pb-24">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden font-sans flex flex-col">
+      <div className="flex-1 flex flex-col max-w-[520px] mx-auto px-5 pt-10 pb-24 lg:pb-10 w-full lg:justify-center">
 
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-display text-4xl mb-1.5">Breathwork</h1>
-          <p className="text-ui text-xs tracking-[0.05em]">Real-Time Regulation</p>
-        </div>
+        {/* Header - hide during session on desktop for immersion */}
+        {step === "setup" && (
+          <div className="mb-6">
+            <h1 className="text-display text-4xl mb-1.5">Breathwork</h1>
+            <p className="text-ui text-xs tracking-[0.05em]">Real-Time Regulation</p>
+          </div>
+        )}
 
         {/* Stats */}
-        {breathworkSessions.length > 0 && (
+        {step === "setup" && breathworkSessions.length > 0 && (
           <div className="flex gap-2.5 mb-6">
             <div className="flex-1 velum-card-flat p-3.5 text-center">
               <div className="text-display text-2xl">{breathworkSessions.length}</div>
@@ -288,20 +340,21 @@ export default function BreathePage() {
               </div>
 
               {/* Music toggle */}
-              <div className={`velum-card-flat p-4 flex items-center justify-between mb-3.5 border transition-colors duration-200 ${musicEnabled ? "border-accent/30" : "border-foreground/10"}`}>
+              <div className={`velum-card-flat p-4 flex items-center justify-between mb-2 border transition-colors duration-200 ${musicEnabled ? "border-accent/30" : "border-foreground/10"}`}>
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">🎧</span>
+                  <Headphones className="w-5 h-5 text-accent" />
                   <div>
                     <div className="text-[13px] font-semibold text-foreground">Background Music</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">Headphones recommended</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">Ambient soundscape</div>
                   </div>
                 </div>
-                <button onClick={() => setMusicEnabled(v => !v)}
+                <button onClick={handleToggleMusic}
                   className={`w-12 h-[26px] rounded-full relative transition-colors duration-250 flex-shrink-0 ${musicEnabled ? "bg-accent" : "bg-muted-foreground/30"}`}
                 >
                   <div className={`w-5 h-5 rounded-full bg-white absolute top-[3px] transition-all duration-250 shadow ${musicEnabled ? "left-[25px]" : "left-[3px]"}`} />
                 </button>
               </div>
+              <p className="text-muted-foreground/50 text-[11px] text-center mb-5">🎧 Headphones recommended for full effect</p>
 
               {/* Begin */}
               <button onClick={handleStart}
@@ -321,17 +374,25 @@ export default function BreathePage() {
           {/* SESSION */}
           {step === "session" && (
             <motion.div key="session" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="text-center pt-5">
-              <div className="relative w-[260px] h-[260px] mx-auto mb-8 flex items-center justify-center">
+              className="text-center flex flex-col items-center justify-center flex-1">
+              
+              {/* Music toggle during session */}
+              <button onClick={handleToggleMusic}
+                className={`absolute top-6 right-6 p-3 rounded-full transition-all ${musicPlaying ? "text-accent bg-accent/10" : "text-muted-foreground/40 bg-card"}`}
+                title={musicPlaying ? "Mute music" : "Play music"}>
+                <Headphones className="w-5 h-5" />
+              </button>
+
+              <div className="relative w-[280px] h-[280px] lg:w-[340px] lg:h-[340px] mx-auto mb-8 flex items-center justify-center">
                 {/* Gold ring */}
-                <div className="absolute w-40 h-40 rounded-full border border-accent/50"
+                <div className="absolute w-44 h-44 lg:w-52 lg:h-52 rounded-full border border-accent/50"
                   style={{
                     boxShadow: "0 0 20px hsl(var(--accent) / 0.3)",
                     transform: `scale(${orbScale * 1.18})`,
                     transition: `transform ${orbTransitionDur}s ease-in-out`,
                   }} />
-                {/* Orb */}
-                <div className="absolute w-40 h-40 rounded-full"
+                {/* Orb - misty sage */}
+                <div className="absolute w-44 h-44 lg:w-52 lg:h-52 rounded-full"
                   style={{
                     background: "radial-gradient(circle, hsl(var(--muted) / 0.7) 0%, hsl(var(--muted) / 0.35) 50%, transparent 100%)",
                     transform: `scale(${orbScale})`,
@@ -340,8 +401,8 @@ export default function BreathePage() {
                   }} />
                 {/* Phase label */}
                 <div className="relative z-10 flex flex-col items-center justify-center">
-                  <div className="text-display text-2xl text-foreground">{phases[phaseIndex].label}</div>
-                  <div className="text-[32px] font-bold text-foreground mt-0.5">{phaseDur - phaseTime}</div>
+                  <div className="text-display text-2xl lg:text-3xl text-foreground">{phases[phaseIndex].label}</div>
+                  <div className="text-[32px] lg:text-[40px] font-bold text-foreground mt-0.5">{phaseDur - phaseTime}</div>
                 </div>
               </div>
 

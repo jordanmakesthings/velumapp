@@ -202,7 +202,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
+    <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto" style={{ background: "linear-gradient(180deg, hsl(156 51% 10%) 0%, hsl(var(--background)) 40%)" }}>
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-3">
