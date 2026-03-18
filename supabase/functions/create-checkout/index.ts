@@ -3,7 +3,13 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+// Stripe Price IDs (USD)
+const PRICE_IDS = {
+  monthly: "price_1TC9J5Lv0dyfXaxONNpQ9wHV",  // $29/mo recurring
+  lifetime: "price_1TC9JLLv0dyfXaxOM4HC5j8l",  // $299 one-time
 };
 
 Deno.serve(async (req) => {
@@ -18,7 +24,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify user auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -29,13 +34,13 @@ Deno.serve(async (req) => {
     });
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const userId = claimsData.claims.sub;
-    const userEmail = claimsData.claims.email;
+    const userId = user.id;
+    const userEmail = user.email;
 
     const { plan, promoCode, returnUrl } = await req.json();
     if (!plan || !["monthly", "lifetime"].includes(plan)) {
@@ -60,46 +65,28 @@ Deno.serve(async (req) => {
       });
       customerId = customer.id;
 
-      // Save customer ID (use service role for this)
       const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       await supabaseAdmin.from("profiles").update({ stripe_customer_id: customerId }).eq("id", userId);
     }
 
-    // Build checkout session
+    const priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS];
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       success_url: `${returnUrl || "https://velum.app"}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${returnUrl || "https://velum.app"}/premium`,
       metadata: { supabase_user_id: userId, plan },
+      line_items: [{ price: priceId, quantity: 1 }],
     };
 
     if (plan === "monthly") {
-      // Subscription with 7-day trial
       sessionParams.mode = "subscription";
-      sessionParams.line_items = [{
-        price_data: {
-          currency: "usd",
-          product_data: { name: "Velum Premium — Monthly" },
-          unit_amount: 2900,
-          recurring: { interval: "month" },
-        },
-        quantity: 1,
-      }];
       sessionParams.subscription_data = {
         trial_period_days: 7,
         metadata: { supabase_user_id: userId },
       };
     } else {
-      // One-time lifetime payment
       sessionParams.mode = "payment";
-      sessionParams.line_items = [{
-        price_data: {
-          currency: "usd",
-          product_data: { name: "Velum Premium — Lifetime" },
-          unit_amount: 29900,
-        },
-        quantity: 1,
-      }];
     }
 
     // Apply promo code if provided
