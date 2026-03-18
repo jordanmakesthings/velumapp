@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, Plus, Upload, Trash2, Edit2, X, Check, Music, BookOpen,
-  GraduationCap, Feather, Settings, Layers
+  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown
 } from "lucide-react";
 import { toast } from "sonner";
 import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
@@ -42,27 +42,22 @@ export default function AdminPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<AdminTab>("tracks");
 
-  // --- Tracks state ---
   const [showTrackForm, setShowTrackForm] = useState(false);
   const [editingTrack, setEditingTrack] = useState<any>(null);
   const [trackForm, setTrackForm] = useState(emptyTrackForm);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
 
-  // --- Prompts state ---
   const [newPrompt, setNewPrompt] = useState("");
   const [newPromptCategory, setNewPromptCategory] = useState("");
 
-  // --- Course state ---
   const [showCourseForm, setShowCourseForm] = useState(false);
   const [courseForm, setCourseForm] = useState({ title: "", description: "", is_premium: true, thumbnail_url: "", category: "", cover_image_url: "" });
   const [editingCourse, setEditingCourse] = useState<any>(null);
 
-  // --- Mastery state ---
   const [showMasteryForm, setShowMasteryForm] = useState(false);
   const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" });
   const [editingMastery, setEditingMastery] = useState<any>(null);
 
-  // --- Subcategory state ---
   const [showSubcatForm, setShowSubcatForm] = useState(false);
   const [subcatForm, setSubcatForm] = useState({ name: "", category: "meditation", thumbnail_url: "", order_index: 0 });
   const [editingSubcat, setEditingSubcat] = useState<any>(null);
@@ -118,7 +113,6 @@ export default function AdminPage() {
     return data.publicUrl;
   };
 
-  // Generic upload handler for any form
   const handleUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     field: string,
@@ -130,7 +124,6 @@ export default function AdminPage() {
     if (!file) return;
     setUploading(u => ({ ...u, [uploadKey]: true }));
     try {
-      // Auto-detect duration for audio files on track form
       if (field === "audio_url" && file.type.startsWith("audio") && setForm === setTrackFormWrapped) {
         const url = URL.createObjectURL(file);
         const audio = document.createElement("audio");
@@ -158,9 +151,51 @@ export default function AdminPage() {
     }
   };
 
-  // Wrapper functions for type safety
   const setTrackFormWrapped = (fn: (prev: any) => any) => setTrackForm(fn);
   const setMasteryFormWrapped = (fn: (prev: any) => any) => setMasteryForm(fn);
+
+  // ===== REORDER HELPER =====
+  const reorderMutation = useMutation({
+    mutationFn: async ({ table, id, newIndex, siblings }: { table: string; id: string; newIndex: number; siblings: any[] }) => {
+      // Swap order_index between the item and the one it's replacing
+      const item = siblings.find((s: any) => s.id === id);
+      const target = siblings[newIndex];
+      if (!item || !target || item.id === target.id) return;
+      await Promise.all([
+        supabase.from(table as any).update({ order_index: target.order_index }).eq("id", item.id),
+        supabase.from(table as any).update({ order_index: item.order_index }).eq("id", target.id),
+      ]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminTracks"] });
+      queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
+      queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
+      queryClient.invalidateQueries({ queryKey: ["adminSubcategories"] });
+      queryClient.invalidateQueries({ queryKey: ["adminPrompts"] });
+    },
+  });
+
+  const ReorderButtons = ({ table, item, siblings }: { table: string; item: any; siblings: any[] }) => {
+    const idx = siblings.findIndex((s: any) => s.id === item.id);
+    return (
+      <div className="flex flex-col gap-0.5 shrink-0">
+        <button
+          disabled={idx === 0 || reorderMutation.isPending}
+          onClick={() => reorderMutation.mutate({ table, id: item.id, newIndex: idx - 1, siblings })}
+          className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+        >
+          <ChevronUp className="w-3.5 h-3.5" />
+        </button>
+        <button
+          disabled={idx === siblings.length - 1 || reorderMutation.isPending}
+          onClick={() => reorderMutation.mutate({ table, id: item.id, newIndex: idx + 1, siblings })}
+          className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+        >
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  };
 
   // Track mutations
   const saveTrackMutation = useMutation({
@@ -195,7 +230,6 @@ export default function AdminPage() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminTracks"] }); toast.success("Track deleted"); },
   });
 
-  // Course mutations
   const saveCourseMutation = useMutation({
     mutationFn: async (data: typeof courseForm) => {
       const saveData = { title: data.title, description: data.description || null, is_premium: data.is_premium, thumbnail_url: data.thumbnail_url || null, category: data.category || null, cover_image_url: data.cover_image_url || null };
@@ -224,7 +258,6 @@ export default function AdminPage() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminCourses"] }); toast.success("Course deleted"); },
   });
 
-  // Mastery mutations
   const saveMasteryMutation = useMutation({
     mutationFn: async (data: typeof masteryForm) => {
       let parsedPrompts: any[] = [];
@@ -259,7 +292,6 @@ export default function AdminPage() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminMastery"] }); toast.success("Class deleted"); },
   });
 
-  // Subcategory mutations
   const saveSubcatMutation = useMutation({
     mutationFn: async (data: typeof subcatForm) => {
       const saveData = { name: data.name, category: data.category, thumbnail_url: data.thumbnail_url || null, order_index: data.order_index };
@@ -288,7 +320,6 @@ export default function AdminPage() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminSubcategories"] }); toast.success("Subcategory deleted"); },
   });
 
-  // Prompt mutations
   const addPromptMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("journaling_prompts").insert({ prompt: newPrompt, category: newPromptCategory || null, order_index: prompts.length });
@@ -329,7 +360,6 @@ export default function AdminPage() {
   const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
   const labelClass = "block text-xs text-muted-foreground mb-1.5 uppercase tracking-wider";
 
-  // Reusable upload row component
   const UploadRow = ({ label, field, folder, value, setForm, uploadKey, accept = "image/*", preview = "image" }: {
     label: string; field: string; folder: string; value: string;
     setForm: (fn: (p: any) => any) => void; uploadKey: string;
@@ -477,15 +507,10 @@ export default function AdminPage() {
                   <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
                     setForm={setTrackFormWrapped} uploadKey="trackImage" />
 
-                  {/* Thumbnail Generator */}
                   <div className="md:col-span-2 border-t border-foreground/5 pt-4">
-                    <label className={labelClass}>Auto-Generate Thumbnail</label>
                     <ThumbnailGenerator
                       title={trackForm.title}
                       category={trackForm.category}
-                      onGenerated={(landscapeUrl, squareUrl) => {
-                        setTrackForm(f => ({ ...f, thumbnail_url: landscapeUrl }));
-                      }}
                     />
                   </div>
                 </div>
@@ -517,7 +542,8 @@ export default function AdminPage() {
                     </div>
                     <div className="space-y-2">
                       {catTracks.map((track: any) => (
-                        <div key={track.id} className="flex items-center gap-4 p-4 rounded-xl bg-card border border-foreground/5">
+                        <div key={track.id} className="flex items-center gap-3 p-4 rounded-xl bg-card border border-foreground/5">
+                          <ReorderButtons table="tracks" item={track} siblings={catTracks} />
                           {track.thumbnail_url ? (
                             <img src={track.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover shrink-0" />
                           ) : (
@@ -607,8 +633,9 @@ export default function AdminPage() {
                     </div>
                     <div className="space-y-2">
                       {catSubcats.map((sc: any) => (
-                        <div key={sc.id} className="velum-card p-4 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
+                        <div key={sc.id} className="velum-card p-4 flex items-center gap-3">
+                          <ReorderButtons table="subcategories" item={sc} siblings={catSubcats} />
+                          <div className="flex items-center gap-3 flex-1">
                             {sc.thumbnail_url && <img src={sc.thumbnail_url} alt="" className="w-10 h-10 rounded-lg object-cover" />}
                             <div>
                               <p className="text-foreground text-sm font-sans font-medium">{sc.name}</p>
@@ -688,9 +715,10 @@ export default function AdminPage() {
             <div className="space-y-3">
               {courses.length === 0 ? (
                 <p className="text-muted-foreground text-sm text-center py-8">No courses yet.</p>
-              ) : courses.map((course: any) => (
-                <div key={course.id} className="velum-card p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+              ) : courses.map((course: any, idx: number) => (
+                <div key={course.id} className="velum-card p-4 flex items-center gap-3">
+                  <ReorderButtons table="courses" item={course} siblings={courses as any[]} />
+                  <div className="flex items-center gap-3 flex-1">
                     {course.thumbnail_url && <img src={course.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
                     <div>
                       <p className="text-foreground text-sm font-sans font-medium">{course.title}</p>
@@ -777,8 +805,9 @@ export default function AdminPage() {
               {masteryClasses.length === 0 ? (
                 <p className="text-muted-foreground text-sm text-center py-8">No mastery classes yet.</p>
               ) : masteryClasses.map((mc: any) => (
-                <div key={mc.id} className="velum-card p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div key={mc.id} className="velum-card p-4 flex items-center gap-3">
+                  <ReorderButtons table="mastery_classes" item={mc} siblings={masteryClasses as any[]} />
+                  <div className="flex items-center gap-3 flex-1">
                     {mc.thumbnail_url && <img src={mc.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
                     <div>
                       <p className="text-foreground text-sm font-sans font-medium">{mc.title}</p>
@@ -846,9 +875,17 @@ export default function AdminPage() {
         {activeTab === "settings" && (
           <div>
             <h2 className="text-display text-2xl mb-6">Settings</h2>
+            <div className="velum-card p-6 mb-6">
+              <p className="text-ui text-xs tracking-wide uppercase mb-4">Stripe Configuration</p>
+              <div className="space-y-2 text-sm font-sans">
+                <p className="text-foreground"><span className="text-muted-foreground">Monthly Price ID:</span> price_1TC9J5Lv0dyfXaxONNpQ9wHV</p>
+                <p className="text-foreground"><span className="text-muted-foreground">Lifetime Price ID:</span> price_1TC9JLLv0dyfXaxOM4HC5j8l</p>
+                <p className="text-muted-foreground text-xs mt-3">These are already wired into the checkout function. No action needed.</p>
+              </div>
+            </div>
             <div className="velum-card p-6">
               <p className="text-ui text-xs tracking-wide uppercase mb-4">App Configuration</p>
-              <p className="text-muted-foreground text-sm">Settings management coming soon.</p>
+              <p className="text-muted-foreground text-sm">Additional settings coming soon.</p>
             </div>
           </div>
         )}
