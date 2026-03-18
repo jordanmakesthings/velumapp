@@ -10,6 +10,72 @@ import {
 import { toast } from "sonner";
 import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
 
+const STEP_TYPES = ["intro", "breathe", "write", "reflect", "close"] as const;
+
+interface JournalingStep {
+  step: number;
+  type: string;
+  instruction: string;
+  prompt: string;
+}
+
+function StepsBuilder({ value, onChange }: { value: string; onChange: (val: string) => void }) {
+  let steps: JournalingStep[] = [];
+  try {
+    if (value) steps = JSON.parse(value);
+  } catch { /* keep empty */ }
+
+  const updateSteps = (newSteps: JournalingStep[]) => {
+    onChange(JSON.stringify(newSteps.map((s, i) => ({ ...s, step: i + 1 })), null, 2));
+  };
+
+  const addStep = () => {
+    updateSteps([...steps, { step: steps.length + 1, type: "write", instruction: "", prompt: "" }]);
+  };
+
+  const removeStep = (idx: number) => {
+    updateSteps(steps.filter((_, i) => i !== idx));
+  };
+
+  const updateStep = (idx: number, field: keyof JournalingStep, val: string) => {
+    const newSteps = [...steps];
+    newSteps[idx] = { ...newSteps[idx], [field]: val };
+    updateSteps(newSteps);
+  };
+
+  const inputCls = "w-full px-3 py-2 rounded-lg bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
+
+  return (
+    <div className="space-y-3">
+      {steps.map((s, i) => (
+        <div key={i} className="p-4 rounded-xl bg-background border border-foreground/10 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-accent text-[10px] font-sans font-medium tracking-wider uppercase">Step {i + 1}</span>
+            <button onClick={() => removeStep(i)} className="text-muted-foreground hover:text-destructive text-xs">Remove</button>
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">Type</label>
+            <select value={s.type} onChange={e => updateStep(i, "type", e.target.value)} className={inputCls}>
+              {STEP_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">Instruction</label>
+            <input value={s.instruction || ""} onChange={e => updateStep(i, "instruction", e.target.value)} className={inputCls} placeholder="e.g. Take a moment to settle in..." />
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">Prompt</label>
+            <textarea value={s.prompt || ""} onChange={e => updateStep(i, "prompt", e.target.value)} rows={2} className={inputCls + " resize-none"} placeholder="e.g. What are you noticing in your body right now?" />
+          </div>
+        </div>
+      ))}
+      <button onClick={addStep} className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-foreground/15 text-muted-foreground hover:text-foreground hover:border-accent/30 text-sm font-sans w-full justify-center transition-colors">
+        <Plus className="w-4 h-4" /> Add Step
+      </button>
+    </div>
+  );
+}
+
 type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "settings";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
