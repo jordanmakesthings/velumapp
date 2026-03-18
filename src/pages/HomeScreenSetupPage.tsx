@@ -28,7 +28,7 @@ export default function HomeScreenSetupPage() {
       <div className="w-full max-w-[400px] flex flex-col items-center pt-16">
         {/* Logo */}
         <img alt="Velum" className="w-[52px] h-[52px] object-contain mb-4" src="/lovable-uploads/873c5ffb-ee75-4845-9045-d763a10a06c0.jpg" />
-        <p className="text-accent text-[11px] font-sans font-medium tracking-[4px] uppercase text-center mb-4">Velum</p>
+        <p className="text-accent text-[11px] font-sans font-medium tracking-[4px] uppercase text-center mb-4">​Setup </p>
         <div className="w-12 h-px bg-accent/70 mb-9" />
 
         {/* Heading */}
