@@ -335,39 +335,38 @@ export default function OnboardingPage() {
           {step === 6 && (
             <motion.div key="paywall" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
               <div className="text-center mb-8">
-                <h1 className="text-display text-4xl italic mb-2">Final Step.</h1>
+                <h1 className="text-display text-4xl italic mb-2">Invest in Your Nervous System.</h1>
                 <p className="text-muted-foreground text-[15px] font-sans font-light">
-                  Full access to everything in Velum. Free for 7 days.
+                  Full access to everything in Velum.
                 </p>
               </div>
 
               {/* Monthly */}
               <div className="text-center mb-8">
-                <p className="text-accent text-[10px] font-sans font-medium tracking-[2.5px] uppercase mb-3">Most Popular</p>
                 <p className="text-display text-5xl text-foreground mb-1">$29 <span className="text-muted-foreground text-lg font-sans font-light">/ month</span></p>
-                <p className="text-muted-foreground text-sm font-sans font-light mb-4">Start free for 7 days · Cancel anytime</p>
+                <p className="text-muted-foreground text-sm font-sans font-light mb-4">Cancel anytime</p>
                 <button onClick={() => handleCheckout("monthly")} disabled={checkoutLoading}
                   className="w-full border border-accent/30 rounded-xl p-5 flex items-center justify-between text-left mb-1">
-                  <span className="text-foreground text-lg font-sans font-semibold">Start Free Trial</span>
+                  <span className="text-foreground text-lg font-sans font-semibold">Begin My Journey</span>
                   <span className="text-accent text-xl">→</span>
                 </button>
-                <p className="text-muted-foreground/40 text-xs font-sans">7 days free then $29/mo · Cancel anytime</p>
+                <p className="text-muted-foreground/40 text-xs font-sans">Cancel anytime</p>
               </div>
 
               <div className="w-full h-px bg-accent/15 mb-8" />
 
               {/* Lifetime */}
               <div className="text-center mb-8">
-                <p className="text-accent text-sm font-sans font-medium mb-2">● Only 16 spots remaining</p>
                 <p className="text-display text-5xl text-foreground mb-1">$299 <span className="text-muted-foreground text-lg font-sans font-light">· One time</span></p>
                 <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">
                   Every course. Every tool. Every future update.<br />Pay once, never think about it again.
                 </p>
                 <button onClick={() => handleCheckout("lifetime")} disabled={checkoutLoading}
                   className="w-full border border-muted-foreground/20 rounded-xl p-5 flex items-center justify-between text-left mb-1">
-                  <span className="text-foreground text-lg font-sans font-semibold">Claim Founding Member Access</span>
+                  <span className="text-foreground text-lg font-sans font-semibold">Begin My Journey</span>
                   <span className="text-accent text-xl">→</span>
                 </button>
+                <p className="text-muted-foreground/40 text-xs font-sans">One time payment</p>
               </div>
 
               <p className="text-accent text-sm font-sans text-center mb-6">Have a code? Apply it here →</p>
@@ -393,7 +392,7 @@ export default function OnboardingPage() {
               <div className="mt-8">
                 <button onClick={handleSkip}
                   className="w-full text-center text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
-                  Continue for free
+                  Continue without subscribing
                 </button>
               </div>
             </motion.div>

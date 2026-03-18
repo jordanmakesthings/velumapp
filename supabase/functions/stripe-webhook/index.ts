@@ -53,8 +53,7 @@ Deno.serve(async (req) => {
         if (plan === "lifetime") {
           await updateSubscription(userId, "active", "lifetime", null);
         } else if (session.subscription) {
-          // Subscription — will be handled by subscription events
-          await updateSubscription(userId, "trialing", "monthly", null);
+          await updateSubscription(userId, "active", "monthly", null);
         }
         break;
       }
@@ -64,19 +63,18 @@ Deno.serve(async (req) => {
         const sub = event.data.object as Stripe.Subscription;
         const userId = sub.metadata?.supabase_user_id;
         if (!userId) {
-          // Try to find user by customer ID
           const { data } = await supabaseAdmin
             .from("profiles")
             .select("id")
             .eq("stripe_customer_id", sub.customer as string)
             .single();
           if (data) {
-            const status = sub.status === "trialing" ? "trialing" : sub.status === "active" ? "active" : sub.status;
+            const status = sub.status === "active" ? "active" : sub.status;
             await updateSubscription(data.id, status, "monthly",
               sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null);
           }
         } else {
-          const status = sub.status === "trialing" ? "trialing" : sub.status === "active" ? "active" : sub.status;
+          const status = sub.status === "active" ? "active" : sub.status;
           await updateSubscription(userId, status, "monthly",
             sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null);
         }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Crown, Check, X, Sparkles, Loader2 } from "lucide-react";
+import { X, Sparkles, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -13,9 +13,9 @@ interface PaywallModalProps {
 
 const FEATURES = [
   "Full meditation & breathwork library",
-  "EFT tapping sessions",
-  "Mastery classes",
-  "Progress tracking & insights",
+  "Interactive breathwork tool",
+  "Courses & MasteryClasses",
+  "Progress tracking & journal",
 ];
 
 export function PaywallModal({ open, onClose }: PaywallModalProps) {
@@ -60,20 +60,17 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
         <div className="flex flex-col items-center mb-5">
           <img src={logoLotus} alt="Velum" className="w-10 h-10 rounded-xl object-cover mb-4" />
           <h3 className="text-foreground font-serif text-2xl text-center">Unlock Full Access</h3>
-          <p className="text-ui text-xs mt-1">Premium content awaits</p>
+          <p className="text-ui text-xs mt-1">Invest in your nervous system</p>
         </div>
 
         {/* Plan cards */}
         <div className="grid grid-cols-2 gap-3 mb-5">
           <button
             onClick={() => setSelectedPlan("monthly")}
-            className={`velum-card-flat p-4 text-left transition-all relative ${
+            className={`velum-card-flat p-4 text-left transition-all ${
               selectedPlan === "monthly" ? "ring-1 ring-accent/50" : ""
             }`}
           >
-            <span className="absolute -top-2 right-3 text-[8px] px-1.5 py-0.5 rounded-full gold-gradient text-primary-foreground font-sans font-medium tracking-wide">
-              7-DAY TRIAL
-            </span>
             <p className="text-foreground text-xs font-sans font-medium mb-0.5">Monthly</p>
             <p className="text-display text-2xl text-accent">$29</p>
             <p className="text-ui text-[10px]">/month</p>
@@ -81,13 +78,10 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
 
           <button
             onClick={() => setSelectedPlan("lifetime")}
-            className={`velum-card-flat p-4 text-left transition-all relative ${
+            className={`velum-card-flat p-4 text-left transition-all ${
               selectedPlan === "lifetime" ? "ring-1 ring-accent/50" : ""
             }`}
           >
-            <span className="absolute -top-2 right-3 text-[8px] px-1.5 py-0.5 rounded-full bg-surface-light text-muted-foreground font-sans font-medium tracking-wide">
-              BEST VALUE
-            </span>
             <p className="text-foreground text-xs font-sans font-medium mb-0.5">Lifetime</p>
             <p className="text-display text-2xl text-accent">$299</p>
             <p className="text-ui text-[10px]">one-time</p>
@@ -104,7 +98,7 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
           ))}
         </div>
 
-        {/* CTA - only shown after plan selected */}
+        {/* CTA */}
         {selectedPlan && (
           <button
             onClick={handleCheckout}
@@ -116,7 +110,7 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                {selectedPlan === "monthly" ? "Start Free Trial" : "Get Lifetime Access"}
+                Begin My Journey
               </>
             )}
           </button>
@@ -124,8 +118,8 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
 
         <p className="text-center text-muted-foreground text-[10px] font-sans mt-3">
           {selectedPlan === "lifetime"
-            ? "One-time payment of $299. Access forever."
-            : "7-day free trial, then $29/month"}
+            ? "One time payment"
+            : "Cancel anytime"}
         </p>
 
         <button onClick={onClose} className="w-full text-center text-muted-foreground text-xs font-sans mt-3 hover:text-foreground transition-colors">
