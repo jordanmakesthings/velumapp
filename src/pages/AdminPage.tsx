@@ -500,9 +500,6 @@ export default function AdminPage() {
                   </div>
                   <div className="flex items-center gap-6">
                     <label className="flex items-center gap-2 text-foreground text-sm font-sans cursor-pointer">
-                      <input type="checkbox" checked={trackForm.is_premium} onChange={e => setTrackForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium
-                    </label>
-                    <label className="flex items-center gap-2 text-foreground text-sm font-sans cursor-pointer">
                       <input type="checkbox" checked={trackForm.is_featured} onChange={e => setTrackForm(f => ({ ...f, is_featured: e.target.checked }))} className="accent-accent" /> Featured
                     </label>
                   </div>
