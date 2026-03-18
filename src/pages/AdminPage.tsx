@@ -578,7 +578,7 @@ export default function AdminPage() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground truncate">{track.title}</p>
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                              {track.duration_minutes} min{track.is_premium ? " · Premium" : ""}{!track.audio_url ? " · No audio" : ""}{track.is_featured ? " · ★" : ""}
+                              {track.duration_minutes} min{!track.audio_url && track.content_type === "audio" ? " · No audio" : ""}{track.is_featured ? " · ★" : ""}{track.content_type === "journaling" ? " · Journaling" : ""}
                             </p>
                           </div>
                           <div className="flex gap-2 shrink-0">
