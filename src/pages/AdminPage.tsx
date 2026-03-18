@@ -414,6 +414,7 @@ export default function AdminPage() {
       audio_url: track.audio_url || "", thumbnail_url: track.thumbnail_url || "",
       course_id: track.course_id || "", subcategory_id: track.subcategory_id || "", order_index: track.order_index,
       content_type: track.content_type || "audio", steps: track.steps ? JSON.stringify(track.steps, null, 2) : "",
+      tags: track.tags ? (Array.isArray(track.tags) ? track.tags.join(", ") : String(track.tags)) : "",
     });
     setShowTrackForm(true);
   };
