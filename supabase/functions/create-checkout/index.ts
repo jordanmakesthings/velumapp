@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Invalid plan" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Get or create Stripe customer
     const { data: profile } = await supabase
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
-      success_url: `${returnUrl || "https://velum.app"}?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${returnUrl || "https://velum.app"}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${returnUrl || "https://velum.app"}/premium`,
       metadata: { supabase_user_id: userId, plan },
       line_items: [{ price: priceId, quantity: 1 }],
