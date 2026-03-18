@@ -526,13 +526,10 @@ export default function AdminPage() {
 
                   {trackForm.content_type === "journaling" && (
                     <div className="md:col-span-2">
-                      <label className={labelClass}>Steps (JSON)</label>
-                      <textarea
+                      <label className={labelClass}>Steps</label>
+                      <StepsBuilder
                         value={trackForm.steps}
-                        onChange={e => setTrackForm(f => ({ ...f, steps: e.target.value }))}
-                        rows={10}
-                        className={inputClass + " resize-y font-mono text-xs"}
-                        placeholder='[{"step": 1, "type": "intro", "prompt": "...", "instruction": "..."}]'
+                        onChange={(val) => setTrackForm(f => ({ ...f, steps: val }))}
                       />
                     </div>
                   )}
