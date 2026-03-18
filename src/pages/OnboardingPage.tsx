@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Crown, Sparkles, Wind, Heart, BookOpen, BarChart3, Compass, Feather, Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import logoLotus from "@/assets/logo-lotus.jpg";
+import logoCircle from "@/assets/logo-circle.png";
 
 const GOAL_OPTIONS = [
-  { key: "stress", label: "Stress & anxiety", icon: Wind },
-  { key: "emotions", label: "Master my emotions", icon: Heart },
-  { key: "sleep", label: "Sleep deeper", icon: Sparkles },
-  { key: "focus", label: "More energy & focus", icon: BarChart3 },
-  { key: "confidence", label: "Greater confidence & self-esteem", icon: Crown },
-  { key: "creativity", label: "Unlock my creativity", icon: Feather },
-  { key: "self", label: "Deepen connection to self", icon: Compass },
-  { key: "habits", label: "Break bad habits & self-sabotaging patterns", icon: BookOpen },
+  { key: "stress", label: "Stress & anxiety", icon: "◌" },
+  { key: "emotions", label: "Master my emotions", icon: "✦" },
+  { key: "sleep", label: "Sleep deeper", icon: "◎" },
+  { key: "focus", label: "More energy & focus", icon: "◇" },
+  { key: "confidence", label: "Greater confidence & self-esteem", icon: "≡" },
+  { key: "creativity", label: "Unlock my creativity", icon: "✎" },
+  { key: "self", label: "Deepen connection to self", icon: "◌" },
+  { key: "habits", label: "Break bad habits & self-sabotaging patterns", icon: "✦" },
 ];
 
 const EXPERIENCE_OPTIONS = [
@@ -25,39 +25,38 @@ const EXPERIENCE_OPTIONS = [
   { key: "advanced", label: "Advanced practitioner", description: "I live this — I'm here to go further" },
 ];
 
-const PREMIUM_FEATURES = [
-  "Nervous System Library",
-  "Interactive Breathwork",
-  "EFT Tapping Sessions",
-  "Mastery Classes",
-  "Daily Journaling",
-  "Progress Tracking",
-  "Blueprint — your personalized nervous system map",
+const INCLUDED_FEATURES = [
+  { title: "Nervous System Library", desc: "A storehouse of meditation, breathwork and journaling practices to pull you from survival to creation. From 10-minute Rapid Resets to extended journeys designed to peel back the invisible layers that have held you back from the life you know you're capable of living." },
+  { title: "Interactive Breathwork", desc: "A custom guided breathwork tool for real-time regulation and a nervous system reset. Rapid state changes in under 10 minutes." },
+  { title: "Courses", desc: "Entry-level courses including Meditation Made Easy and EFT Essentials to advanced journeys designed to rewrite reality and unlock unseen levels of potential and emotional mastery." },
+  { title: "MasteryClasses", desc: "Updated monthly. Interactive mini-courses designed to be digested and implemented in one shot. Information to build new neural networks, guided interactive journaling to retain the information and generate ideas, action prompts to build the bridge from the invisible to the visible." },
+  { title: "Velum Journal", desc: "A door to the subconscious that fits in your pocket. Includes a new Daily Reflection every morning, guided journaling practices based in NLP and CBT to uncover and rewire limiting beliefs or process heavy emotions, and the ability to save and revisit entries to reflect on growth and progress." },
 ];
 
 function StressSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const getInfo = (v: number) => {
-    if (v <= 2) return { label: "Very calm" };
-    if (v <= 4) return { label: "Mild tension" };
-    if (v <= 6) return { label: "Moderate stress" };
-    if (v <= 8) return { label: "High stress" };
-    return { label: "Overwhelmed" };
+  const getLabel = (v: number) => {
+    if (v <= 2) return "Very calm";
+    if (v <= 4) return "Mild tension";
+    if (v <= 6) return "Moderate stress";
+    if (v <= 8) return "High stress";
+    return "Overwhelmed";
   };
-  const info = getInfo(value);
-
   return (
     <div className="w-full text-center">
-      <p className="text-display text-6xl text-accent mb-2">{value}</p>
-      <p className="text-ui text-xs uppercase tracking-widest mb-8">{info.label}</p>
-      <div className="px-4">
+      <div className="mb-8">
+        <span className="text-display text-7xl text-accent">{value}</span>
+        <span className="text-muted-foreground/40 text-3xl font-sans">/10</span>
+      </div>
+      <p className="text-accent text-[10px] font-sans font-medium tracking-[2.5px] uppercase mb-8">{getLabel(value)}</p>
+      <div className="px-2">
         <input
           type="range" min={1} max={10} value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-foreground"
+          className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-accent"
         />
         <div className="flex justify-between mt-3">
-          <span className="text-ui text-xs">1 · Completely calm</span>
-          <span className="text-ui text-xs">10 · Overwhelmed</span>
+          <span className="text-muted-foreground text-xs font-sans">1 · Completely calm</span>
+          <span className="text-accent text-xs font-sans">10 · Overwhelmed</span>
         </div>
       </div>
     </div>
@@ -72,29 +71,40 @@ function EmotionSplit({ value, onChange }: { value: number; onChange: (v: number
     if (v >= 25) return "More negative than not";
     return "Mostly negative";
   };
-
   return (
     <div className="w-full text-center">
       <div className="rounded-xl overflow-hidden h-12 flex mb-4">
-        <div className="bg-accent/60 flex items-center justify-center transition-all" style={{ width: `${value}%` }}>
+        <div className="flex items-center justify-center transition-all" style={{ width: `${value}%`, background: "hsl(100, 40%, 55%)" }}>
           {value > 15 && <span className="text-xs font-bold text-background">{value}% positive</span>}
         </div>
-        <div className="bg-muted flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center" style={{ background: "hsl(10, 40%, 50%)" }}>
           {(100 - value) > 15 && <span className="text-xs font-bold text-foreground">{100 - value}% negative</span>}
         </div>
       </div>
-      <p className="text-display text-xl text-foreground mb-6">{getLabel(value)}</p>
-      <div className="px-4">
+      <p className="text-display text-2xl text-foreground mb-6">{getLabel(value)}</p>
+      <div className="px-2">
         <input
           type="range" min={0} max={100} value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-lg"
+          className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-accent"
         />
         <div className="flex justify-between mt-3">
-          <span className="text-ui text-xs">← All negative</span>
-          <span className="text-ui text-xs">All positive →</span>
+          <span className="text-muted-foreground text-xs font-sans">← All negative</span>
+          <span className="text-muted-foreground text-xs font-sans">All positive →</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ProgressBar({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex gap-1.5 justify-center mb-10">
+      {Array.from({ length: total }).map((_, i) => (
+        <div key={i} className={`h-[3px] w-10 rounded-full transition-colors duration-300 ${
+          i <= current ? "bg-accent" : i === current + 1 ? "bg-muted-foreground/30" : "bg-muted-foreground/15"
+        }`} />
+      ))}
     </div>
   );
 }
@@ -104,6 +114,7 @@ export default function OnboardingPage() {
   const { user, session, refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [goals, setGoals] = useState<string[]>([]);
   const [experience, setExperience] = useState("");
   const [stress, setStress] = useState(5);
@@ -114,20 +125,19 @@ export default function OnboardingPage() {
 
   const totalSteps = 7;
 
-  // Handle Stripe success redirect
+  useEffect(() => {
+    if (user?.email) setEmail(user.email);
+  }, [user]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("success") === "true") {
-      saveOnboardingData(true).then(() => {
-        navigate("/welcome");
-      });
+      saveOnboardingData(true).then(() => navigate("/payment-success"));
     }
   }, []);
 
   const toggleGoal = (key: string) => {
-    setGoals((prev) =>
-      prev.includes(key) ? prev.filter((g) => g !== key) : [...prev, key]
-    );
+    setGoals((prev) => prev.includes(key) ? prev.filter((g) => g !== key) : [...prev, key]);
   };
 
   const canProceed = () => {
@@ -135,10 +145,6 @@ export default function OnboardingPage() {
       case 0: return name.trim().length > 0;
       case 1: return goals.length > 0;
       case 2: return experience !== "";
-      case 3: return true;
-      case 4: return true;
-      case 5: return true;
-      case 6: return true;
       default: return true;
     }
   };
@@ -146,12 +152,9 @@ export default function OnboardingPage() {
   const saveOnboardingData = async (markComplete = false) => {
     if (!user) return;
     const onboardingAnswers = { goals, experience, stress, emotional, vision };
-    const updates: Record<string, unknown> = {
-      onboarding_answers: onboardingAnswers,
-    };
+    const updates: Record<string, unknown> = { onboarding_answers: onboardingAnswers };
     if (name.trim()) updates.full_name = name.trim();
     if (markComplete) updates.onboarding_completed = true;
-
     await supabase.from("profiles").update(updates).eq("id", user.id);
     await refreshProfile();
   };
@@ -166,28 +169,18 @@ export default function OnboardingPage() {
     navigate("/welcome");
   };
 
-  const handleCheckout = async () => {
-    if (!session) {
-      navigate("/auth");
-      return;
-    }
+  const handleCheckout = async (plan: "monthly" | "lifetime") => {
+    if (!session) { navigate("/auth"); return; }
+    setSelectedPlan(plan);
     setCheckoutLoading(true);
     try {
-      // Save onboarding data before checkout redirect
       await saveOnboardingData(true);
-
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          plan: selectedPlan,
-          returnUrl: `${window.location.origin}/onboarding?success=true`,
-        },
+        body: { plan, returnUrl: `${window.location.origin}/payment-success` },
       });
       if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("No checkout URL returned");
-      }
+      if (data?.url) window.location.href = data.url;
+      else throw new Error("No checkout URL returned");
     } catch (err: any) {
       console.error("Checkout error:", err);
       toast.error(err.message || "Failed to start checkout");
@@ -209,41 +202,37 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Progress bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-surface">
-        <motion.div
-          className="h-full gold-gradient"
-          animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
-          transition={{ duration: 0.3 }}
-        />
-      </div>
+      <div className="flex-1 flex flex-col items-center px-6 py-16 max-w-[440px] mx-auto w-full">
+        {/* Logo */}
+        <img src={logoCircle} alt="Velum" className="w-[48px] h-[48px] object-contain mb-3" />
+        <p className="text-accent text-[11px] font-sans font-medium tracking-[4px] uppercase mb-5">Velum</p>
 
-      {/* Back button */}
-      {step > 0 && (
-        <button
-          onClick={() => setStep(step - 1)}
-          className="fixed top-6 left-4 z-50 p-2 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-      )}
+        <ProgressBar current={step} total={totalSteps} />
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-20 max-w-lg mx-auto w-full">
         <AnimatePresence mode="wait">
-          {/* Step 0: Name */}
+          {/* Step 0: Name + Email */}
           {step === 0 && (
             <motion.div key="name" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
-              <img src={logoLotus} alt="Velum" className="w-12 h-12 rounded-xl object-cover mx-auto mb-8" />
               <h1 className="text-display text-3xl mb-2">Before we begin.</h1>
-              <p className="text-ui text-sm mb-10">Tell us a little about yourself.</p>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your first name"
-                className="w-full bg-card rounded-xl px-5 py-4 text-foreground text-lg font-sans text-center placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30 transition-shadow"
-                autoFocus
-              />
+              <p className="text-muted-foreground text-sm font-sans font-light mb-10">Tell us a little about yourself.</p>
+              <div className="text-left mb-5">
+                <p className="text-accent text-[10px] font-sans font-medium tracking-[2px] uppercase mb-2">Your Name</p>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                  placeholder="First name"
+                  className="w-full bg-transparent border border-muted-foreground/25 rounded-xl px-5 py-4 text-foreground text-base font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:border-accent/40 transition-colors"
+                  autoFocus />
+              </div>
+              <div className="text-left mb-6">
+                <p className="text-accent text-[10px] font-sans font-medium tracking-[2px] uppercase mb-2">Your Email</p>
+                <input type="email" value={email} readOnly
+                  placeholder="you@example.com"
+                  className="w-full bg-transparent border border-muted-foreground/25 rounded-xl px-5 py-4 text-foreground/50 text-base font-sans placeholder:text-muted-foreground/40 focus:outline-none" />
+              </div>
+              <p className="text-accent text-sm font-sans text-center">
+                <button onClick={() => navigate("/auth")} className="hover:underline underline-offset-2">
+                  Have an account? Log in here →
+                </button>
+              </p>
             </motion.div>
           )}
 
@@ -251,32 +240,23 @@ export default function OnboardingPage() {
           {step === 1 && (
             <motion.div key="goals" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
               <h1 className="text-display text-3xl mb-2 text-center">Something brought you here.</h1>
-              <p className="text-ui text-sm mb-8 text-center">Whatever it is — it was right to listen. Choose everything that resonates.</p>
-              <div className="grid grid-cols-1 gap-3">
-                {GOAL_OPTIONS.map(({ key, label, icon: Icon }) => {
+              <p className="text-muted-foreground text-sm font-sans font-light mb-8 text-center">
+                Whatever it is — it was right to listen. Choose everything that resonates.
+              </p>
+              <div className="flex flex-col gap-3">
+                {GOAL_OPTIONS.map(({ key, label, icon }) => {
                   const isSelected = goals.includes(key);
                   return (
-                    <button
-                      key={key}
-                      onClick={() => toggleGoal(key)}
-                      className={`velum-card p-4 flex items-center gap-4 text-left transition-all duration-200 ${
-                        isSelected ? "ring-1 ring-accent/50" : ""
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                        isSelected ? "gold-gradient" : "bg-surface-light"
+                    <button key={key} onClick={() => toggleGoal(key)}
+                      className={`w-full border rounded-xl px-5 py-4 flex items-center gap-4 text-left transition-all duration-200 ${
+                        isSelected ? "border-accent/40 bg-surface-light/30" : "border-muted-foreground/20"
                       }`}>
-                        <Icon className={`w-4 h-4 ${isSelected ? "text-primary-foreground" : "text-muted-foreground"}`} />
-                      </div>
-                      <span className="text-foreground text-sm font-sans">{label}</span>
-                      {isSelected && <Check className="w-4 h-4 text-accent ml-auto" />}
+                      <span className={`text-lg ${isSelected ? "text-accent" : "text-muted-foreground/50"}`}>{icon}</span>
+                      <span className="text-foreground text-sm font-sans font-semibold">{label}</span>
                     </button>
                   );
                 })}
               </div>
-              <button onClick={handleNext} className="w-full text-center text-muted-foreground text-xs font-sans mt-4 hover:text-foreground transition-colors">
-                Skip this question
-              </button>
             </motion.div>
           )}
 
@@ -284,38 +264,46 @@ export default function OnboardingPage() {
           {step === 2 && (
             <motion.div key="experience" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
               <h1 className="text-display text-3xl mb-2 text-center">Where are you starting from?</h1>
-              <p className="text-ui text-sm mb-8 text-center">There's no right answer. Every path through Velum begins exactly where you are.</p>
+              <p className="text-muted-foreground text-sm font-sans font-light mb-8 text-center">
+                There's no right answer. Every path through Velum begins exactly where you are.
+              </p>
               <div className="flex flex-col gap-3">
                 {EXPERIENCE_OPTIONS.map(({ key, label, description }) => (
-                  <button
-                    key={key}
-                    onClick={() => setExperience(key)}
-                    className={`velum-card p-5 text-left transition-all duration-200 ${
-                      experience === key ? "ring-1 ring-accent/50" : ""
-                    }`}
-                  >
-                    <p className="text-foreground text-sm font-sans font-medium">{label}</p>
-                    <p className="text-ui text-xs mt-1">{description}</p>
+                  <button key={key} onClick={() => setExperience(key)}
+                    className={`w-full border rounded-xl px-5 py-5 flex items-center justify-between text-left transition-all duration-200 ${
+                      experience === key ? "border-accent/40 bg-surface-light/30" : "border-muted-foreground/20"
+                    }`}>
+                    <div>
+                      <p className="text-foreground text-sm font-sans font-bold">{label}</p>
+                      <p className="text-muted-foreground text-xs font-sans mt-1">{description}</p>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 ml-4 ${
+                      experience === key ? "border-accent bg-accent" : "border-muted-foreground/30"
+                    }`} />
                   </button>
                 ))}
               </div>
             </motion.div>
           )}
 
-          {/* Step 3: Stress level */}
+          {/* Step 3: Stress */}
           {step === 3 && (
             <motion.div key="stress" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
               <h1 className="text-display text-3xl mb-2">How stressed do you feel on a typical day?</h1>
-              <p className="text-ui text-sm mb-12">Be honest with yourself. This is just between you and Velum.</p>
+              <p className="text-muted-foreground text-sm font-sans font-light mb-12">
+                Be honest with yourself. This is just between you and Velum.
+              </p>
               <StressSlider value={stress} onChange={setStress} />
             </motion.div>
           )}
 
-          {/* Step 4: Emotional landscape */}
+          {/* Step 4: Emotional */}
           {step === 4 && (
             <motion.div key="emotional" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
               <h1 className="text-display text-3xl mb-2">How does your inner world usually feel?</h1>
-              <p className="text-ui text-sm mb-12">Drag the scale to reflect the balance of your emotional life.</p>
+              <p className="text-muted-foreground text-sm font-sans font-light mb-12">
+                Drag the scale to reflect the balance of your emotional life.
+              </p>
               <EmotionSplit value={emotional} onChange={setEmotional} />
             </motion.div>
           )}
@@ -323,10 +311,14 @@ export default function OnboardingPage() {
           {/* Step 5: 30-day vision */}
           {step === 5 && (
             <motion.div key="vision" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
-              <h1 className="text-display text-3xl mb-2">Your 30-day vision</h1>
-              <p className="text-ui text-sm mb-4">In one sentence — what would a true mark of success look like for you 30 days from now?</p>
-              <div className="velum-card-flat p-4 mb-4 text-left">
-                <p className="text-ui text-xs italic leading-relaxed">
+              <h1 className="text-display text-3xl mb-2">
+                In one sentence — what would a true mark of success look like for you 30 days from now?
+              </h1>
+              <p className="text-muted-foreground text-sm font-sans font-light mb-6">
+                There's no wrong answer. This is just for you.
+              </p>
+              <div className="border border-muted-foreground/20 rounded-xl p-5 mb-4 text-left">
+                <p className="text-muted-foreground text-sm font-sans italic leading-relaxed">
                   "The people who transform their lives aren't the ones who tried the hardest — they're the ones who finally got honest about what they truly wanted."
                 </p>
               </div>
@@ -334,7 +326,7 @@ export default function OnboardingPage() {
                 value={vision}
                 onChange={(e) => setVision(e.target.value)}
                 placeholder="e.g. I wake up feeling calm and excited about my day..."
-                className="w-full bg-card rounded-xl p-5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 resize-none h-32 focus:outline-none focus:ring-1 focus:ring-accent/30 transition-shadow"
+                className="w-full bg-transparent border border-muted-foreground/20 rounded-xl p-5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 resize-none h-32 focus:outline-none focus:border-accent/40 transition-colors"
               />
             </motion.div>
           )}
@@ -342,95 +334,82 @@ export default function OnboardingPage() {
           {/* Step 6: Paywall */}
           {step === 6 && (
             <motion.div key="paywall" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-              <h1 className="text-display text-3xl mb-2 text-center">Final Step.</h1>
-              <p className="text-ui text-sm text-center mb-8">Full access to everything in Velum. Free for 7 days.</p>
+              <div className="text-center mb-8">
+                <h1 className="text-display text-4xl italic mb-2">Final Step.</h1>
+                <p className="text-muted-foreground text-[15px] font-sans font-light">
+                  Full access to everything in Velum. Free for 7 days.
+                </p>
+              </div>
 
-              {/* Plans */}
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <button
-                  onClick={() => setSelectedPlan("monthly")}
-                  className={`velum-card p-5 text-left transition-all relative ${
-                    selectedPlan === "monthly" ? "ring-1 ring-accent/50" : ""
-                  }`}
-                >
-                  <span className="absolute -top-2 right-3 text-[9px] px-2 py-0.5 rounded-full gold-gradient text-primary-foreground font-sans font-medium tracking-wide">
-                    POPULAR
-                  </span>
-                  <p className="text-foreground text-sm font-sans font-medium mb-1">Monthly</p>
-                  <p className="text-display text-2xl text-accent">$29</p>
-                  <p className="text-ui text-xs">/month</p>
-                  <p className="text-accent text-[10px] font-sans mt-2">7-day free trial</p>
+              {/* Monthly */}
+              <div className="text-center mb-8">
+                <p className="text-accent text-[10px] font-sans font-medium tracking-[2.5px] uppercase mb-3">Most Popular</p>
+                <p className="text-display text-5xl text-foreground mb-1">$29 <span className="text-muted-foreground text-lg font-sans font-light">/ month</span></p>
+                <p className="text-muted-foreground text-sm font-sans font-light mb-4">Start free for 7 days · Cancel anytime</p>
+                <button onClick={() => handleCheckout("monthly")} disabled={checkoutLoading}
+                  className="w-full border border-accent/30 rounded-xl p-5 flex items-center justify-between text-left mb-1">
+                  <span className="text-foreground text-lg font-sans font-semibold">Start Free Trial</span>
+                  <span className="text-accent text-xl">→</span>
                 </button>
+                <p className="text-muted-foreground/40 text-xs font-sans">7 days free then $29/mo · Cancel anytime</p>
+              </div>
 
-                <button
-                  onClick={() => setSelectedPlan("lifetime")}
-                  className={`velum-card p-5 text-left transition-all relative ${
-                    selectedPlan === "lifetime" ? "ring-1 ring-accent/50" : ""
-                  }`}
-                >
-                  <span className="absolute -top-2 right-3 text-[9px] px-2 py-0.5 rounded-full bg-surface-light text-muted-foreground font-sans font-medium tracking-wide">
-                    BEST VALUE
-                  </span>
-                  <p className="text-foreground text-sm font-sans font-medium mb-1">Lifetime</p>
-                  <p className="text-display text-2xl text-accent">$299</p>
-                  <p className="text-ui text-xs">one-time</p>
-                  <p className="text-accent text-[10px] font-sans mt-2">Forever access</p>
+              <div className="w-full h-px bg-accent/15 mb-8" />
+
+              {/* Lifetime */}
+              <div className="text-center mb-8">
+                <p className="text-accent text-sm font-sans font-medium mb-2">● Only 16 spots remaining</p>
+                <p className="text-display text-5xl text-foreground mb-1">$299 <span className="text-muted-foreground text-lg font-sans font-light">· One time</span></p>
+                <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">
+                  Every course. Every tool. Every future update.<br />Pay once, never think about it again.
+                </p>
+                <button onClick={() => handleCheckout("lifetime")} disabled={checkoutLoading}
+                  className="w-full border border-muted-foreground/20 rounded-xl p-5 flex items-center justify-between text-left mb-1">
+                  <span className="text-foreground text-lg font-sans font-semibold">Claim Founding Member Access</span>
+                  <span className="text-accent text-xl">→</span>
                 </button>
               </div>
 
-              {/* Features */}
-              <div className="velum-card p-6 mb-6">
-                <p className="text-ui text-xs tracking-wide uppercase mb-4">Everything Included</p>
-                <div className="flex flex-col gap-3">
-                  {PREMIUM_FEATURES.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3">
-                      <div className="w-5 h-5 rounded-full gold-gradient flex items-center justify-center shrink-0">
-                        <Check className="w-3 h-3 text-primary-foreground" />
-                      </div>
-                      <span className="text-foreground text-sm font-sans">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <p className="text-accent text-sm font-sans text-center mb-6">Have a code? Apply it here →</p>
 
-              {/* CTA */}
-              <button
-                onClick={handleCheckout}
-                disabled={checkoutLoading}
-                className="w-full py-4 rounded-xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform mb-3 flex items-center justify-center gap-2 disabled:opacity-70"
-              >
-                {checkoutLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  selectedPlan === "monthly" ? "Start Free Trial" : "Claim Lifetime Access"
-                )}
-              </button>
-              <p className="text-center text-muted-foreground text-[10px] font-sans mb-4">
-                {selectedPlan === "monthly"
-                  ? "7 days free then $29/mo · Cancel anytime"
-                  : "One-time payment of $299. Access forever."}
+              <div className="w-full h-px bg-accent/15 mb-6" />
+
+              {/* Everything Included */}
+              <p className="text-accent text-[10px] font-sans font-medium tracking-[2.5px] uppercase text-center mb-6">
+                Everything Included
               </p>
+              <div className="flex flex-col">
+                {INCLUDED_FEATURES.map((f, i) => (
+                  <div key={i} className={`py-5 ${i < INCLUDED_FEATURES.length - 1 ? "border-b border-accent/10" : ""}`}>
+                    <div className="flex items-start gap-3 mb-1.5">
+                      <span className="text-accent text-lg mt-0.5">✓</span>
+                      <h3 className="text-foreground text-lg font-serif font-bold">{f.title}</h3>
+                    </div>
+                    <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed pl-8">{f.desc}</p>
+                  </div>
+                ))}
+              </div>
 
-              <button
-                onClick={handleSkip}
-                className="w-full text-center text-muted-foreground text-xs font-sans hover:text-foreground transition-colors"
-              >
-                Continue for free
-              </button>
+              <div className="mt-8">
+                <button onClick={handleSkip}
+                  className="w-full text-center text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
+                  Continue for free
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Bottom CTA (not on paywall step) */}
+      {/* Bottom CTA (not on paywall) */}
       {step < 6 && (
         <div className="fixed bottom-0 inset-x-0 p-6 bg-gradient-to-t from-background via-background to-transparent">
           <button
             onClick={handleNext}
             disabled={!canProceed()}
-            className="w-full max-w-lg mx-auto flex items-center justify-center gap-2 py-4 rounded-xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-30 active:scale-[0.98] transition-transform"
+            className="w-full max-w-[440px] mx-auto flex items-center justify-center gap-2 py-5 rounded-xl gold-gradient text-primary-foreground font-sans font-bold text-base disabled:opacity-30 active:scale-[0.98] transition-transform"
           >
-            {step === 5 ? "Almost there →" : "Continue"} <ArrowRight className="w-4 h-4" />
+            {step === 5 ? "Almost there →" : "Continue →"}
           </button>
         </div>
       )}

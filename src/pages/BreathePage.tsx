@@ -336,7 +336,7 @@ export default function BreathePage() {
                     background: "radial-gradient(circle, hsl(var(--muted) / 0.7) 0%, hsl(var(--muted) / 0.35) 50%, transparent 100%)",
                     transform: `scale(${orbScale})`,
                     transition: `transform ${orbTransitionDur}s ease-in-out`,
-                    boxShadow: `0 0 ${orbScale > 1 ? 80 : 24}px hsl(var(--accent) / 0.47)`,
+                    boxShadow: `0 0 ${orbScale > 1 ? 80 : 24}px hsl(var(--muted) / 0.4)`,
                   }} />
                 {/* Phase label */}
                 <div className="relative z-10 flex flex-col items-center justify-center">
