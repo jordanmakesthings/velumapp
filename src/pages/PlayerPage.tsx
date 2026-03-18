@@ -286,6 +286,17 @@ export default function PlayerPage() {
     );
   }
 
+  // Journaling tracks use a different player
+  if (track.content_type === "journaling" && track.steps) {
+    return (
+      <JournalingPlayer
+        track={track}
+        isFavorited={isFavorited}
+        onToggleFavorite={() => toggleFavMutation.mutate()}
+      />
+    );
+  }
+
   // Done state
   if (step === "done") {
     return (
