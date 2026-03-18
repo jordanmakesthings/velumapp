@@ -21,6 +21,7 @@ import MasteryPlayerPage from "./pages/MasteryPlayerPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import CourseExperiencePage from "./pages/CourseExperiencePage";
 import HomeScreenSetupPage from "./pages/HomeScreenSetupPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import AdminPage from "./pages/AdminPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/player" element={<PlayerPage />} />
             <Route path="/mastery-player" element={<MasteryPlayerPage />} />
             <Route path="/home-setup" element={<HomeScreenSetupPage />} />
+            <Route path="/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
