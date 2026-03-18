@@ -114,7 +114,7 @@ export default function BreathePage() {
   const [totalElapsed, setTotalElapsed] = useState(0);
   const [orbScale, setOrbScale] = useState(0.65); // Start SMALL
   const [orbTransitionDur, setOrbTransitionDur] = useState(4);
-  const [musicEnabled, setMusicEnabled] = useState(false); // OFF by default
+  const [musicEnabled, setMusicEnabled] = useState(true); // ON by default
   const [musicPlaying, setMusicPlaying] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const audioRef = useRef<HTMLAudioElement | null>(null);
