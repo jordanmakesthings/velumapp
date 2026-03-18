@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaywallModal } from "@/components/PaywallModal";
+import JournalingPlayer from "@/components/player/JournalingPlayer";
 
 const SPEEDS = [0.75, 1, 1.25, 1.5];
 
@@ -282,6 +283,17 @@ export default function PlayerPage() {
         </div>
         <PaywallModal open={showPaywall} onClose={() => setShowPaywall(false)} />
       </div>
+    );
+  }
+
+  // Journaling tracks use a different player
+  if (track.content_type === "journaling" && track.steps) {
+    return (
+      <JournalingPlayer
+        track={track}
+        isFavorited={isFavorited}
+        onToggleFavorite={() => toggleFavMutation.mutate()}
+      />
     );
   }
 

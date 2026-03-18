@@ -169,6 +169,44 @@ export type Database = {
           },
         ]
       }
+      journal_entries: {
+        Row: {
+          content: string
+          created_at: string
+          entry_date: string
+          id: string
+          step_number: number
+          track_id: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          entry_date?: string
+          id?: string
+          step_number: number
+          track_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          entry_date?: string
+          id?: string
+          step_number?: number
+          track_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journaling_prompts: {
         Row: {
           category: string | null
@@ -450,6 +488,7 @@ export type Database = {
         Row: {
           audio_url: string | null
           category: string
+          content_type: string
           course_id: string | null
           created_at: string
           description: string | null
@@ -461,6 +500,7 @@ export type Database = {
           lock_type: string
           order_in_course: number
           order_index: number
+          steps: Json | null
           subcategory_id: string | null
           thumbnail_url: string | null
           title: string
@@ -468,6 +508,7 @@ export type Database = {
         Insert: {
           audio_url?: string | null
           category: string
+          content_type?: string
           course_id?: string | null
           created_at?: string
           description?: string | null
@@ -479,6 +520,7 @@ export type Database = {
           lock_type?: string
           order_in_course?: number
           order_index?: number
+          steps?: Json | null
           subcategory_id?: string | null
           thumbnail_url?: string | null
           title: string
@@ -486,6 +528,7 @@ export type Database = {
         Update: {
           audio_url?: string | null
           category?: string
+          content_type?: string
           course_id?: string | null
           created_at?: string
           description?: string | null
@@ -497,6 +540,7 @@ export type Database = {
           lock_type?: string
           order_in_course?: number
           order_index?: number
+          steps?: Json | null
           subcategory_id?: string | null
           thumbnail_url?: string | null
           title?: string

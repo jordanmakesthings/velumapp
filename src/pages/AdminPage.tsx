@@ -34,6 +34,7 @@ const emptyTrackForm = {
   title: "", description: "", category: "meditation",
   duration_minutes: 10, is_premium: false, is_featured: false,
   audio_url: "", thumbnail_url: "", course_id: "", subcategory_id: "", order_index: 0,
+  content_type: "audio", steps: "",
 };
 
 export default function AdminPage() {
@@ -200,11 +201,14 @@ export default function AdminPage() {
   // Track mutations
   const saveTrackMutation = useMutation({
     mutationFn: async (data: typeof emptyTrackForm) => {
+      let parsedSteps: any = null;
+      try { if (data.steps) parsedSteps = JSON.parse(data.steps); } catch { /* keep null */ }
       const saveData = {
         title: data.title, description: data.description || null, category: data.category,
         duration_minutes: data.duration_minutes, is_premium: data.is_premium, is_featured: data.is_featured,
         audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
         course_id: data.course_id || null, subcategory_id: data.subcategory_id || null, order_index: data.order_index,
+        content_type: data.content_type || "audio", steps: parsedSteps,
       };
       if (editingTrack) {
         const { error } = await supabase.from("tracks").update(saveData).eq("id", editingTrack.id);
@@ -343,6 +347,7 @@ export default function AdminPage() {
       duration_minutes: track.duration_minutes, is_premium: track.is_premium, is_featured: track.is_featured,
       audio_url: track.audio_url || "", thumbnail_url: track.thumbnail_url || "",
       course_id: track.course_id || "", subcategory_id: track.subcategory_id || "", order_index: track.order_index,
+      content_type: track.content_type || "audio", steps: track.steps ? JSON.stringify(track.steps, null, 2) : "",
     });
     setShowTrackForm(true);
   };
@@ -501,11 +506,36 @@ export default function AdminPage() {
                       <input type="checkbox" checked={trackForm.is_featured} onChange={e => setTrackForm(f => ({ ...f, is_featured: e.target.checked }))} className="accent-accent" /> Featured
                     </label>
                   </div>
+                  <div>
+                    <label className={labelClass}>Content Type</label>
+                    <select value={trackForm.content_type} onChange={e => setTrackForm(f => ({ ...f, content_type: e.target.value }))} className={inputClass}>
+                      <option value="audio">Audio</option>
+                      <option value="journaling">Journaling</option>
+                    </select>
+                  </div>
 
-                  <UploadRow label="Audio File" field="audio_url" folder="audio" value={trackForm.audio_url}
-                    setForm={setTrackFormWrapped} uploadKey="trackAudio" accept="audio/*" preview="audio" />
+                  {trackForm.content_type === "audio" && (
+                    <>
+                      <UploadRow label="Audio File" field="audio_url" folder="audio" value={trackForm.audio_url}
+                        setForm={setTrackFormWrapped} uploadKey="trackAudio" accept="audio/*" preview="audio" />
+                    </>
+                  )}
+
                   <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
                     setForm={setTrackFormWrapped} uploadKey="trackImage" />
+
+                  {trackForm.content_type === "journaling" && (
+                    <div className="md:col-span-2">
+                      <label className={labelClass}>Steps (JSON)</label>
+                      <textarea
+                        value={trackForm.steps}
+                        onChange={e => setTrackForm(f => ({ ...f, steps: e.target.value }))}
+                        rows={10}
+                        className={inputClass + " resize-y font-mono text-xs"}
+                        placeholder='[{"step": 1, "type": "intro", "prompt": "...", "instruction": "..."}]'
+                      />
+                    </div>
+                  )}
 
                   <div className="md:col-span-2 border-t border-foreground/5 pt-4">
                     <ThumbnailGenerator
