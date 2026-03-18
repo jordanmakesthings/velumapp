@@ -413,5 +413,6 @@ export default function HomePage() {
 
       <SessionFinderModal open={finderOpen} onClose={() => setFinderOpen(false)} />
     </div>
+    </div>
   );
 }
