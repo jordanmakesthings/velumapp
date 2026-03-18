@@ -506,11 +506,36 @@ export default function AdminPage() {
                       <input type="checkbox" checked={trackForm.is_featured} onChange={e => setTrackForm(f => ({ ...f, is_featured: e.target.checked }))} className="accent-accent" /> Featured
                     </label>
                   </div>
+                  <div>
+                    <label className={labelClass}>Content Type</label>
+                    <select value={trackForm.content_type} onChange={e => setTrackForm(f => ({ ...f, content_type: e.target.value }))} className={inputClass}>
+                      <option value="audio">Audio</option>
+                      <option value="journaling">Journaling</option>
+                    </select>
+                  </div>
 
-                  <UploadRow label="Audio File" field="audio_url" folder="audio" value={trackForm.audio_url}
-                    setForm={setTrackFormWrapped} uploadKey="trackAudio" accept="audio/*" preview="audio" />
+                  {trackForm.content_type === "audio" && (
+                    <>
+                      <UploadRow label="Audio File" field="audio_url" folder="audio" value={trackForm.audio_url}
+                        setForm={setTrackFormWrapped} uploadKey="trackAudio" accept="audio/*" preview="audio" />
+                    </>
+                  )}
+
                   <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
                     setForm={setTrackFormWrapped} uploadKey="trackImage" />
+
+                  {trackForm.content_type === "journaling" && (
+                    <div className="md:col-span-2">
+                      <label className={labelClass}>Steps (JSON)</label>
+                      <textarea
+                        value={trackForm.steps}
+                        onChange={e => setTrackForm(f => ({ ...f, steps: e.target.value }))}
+                        rows={10}
+                        className={inputClass + " resize-y font-mono text-xs"}
+                        placeholder='[{"step": 1, "type": "intro", "prompt": "...", "instruction": "..."}]'
+                      />
+                    </div>
+                  )}
 
                   <div className="md:col-span-2 border-t border-foreground/5 pt-4">
                     <ThumbnailGenerator
