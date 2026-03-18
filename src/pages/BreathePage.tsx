@@ -333,7 +333,7 @@ export default function BreathePage() {
                 {/* Orb */}
                 <div className="absolute w-40 h-40 rounded-full"
                   style={{
-                    background: "radial-gradient(circle, hsl(var(--accent) / 0.87) 0%, hsl(var(--accent) / 0.4) 50%, transparent 100%)",
+                    background: "radial-gradient(circle, hsl(var(--muted) / 0.7) 0%, hsl(var(--muted) / 0.35) 50%, transparent 100%)",
                     transform: `scale(${orbScale})`,
                     transition: `transform ${orbTransitionDur}s ease-in-out`,
                     boxShadow: `0 0 ${orbScale > 1 ? 80 : 24}px hsl(var(--accent) / 0.47)`,
