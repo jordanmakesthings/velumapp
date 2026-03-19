@@ -6,12 +6,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Headphones, X } from "lucide-react";
 
+interface Phase {
+  label: string;
+  duration: number;
+}
+
 interface Technique {
   id: string;
   name: string;
   desc: string;
   color: string;
-  phases: { label: string; duration: number }[];
+  phases: Phase[];
 }
 
 const techniques: Technique[] = [
@@ -60,14 +65,21 @@ type Stage = "setup" | "checkin_before" | "session" | "checkin_after" | "done";
 
 const AMBIENT_MUSIC_URL = "https://drive.google.com/uc?export=download&id=1sXeRiZUQJQ2E1T4_FfhKDGmE8L4wyZ5W";
 
-const getTargetScale = (label: string, prevScale: number) => {
+const MIN_SCALE = 0.45;
+const MAX_SCALE = 1.4;
+
+function isInhalePhase(label: string) {
   const l = label.toLowerCase();
-  if (l === "inhale again") return Math.min((prevScale || 0.5) + 0.35, 1.4);
-  if (l.includes("inhale")) return 1.4;
-  if (l.includes("exhale")) return 0.5;
-  if (l.includes("hold")) return prevScale;
-  return prevScale;
-};
+  return l.includes("inhale");
+}
+function isExhalePhase(label: string) {
+  const l = label.toLowerCase();
+  return l.includes("exhale");
+}
+function isHoldPhase(label: string) {
+  const l = label.toLowerCase();
+  return l.includes("hold") && !l.includes("inhale") && !l.includes("exhale");
+}
 
 function StressRating({ label, onSelect }: { label: string; onSelect: (n: number) => void }) {
   const [selected, setSelected] = useState<number | null>(null);
@@ -102,19 +114,27 @@ export default function BreathePage() {
   const [stressBefore, setStressBefore] = useState<number | null>(null);
   const [stressAfter, setStressAfter] = useState<number | null>(null);
   const [phaseIndex, setPhaseIndex] = useState(0);
-  const [phaseTime, setPhaseTime] = useState(0);
   const [totalElapsed, setTotalElapsed] = useState(0);
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [musicPlaying, setMusicPlaying] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const [phaseLabel, setPhaseLabel] = useState("");
+  const [phaseCountdown, setPhaseCountdown] = useState(0);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Orb animation via CSS classes, NOT inline scale state
-  // We use a ref to track the actual current scale for "hold" phases
+  // Animation state managed entirely via refs + rAF
+  const animFrameRef = useRef<number>(0);
+  const phaseStartTimeRef = useRef(0);
+  const currentPhaseIdxRef = useRef(0);
+  const currentScaleRef = useRef(MIN_SCALE);
+  const startScaleRef = useRef(MIN_SCALE);
+  const targetScaleRef = useRef(MIN_SCALE);
+  const phaseDurMsRef = useRef(0);
+  const sessionRunningRef = useRef(false);
+  const totalElapsedRef = useRef(0);
+  const lastTickRef = useRef(0);
   const orbRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
-  const currentScaleRef = useRef(0.5);
-  const [sessionReady, setSessionReady] = useState(false);
 
   const { data: progress = [] } = useQuery({
     queryKey: ["breathProgress", user?.id],
@@ -175,73 +195,113 @@ export default function BreathePage() {
   const totalSeconds = selectedDuration * 60;
   const phases = selectedTech.phases;
 
-  // Apply orb scale directly via DOM for precise control
-  const applyOrbScale = useCallback((scale: number, durationSecs: number) => {
-    currentScaleRef.current = scale;
-    if (orbRef.current) {
-      orbRef.current.style.transition = durationSecs > 0 ? `transform ${durationSecs}s ease-in-out` : "none";
-      orbRef.current.style.transform = `scale(${scale})`;
-    }
-    if (ringRef.current) {
-      ringRef.current.style.transition = durationSecs > 0 ? `transform ${durationSecs}s ease-in-out` : "none";
-      ringRef.current.style.transform = `scale(${scale * 1.18})`;
-    }
+  // Compute target scale for a phase given current scale
+  const getTargetScale = useCallback((label: string, fromScale: number) => {
+    if (isInhalePhase(label)) return MAX_SCALE;
+    if (isExhalePhase(label)) return MIN_SCALE;
+    if (isHoldPhase(label)) return fromScale; // stay where we are
+    return fromScale;
   }, []);
 
-  // When session starts: set orb to SMALL with NO transition, then after a frame, animate to first phase
-  useEffect(() => {
-    if (step === "session" && !sessionReady) {
-      // Force small with no transition
-      applyOrbScale(0.5, 0);
-      // After two frames, animate to the first phase target
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const firstLabel = phases[0].label;
-          const target = getTargetScale(firstLabel, 0.5);
-          const dur = firstLabel.toLowerCase().includes("hold") ? 0 : phases[0].duration;
-          applyOrbScale(target, dur);
-          setSessionReady(true);
-        });
-      });
-    }
-    if (step !== "session") {
-      setSessionReady(false);
-    }
-  }, [step, phases, applyOrbScale, sessionReady]);
+  // Set orb scale directly on DOM
+  const setOrbDom = useCallback((scale: number) => {
+    if (orbRef.current) orbRef.current.style.transform = `scale(${scale})`;
+    if (ringRef.current) ringRef.current.style.transform = `scale(${scale * 1.18})`;
+  }, []);
 
-  // Phase transitions during session
-  useEffect(() => {
-    if (step !== "session") { clearInterval(timerRef.current); return; }
+  // Start a specific phase
+  const startPhase = useCallback((idx: number, now: number) => {
+    const phase = phases[idx % phases.length];
+    currentPhaseIdxRef.current = idx % phases.length;
+    phaseStartTimeRef.current = now;
+    phaseDurMsRef.current = phase.duration * 1000;
 
-    timerRef.current = setInterval(() => {
-      setPhaseTime(prev => {
-        const phaseDur = phases[phaseIndex].duration;
-        if (prev + 1 >= phaseDur) {
-          const nextIndex = (phaseIndex + 1) % phases.length;
-          setPhaseIndex(nextIndex);
-          const nextLabel = phases[nextIndex].label;
-          const target = getTargetScale(nextLabel, currentScaleRef.current);
-          const transDur = nextLabel.toLowerCase().includes("hold") ? 0 : phases[nextIndex].duration;
-          applyOrbScale(target, transDur);
-          return 0;
-        }
-        return prev + 1;
-      });
-      setTotalElapsed(prev => {
-        if (prev + 1 >= totalSeconds) {
-          clearInterval(timerRef.current);
-          setStep("checkin_after");
-          return prev + 1;
-        }
-        return prev + 1;
-      });
-    }, 1000);
-    return () => { clearInterval(timerRef.current); };
-  }, [step, phaseIndex, phases, totalSeconds, applyOrbScale]);
+    startScaleRef.current = currentScaleRef.current;
+    targetScaleRef.current = getTargetScale(phase.label, currentScaleRef.current);
+
+    setPhaseLabel(phase.label);
+    setPhaseCountdown(phase.duration);
+    setPhaseIndex(idx % phases.length);
+  }, [phases, getTargetScale]);
+
+  // The main animation loop using rAF
+  const animate = useCallback((timestamp: number) => {
+    if (!sessionRunningRef.current) return;
+
+    // Track total elapsed
+    if (lastTickRef.current > 0) {
+      const delta = (timestamp - lastTickRef.current) / 1000;
+      totalElapsedRef.current += delta;
+      // Update React state for display (throttled to ~4fps for perf)
+      if (Math.floor(totalElapsedRef.current) !== Math.floor(totalElapsedRef.current - delta)) {
+        setTotalElapsed(Math.floor(totalElapsedRef.current));
+      }
+      if (totalElapsedRef.current >= totalSeconds) {
+        sessionRunningRef.current = false;
+        setTotalElapsed(totalSeconds);
+        setStep("checkin_after");
+        return;
+      }
+    }
+    lastTickRef.current = timestamp;
+
+    // Phase progress
+    const elapsed = timestamp - phaseStartTimeRef.current;
+    const dur = phaseDurMsRef.current;
+    const progress = Math.min(elapsed / dur, 1);
+
+    // Ease in-out
+    const eased = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+    const scale = startScaleRef.current + (targetScaleRef.current - startScaleRef.current) * eased;
+    currentScaleRef.current = scale;
+    setOrbDom(scale);
+
+    // Update countdown
+    const remaining = Math.ceil((dur - elapsed) / 1000);
+    setPhaseCountdown(Math.max(0, remaining));
+
+    // Phase complete?
+    if (elapsed >= dur) {
+      currentScaleRef.current = targetScaleRef.current;
+      const nextIdx = (currentPhaseIdxRef.current + 1) % phases.length;
+      startPhase(nextIdx, timestamp);
+    }
+
+    animFrameRef.current = requestAnimationFrame(animate);
+  }, [phases, totalSeconds, setOrbDom, startPhase]);
+
+  // Start/stop session animation
+  useEffect(() => {
+    if (step === "session") {
+      // Reset everything
+      currentScaleRef.current = MIN_SCALE;
+      setOrbDom(MIN_SCALE);
+      totalElapsedRef.current = 0;
+      lastTickRef.current = 0;
+      sessionRunningRef.current = true;
+
+      // Small delay to ensure DOM has rendered at MIN_SCALE before animating
+      const timeout = setTimeout(() => {
+        startPhase(0, performance.now());
+        animFrameRef.current = requestAnimationFrame(animate);
+      }, 50);
+
+      return () => {
+        clearTimeout(timeout);
+        sessionRunningRef.current = false;
+        cancelAnimationFrame(animFrameRef.current);
+      };
+    } else {
+      sessionRunningRef.current = false;
+      cancelAnimationFrame(animFrameRef.current);
+    }
+  }, [step, animate, startPhase, setOrbDom]);
 
   const handleStart = () => {
     setPhaseIndex(0);
-    setPhaseTime(0);
     setTotalElapsed(0);
     setStep("checkin_before");
   };
@@ -266,7 +326,6 @@ export default function BreathePage() {
     setStep("done");
   };
 
-  const phaseDur = phases[phaseIndex]?.duration || 4;
   const breathworkSessions = progress.filter((p: any) => p.track_id?.startsWith("breathwork_"));
   const validSessions = breathworkSessions.filter((p: any) => p.stress_before && p.stress_after);
   const avgReduction = validSessions.length > 0
@@ -274,7 +333,7 @@ export default function BreathePage() {
     : null;
 
   return (
-    <div className="min-h-screen lg:h-screen lg:overflow-hidden font-sans flex flex-col">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden font-sans flex flex-col bg-radial-subtle">
       <div className="flex-1 flex flex-col max-w-[520px] mx-auto px-5 pt-10 pb-24 lg:pb-10 w-full lg:justify-center">
 
         {step === "setup" && (
@@ -378,24 +437,22 @@ export default function BreathePage() {
               </button>
 
               <div className="relative w-[280px] h-[280px] lg:w-[340px] lg:h-[340px] mx-auto mb-8 flex items-center justify-center">
-                {/* Gold ring - starts small via ref */}
+                {/* Gold ring */}
                 <div ref={ringRef} className="absolute w-44 h-44 lg:w-52 lg:h-52 rounded-full border border-accent/50"
                   style={{
                     boxShadow: "0 0 20px hsl(var(--accent) / 0.3)",
-                    transform: "scale(0.59)",
-                    transition: "none",
+                    transform: `scale(${MIN_SCALE * 1.18})`,
                   }} />
-                {/* Orb - starts small via ref */}
+                {/* Orb - starts at MIN_SCALE */}
                 <div ref={orbRef} className="absolute w-44 h-44 lg:w-52 lg:h-52 rounded-full"
                   style={{
                     background: "radial-gradient(circle, hsl(var(--muted) / 0.7) 0%, hsl(var(--muted) / 0.35) 50%, transparent 100%)",
-                    transform: "scale(0.5)",
-                    transition: "none",
+                    transform: `scale(${MIN_SCALE})`,
                     boxShadow: "0 0 24px hsl(var(--muted) / 0.4)",
                   }} />
                 <div className="relative z-10 flex flex-col items-center justify-center">
-                  <div className="text-display text-2xl lg:text-3xl text-foreground">{phases[phaseIndex].label}</div>
-                  <div className="text-[32px] lg:text-[40px] font-bold text-foreground mt-0.5">{phaseDur - phaseTime}</div>
+                  <div className="text-display text-2xl lg:text-3xl text-foreground">{phaseLabel}</div>
+                  <div className="text-[32px] lg:text-[40px] font-bold text-foreground mt-0.5">{phaseCountdown}</div>
                 </div>
               </div>
 
@@ -403,35 +460,30 @@ export default function BreathePage() {
                 {Math.floor(totalElapsed / 60)}:{(totalElapsed % 60).toString().padStart(2, "0")} / {Math.floor(totalSeconds / 60)}:{(totalSeconds % 60).toString().padStart(2, "0")}
               </div>
 
-              <button onClick={() => { clearInterval(timerRef.current); setStep("checkin_after"); }}
-                className="px-8 py-3 rounded-xl text-sm border border-foreground/15 text-muted-foreground hover:text-foreground transition-colors">
-                End session
+              <button onClick={() => { sessionRunningRef.current = false; cancelAnimationFrame(animFrameRef.current); setStep("checkin_after"); }}
+                className="px-8 py-3 rounded-full border border-muted-foreground/25 text-muted-foreground text-sm font-sans hover:border-accent/40 hover:text-foreground transition-all">
+                End Session
               </button>
             </motion.div>
           )}
 
           {step === "checkin_after" && (
             <motion.div key="checkin_after" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-              <StressRating label="How do you feel now?" onSelect={handleAfterRated} />
+              <StressRating label="How stressed do you feel now?" onSelect={handleAfterRated} />
             </motion.div>
           )}
 
           {step === "done" && (
-            <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-              className="flex flex-col items-center py-10 text-center">
-              <div className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center mb-6 shadow-lg">
-                <span className="text-3xl">✓</span>
-              </div>
-              <h2 className="text-display text-2xl mb-3">Session Complete</h2>
-              {stressBefore !== null && stressAfter !== null && (
-                <div className="flex gap-6 mb-5">
-                  <div><span className="text-display text-2xl">{stressBefore}</span><p className="text-ui text-[10px] uppercase tracking-wider mt-0.5">Before</p></div>
-                  <div className="text-accent text-2xl">→</div>
-                  <div><span className="text-display text-2xl">{stressAfter}</span><p className="text-ui text-[10px] uppercase tracking-wider mt-0.5">After</p></div>
-                </div>
+            <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-12">
+              <div className="text-5xl mb-6 opacity-80">✦</div>
+              <h2 className="text-display text-3xl mb-3">Session Complete</h2>
+              {stressBefore && stressAfter && stressBefore > stressAfter && (
+                <p className="text-accent text-sm font-sans mb-6">
+                  Stress reduced by {Math.round(((stressBefore - stressAfter) / stressBefore) * 100)}%
+                </p>
               )}
-              <button onClick={() => { setStep("setup"); }}
-                className="px-8 py-3 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-bold active:scale-95 transition-transform">
+              <button onClick={() => { setStep("setup"); setStressBefore(null); setStressAfter(null); }}
+                className="px-8 py-3 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-bold">
                 Done
               </button>
             </motion.div>
