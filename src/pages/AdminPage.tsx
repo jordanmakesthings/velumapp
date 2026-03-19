@@ -278,10 +278,10 @@ export default function AdminPage() {
         content_type: data.content_type || "audio", steps: parsedSteps, tags: parsedTags,
       };
       if (editingTrack) {
-        const { error } = await supabase.from("tracks").update(saveData).eq("id", editingTrack.id);
+        const { error } = await supabase.from("tracks").update(saveData as any).eq("id", editingTrack.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("tracks").insert(saveData);
+        const { error } = await supabase.from("tracks").insert(saveData as any);
         if (error) throw error;
       }
     },
