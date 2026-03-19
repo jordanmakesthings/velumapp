@@ -58,23 +58,15 @@ const techniques: Technique[] = [
 
 type Stage = "setup" | "checkin_before" | "session" | "checkin_after" | "done";
 
-// AMBIENT MUSIC URL (Google Drive direct download link)
 const AMBIENT_MUSIC_URL = "https://drive.google.com/uc?export=download&id=1sXeRiZUQJQ2E1T4_FfhKDGmE8L4wyZ5W";
 
-const getOrbScale = (label: string, prevScale: number) => {
+const getTargetScale = (label: string, prevScale: number) => {
   const l = label.toLowerCase();
-  if (l === "inhale again") return Math.min((prevScale || 0.65) + 0.4, 1.45);
-  if (l.includes("inhale")) return 1.45;
-  if (l.includes("exhale")) return 0.65;
+  if (l === "inhale again") return Math.min((prevScale || 0.5) + 0.35, 1.4);
+  if (l.includes("inhale")) return 1.4;
+  if (l.includes("exhale")) return 0.5;
   if (l.includes("hold")) return prevScale;
   return prevScale;
-};
-
-const getOrbTransitionDur = (label: string, duration: number) => {
-  const l = label.toLowerCase();
-  if (l === "inhale again") return 3;
-  if (l.includes("hold")) return 0;
-  return duration;
 };
 
 function StressRating({ label, onSelect }: { label: string; onSelect: (n: number) => void }) {
@@ -112,12 +104,17 @@ export default function BreathePage() {
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [phaseTime, setPhaseTime] = useState(0);
   const [totalElapsed, setTotalElapsed] = useState(0);
-  const [orbScale, setOrbScale] = useState(0.65); // Start SMALL
-  const [orbTransitionDur, setOrbTransitionDur] = useState(4);
-  const [musicEnabled, setMusicEnabled] = useState(true); // ON by default
+  const [musicEnabled, setMusicEnabled] = useState(true);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Orb animation via CSS classes, NOT inline scale state
+  // We use a ref to track the actual current scale for "hold" phases
+  const orbRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+  const currentScaleRef = useRef(0.5);
+  const [sessionReady, setSessionReady] = useState(false);
 
   const { data: progress = [] } = useQuery({
     queryKey: ["breathProgress", user?.id],
@@ -140,10 +137,7 @@ export default function BreathePage() {
       stress_before: number | null; stress_after: number; progress_seconds: number;
     }) => {
       if (!user) return;
-      const { error } = await supabase.from("user_progress").insert({
-        user_id: user.id,
-        ...data,
-      });
+      const { error } = await supabase.from("user_progress").insert({ user_id: user.id, ...data });
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["breathProgress"] }),
@@ -157,18 +151,13 @@ export default function BreathePage() {
       audioRef.current.volume = 0.3;
     }
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     };
   }, []);
 
-  // Toggle music based on musicEnabled and session state
   useEffect(() => {
     if (!audioRef.current) return;
-    const isInSession = step === "session";
-    if (musicEnabled && isInSession) {
+    if (musicEnabled && step === "session") {
       audioRef.current.play().catch(() => {});
       setMusicPlaying(true);
     } else {
@@ -177,37 +166,50 @@ export default function BreathePage() {
     }
   }, [musicEnabled, step]);
 
-  // Stop music on exit/completion
   useEffect(() => {
     if (step === "done" || step === "checkin_after") {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-        setMusicPlaying(false);
-      }
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; setMusicPlaying(false); }
     }
   }, [step]);
 
   const totalSeconds = selectedDuration * 60;
   const phases = selectedTech.phases;
 
-  // Dedicated effect: when session first starts, trigger first inhale after a brief pause
-  const sessionStartedRef = useRef(false);
+  // Apply orb scale directly via DOM for precise control
+  const applyOrbScale = useCallback((scale: number, durationSecs: number) => {
+    currentScaleRef.current = scale;
+    if (orbRef.current) {
+      orbRef.current.style.transition = durationSecs > 0 ? `transform ${durationSecs}s ease-in-out` : "none";
+      orbRef.current.style.transform = `scale(${scale})`;
+    }
+    if (ringRef.current) {
+      ringRef.current.style.transition = durationSecs > 0 ? `transform ${durationSecs}s ease-in-out` : "none";
+      ringRef.current.style.transform = `scale(${scale * 1.18})`;
+    }
+  }, []);
+
+  // When session starts: set orb to SMALL with NO transition, then after a frame, animate to first phase
   useEffect(() => {
-    if (step === "session" && !sessionStartedRef.current) {
-      sessionStartedRef.current = true;
-      // Orb is at 0.65 (small). After 100ms, animate to inhale size over the inhale duration.
-      const t = setTimeout(() => {
-        setOrbScale(getOrbScale(phases[0].label, 0.65));
-        setOrbTransitionDur(getOrbTransitionDur(phases[0].label, phases[0].duration));
-      }, 100);
-      return () => clearTimeout(t);
+    if (step === "session" && !sessionReady) {
+      // Force small with no transition
+      applyOrbScale(0.5, 0);
+      // After two frames, animate to the first phase target
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const firstLabel = phases[0].label;
+          const target = getTargetScale(firstLabel, 0.5);
+          const dur = firstLabel.toLowerCase().includes("hold") ? 0 : phases[0].duration;
+          applyOrbScale(target, dur);
+          setSessionReady(true);
+        });
+      });
     }
     if (step !== "session") {
-      sessionStartedRef.current = false;
+      setSessionReady(false);
     }
-  }, [step, phases]);
+  }, [step, phases, applyOrbScale, sessionReady]);
 
+  // Phase transitions during session
   useEffect(() => {
     if (step !== "session") { clearInterval(timerRef.current); return; }
 
@@ -217,8 +219,10 @@ export default function BreathePage() {
         if (prev + 1 >= phaseDur) {
           const nextIndex = (phaseIndex + 1) % phases.length;
           setPhaseIndex(nextIndex);
-          setOrbScale(prevScale => getOrbScale(phases[nextIndex].label, prevScale));
-          setOrbTransitionDur(getOrbTransitionDur(phases[nextIndex].label, phases[nextIndex].duration));
+          const nextLabel = phases[nextIndex].label;
+          const target = getTargetScale(nextLabel, currentScaleRef.current);
+          const transDur = nextLabel.toLowerCase().includes("hold") ? 0 : phases[nextIndex].duration;
+          applyOrbScale(target, transDur);
           return 0;
         }
         return prev + 1;
@@ -233,14 +237,12 @@ export default function BreathePage() {
       });
     }, 1000);
     return () => { clearInterval(timerRef.current); };
-  }, [step, phaseIndex, phases, totalSeconds]);
+  }, [step, phaseIndex, phases, totalSeconds, applyOrbScale]);
 
   const handleStart = () => {
     setPhaseIndex(0);
     setPhaseTime(0);
     setTotalElapsed(0);
-    setOrbScale(0.65); // Always start SMALL
-    setOrbTransitionDur(phases[0].duration);
     setStep("checkin_before");
   };
 
@@ -264,10 +266,6 @@ export default function BreathePage() {
     setStep("done");
   };
 
-  const handleToggleMusic = () => {
-    setMusicEnabled(v => !v);
-  };
-
   const phaseDur = phases[phaseIndex]?.duration || 4;
   const breathworkSessions = progress.filter((p: any) => p.track_id?.startsWith("breathwork_"));
   const validSessions = breathworkSessions.filter((p: any) => p.stress_before && p.stress_after);
@@ -279,7 +277,6 @@ export default function BreathePage() {
     <div className="min-h-screen lg:h-screen lg:overflow-hidden font-sans flex flex-col">
       <div className="flex-1 flex flex-col max-w-[520px] mx-auto px-5 pt-10 pb-24 lg:pb-10 w-full lg:justify-center">
 
-        {/* Header - hide during session on desktop for immersion */}
         {step === "setup" && (
           <div className="mb-6">
             <h1 className="text-display text-4xl mb-1.5">Breathwork</h1>
@@ -287,7 +284,6 @@ export default function BreathePage() {
           </div>
         )}
 
-        {/* Stats */}
         {step === "setup" && breathworkSessions.length > 0 && (
           <div className="flex gap-2.5 mb-6">
             <div className="flex-1 velum-card-flat p-3.5 text-center">
@@ -304,10 +300,8 @@ export default function BreathePage() {
         )}
 
         <AnimatePresence mode="wait">
-          {/* SETUP */}
           {step === "setup" && (
             <motion.div key="setup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {/* Technique grid */}
               <div className="mb-5">
                 <p className="text-[11px] tracking-[2px] uppercase text-muted-foreground/50 mb-3">Choose Technique</p>
                 <div className="grid grid-cols-2 gap-2">
@@ -315,8 +309,7 @@ export default function BreathePage() {
                     const sel = selectedTech.id === t.id;
                     return (
                       <button key={t.id} onClick={() => setSelectedTech(t)}
-                        className={`velum-card p-3.5 text-left transition-all duration-200 ${sel ? "ring-1 ring-accent/50" : ""}`}
-                      >
+                        className={`velum-card p-3.5 text-left transition-all duration-200 ${sel ? "ring-1 ring-accent/50" : ""}`}>
                         <div className="w-2 h-2 rounded-full mb-2" style={{ background: t.color, boxShadow: sel ? `0 0 8px ${t.color}` : "none" }} />
                         <div className="text-[13px] font-semibold text-foreground mb-0.5 uppercase">{t.name}</div>
                         <div className="text-[11px] text-muted-foreground">{t.desc}</div>
@@ -333,25 +326,19 @@ export default function BreathePage() {
                 </div>
               </div>
 
-              {/* Duration slider */}
               <div className="velum-card p-5 mb-5 border border-accent/20">
                 <div className="flex justify-between items-center mb-4">
                   <p className="text-[11px] tracking-[2px] uppercase text-muted-foreground/50">Duration</p>
                   <span className="text-display text-2xl text-accent">{selectedDuration} min</span>
                 </div>
-                <input
-                  type="range" min={3} max={10} step={1}
-                  value={selectedDuration}
-                  onChange={e => setSelectedDuration(Number(e.target.value))}
-                  className="w-full cursor-pointer"
-                />
+                <input type="range" min={3} max={10} step={1} value={selectedDuration}
+                  onChange={e => setSelectedDuration(Number(e.target.value))} className="w-full cursor-pointer" />
                 <div className="flex justify-between mt-1.5">
                   <span className="text-[10px] text-muted-foreground/40">3 min</span>
                   <span className="text-[10px] text-muted-foreground/40">10 min</span>
                 </div>
               </div>
 
-              {/* Music toggle */}
               <div className={`velum-card-flat p-4 flex items-center justify-between mb-2 border transition-colors duration-200 ${musicEnabled ? "border-accent/30" : "border-foreground/10"}`}>
                 <div className="flex items-center gap-3">
                   <Headphones className="w-5 h-5 text-accent" />
@@ -360,15 +347,13 @@ export default function BreathePage() {
                     <div className="text-[11px] text-muted-foreground mt-0.5">Ambient soundscape</div>
                   </div>
                 </div>
-                <button onClick={handleToggleMusic}
-                  className={`w-12 h-[26px] rounded-full relative transition-colors duration-250 flex-shrink-0 ${musicEnabled ? "bg-accent" : "bg-muted-foreground/30"}`}
-                >
+                <button onClick={() => setMusicEnabled(v => !v)}
+                  className={`w-12 h-[26px] rounded-full relative transition-colors duration-250 flex-shrink-0 ${musicEnabled ? "bg-accent" : "bg-muted-foreground/30"}`}>
                   <div className={`w-5 h-5 rounded-full bg-white absolute top-[3px] transition-all duration-250 shadow ${musicEnabled ? "left-[25px]" : "left-[3px]"}`} />
                 </button>
               </div>
               <p className="text-muted-foreground/50 text-[11px] text-center mb-5">🎧 Headphones recommended for full effect</p>
 
-              {/* Begin */}
               <button onClick={handleStart}
                 className="w-full gold-gradient text-primary-foreground rounded-[14px] py-[19px] text-base font-extrabold font-sans tracking-[0.02em] active:scale-[0.98] transition-transform">
                 Begin · {selectedDuration} min
@@ -376,42 +361,38 @@ export default function BreathePage() {
             </motion.div>
           )}
 
-          {/* STRESS CHECK-IN */}
           {step === "checkin_before" && (
             <motion.div key="checkin_before" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <StressRating label="How stressed do you feel right now?" onSelect={handleBeforeRated} />
             </motion.div>
           )}
 
-          {/* SESSION */}
           {step === "session" && (
             <motion.div key="session" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="text-center flex flex-col items-center justify-center flex-1">
               
-              {/* Music toggle during session */}
-              <button onClick={handleToggleMusic}
+              <button onClick={() => setMusicEnabled(v => !v)}
                 className={`absolute top-6 right-6 p-3 rounded-full transition-all ${musicPlaying ? "text-accent bg-accent/10" : "text-muted-foreground/40 bg-card"}`}
                 title={musicPlaying ? "Mute music" : "Play music"}>
                 <Headphones className="w-5 h-5" />
               </button>
 
               <div className="relative w-[280px] h-[280px] lg:w-[340px] lg:h-[340px] mx-auto mb-8 flex items-center justify-center">
-                {/* Gold ring */}
-                <div className="absolute w-44 h-44 lg:w-52 lg:h-52 rounded-full border border-accent/50"
+                {/* Gold ring - starts small via ref */}
+                <div ref={ringRef} className="absolute w-44 h-44 lg:w-52 lg:h-52 rounded-full border border-accent/50"
                   style={{
                     boxShadow: "0 0 20px hsl(var(--accent) / 0.3)",
-                    transform: `scale(${orbScale * 1.18})`,
-                    transition: `transform ${orbTransitionDur}s ease-in-out`,
+                    transform: "scale(0.59)",
+                    transition: "none",
                   }} />
-                {/* Orb - misty sage */}
-                <div className="absolute w-44 h-44 lg:w-52 lg:h-52 rounded-full"
+                {/* Orb - starts small via ref */}
+                <div ref={orbRef} className="absolute w-44 h-44 lg:w-52 lg:h-52 rounded-full"
                   style={{
                     background: "radial-gradient(circle, hsl(var(--muted) / 0.7) 0%, hsl(var(--muted) / 0.35) 50%, transparent 100%)",
-                    transform: `scale(${orbScale})`,
-                    transition: `transform ${orbTransitionDur}s ease-in-out`,
-                    boxShadow: `0 0 ${orbScale > 1 ? 80 : 24}px hsl(var(--muted) / 0.4)`,
+                    transform: "scale(0.5)",
+                    transition: "none",
+                    boxShadow: "0 0 24px hsl(var(--muted) / 0.4)",
                   }} />
-                {/* Phase label */}
                 <div className="relative z-10 flex flex-col items-center justify-center">
                   <div className="text-display text-2xl lg:text-3xl text-foreground">{phases[phaseIndex].label}</div>
                   <div className="text-[32px] lg:text-[40px] font-bold text-foreground mt-0.5">{phaseDur - phaseTime}</div>
@@ -419,50 +400,40 @@ export default function BreathePage() {
               </div>
 
               <div className="text-[13px] text-muted-foreground/50 mb-7">
-                {Math.floor(totalElapsed / 60)}:{String(totalElapsed % 60).padStart(2, "0")} / {selectedDuration}:00
+                {Math.floor(totalElapsed / 60)}:{(totalElapsed % 60).toString().padStart(2, "0")} / {Math.floor(totalSeconds / 60)}:{(totalSeconds % 60).toString().padStart(2, "0")}
               </div>
 
-              <button onClick={() => setStep("checkin_after")}
-                className="border border-muted-foreground/30 rounded-[10px] px-6 py-2.5 text-[13px] text-foreground/40 font-sans hover:text-foreground/60 transition-colors">
+              <button onClick={() => { clearInterval(timerRef.current); setStep("checkin_after"); }}
+                className="px-8 py-3 rounded-xl text-sm border border-foreground/15 text-muted-foreground hover:text-foreground transition-colors">
                 End session
               </button>
             </motion.div>
           )}
 
-          {/* CHECK-IN AFTER */}
           {step === "checkin_after" && (
             <motion.div key="checkin_after" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <StressRating label="How do you feel now?" onSelect={handleAfterRated} />
             </motion.div>
           )}
 
-          {/* DONE */}
           {step === "done" && (
-            <motion.div key="done" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              className="text-center pt-8">
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}
-                className="w-[72px] h-[72px] rounded-full border-2 border-accent flex items-center justify-center mx-auto mb-6 text-3xl text-accent">
-                ◌
-              </motion.div>
-              <h2 className="text-display text-[30px] text-foreground mb-2.5">Session complete.</h2>
-              {stressBefore && stressAfter && (
-                <p className="text-[15px] text-muted-foreground mb-8 leading-relaxed">
-                  Stress: {stressBefore} → {stressAfter}
-                  {stressAfter < stressBefore && (
-                    <span className="text-accent"> ↓ {Math.round(((stressBefore - stressAfter) / stressBefore) * 100)}%</span>
-                  )}
-                </p>
-              )}
-              <div className="flex flex-col gap-2.5">
-                <button onClick={() => { setStep("setup"); setStressBefore(null); setStressAfter(null); }}
-                  className="w-full gold-gradient text-primary-foreground rounded-[14px] py-[18px] text-base font-extrabold font-sans active:scale-[0.98] transition-transform">
-                  Practice another session
-                </button>
-                <button onClick={() => navigate("/")}
-                  className="w-full border border-muted-foreground/35 text-foreground rounded-[14px] py-[17px] text-[15px] font-semibold font-sans active:scale-[0.98] transition-transform">
-                  Return to Home
-                </button>
+            <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+              className="flex flex-col items-center py-10 text-center">
+              <div className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center mb-6 shadow-lg">
+                <span className="text-3xl">✓</span>
               </div>
+              <h2 className="text-display text-2xl mb-3">Session Complete</h2>
+              {stressBefore !== null && stressAfter !== null && (
+                <div className="flex gap-6 mb-5">
+                  <div><span className="text-display text-2xl">{stressBefore}</span><p className="text-ui text-[10px] uppercase tracking-wider mt-0.5">Before</p></div>
+                  <div className="text-accent text-2xl">→</div>
+                  <div><span className="text-display text-2xl">{stressAfter}</span><p className="text-ui text-[10px] uppercase tracking-wider mt-0.5">After</p></div>
+                </div>
+              )}
+              <button onClick={() => { setStep("setup"); }}
+                className="px-8 py-3 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-bold active:scale-95 transition-transform">
+                Done
+              </button>
             </motion.div>
           )}
         </AnimatePresence>

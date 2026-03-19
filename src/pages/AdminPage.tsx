@@ -436,23 +436,24 @@ export default function AdminPage() {
   const UploadRow = ({ label, field, folder, value, setForm, uploadKey, accept = "image/*", preview = "image" }: {
     label: string; field: string; folder: string; value: string;
     setForm: (fn: (p: any) => any) => void; uploadKey: string;
-    accept?: string; preview?: "image" | "audio";
+    accept?: string; preview?: "image" | "audio" | "video";
   }) => (
     <div className="md:col-span-2">
       <label className={labelClass}>{label}</label>
       <div className="flex gap-3 items-center flex-wrap">
         <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm cursor-pointer border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-accent/30 transition-all">
           <Upload className="w-4 h-4" />
-          {uploading[uploadKey] ? "Uploading..." : `Upload ${preview === "audio" ? "audio" : "image"}`}
+          {uploading[uploadKey] ? "Uploading..." : `Upload ${preview === "audio" ? "audio" : preview === "video" ? "video" : "image"}`}
           <input type="file" accept={accept} className="hidden"
             onChange={e => handleUpload(e, field, folder, setForm, uploadKey)}
             disabled={!!uploading[uploadKey]} />
         </label>
         {value && preview === "image" && <img src={value} alt="thumb" className="w-16 h-10 rounded-lg object-cover border border-foreground/10" />}
         {value && preview === "audio" && <span className="text-xs text-muted-foreground flex items-center gap-1"><Check className="w-3 h-3 text-accent" /> Audio uploaded</span>}
+        {value && preview === "video" && <span className="text-xs text-muted-foreground flex items-center gap-1"><Check className="w-3 h-3 text-accent" /> Video uploaded</span>}
       </div>
       <input value={value} onChange={e => setForm((f: any) => ({ ...f, [field]: e.target.value }))}
-        className={inputClass + " mt-2 text-xs"} placeholder={`Or paste ${preview === "audio" ? "audio" : "image"} URL`} />
+        className={inputClass + " mt-2 text-xs"} placeholder={`Or paste ${preview} URL`} />
     </div>
   );
 
@@ -477,9 +478,21 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="flex">
+      {/* Mobile tabs */}
+      <div className="lg:hidden flex gap-1 overflow-x-auto px-4 py-3 border-b border-accent/10 w-full">
+        {ADMIN_TABS.map(({ key, label }) => (
+          <button key={key} onClick={() => setActiveTab(key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-sans whitespace-nowrap transition-all ${
+              activeTab === key ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"
+            }`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-1">
         {/* Desktop sidebar */}
-        <div className="hidden lg:flex flex-col w-48 border-r border-accent/10 min-h-[calc(100vh-57px)] py-4 px-3">
+        <div className="hidden lg:flex flex-col w-48 border-r border-accent/10 min-h-[calc(100vh-57px)] py-4 px-3 shrink-0">
           {ADMIN_TABS.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => setActiveTab(key)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-sans transition-all mb-1 ${
@@ -490,20 +503,7 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* Mobile tabs */}
-        <div className="lg:hidden flex gap-1 overflow-x-auto px-4 py-3 border-b border-accent/10 w-full">
-          {ADMIN_TABS.map(({ key, label }) => (
-            <button key={key} onClick={() => setActiveTab(key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-sans whitespace-nowrap transition-all ${
-                activeTab === key ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"
-              }`}>
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="p-4 lg:p-8 max-w-4xl mx-auto">
+        <div className="flex-1 p-4 lg:p-8 max-w-4xl mx-auto">
 
         {/* ============ TRACKS TAB ============ */}
         {activeTab === "tracks" && (
@@ -575,13 +575,14 @@ export default function AdminPage() {
                     <label className={labelClass}>Content Type</label>
                     <select value={trackForm.content_type} onChange={e => setTrackForm(f => ({ ...f, content_type: e.target.value }))} className={inputClass}>
                       <option value="audio">Audio</option>
+                      <option value="video">Video</option>
                       <option value="journaling">Journaling</option>
                     </select>
                   </div>
                   <div>
                     <label className={labelClass}>Tags (comma-separated)</label>
                     <input value={trackForm.tags} onChange={e => setTrackForm(f => ({ ...f, tags: e.target.value }))}
-                      className={inputClass} placeholder="e.g. stress, anxiety, focus" />
+                      className={inputClass} placeholder="e.g. stress, anxiety, focus, calm, sleep" />
                   </div>
 
                   {/* Thumbnail Generator at top */}
@@ -595,10 +596,18 @@ export default function AdminPage() {
                   <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
                     setForm={setTrackFormWrapped} uploadKey="trackImage" />
 
-                  {trackForm.content_type === "audio" && (
+                  {(trackForm.content_type === "audio" || trackForm.content_type === "video") && (
                     <>
-                      <UploadRow label="Audio File" field="audio_url" folder="audio" value={trackForm.audio_url}
-                        setForm={setTrackFormWrapped} uploadKey="trackAudio" accept="audio/*" preview="audio" />
+                      <UploadRow
+                        label={trackForm.content_type === "video" ? "Video File" : "Audio File"}
+                        field="audio_url"
+                        folder={trackForm.content_type === "video" ? "video" : "audio"}
+                        value={trackForm.audio_url}
+                        setForm={setTrackFormWrapped}
+                        uploadKey="trackMedia"
+                        accept={trackForm.content_type === "video" ? "video/*" : "audio/*"}
+                        preview={trackForm.content_type === "video" ? "video" : "audio"}
+                      />
                     </>
                   )}
 
@@ -987,6 +996,7 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

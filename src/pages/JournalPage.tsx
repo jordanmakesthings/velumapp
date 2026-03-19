@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Trash2 } from "lucide-react";
+import { Trash2, Feather, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 function formatDate(dateStr: string) {
@@ -26,7 +26,6 @@ export default function JournalPage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Fetch prompts
   const { data: prompts = [] } = useQuery({
     queryKey: ["prompts"],
     queryFn: async () => {
@@ -35,7 +34,6 @@ export default function JournalPage() {
     },
   });
 
-  // Fetch reflections
   const { data: reflections = [], isLoading: loadingReflections } = useQuery({
     queryKey: ["reflections", user?.id],
     queryFn: async () => {
@@ -46,7 +44,6 @@ export default function JournalPage() {
     enabled: !!user,
   });
 
-  // Fetch completed progress (for guided exercises)
   const { data: allProgress = [] } = useQuery({
     queryKey: ["journalingProgress", user?.id],
     queryFn: async () => {
@@ -57,7 +54,6 @@ export default function JournalPage() {
     enabled: !!user,
   });
 
-  // Fetch journaling tracks
   const { data: journalingTracks = [] } = useQuery({
     queryKey: ["journalingTracks"],
     queryFn: async () => {
@@ -66,7 +62,6 @@ export default function JournalPage() {
     },
   });
 
-  // Fetch mastery responses
   const { data: masteryResponses = [] } = useQuery({
     queryKey: ["masteryResponses", user?.id],
     queryFn: async () => {
@@ -77,13 +72,11 @@ export default function JournalPage() {
     enabled: !!user,
   });
 
-  // Today's prompt
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const todayPrompt = prompts.length > 0 ? prompts[dayOfYear % prompts.length]?.prompt : "What does your body need from you today?";
   const today = new Date().toISOString().split("T")[0];
   const todayEntry = reflections.find((r: any) => r.reflection_date === today);
 
-  // Save mutation
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
@@ -113,7 +106,6 @@ export default function JournalPage() {
 
   const displayReflection = todayEntry && !reflection ? (todayEntry as any).content : reflection;
 
-  // Build journaling track map
   const journalingTrackMap = useMemo(() => {
     const map: Record<string, any> = {};
     journalingTracks.forEach((t: any) => { map[t.id] = t; });
@@ -124,7 +116,6 @@ export default function JournalPage() {
     return allProgress.filter((p: any) => journalingTrackMap[p.track_id]).map((p: any) => ({ ...p, track: journalingTrackMap[p.track_id] }));
   }, [allProgress, journalingTrackMap]);
 
-  // Merge all entries
   const allEntries = useMemo(() => {
     const items: { type: FilterType; date: string; data: any }[] = [];
     reflections.forEach((r: any) => items.push({ type: "reflection", date: r.reflection_date, data: r }));
@@ -142,7 +133,6 @@ export default function JournalPage() {
   const totalWords = useMemo(() => reflections.reduce((sum: number, r: any) => sum + countWords(r.content), 0), [reflections]);
   const completedTrackIds = useMemo(() => new Set(allProgress.map((p: any) => p.track_id)), [allProgress]);
 
-  // Filter out today's entry from the merged list
   const pastEntries = filtered.filter(e => !(e.type === "reflection" && e.date === today));
   const isLoading = loadingReflections || !user;
 
@@ -187,7 +177,7 @@ export default function JournalPage() {
             value={displayReflection}
             onChange={(e) => setReflection(e.target.value)}
             placeholder="Write your reflection..."
-            className="w-full bg-secondary rounded-lg p-4 text-foreground text-sm font-sans placeholder:text-muted-foreground/50 resize-none h-32 focus:outline-none focus:ring-1 focus:ring-accent/30 transition-shadow"
+            className="w-full rounded-lg p-4 text-foreground text-sm font-sans placeholder:text-muted-foreground/50 resize-none h-32 focus:outline-none focus:ring-1 focus:ring-accent/30 transition-shadow border border-foreground/15 bg-background"
           />
           <button
             onClick={() => saveMutation.mutate()}
@@ -199,11 +189,30 @@ export default function JournalPage() {
           {todayEntry && <p className="text-accent text-[10px] font-sans mt-2">You've already reflected today. Edit above to update.</p>}
         </div>
 
+        {/* Explore Guided Journaling Exercises */}
+        {journalingTracks.length > 0 && (
+          <div className="mb-8">
+            <Link to="/library?tab=journal" className="velum-card p-5 flex items-center justify-between group">
+              <div className="flex items-center gap-3">
+                <Feather className="w-5 h-5 text-accent" />
+                <div>
+                  <p className="text-foreground font-serif text-base">Explore Guided Journaling Exercises</p>
+                  <p className="text-ui text-xs mt-0.5">{journalingTracks.length} guided sessions available</p>
+                </div>
+              </div>
+              <ArrowRight className="w-5 h-5 text-accent group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        )}
+
+        {/* Past Entries heading */}
+        <p className="text-display text-xl mb-4">Past Entries</p>
+
         {/* Filter tabs */}
         <div className="flex gap-1.5 mb-8 overflow-x-auto">
           {([
             { key: "all" as FilterType, label: "All" },
-            { key: "reflection" as FilterType, label: "Daily Reflections" },
+            { key: "reflection" as FilterType, label: "My Entries" },
             { key: "exercise" as FilterType, label: "Guided Exercises" },
             { key: "mastery" as FilterType, label: "Mastery Classes" },
           ]).map(({ key, label }) => (
@@ -323,39 +332,6 @@ export default function JournalPage() {
                 </div>
               );
             })}
-          </div>
-        )}
-
-        {/* Guided Journaling Exercises */}
-        {!isLoading && journalingTracks.length > 0 && (
-          <div className="mt-14">
-            <div className="border-b border-accent/10 pb-5 mb-7">
-              <p className="text-accent/50 text-[10px] font-sans tracking-[3px] uppercase mb-2">Guided Exercises</p>
-              <h2 className="text-display text-2xl">Journaling Practices</h2>
-            </div>
-            <div className="flex flex-col gap-2.5">
-              {journalingTracks.map((track: any) => {
-                const done = completedTrackIds.has(track.id);
-                return (
-                  <Link key={track.id} to={`/player?trackId=${track.id}`}
-                    className="flex items-center gap-4 p-4 rounded-2xl bg-card/50 border border-accent/10 hover:border-accent/30 hover:bg-card/80 transition-all">
-                    <div className="w-10 h-10 rounded-lg bg-accent/8 flex items-center justify-center text-lg text-accent shrink-0">✎</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-display text-base mb-0.5">{track.title}</p>
-                      {track.description && <p className="text-ui text-xs truncate">{track.description}</p>}
-                    </div>
-                    <div className="shrink-0 text-right flex flex-col items-end gap-1">
-                      {track.duration_minutes && <span className="text-foreground/30 text-[11px] font-sans">{track.duration_minutes} min</span>}
-                      {done ? (
-                        <span className="text-muted-foreground/70 text-[10px] font-sans tracking-wide">done ✓</span>
-                      ) : (
-                        <span className="text-accent/50 text-xs">›</span>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
           </div>
         )}
       </div>
