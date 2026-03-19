@@ -477,9 +477,21 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="flex">
+      {/* Mobile tabs */}
+      <div className="lg:hidden flex gap-1 overflow-x-auto px-4 py-3 border-b border-accent/10 w-full">
+        {ADMIN_TABS.map(({ key, label }) => (
+          <button key={key} onClick={() => setActiveTab(key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-sans whitespace-nowrap transition-all ${
+              activeTab === key ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"
+            }`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-1">
         {/* Desktop sidebar */}
-        <div className="hidden lg:flex flex-col w-48 border-r border-accent/10 min-h-[calc(100vh-57px)] py-4 px-3">
+        <div className="hidden lg:flex flex-col w-48 border-r border-accent/10 min-h-[calc(100vh-57px)] py-4 px-3 shrink-0">
           {ADMIN_TABS.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => setActiveTab(key)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-sans transition-all mb-1 ${
@@ -490,20 +502,7 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* Mobile tabs */}
-        <div className="lg:hidden flex gap-1 overflow-x-auto px-4 py-3 border-b border-accent/10 w-full">
-          {ADMIN_TABS.map(({ key, label }) => (
-            <button key={key} onClick={() => setActiveTab(key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-sans whitespace-nowrap transition-all ${
-                activeTab === key ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"
-              }`}>
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="p-4 lg:p-8 max-w-4xl mx-auto">
+        <div className="flex-1 p-4 lg:p-8 max-w-4xl mx-auto">
 
         {/* ============ TRACKS TAB ============ */}
         {activeTab === "tracks" && (
