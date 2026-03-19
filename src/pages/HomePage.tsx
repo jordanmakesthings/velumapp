@@ -144,24 +144,29 @@ export default function HomePage() {
     enabled: !!user,
   });
 
-  // Stats
   const categoryCounts: Record<string, number> = {};
   (tracks as any[]).forEach((t) => { categoryCounts[t.category] = (categoryCounts[t.category] || 0) + 1; });
 
+  // Each category links to its filtered library view — NOT to /breathe or /journal
   const categories = [
     { key: "meditation", label: "Meditation" },
     { key: "rapid_resets", label: "Rapid Resets" },
     { key: "breathwork", label: "Breathwork" },
     { key: "tapping", label: "Tapping" },
     { key: "journaling", label: "Journaling" },
-    { key: "mastery", label: "MasteryClasses" },
+    { key: "mastery", label: "Mastery Classes" },
   ].map(c => ({ ...c, icon: CATEGORY_ICONS[c.key] || Sparkles, count: categoryCounts[c.key] || 0, description: CATEGORY_DESCRIPTIONS[c.key] || "" }));
+
+  const getCategoryLink = (key: string) => {
+    if (key === "mastery") return "/library?tab=mastery";
+    if (key === "journaling") return "/library?tab=journal";
+    return `/library?category=${key}`;
+  };
 
   const featuredTracks = (tracks as any[]).filter(t => t.is_featured).slice(0, 5);
   const totalSessions = progress.length;
   const totalMinutes = progress.reduce((sum: number, p: any) => sum + (p.progress_seconds || 0), 0) / 60;
 
-  // Streak
   const completedDates = new Set(progress.map((p: any) => p.completed_date));
   let streak = 0;
   const today = new Date();
@@ -172,11 +177,9 @@ export default function HomePage() {
     else if (i > 0) break;
   }
 
-  // Continue journey
   const completedTrackIds = new Set(progress.map((p: any) => p.track_id));
   const nextTrack = (tracks as any[]).find(t => !completedTrackIds.has(t.id));
 
-  // Carousel navigation
   const scrollCarousel = (dir: number) => {
     if (!carouselRef.current) return;
     const newIdx = Math.max(0, Math.min(featuredTracks.length - 1, carouselIdx + dir));
@@ -185,7 +188,6 @@ export default function HomePage() {
     if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
   };
 
-  // Save reflection
   const handleSaveReflection = async () => {
     if (!user || !reflectionText.trim()) return;
     setSavingReflection(true);
@@ -203,7 +205,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(180deg, hsl(156 51% 10%) 0%, hsl(156 40% 8%) 50%, hsl(var(--background)) 100%)" }}>
-    <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
+    <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-3">
@@ -248,7 +250,7 @@ export default function HomePage() {
           {categories.map(({ key, label, icon: Icon, count, description }) => (
             <Link
               key={key}
-              to={key === "mastery" ? "/library?tab=mastery" : key === "journaling" ? "/journal" : key === "breathwork" ? "/breathe" : `/library?category=${key}`}
+              to={getCategoryLink(key)}
               className="velum-card p-5 flex flex-col justify-between min-h-[130px] group"
             >
               <div className="flex items-start justify-between mb-3">
@@ -264,7 +266,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Breathwork CTA */}
+      {/* Breathwork CTA - matches user screenshot */}
       <Link to="/breathe" className="block mb-8">
         <div className="velum-card p-6 relative overflow-hidden border border-accent/25">
           {/* Animated orb */}
@@ -331,7 +333,6 @@ export default function HomePage() {
               </button>
             </div>
           </div>
-          {/* Dot indicators */}
           <div className="flex gap-1.5 justify-end mb-3">
             {featuredTracks.map((_: any, i: number) => (
               <div key={i} className={`h-1.5 rounded-full transition-all ${i === carouselIdx ? "w-5 bg-accent" : "w-1.5 bg-surface-light"}`} />
