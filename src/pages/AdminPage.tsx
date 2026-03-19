@@ -575,13 +575,14 @@ export default function AdminPage() {
                     <label className={labelClass}>Content Type</label>
                     <select value={trackForm.content_type} onChange={e => setTrackForm(f => ({ ...f, content_type: e.target.value }))} className={inputClass}>
                       <option value="audio">Audio</option>
+                      <option value="video">Video</option>
                       <option value="journaling">Journaling</option>
                     </select>
                   </div>
                   <div>
                     <label className={labelClass}>Tags (comma-separated)</label>
                     <input value={trackForm.tags} onChange={e => setTrackForm(f => ({ ...f, tags: e.target.value }))}
-                      className={inputClass} placeholder="e.g. stress, anxiety, focus" />
+                      className={inputClass} placeholder="e.g. stress, anxiety, focus, calm, sleep" />
                   </div>
 
                   {/* Thumbnail Generator at top */}
@@ -595,10 +596,18 @@ export default function AdminPage() {
                   <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
                     setForm={setTrackFormWrapped} uploadKey="trackImage" />
 
-                  {trackForm.content_type === "audio" && (
+                  {(trackForm.content_type === "audio" || trackForm.content_type === "video") && (
                     <>
-                      <UploadRow label="Audio File" field="audio_url" folder="audio" value={trackForm.audio_url}
-                        setForm={setTrackFormWrapped} uploadKey="trackAudio" accept="audio/*" preview="audio" />
+                      <UploadRow
+                        label={trackForm.content_type === "video" ? "Video File" : "Audio File"}
+                        field="audio_url"
+                        folder={trackForm.content_type === "video" ? "video" : "audio"}
+                        value={trackForm.audio_url}
+                        setForm={setTrackFormWrapped}
+                        uploadKey="trackMedia"
+                        accept={trackForm.content_type === "video" ? "video/*" : "audio/*"}
+                        preview={trackForm.content_type === "video" ? "video" : "audio"}
+                      />
                     </>
                   )}
 
