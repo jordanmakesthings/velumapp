@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Search, Heart, Sparkles, Wind, Zap, GraduationCap, Feather, BookOpen, Check, Play } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,9 +26,23 @@ const CATEGORIES = [
 export default function LibraryPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>("sessions");
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Handle URL params for deep linking from homepage
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    const categoryParam = searchParams.get("category");
+    if (tabParam && TABS.some(t => t.key === tabParam)) {
+      setActiveTab(tabParam as Tab);
+    }
+    if (categoryParam) {
+      setActiveTab("sessions");
+      setSelectedCategory(categoryParam);
+    }
+  }, [searchParams]);
 
   const { data: tracks = [] } = useQuery({
     queryKey: ["tracks"],
@@ -74,14 +88,6 @@ export default function LibraryPage() {
     enabled: !!user,
   });
 
-  const { data: prompts = [] } = useQuery({
-    queryKey: ["prompts"],
-    queryFn: async () => {
-      const { data } = await supabase.from("journaling_prompts").select("*").order("order_index");
-      return data || [];
-    },
-  });
-
   const favoriteTrackIds = new Set(favorites.map((f: any) => f.track_id));
   const completedTrackIds = new Set(progress.map((p: any) => p.track_id));
 
@@ -111,8 +117,40 @@ export default function LibraryPage() {
 
   const favoriteTracks = tracks.filter((t: any) => favoriteTrackIds.has(t.id));
 
+  const TrackCard = ({ track }: { track: any }) => (
+    <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card overflow-hidden group">
+      <div className="aspect-video bg-surface-light relative">
+        {track.thumbnail_url ? (
+          <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
+        )}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
+            <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
+          </div>
+        </div>
+        {completedTrackIds.has(track.id) && (
+          <div className="absolute top-2 left-2 w-5 h-5 rounded-full gold-gradient flex items-center justify-center">
+            <Check className="w-3 h-3 text-primary-foreground" />
+          </div>
+        )}
+      </div>
+      <div className="p-4 flex items-start justify-between">
+        <div>
+          <p className="text-foreground text-sm font-sans">{track.title}</p>
+          <p className="text-ui text-xs mt-1">{track.duration_minutes} min</p>
+        </div>
+        <button onClick={(e) => { e.preventDefault(); toggleFavMutation.mutate(track.id); }}
+          className={`transition-colors ${favoriteTrackIds.has(track.id) ? "text-accent" : "text-muted-foreground hover:text-accent"}`}>
+          <Heart className={`w-4 h-4 ${favoriteTrackIds.has(track.id) ? "fill-current" : ""}`} />
+        </button>
+      </div>
+    </Link>
+  );
+
   return (
-    <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
+    <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto">
       <h1 className="text-display text-3xl mb-6">Library</h1>
 
       <div className="flex gap-1 mb-6 overflow-x-auto pb-1 -mx-4 px-4">
@@ -161,35 +199,7 @@ export default function LibraryPage() {
               </button>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {filteredTracks.map((track: any) => (
-                  <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card overflow-hidden group">
-                    <div className="aspect-video bg-surface-light relative">
-                      {track.thumbnail_url ? (
-                        <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
-                          <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
-                        </div>
-                      </div>
-                      {completedTrackIds.has(track.id) && (
-                        <div className="absolute top-2 left-2 w-5 h-5 rounded-full gold-gradient flex items-center justify-center">
-                          <Check className="w-3 h-3 text-primary-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4 flex items-start justify-between">
-                      <div>
-                        <p className="text-foreground text-sm font-sans">{track.title}</p>
-                        <p className="text-ui text-xs mt-1">{track.duration_minutes} min</p>
-                      </div>
-                      <button onClick={(e) => { e.preventDefault(); toggleFavMutation.mutate(track.id); }}
-                        className={`transition-colors ${favoriteTrackIds.has(track.id) ? "text-accent" : "text-muted-foreground hover:text-accent"}`}>
-                        <Heart className={`w-4 h-4 ${favoriteTrackIds.has(track.id) ? "fill-current" : ""}`} />
-                      </button>
-                    </div>
-                  </Link>
+                  <TrackCard key={track.id} track={track} />
                 ))}
                 {filteredTracks.length === 0 && (
                   <p className="text-muted-foreground text-sm col-span-2 text-center py-8">No sessions in this category yet.</p>
@@ -210,23 +220,7 @@ export default function LibraryPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {favoriteTracks.map((track: any) => (
-              <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card overflow-hidden group">
-                <div className="aspect-video bg-surface-light relative">
-                  {track.thumbnail_url ? (
-                    <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
-                  )}
-                </div>
-                <div className="p-4 flex items-start justify-between">
-                  <div>
-                    <p className="text-foreground text-sm font-sans">{track.title}</p>
-                    <p className="text-ui text-xs mt-1">{track.duration_minutes} min</p>
-                  </div>
-                  <button onClick={(e) => { e.preventDefault(); toggleFavMutation.mutate(track.id); }}
-                    className="text-accent"><Heart className="w-4 h-4 fill-current" /></button>
-                </div>
-              </Link>
+              <TrackCard key={track.id} track={track} />
             ))}
           </div>
         )
@@ -278,35 +272,7 @@ export default function LibraryPage() {
               </div>
             ) : (
               tracks.filter((t: any) => t.category === "journaling").map((track: any) => (
-                <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card overflow-hidden group">
-                  <div className="aspect-video bg-surface-light relative">
-                    {track.thumbnail_url ? (
-                      <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
-                    )}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
-                        <Feather className="w-4 h-4 text-primary-foreground" />
-                      </div>
-                    </div>
-                    {completedTrackIds.has(track.id) && (
-                      <div className="absolute top-2 left-2 w-5 h-5 rounded-full gold-gradient flex items-center justify-center">
-                        <Check className="w-3 h-3 text-primary-foreground" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 flex items-start justify-between">
-                    <div>
-                      <p className="text-foreground text-sm font-sans">{track.title}</p>
-                      <p className="text-ui text-xs mt-1">{track.duration_minutes} min</p>
-                    </div>
-                    <button onClick={(e) => { e.preventDefault(); toggleFavMutation.mutate(track.id); }}
-                      className={`transition-colors ${favoriteTrackIds.has(track.id) ? "text-accent" : "text-muted-foreground hover:text-accent"}`}>
-                      <Heart className={`w-4 h-4 ${favoriteTrackIds.has(track.id) ? "fill-current" : ""}`} />
-                    </button>
-                  </div>
-                </Link>
+                <TrackCard key={track.id} track={track} />
               ))
             )}
           </div>
