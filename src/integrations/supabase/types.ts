@@ -502,6 +502,7 @@ export type Database = {
           order_index: number
           steps: Json | null
           subcategory_id: string | null
+          tags: Json | null
           thumbnail_url: string | null
           title: string
         }
@@ -522,6 +523,7 @@ export type Database = {
           order_index?: number
           steps?: Json | null
           subcategory_id?: string | null
+          tags?: Json | null
           thumbnail_url?: string | null
           title: string
         }
@@ -542,6 +544,7 @@ export type Database = {
           order_index?: number
           steps?: Json | null
           subcategory_id?: string | null
+          tags?: Json | null
           thumbnail_url?: string | null
           title?: string
         }

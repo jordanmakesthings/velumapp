@@ -159,7 +159,11 @@ export default function HomePage() {
 
   const getCategoryLink = (key: string) => {
     if (key === "mastery") return "/library?tab=mastery";
-    if (key === "journaling") return "/library?tab=journal";
+    if (key === "journaling") return "/journal";
+    if (key === "breathwork") return "/library?category=breathwork";
+    if (key === "meditation") return "/library?category=meditation";
+    if (key === "rapid_resets") return "/library?category=rapid_resets";
+    if (key === "tapping") return "/library?category=tapping";
     return `/library?category=${key}`;
   };
 
@@ -204,7 +208,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(180deg, hsl(156 51% 10%) 0%, hsl(156 40% 8%) 50%, hsl(var(--background)) 100%)" }}>
+    <div className="min-h-screen bg-radial-subtle">
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-8">

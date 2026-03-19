@@ -269,8 +269,8 @@ export default function AdminPage() {
     mutationFn: async (data: typeof emptyTrackForm) => {
       let parsedSteps: any = null;
       try { if (data.steps) parsedSteps = JSON.parse(data.steps); } catch { /* keep null */ }
-      const parsedTags = data.tags ? data.tags.split(",").map(t => t.trim()).filter(Boolean) : null;
-      const saveData = {
+        const parsedTags = data.tags ? data.tags.split(",").map(t => t.trim()).filter(Boolean) : [];
+      const saveData: Record<string, any> = {
         title: data.title, description: data.description || null, category: data.category,
         duration_minutes: data.duration_minutes, is_premium: data.is_premium, is_featured: data.is_featured,
         audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
@@ -278,10 +278,10 @@ export default function AdminPage() {
         content_type: data.content_type || "audio", steps: parsedSteps, tags: parsedTags,
       };
       if (editingTrack) {
-        const { error } = await supabase.from("tracks").update(saveData).eq("id", editingTrack.id);
+        const { error } = await supabase.from("tracks").update(saveData as any).eq("id", editingTrack.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("tracks").insert(saveData);
+        const { error } = await supabase.from("tracks").insert(saveData as any);
         if (error) throw error;
       }
     },

@@ -137,7 +137,7 @@ export default function JournalPage() {
   const isLoading = loadingReflections || !user;
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-radial-subtle relative overflow-x-hidden">
       {/* Decorative lines */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute inset-0" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 52px, rgba(201,168,76,0.03) 52px, rgba(201,168,76,0.03) 53px)" }} />
