@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
+import TrackTagInput from "@/components/admin/TrackTagInput";
 
 const STEP_TYPES = ["intro", "breathe", "write", "reflect", "close"] as const;
 
