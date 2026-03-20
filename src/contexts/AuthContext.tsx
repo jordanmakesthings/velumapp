@@ -103,6 +103,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { full_name: fullName || "" },
       },
     });
+    if (!error) {
+      // Fire-and-forget: add contact to Loops
+      supabase.functions.invoke("loops-signup", {
+        body: { email, firstName: fullName || "" },
+      });
+    }
     return { error: error as Error | null };
   };
 
