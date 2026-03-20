@@ -255,9 +255,9 @@ export default function PlayerPage() {
           </button>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div className="w-64 h-64 rounded-3xl bg-card overflow-hidden mb-8">
-            {track.thumbnail_url ? (
-              <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
+          <div className="aspect-square w-full relative overflow-hidden rounded-xl max-w-[16rem]">
+            {(track.thumbnail_square_url || track.thumbnail_url) ? (
+              <img src={(track as any).thumbnail_square_url ?? track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-surface-light flex items-center justify-center">
                 <div className="w-24 h-24 rounded-full bg-[radial-gradient(circle,_hsl(42,53%,54%)_0%,_transparent_70%)] opacity-60" />
