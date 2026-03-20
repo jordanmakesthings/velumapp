@@ -60,7 +60,7 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
         <div className="flex flex-col items-center mb-5">
           <img src={logoLotus} alt="Velum" className="w-10 h-10 rounded-xl object-cover mb-4" />
           <h3 className="text-foreground font-serif text-2xl text-center">Unlock Full Access</h3>
-          <p className="text-ui text-xs mt-1">Invest in your nervous system</p>
+          <p className="text-ui text-xs mt-1">Full access to everything in Velum</p>
         </div>
 
         {/* Plan cards */}
