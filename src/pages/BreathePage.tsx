@@ -304,6 +304,10 @@ export default function BreathePage() {
   }, [step, animate, startPhase, setOrbDom]);
 
   const handleStart = () => {
+    if (!hasAccess) {
+      setShowPaywall(true);
+      return;
+    }
     setPhaseIndex(0);
     setTotalElapsed(0);
     setStep("checkin_before");

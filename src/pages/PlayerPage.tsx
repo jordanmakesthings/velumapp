@@ -373,10 +373,10 @@ export default function PlayerPage() {
             <motion.div
               animate={{ scale: isPlaying ? [1, 1.02, 1] : 1 }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="w-64 h-64 lg:w-72 lg:h-72 rounded-3xl bg-card overflow-hidden mb-10 shadow-2xl"
+              className="aspect-square w-64 lg:w-72 relative overflow-hidden rounded-xl mb-10 shadow-2xl"
             >
-              {track.thumbnail_url ? (
-                <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
+              {((track as any).thumbnail_square_url || track.thumbnail_url) ? (
+                <img src={(track as any).thumbnail_square_url ?? track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full bg-surface-light flex items-center justify-center">
                   <div className="w-24 h-24 rounded-full bg-[radial-gradient(circle,_hsl(42,53%,54%)_0%,_transparent_70%)] opacity-60" />
