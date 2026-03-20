@@ -77,6 +77,89 @@ function StepsBuilder({ value, onChange }: { value: string; onChange: (val: stri
   );
 }
 
+interface MasteryPrompt {
+  prompt_id: string;
+  text: string;
+  timestamp_seconds: number;
+  post_completion: boolean;
+}
+
+function MasteryPromptBuilder({ value, onChange }: { value: string; onChange: (val: string) => void }) {
+  let prompts: MasteryPrompt[] = [];
+  try {
+    if (value) prompts = JSON.parse(value);
+  } catch { /* keep empty */ }
+
+  const inputCls = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
+
+  const update = (newPrompts: MasteryPrompt[]) => {
+    onChange(JSON.stringify(newPrompts, null, 2));
+  };
+
+  const addPrompt = () => {
+    const id = `p${Date.now()}`;
+    update([...prompts, { prompt_id: id, text: "", timestamp_seconds: 0, post_completion: false }]);
+  };
+
+  const removePrompt = (idx: number) => {
+    update(prompts.filter((_, i) => i !== idx));
+  };
+
+  const updatePrompt = (idx: number, field: keyof MasteryPrompt, val: string | number | boolean) => {
+    const next = [...prompts];
+    next[idx] = { ...next[idx], [field]: val };
+    update(next);
+  };
+
+  return (
+    <div className="space-y-3">
+      {prompts.map((p, i) => (
+        <div key={p.prompt_id} className="p-4 rounded-xl bg-background border border-foreground/10 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-accent text-[10px] font-sans font-medium tracking-wider uppercase">Prompt {i + 1}</span>
+            <button onClick={() => removePrompt(i)} className="text-muted-foreground hover:text-destructive text-xs font-sans transition-colors">Remove</button>
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">Prompt text</label>
+            <textarea
+              value={p.text}
+              onChange={e => updatePrompt(i, "text", e.target.value)}
+              rows={2}
+              className={inputCls + " resize-none"}
+              placeholder="e.g. What are you noticing right now?"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">Pause at (seconds)</label>
+              <input
+                type="number"
+                min={0}
+                value={p.timestamp_seconds}
+                onChange={e => updatePrompt(i, "timestamp_seconds", parseInt(e.target.value) || 0)}
+                className={inputCls}
+              />
+              <span className="text-[10px] text-muted-foreground/50 mt-0.5 block">e.g. 180 = 3:00</span>
+            </div>
+            <div className="flex items-center gap-2 pt-5">
+              <input
+                type="checkbox"
+                checked={p.post_completion}
+                onChange={e => updatePrompt(i, "post_completion", e.target.checked)}
+                className="w-4 h-4 rounded accent-accent"
+              />
+              <label className="text-xs text-foreground/80 font-sans">Show after completion</label>
+            </div>
+          </div>
+        </div>
+      ))}
+      <button onClick={addPrompt} className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-foreground/15 text-muted-foreground hover:text-foreground hover:border-accent/30 text-sm font-sans w-full justify-center transition-colors">
+        <Plus className="w-4 h-4" /> Add Prompt
+      </button>
+    </div>
+  );
+}
+
 type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "settings" | "users";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
