@@ -118,8 +118,8 @@ export default function ProfilePage() {
     setCanceling(true);
     setCancelError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("stripe-webhook", {
-        body: { action: "cancel" },
+      const { data, error } = await supabase.functions.invoke("cancel-subscription", {
+        body: {},
       });
       if (error) throw error;
       setCancelSuccess(true);
