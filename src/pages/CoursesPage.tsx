@@ -69,8 +69,8 @@ export default function CoursesPage() {
     ? coursesV2.filter((c: any) => c.title?.toLowerCase().includes(searchQuery.toLowerCase()) || c.description?.toLowerCase().includes(searchQuery.toLowerCase()))
     : coursesV2;
 
-  const freeCourses = searched.filter((c: any) => !c.is_premium);
-  const premiumCourses = searched.filter((c: any) => c.is_premium);
+  // Show all courses together — no free/premium separation
+  const allCourses = searched;
 
   const getTrackCount = (courseId: string) => tracks.filter((t: any) => t.course_id === courseId).length;
   const getCompletedCount = (courseId: string) => {
