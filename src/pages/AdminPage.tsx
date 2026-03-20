@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, Plus, Upload, Trash2, Edit2, X, Check, Music, BookOpen,
-  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown
+  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown, Users
 } from "lucide-react";
 import { toast } from "sonner";
 import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
@@ -77,7 +77,7 @@ function StepsBuilder({ value, onChange }: { value: string; onChange: (val: stri
   );
 }
 
-type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "settings";
+type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "settings" | "users";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
@@ -86,6 +86,7 @@ const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "mastery", label: "Mastery", icon: GraduationCap },
   { key: "prompts", label: "Prompts", icon: Feather },
   { key: "settings", label: "Settings", icon: Settings },
+  { key: "users", label: "Users", icon: Users },
 ];
 
 const CATEGORIES: Record<string, string> = {
@@ -104,7 +105,73 @@ const emptyTrackForm = {
   content_type: "audio", steps: "", tags: [] as string[],
 };
 
+function UsersTab() {
+  const queryClient = useQueryClient();
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["adminUsers"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, subscription_status, subscription_plan, created_at")
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+  });
+
+  const updateUser = async (userId: string, subscription_status: string, subscription_plan: string | null) => {
+    const { error } = await supabase.functions.invoke("admin-update-user", {
+      body: { userId, subscription_status, subscription_plan },
+    });
+    if (error) {
+      toast.error("Failed to update user");
+      return;
+    }
+    toast.success("User updated");
+    queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+  };
+
+  const btnClass = "px-3 py-1.5 rounded-lg text-xs font-sans font-medium transition-colors active:scale-95";
+
+  return (
+    <div>
+      <h2 className="text-display text-2xl mb-6">Users</h2>
+      {isLoading ? (
+        <p className="text-muted-foreground text-sm">Loading...</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {users.map((u: any) => (
+            <div key={u.id} className="velum-card p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-foreground text-sm font-sans truncate">{u.email || "No email"}</p>
+                <p className="text-muted-foreground text-xs font-sans">{u.full_name || "—"}</p>
+                <p className="text-accent text-[10px] uppercase tracking-wider mt-1">
+                  {u.subscription_status || "none"} · {u.subscription_plan || "no plan"}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <button onClick={() => updateUser(u.id, "active", "monthly")}
+                  className={`${btnClass} bg-accent/20 text-accent hover:bg-accent/30`}>
+                  Grant Access
+                </button>
+                <button onClick={() => updateUser(u.id, "active", "lifetime")}
+                  className={`${btnClass} bg-accent/10 text-accent hover:bg-accent/20`}>
+                  Grant Lifetime
+                </button>
+                <button onClick={() => updateUser(u.id, "canceled", null)}
+                  className={`${btnClass} bg-destructive/20 text-destructive hover:bg-destructive/30`}>
+                  Revoke
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPage() {
+
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -999,6 +1066,9 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* ============ USERS TAB ============ */}
+        {activeTab === "users" && <UsersTab />}
         </div>
       </div>
     </div>
