@@ -921,7 +921,7 @@ export default function AdminPage() {
                     {mc.thumbnail_url && <img src={mc.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
                     <div>
                       <p className="text-foreground text-sm font-sans font-medium">{mc.title}</p>
-                      <p className="text-ui text-xs">{mc.duration_minutes} min{mc.is_premium ? " · Premium" : ""}{mc.theme ? ` · ${mc.theme}` : ""}{!mc.audio_url ? " · No audio" : ""}</p>
+                      <p className="text-ui text-xs">{mc.duration_minutes} min{mc.theme ? ` · ${mc.theme}` : ""}{!mc.audio_url ? " · No audio" : ""}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
