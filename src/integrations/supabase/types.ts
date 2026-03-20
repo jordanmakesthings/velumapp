@@ -503,6 +503,7 @@ export type Database = {
           steps: Json | null
           subcategory_id: string | null
           tags: Json | null
+          thumbnail_square_url: string | null
           thumbnail_url: string | null
           title: string
         }
@@ -524,6 +525,7 @@ export type Database = {
           steps?: Json | null
           subcategory_id?: string | null
           tags?: Json | null
+          thumbnail_square_url?: string | null
           thumbnail_url?: string | null
           title: string
         }
@@ -545,6 +547,7 @@ export type Database = {
           steps?: Json | null
           subcategory_id?: string | null
           tags?: Json | null
+          thumbnail_square_url?: string | null
           thumbnail_url?: string | null
           title?: string
         }

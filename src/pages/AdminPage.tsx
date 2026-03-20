@@ -101,7 +101,7 @@ const CATEGORIES: Record<string, string> = {
 const emptyTrackForm = {
   title: "", description: "", category: "meditation",
   duration_minutes: 10, is_featured: false,
-  audio_url: "", thumbnail_url: "", course_id: "", subcategory_id: "", order_index: 0,
+  audio_url: "", thumbnail_url: "", thumbnail_square_url: "", course_id: "", subcategory_id: "", order_index: 0,
   content_type: "audio", steps: "", tags: [] as string[],
 };
 
@@ -341,6 +341,7 @@ export default function AdminPage() {
         title: data.title, description: data.description || null, category: data.category,
         duration_minutes: data.duration_minutes, is_featured: data.is_featured,
         audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
+        thumbnail_square_url: (data as any).thumbnail_square_url || null,
         course_id: data.course_id || null, subcategory_id: data.subcategory_id || null, order_index: data.order_index,
         content_type: data.content_type || "audio", steps: parsedSteps, tags: data.tags,
       };
@@ -481,6 +482,7 @@ export default function AdminPage() {
       title: track.title, description: track.description || "", category: track.category,
       duration_minutes: track.duration_minutes, is_featured: track.is_featured,
       audio_url: track.audio_url || "", thumbnail_url: track.thumbnail_url || "",
+      thumbnail_square_url: (track as any).thumbnail_square_url || "",
       course_id: track.course_id || "", subcategory_id: track.subcategory_id || "", order_index: track.order_index,
       content_type: track.content_type || "audio", steps: track.steps ? JSON.stringify(track.steps, null, 2) : "",
       tags: trackTags,
@@ -672,8 +674,10 @@ export default function AdminPage() {
                     />
                   </div>
 
-                  <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
+                  <UploadRow label="Thumbnail — Horizontal (16:9)" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
                     setForm={setTrackFormWrapped} uploadKey="trackImage" />
+                  <UploadRow label="Thumbnail — Square (1:1)" field="thumbnail_square_url" folder="images" value={(trackForm as any).thumbnail_square_url}
+                    setForm={setTrackFormWrapped} uploadKey="trackSquareImage" />
 
                   {(trackForm.content_type === "audio" || trackForm.content_type === "video") && (
                     <>

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { PaywallModal } from "@/components/PaywallModal";
 import { Headphones, X } from "lucide-react";
 
 interface Phase {
@@ -105,8 +106,10 @@ function StressRating({ label, onSelect }: { label: string; onSelect: (n: number
 
 export default function BreathePage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const queryClient = useQueryClient();
+  const hasAccess = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const [selectedTech, setSelectedTech] = useState(techniques[0]);
   const [selectedDuration, setSelectedDuration] = useState(5);
@@ -301,6 +304,10 @@ export default function BreathePage() {
   }, [step, animate, startPhase, setOrbDom]);
 
   const handleStart = () => {
+    if (!hasAccess) {
+      setShowPaywall(true);
+      return;
+    }
     setPhaseIndex(0);
     setTotalElapsed(0);
     setStep("checkin_before");
@@ -490,6 +497,7 @@ export default function BreathePage() {
           )}
         </AnimatePresence>
       </div>
+      <PaywallModal open={showPaywall} onClose={() => setShowPaywall(false)} />
     </div>
   );
 }
