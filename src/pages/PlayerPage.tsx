@@ -350,9 +350,9 @@ export default function PlayerPage() {
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6">
         {step === "before" ? (
           <>
-            <div className="w-48 h-48 rounded-3xl bg-card overflow-hidden mb-6 shadow-2xl">
-              {track.thumbnail_url ? (
-                <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
+            <div className="aspect-square w-48 relative overflow-hidden rounded-xl mb-6 shadow-2xl">
+              {((track as any).thumbnail_square_url || track.thumbnail_url) ? (
+                <img src={(track as any).thumbnail_square_url ?? track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full bg-surface-light flex items-center justify-center">
                   <div className="w-20 h-20 rounded-full bg-[radial-gradient(circle,_hsl(42,53%,54%)_0%,_transparent_70%)] opacity-60" />
