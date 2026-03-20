@@ -183,7 +183,14 @@ export default function LibraryPage() {
           {!selectedCategory ? (
             <div className="grid grid-cols-2 gap-3">
               {categoryCounts.map(({ key, label, icon: Icon, count }) => (
-                <button key={key} onClick={() => setSelectedCategory(key)}
+                <button key={key} onClick={() => {
+                  if (key === "mastery") {
+                    setActiveTab("mastery");
+                    setSelectedCategory(null);
+                  } else {
+                    setSelectedCategory(key);
+                  }
+                }}
                   className="velum-card p-5 flex flex-col gap-3 text-left group">
                   <Icon className="w-5 h-5 text-accent" />
                   <div>
