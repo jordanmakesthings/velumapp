@@ -811,11 +811,7 @@ export default function AdminPage() {
                       {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
                   </div>
-                  <div className="flex items-center">
-                    <label className="flex items-center gap-2 text-foreground text-sm font-sans cursor-pointer">
-                      <input type="checkbox" checked={courseForm.is_premium} onChange={e => setCourseForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium
-                    </label>
-                  </div>
+                  <div>{/* spacer */}</div>
                   <UploadRow label="Thumbnail" field="thumbnail_url" folder="images" value={courseForm.thumbnail_url}
                     setForm={(fn) => setCourseForm(fn)} uploadKey="courseThumb" />
                   <UploadRow label="Cover Image" field="cover_image_url" folder="images" value={courseForm.cover_image_url}
