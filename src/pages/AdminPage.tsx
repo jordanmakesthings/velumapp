@@ -929,7 +929,7 @@ export default function AdminPage() {
                       setEditingMastery(mc);
                       setMasteryForm({
                         title: mc.title, description: mc.description || "", duration_minutes: mc.duration_minutes,
-                        is_premium: mc.is_premium, audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "",
+                        audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "",
                         theme: mc.theme || "", cover_image_url: mc.cover_image_url || "",
                         pause_prompts: JSON.stringify(mc.pause_prompts || [], null, 2),
                       });
