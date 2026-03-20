@@ -107,7 +107,7 @@ export default function LibraryPage() {
 
   const categoryCounts = CATEGORIES.map(c => ({
     ...c,
-    count: tracks.filter((t: any) => t.category === c.key).length,
+    count: c.key === "mastery" ? masteryClasses.length : tracks.filter((t: any) => t.category === c.key).length,
   }));
 
   const filteredTracks = tracks.filter((t: any) => {
