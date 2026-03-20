@@ -1000,6 +1000,9 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* ============ USERS TAB ============ */}
+        {activeTab === "users" && <UsersTab />}
         </div>
       </div>
     </div>
