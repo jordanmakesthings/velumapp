@@ -170,6 +170,7 @@ function UsersTab() {
   );
 }
 
+export default function AdminPage() {
 
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
