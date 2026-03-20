@@ -886,11 +886,6 @@ export default function AdminPage() {
                     <label className={labelClass}>Duration (min)</label>
                     <input type="number" value={masteryForm.duration_minutes} onChange={e => setMasteryForm(f => ({ ...f, duration_minutes: Number(e.target.value) }))} className={inputClass} />
                   </div>
-                  <div className="flex items-center">
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input type="checkbox" checked={masteryForm.is_premium} onChange={e => setMasteryForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium
-                    </label>
-                  </div>
                   <div>{/* spacer */}</div>
 
                   <UploadRow label="Audio File" field="audio_url" folder="audio" value={masteryForm.audio_url}
