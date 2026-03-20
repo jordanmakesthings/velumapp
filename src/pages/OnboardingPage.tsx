@@ -251,7 +251,7 @@ export default function OnboardingPage() {
                       className={`w-full border rounded-xl px-5 py-4 flex items-center gap-4 text-left transition-all duration-200 ${
                         isSelected ? "border-accent/40 bg-surface-light/30" : "border-muted-foreground/20"
                       }`}>
-                      <span className={`text-lg ${isSelected ? "text-accent" : "text-muted-foreground/50"}`}>{icon}</span>
+                      <span className={`text-lg ${isSelected ? "text-accent" : "text-accent/40"}`}>{icon}</span>
                       <span className="text-foreground text-sm font-sans font-semibold">{label}</span>
                     </button>
                   );

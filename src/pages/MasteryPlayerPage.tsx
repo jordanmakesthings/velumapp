@@ -189,16 +189,16 @@ export default function MasteryPlayerPage() {
         <h2 className="text-display text-2xl mb-1 text-center">{mc.title}</h2>
         {mc.description && <p className="text-ui text-sm mb-8 text-center max-w-md">{mc.description}</p>}
 
-        {isPremiumGated ? (
+        {isGated ? (
           <div className="velum-card p-8 text-center max-w-sm w-full">
             <p className="text-accent text-3xl mb-3">◈</p>
-            <h3 className="text-display text-xl mb-2">Premium Content</h3>
-            <p className="text-ui text-sm mb-5">Upgrade to access this class and all premium content.</p>
+            <h3 className="text-display text-xl mb-2">Subscribe to Access</h3>
+            <p className="text-ui text-sm mb-5">Subscribe to unlock this class and all content in Velum.</p>
             <button
               onClick={() => navigate("/premium")}
               className="px-6 py-3 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform"
             >
-              Upgrade to Premium
+              Begin My Journey
             </button>
           </div>
         ) : (
