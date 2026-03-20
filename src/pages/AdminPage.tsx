@@ -341,6 +341,7 @@ export default function AdminPage() {
         title: data.title, description: data.description || null, category: data.category,
         duration_minutes: data.duration_minutes, is_featured: data.is_featured,
         audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
+        thumbnail_square_url: (data as any).thumbnail_square_url || null,
         course_id: data.course_id || null, subcategory_id: data.subcategory_id || null, order_index: data.order_index,
         content_type: data.content_type || "audio", steps: parsedSteps, tags: data.tags,
       };
