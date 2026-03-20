@@ -837,7 +837,7 @@ export default function AdminPage() {
                     {course.thumbnail_url && <img src={course.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
                     <div>
                       <p className="text-foreground text-sm font-sans font-medium">{course.title}</p>
-                      <p className="text-ui text-xs">{course.category ? CATEGORIES[course.category] || course.category : "No category"}{course.is_premium ? " · Premium" : ""}</p>
+                      <p className="text-ui text-xs">{course.category ? CATEGORIES[course.category] || course.category : "No category"}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
