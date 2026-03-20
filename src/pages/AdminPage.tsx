@@ -315,7 +315,7 @@ export default function AdminPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
       setShowCourseForm(false); setEditingCourse(null);
-      setCourseForm({ title: "", description: "", is_premium: true, thumbnail_url: "", category: "", cover_image_url: "" });
+      setCourseForm({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "" });
       toast.success(editingCourse ? "Course updated" : "Course created");
     },
     onError: (err: any) => toast.error(err.message),
