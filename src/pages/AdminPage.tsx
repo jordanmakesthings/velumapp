@@ -409,13 +409,14 @@ export default function AdminPage() {
 
   const openEditTrack = (track: any) => {
     setEditingTrack(track);
+    const trackTags = Array.isArray(track.tags) ? track.tags : [];
     setTrackForm({
       title: track.title, description: track.description || "", category: track.category,
-      duration_minutes: track.duration_minutes, is_premium: track.is_premium, is_featured: track.is_featured,
+      duration_minutes: track.duration_minutes, is_featured: track.is_featured,
       audio_url: track.audio_url || "", thumbnail_url: track.thumbnail_url || "",
       course_id: track.course_id || "", subcategory_id: track.subcategory_id || "", order_index: track.order_index,
       content_type: track.content_type || "audio", steps: track.steps ? JSON.stringify(track.steps, null, 2) : "",
-      tags: track.tags ? (Array.isArray(track.tags) ? track.tags.join(", ") : String(track.tags)) : "",
+      tags: trackTags,
     });
     setShowTrackForm(true);
   };
