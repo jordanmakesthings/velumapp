@@ -588,10 +588,13 @@ export default function AdminPage() {
                       <option value="journaling">Journaling</option>
                     </select>
                   </div>
-                  <div>
-                    <label className={labelClass}>Tags (comma-separated)</label>
-                    <input value={trackForm.tags} onChange={e => setTrackForm(f => ({ ...f, tags: e.target.value }))}
-                      className={inputClass} placeholder="e.g. stress, anxiety, focus, calm, sleep" />
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Tags</label>
+                    <TrackTagInput
+                      value={trackForm.tags}
+                      onChange={(tags) => setTrackForm(f => ({ ...f, tags }))}
+                      allTags={allTags}
+                    />
                   </div>
 
                   {/* Thumbnail Generator at top */}
