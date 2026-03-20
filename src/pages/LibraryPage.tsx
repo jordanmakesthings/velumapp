@@ -21,6 +21,7 @@ const CATEGORIES = [
   { key: "breathwork", label: "Breathwork", icon: Wind },
   { key: "tapping", label: "Tapping", icon: Heart },
   { key: "journaling", label: "Journaling", icon: Feather },
+  { key: "mastery", label: "MasteryClasses", icon: GraduationCap },
 ];
 
 export default function LibraryPage() {
@@ -106,7 +107,7 @@ export default function LibraryPage() {
 
   const categoryCounts = CATEGORIES.map(c => ({
     ...c,
-    count: tracks.filter((t: any) => t.category === c.key).length,
+    count: c.key === "mastery" ? masteryClasses.length : tracks.filter((t: any) => t.category === c.key).length,
   }));
 
   const filteredTracks = tracks.filter((t: any) => {
@@ -182,7 +183,14 @@ export default function LibraryPage() {
           {!selectedCategory ? (
             <div className="grid grid-cols-2 gap-3">
               {categoryCounts.map(({ key, label, icon: Icon, count }) => (
-                <button key={key} onClick={() => setSelectedCategory(key)}
+                <button key={key} onClick={() => {
+                  if (key === "mastery") {
+                    setActiveTab("mastery");
+                    setSelectedCategory(null);
+                  } else {
+                    setSelectedCategory(key);
+                  }
+                }}
                   className="velum-card p-5 flex flex-col gap-3 text-left group">
                   <Icon className="w-5 h-5 text-accent" />
                   <div>
