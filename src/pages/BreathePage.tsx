@@ -497,6 +497,7 @@ export default function BreathePage() {
           )}
         </AnimatePresence>
       </div>
+      <PaywallModal open={showPaywall} onClose={() => setShowPaywall(false)} />
     </div>
   );
 }
