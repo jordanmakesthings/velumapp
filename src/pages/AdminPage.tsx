@@ -841,7 +841,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", is_premium: course.is_premium, thumbnail_url: course.thumbnail_url || "", category: course.category || "", cover_image_url: course.cover_image_url || "" }); setShowCourseForm(true); }}
+                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", thumbnail_url: course.thumbnail_url || "", category: course.category || "", cover_image_url: course.cover_image_url || "" }); setShowCourseForm(true); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => { if (confirm("Delete?")) deleteCourseMutation.mutate(course.id); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
