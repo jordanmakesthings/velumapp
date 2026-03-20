@@ -180,7 +180,7 @@ function CourseCard({ course, trackCount, completedCount }: { course: any; track
         ) : (
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_hsl(42,53%,54%,0.1)_0%,_transparent_60%)]" />
         )}
-        {course.is_premium && <div className="absolute top-3 right-3"><Crown className="w-4 h-4 text-accent" /></div>}
+        
       </div>
       <div className="p-5">
         <h3 className="text-foreground font-serif text-lg mb-1">{course.title}</h3>
