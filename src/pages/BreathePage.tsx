@@ -106,8 +106,10 @@ function StressRating({ label, onSelect }: { label: string; onSelect: (n: number
 
 export default function BreathePage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const queryClient = useQueryClient();
+  const hasAccess = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const [selectedTech, setSelectedTech] = useState(techniques[0]);
   const [selectedDuration, setSelectedDuration] = useState(5);
