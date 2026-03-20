@@ -77,7 +77,7 @@ function StepsBuilder({ value, onChange }: { value: string; onChange: (val: stri
   );
 }
 
-type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "settings";
+type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "settings" | "users";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
@@ -86,6 +86,7 @@ const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "mastery", label: "Mastery", icon: GraduationCap },
   { key: "prompts", label: "Prompts", icon: Feather },
   { key: "settings", label: "Settings", icon: Settings },
+  { key: "users", label: "Users", icon: Users },
 ];
 
 const CATEGORIES: Record<string, string> = {
