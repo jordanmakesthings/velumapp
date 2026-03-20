@@ -421,6 +421,14 @@ export default function AdminPage() {
     setShowTrackForm(true);
   };
 
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    tracks.forEach((t: any) => {
+      if (Array.isArray(t.tags)) t.tags.forEach((tag: string) => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, [tracks]);
+
   const tracksByCategory = useMemo(() => {
     const grouped: Record<string, any[]> = {};
     tracks.forEach((t: any) => {
