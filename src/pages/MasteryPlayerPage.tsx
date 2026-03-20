@@ -119,7 +119,8 @@ export default function MasteryPlayerPage() {
     }
   };
 
-  const isPremiumGated = mc?.is_premium && profile?.subscription_status !== "active" && profile?.subscription_plan !== "lifetime";
+  const hasAccess = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
+  const isGated = !hasAccess;
 
   if (isLoading) {
     return (
