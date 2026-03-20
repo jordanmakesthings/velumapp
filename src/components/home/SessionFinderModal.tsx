@@ -1,16 +1,16 @@
 import { useState, useMemo } from "react";
-import { X, Clock, Brain, Sparkles, Wind, Heart, Feather, Zap, SlidersHorizontal, Play } from "lucide-react";
+import { X, ArrowRight, ArrowLeft, RotateCcw, Play, SlidersHorizontal, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const CATEGORIES = [
-  { key: "meditation", label: "Meditation", icon: Sparkles },
-  { key: "rapid_resets", label: "Rapid Resets", icon: Zap },
-  { key: "breathwork", label: "Breathwork", icon: Wind },
-  { key: "tapping", label: "Tapping", icon: Heart },
-  { key: "journaling", label: "Journaling", icon: Feather },
+  { key: "meditation", label: "Meditation" },
+  { key: "rapid_resets", label: "Rapid Resets" },
+  { key: "breathwork", label: "Breathwork" },
+  { key: "tapping", label: "Tapping" },
+  { key: "journaling", label: "Journaling" },
 ];
 
 const MOODS = [
@@ -49,10 +49,13 @@ interface Props {
   onClose: () => void;
 }
 
+type WizardStep = 0 | 1 | 2;
+
 export function SessionFinderModal({ open, onClose }: Props) {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [wizardStep, setWizardStep] = useState<WizardStep>(0);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
 
@@ -66,32 +69,30 @@ export function SessionFinderModal({ open, onClose }: Props) {
 
   const filteredTracks = useMemo(() => {
     return (tracks as any[]).filter(t => {
-      if (selectedCategory && t.category !== selectedCategory) return false;
+      if (selectedCategories.length > 0 && !selectedCategories.includes(t.category)) return false;
       if (selectedDuration) {
         const range = DURATION_RANGES.find(r => r.key === selectedDuration);
         if (range && (t.duration_minutes < range.min || t.duration_minutes > range.max)) return false;
       }
-      // Mood and goal filtering based on tags if available
       if (selectedMood && t.tags) {
         const tags = Array.isArray(t.tags) ? t.tags : [];
         if (tags.length > 0 && !tags.some((tag: string) => tag.toLowerCase().includes(selectedMood))) return false;
       }
-      if (selectedGoal && t.tags) {
+      if (selectedGoals.length > 0 && t.tags) {
         const tags = Array.isArray(t.tags) ? t.tags : [];
-        if (tags.length > 0 && !tags.some((tag: string) => tag.toLowerCase().includes(selectedGoal))) return false;
+        if (tags.length > 0 && !selectedGoals.some(g => tags.some((tag: string) => tag.toLowerCase().includes(g)))) return false;
       }
       return true;
     });
-  }, [tracks, selectedCategory, selectedMood, selectedGoal, selectedType, selectedDuration]);
-
-  const hasFilters = selectedCategory || selectedMood || selectedGoal || selectedType || selectedDuration;
+  }, [tracks, selectedCategories, selectedMood, selectedGoals, selectedType, selectedDuration]);
 
   const clearAll = () => {
-    setSelectedCategory(null);
+    setSelectedCategories([]);
+    setSelectedGoals([]);
     setSelectedMood(null);
-    setSelectedGoal(null);
     setSelectedType(null);
     setSelectedDuration(null);
+    setWizardStep(0);
   };
 
   const handleClose = () => {
@@ -99,31 +100,38 @@ export function SessionFinderModal({ open, onClose }: Props) {
     setTimeout(clearAll, 300);
   };
 
-  const PillGroup = ({ title, items, selected, onSelect }: {
-    title: string;
-    items: { key: string; label: string }[];
-    selected: string | null;
-    onSelect: (key: string | null) => void;
-  }) => (
-    <div className="mb-5">
-      <p className="text-ui text-[10px] tracking-[2px] uppercase mb-2.5">{title}</p>
-      <div className="flex flex-wrap gap-2">
-        {items.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => onSelect(selected === key ? null : key)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-sans transition-all ${
-              selected === key
-                ? "gold-gradient text-primary-foreground font-semibold"
-                : "bg-card text-muted-foreground hover:text-foreground border border-foreground/10"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-    </div>
+  const toggleCategory = (key: string) => {
+    setSelectedCategories(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  };
+
+  const toggleGoal = (key: string) => {
+    setSelectedGoals(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  };
+
+  const slideVariants = {
+    enter: { opacity: 0, x: 60 },
+    center: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -60 },
+  };
+
+  const PillToggle = ({ label, selected, onToggle }: { label: string; selected: boolean; onToggle: () => void }) => (
+    <button
+      onClick={onToggle}
+      className={`px-4 py-2.5 rounded-xl text-sm font-sans transition-all duration-200 ${
+        selected
+          ? "gold-gradient text-primary-foreground font-semibold"
+          : "bg-card text-muted-foreground hover:text-foreground border border-foreground/10"
+      }`}
+    >
+      {label}
+    </button>
   );
+
+  const stepTitles = [
+    "What brings you here today?",
+    "Let's refine your session.",
+    `${filteredTracks.length} ${filteredTracks.length === 1 ? "session" : "sessions"} found`,
+  ];
 
   return (
     <AnimatePresence>
@@ -143,7 +151,8 @@ export function SessionFinderModal({ open, onClose }: Props) {
             className="velum-card w-full max-w-lg p-6 mx-4 mb-4 lg:mb-0 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-6">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-2">
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="w-5 h-5 text-accent" />
                 <h3 className="text-display text-xl">Session Finder</h3>
@@ -153,47 +162,133 @@ export function SessionFinderModal({ open, onClose }: Props) {
               </button>
             </div>
 
-            <PillGroup title="Category" items={CATEGORIES} selected={selectedCategory} onSelect={setSelectedCategory} />
-            <PillGroup title="How are you feeling" items={MOODS} selected={selectedMood} onSelect={setSelectedMood} />
-            <PillGroup title="Your goal" items={GOALS} selected={selectedGoal} onSelect={setSelectedGoal} />
-            <PillGroup title="Session type" items={SESSION_TYPES} selected={selectedType} onSelect={setSelectedType} />
-            <PillGroup title="Duration" items={DURATION_RANGES.map(r => ({ key: r.key, label: r.label }))} selected={selectedDuration} onSelect={setSelectedDuration} />
+            {/* Progress dots */}
+            <div className="flex gap-1.5 mb-6">
+              {[0, 1, 2].map(i => (
+                <div key={i} className={`h-[3px] flex-1 rounded-full transition-colors duration-300 ${
+                  i <= wizardStep ? "bg-accent" : "bg-muted-foreground/15"
+                }`} />
+              ))}
+            </div>
 
-            {hasFilters && (
-              <button onClick={clearAll} className="text-accent text-xs font-sans mb-4 inline-block hover:underline">
-                Clear all filters
-              </button>
-            )}
+            <AnimatePresence mode="wait">
+              {/* Step 0: Category + Goal */}
+              {wizardStep === 0 && (
+                <motion.div key="step0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+                  <h2 className="text-display text-2xl mb-1">{stepTitles[0]}</h2>
+                  <p className="text-ui text-sm mb-6">Choose categories and goals that resonate.</p>
 
-            {/* Results */}
-            <div className="border-t border-foreground/10 pt-4 mt-2">
-              <p className="text-ui text-[10px] tracking-[2px] uppercase mb-3">
-                {filteredTracks.length} {filteredTracks.length === 1 ? "result" : "results"}
-              </p>
-              {filteredTracks.length === 0 ? (
-                <p className="text-muted-foreground text-sm text-center py-6">No sessions match your filters. Try adjusting.</p>
-              ) : (
-                <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
-                  {filteredTracks.slice(0, 20).map((track: any) => (
-                    <Link
-                      key={track.id}
-                      to={`/player?trackId=${track.id}`}
-                      onClick={handleClose}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-card/50 border border-foreground/5 hover:border-accent/30 hover:bg-card transition-all"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                        <Play className="w-3.5 h-3.5 text-accent" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-foreground text-sm font-sans font-medium truncate">{track.title}</p>
-                        <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
-                          {track.category?.replace("_", " ")} · {track.duration_minutes} min
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                  <p className="text-ui text-[10px] tracking-[2px] uppercase mb-2.5">Category</p>
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    {CATEGORIES.map(({ key, label }) => (
+                      <PillToggle key={key} label={label} selected={selectedCategories.includes(key)} onToggle={() => toggleCategory(key)} />
+                    ))}
+                  </div>
+
+                  <p className="text-ui text-[10px] tracking-[2px] uppercase mb-2.5">Goal</p>
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {GOALS.map(({ key, label }) => (
+                      <PillToggle key={key} label={label} selected={selectedGoals.includes(key)} onToggle={() => toggleGoal(key)} />
+                    ))}
+                  </div>
+                </motion.div>
               )}
+
+              {/* Step 1: Mood, Type, Duration */}
+              {wizardStep === 1 && (
+                <motion.div key="step1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+                  <h2 className="text-display text-2xl mb-1">{stepTitles[1]}</h2>
+                  <p className="text-ui text-sm mb-6">Fine-tune to find the perfect match.</p>
+
+                  <p className="text-ui text-[10px] tracking-[2px] uppercase mb-2.5">How are you feeling</p>
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    {MOODS.map(({ key, label }) => (
+                      <PillToggle key={key} label={label} selected={selectedMood === key} onToggle={() => setSelectedMood(selectedMood === key ? null : key)} />
+                    ))}
+                  </div>
+
+                  <p className="text-ui text-[10px] tracking-[2px] uppercase mb-2.5">Session type</p>
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    {SESSION_TYPES.map(({ key, label }) => (
+                      <PillToggle key={key} label={label} selected={selectedType === key} onToggle={() => setSelectedType(selectedType === key ? null : key)} />
+                    ))}
+                  </div>
+
+                  <p className="text-ui text-[10px] tracking-[2px] uppercase mb-2.5">Duration</p>
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {DURATION_RANGES.map(({ key, label }) => (
+                      <PillToggle key={key} label={label} selected={selectedDuration === key} onToggle={() => setSelectedDuration(selectedDuration === key ? null : key)} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 2: Results */}
+              {wizardStep === 2 && (
+                <motion.div key="step2" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+                  <h2 className="text-display text-2xl mb-1">{stepTitles[2]}</h2>
+                  <p className="text-ui text-sm mb-4">Here are your curated sessions.</p>
+
+                  {filteredTracks.length === 0 ? (
+                    <div className="text-center py-10">
+                      <p className="text-muted-foreground text-sm mb-4">No sessions match your filters. Try adjusting.</p>
+                      <button onClick={clearAll} className="text-accent text-sm font-sans hover:underline">Start over</button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto">
+                      {filteredTracks.slice(0, 25).map((track: any) => (
+                        <Link
+                          key={track.id}
+                          to={`/player?trackId=${track.id}`}
+                          onClick={handleClose}
+                          className="flex items-center gap-3 p-3 rounded-xl bg-card/50 border border-foreground/5 hover:border-accent/30 hover:bg-card transition-all active:scale-[0.98]"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                            <Play className="w-3.5 h-3.5 text-accent" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-foreground text-sm font-sans font-medium truncate">{track.title}</p>
+                            <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
+                              {track.category?.replace("_", " ")} · {track.duration_minutes} min
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-foreground/10">
+              <div>
+                {wizardStep > 0 && (
+                  <button onClick={() => setWizardStep((wizardStep - 1) as WizardStep)} className="flex items-center gap-1.5 text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
+                    <ArrowLeft className="w-4 h-4" /> Back
+                  </button>
+                )}
+                {wizardStep === 0 && (
+                  <button onClick={clearAll} className="text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
+                    Skip
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-3">
+                {wizardStep === 2 && (
+                  <button onClick={clearAll} className="flex items-center gap-1.5 text-accent text-sm font-sans hover:underline">
+                    <RotateCcw className="w-3.5 h-3.5" /> Start over
+                  </button>
+                )}
+                {wizardStep < 2 && (
+                  <button
+                    onClick={() => setWizardStep((wizardStep + 1) as WizardStep)}
+                    className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-[0.98] transition-transform"
+                  >
+                    {wizardStep === 0 ? "Next" : "Show results"} <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </motion.div>
         </motion.div>
