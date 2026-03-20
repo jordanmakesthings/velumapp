@@ -101,7 +101,7 @@ const CATEGORIES: Record<string, string> = {
 const emptyTrackForm = {
   title: "", description: "", category: "meditation",
   duration_minutes: 10, is_featured: false,
-  audio_url: "", thumbnail_url: "", course_id: "", subcategory_id: "", order_index: 0,
+  audio_url: "", thumbnail_url: "", thumbnail_square_url: "", course_id: "", subcategory_id: "", order_index: 0,
   content_type: "audio", steps: "", tags: [] as string[],
 };
 
