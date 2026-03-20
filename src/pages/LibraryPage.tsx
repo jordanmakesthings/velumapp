@@ -21,6 +21,7 @@ const CATEGORIES = [
   { key: "breathwork", label: "Breathwork", icon: Wind },
   { key: "tapping", label: "Tapping", icon: Heart },
   { key: "journaling", label: "Journaling", icon: Feather },
+  { key: "mastery", label: "MasteryClasses", icon: GraduationCap },
 ];
 
 export default function LibraryPage() {
