@@ -99,9 +99,9 @@ const CATEGORIES: Record<string, string> = {
 
 const emptyTrackForm = {
   title: "", description: "", category: "meditation",
-  duration_minutes: 10, is_premium: false, is_featured: false,
+  duration_minutes: 10, is_featured: false,
   audio_url: "", thumbnail_url: "", course_id: "", subcategory_id: "", order_index: 0,
-  content_type: "audio", steps: "", tags: "",
+  content_type: "audio", steps: "", tags: [] as string[],
 };
 
 export default function AdminPage() {
