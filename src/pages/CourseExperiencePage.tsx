@@ -118,7 +118,7 @@ export default function CourseExperiencePage() {
   const prevLesson = flatLessons[activeIndex - 1] || null;
 
   const openLesson = (lesson: any) => {
-    if (!(lesson as any).is_free_preview && !hasAccess && course?.is_premium) { setShowPaywall(true); return; }
+    if (!hasAccess) { setShowPaywall(true); return; }
     setActiveLessonId(lesson.id);
   };
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Crown, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -69,8 +69,8 @@ export default function CoursesPage() {
     ? coursesV2.filter((c: any) => c.title?.toLowerCase().includes(searchQuery.toLowerCase()) || c.description?.toLowerCase().includes(searchQuery.toLowerCase()))
     : coursesV2;
 
-  const freeCourses = searched.filter((c: any) => !c.is_premium);
-  const premiumCourses = searched.filter((c: any) => c.is_premium);
+  // Show all courses together — no free/premium separation
+  const allCourses = searched;
 
   const getTrackCount = (courseId: string) => tracks.filter((t: any) => t.course_id === courseId).length;
   const getCompletedCount = (courseId: string) => {
@@ -126,7 +126,6 @@ export default function CoursesPage() {
                         ) : (
                           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_hsl(42,53%,54%,0.1)_0%,_transparent_60%)]" />
                         )}
-                        {course.is_premium && <div className="absolute top-3 right-3"><Crown className="w-4 h-4 text-accent" /></div>}
                       </div>
                       <div className="p-5">
                         <h3 className="text-foreground font-serif text-lg mb-1">{course.title}</h3>
@@ -145,28 +144,12 @@ export default function CoursesPage() {
             </section>
           )}
 
-          {/* Free courses */}
-          {freeCourses.length > 0 && (
+          {/* All courses */}
+          {allCourses.length > 0 && (
             <section className="mb-10">
-              <p className="text-ui/50 text-[10px] font-sans tracking-[2.5px] uppercase mb-4">Free — Start Here</p>
+              <p className="text-accent text-[10px] font-sans tracking-[2.5px] uppercase mb-4">Programs</p>
               <div className="flex flex-col gap-4">
-                {freeCourses.map((course: any) => {
-                  const trackCount = getTrackCount(course.id);
-                  const completedCount = getCompletedCount(course.id);
-                  return (
-                    <CourseCard key={course.id} course={course} trackCount={trackCount} completedCount={completedCount} />
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* Premium courses */}
-          {premiumCourses.length > 0 && (
-            <section className="mb-10">
-              <p className="text-accent text-[10px] font-sans tracking-[2.5px] uppercase mb-4">Premium — Deep Programs</p>
-              <div className="flex flex-col gap-4">
-                {premiumCourses.map((course: any) => {
+                {allCourses.map((course: any) => {
                   const trackCount = getTrackCount(course.id);
                   const completedCount = getCompletedCount(course.id);
                   return (
@@ -197,7 +180,7 @@ function CourseCard({ course, trackCount, completedCount }: { course: any; track
         ) : (
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_hsl(42,53%,54%,0.1)_0%,_transparent_60%)]" />
         )}
-        {course.is_premium && <div className="absolute top-3 right-3"><Crown className="w-4 h-4 text-accent" /></div>}
+        
       </div>
       <div className="p-5">
         <h3 className="text-foreground font-serif text-lg mb-1">{course.title}</h3>

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
+import TrackTagInput from "@/components/admin/TrackTagInput";
 
 const STEP_TYPES = ["intro", "breathe", "write", "reflect", "close"] as const;
 
@@ -98,9 +99,9 @@ const CATEGORIES: Record<string, string> = {
 
 const emptyTrackForm = {
   title: "", description: "", category: "meditation",
-  duration_minutes: 10, is_premium: false, is_featured: false,
+  duration_minutes: 10, is_featured: false,
   audio_url: "", thumbnail_url: "", course_id: "", subcategory_id: "", order_index: 0,
-  content_type: "audio", steps: "", tags: "",
+  content_type: "audio", steps: "", tags: [] as string[],
 };
 
 export default function AdminPage() {
@@ -118,11 +119,11 @@ export default function AdminPage() {
   const [newPromptCategory, setNewPromptCategory] = useState("");
 
   const [showCourseForm, setShowCourseForm] = useState(false);
-  const [courseForm, setCourseForm] = useState({ title: "", description: "", is_premium: true, thumbnail_url: "", category: "", cover_image_url: "" });
+  const [courseForm, setCourseForm] = useState({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "" });
   const [editingCourse, setEditingCourse] = useState<any>(null);
 
   const [showMasteryForm, setShowMasteryForm] = useState(false);
-  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" });
+  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" });
   const [editingMastery, setEditingMastery] = useState<any>(null);
 
   const [showSubcatForm, setShowSubcatForm] = useState(false);
@@ -269,13 +270,12 @@ export default function AdminPage() {
     mutationFn: async (data: typeof emptyTrackForm) => {
       let parsedSteps: any = null;
       try { if (data.steps) parsedSteps = JSON.parse(data.steps); } catch { /* keep null */ }
-        const parsedTags = data.tags ? data.tags.split(",").map(t => t.trim()).filter(Boolean) : [];
       const saveData: Record<string, any> = {
         title: data.title, description: data.description || null, category: data.category,
-        duration_minutes: data.duration_minutes, is_premium: data.is_premium, is_featured: data.is_featured,
+        duration_minutes: data.duration_minutes, is_featured: data.is_featured,
         audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
         course_id: data.course_id || null, subcategory_id: data.subcategory_id || null, order_index: data.order_index,
-        content_type: data.content_type || "audio", steps: parsedSteps, tags: parsedTags,
+        content_type: data.content_type || "audio", steps: parsedSteps, tags: data.tags,
       };
       if (editingTrack) {
         const { error } = await supabase.from("tracks").update(saveData as any).eq("id", editingTrack.id);
@@ -303,7 +303,7 @@ export default function AdminPage() {
 
   const saveCourseMutation = useMutation({
     mutationFn: async (data: typeof courseForm) => {
-      const saveData = { title: data.title, description: data.description || null, is_premium: data.is_premium, thumbnail_url: data.thumbnail_url || null, category: data.category || null, cover_image_url: data.cover_image_url || null };
+      const saveData = { title: data.title, description: data.description || null, thumbnail_url: data.thumbnail_url || null, category: data.category || null, cover_image_url: data.cover_image_url || null };
       if (editingCourse) {
         const { error } = await supabase.from("courses").update(saveData).eq("id", editingCourse.id);
         if (error) throw error;
@@ -315,7 +315,7 @@ export default function AdminPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
       setShowCourseForm(false); setEditingCourse(null);
-      setCourseForm({ title: "", description: "", is_premium: true, thumbnail_url: "", category: "", cover_image_url: "" });
+      setCourseForm({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "" });
       toast.success(editingCourse ? "Course updated" : "Course created");
     },
     onError: (err: any) => toast.error(err.message),
@@ -335,7 +335,7 @@ export default function AdminPage() {
       try { parsedPrompts = JSON.parse(data.pause_prompts); } catch { /* keep empty */ }
       const saveData = {
         title: data.title, description: data.description || null, duration_minutes: data.duration_minutes,
-        is_premium: data.is_premium, audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
+        audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
         theme: data.theme || null, cover_image_url: data.cover_image_url || null, pause_prompts: parsedPrompts,
       };
       if (editingMastery) {
@@ -349,7 +349,7 @@ export default function AdminPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
       setShowMasteryForm(false); setEditingMastery(null);
-      setMasteryForm({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" });
+      setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" });
       toast.success(editingMastery ? "Class updated" : "Class created");
     },
     onError: (err: any) => toast.error(err.message),
@@ -409,16 +409,25 @@ export default function AdminPage() {
 
   const openEditTrack = (track: any) => {
     setEditingTrack(track);
+    const trackTags = Array.isArray(track.tags) ? track.tags : [];
     setTrackForm({
       title: track.title, description: track.description || "", category: track.category,
-      duration_minutes: track.duration_minutes, is_premium: track.is_premium, is_featured: track.is_featured,
+      duration_minutes: track.duration_minutes, is_featured: track.is_featured,
       audio_url: track.audio_url || "", thumbnail_url: track.thumbnail_url || "",
       course_id: track.course_id || "", subcategory_id: track.subcategory_id || "", order_index: track.order_index,
       content_type: track.content_type || "audio", steps: track.steps ? JSON.stringify(track.steps, null, 2) : "",
-      tags: track.tags ? (Array.isArray(track.tags) ? track.tags.join(", ") : String(track.tags)) : "",
+      tags: trackTags,
     });
     setShowTrackForm(true);
   };
+
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    tracks.forEach((t: any) => {
+      if (Array.isArray(t.tags)) t.tags.forEach((tag: string) => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, [tracks]);
 
   const tracksByCategory = useMemo(() => {
     const grouped: Record<string, any[]> = {};
@@ -579,10 +588,13 @@ export default function AdminPage() {
                       <option value="journaling">Journaling</option>
                     </select>
                   </div>
-                  <div>
-                    <label className={labelClass}>Tags (comma-separated)</label>
-                    <input value={trackForm.tags} onChange={e => setTrackForm(f => ({ ...f, tags: e.target.value }))}
-                      className={inputClass} placeholder="e.g. stress, anxiety, focus, calm, sleep" />
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Tags</label>
+                    <TrackTagInput
+                      value={trackForm.tags}
+                      onChange={(tags) => setTrackForm(f => ({ ...f, tags }))}
+                      allTags={allTags}
+                    />
                   </div>
 
                   {/* Thumbnail Generator at top */}
@@ -771,7 +783,7 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-display text-2xl">Courses</h2>
-              <button onClick={() => { setEditingCourse(null); setCourseForm({ title: "", description: "", is_premium: true, thumbnail_url: "", category: "", cover_image_url: "" }); setShowCourseForm(true); }}
+              <button onClick={() => { setEditingCourse(null); setCourseForm({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "" }); setShowCourseForm(true); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
                 <Plus className="w-4 h-4" /> Add Course
               </button>
@@ -799,11 +811,7 @@ export default function AdminPage() {
                       {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
                   </div>
-                  <div className="flex items-center">
-                    <label className="flex items-center gap-2 text-foreground text-sm font-sans cursor-pointer">
-                      <input type="checkbox" checked={courseForm.is_premium} onChange={e => setCourseForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium
-                    </label>
-                  </div>
+                  <div>{/* spacer */}</div>
                   <UploadRow label="Thumbnail" field="thumbnail_url" folder="images" value={courseForm.thumbnail_url}
                     setForm={(fn) => setCourseForm(fn)} uploadKey="courseThumb" />
                   <UploadRow label="Cover Image" field="cover_image_url" folder="images" value={courseForm.cover_image_url}
@@ -829,11 +837,11 @@ export default function AdminPage() {
                     {course.thumbnail_url && <img src={course.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
                     <div>
                       <p className="text-foreground text-sm font-sans font-medium">{course.title}</p>
-                      <p className="text-ui text-xs">{course.category ? CATEGORIES[course.category] || course.category : "No category"}{course.is_premium ? " · Premium" : ""}</p>
+                      <p className="text-ui text-xs">{course.category ? CATEGORIES[course.category] || course.category : "No category"}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", is_premium: course.is_premium, thumbnail_url: course.thumbnail_url || "", category: course.category || "", cover_image_url: course.cover_image_url || "" }); setShowCourseForm(true); }}
+                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", thumbnail_url: course.thumbnail_url || "", category: course.category || "", cover_image_url: course.cover_image_url || "" }); setShowCourseForm(true); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => { if (confirm("Delete?")) deleteCourseMutation.mutate(course.id); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
@@ -849,7 +857,7 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-display text-2xl">Mastery Classes</h2>
-              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" }); setShowMasteryForm(true); }}
+              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" }); setShowMasteryForm(true); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
                 <Plus className="w-4 h-4" /> Add Class
               </button>
@@ -877,11 +885,6 @@ export default function AdminPage() {
                   <div>
                     <label className={labelClass}>Duration (min)</label>
                     <input type="number" value={masteryForm.duration_minutes} onChange={e => setMasteryForm(f => ({ ...f, duration_minutes: Number(e.target.value) }))} className={inputClass} />
-                  </div>
-                  <div className="flex items-center">
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input type="checkbox" checked={masteryForm.is_premium} onChange={e => setMasteryForm(f => ({ ...f, is_premium: e.target.checked }))} className="accent-accent" /> Premium
-                    </label>
                   </div>
                   <div>{/* spacer */}</div>
 
@@ -918,7 +921,7 @@ export default function AdminPage() {
                     {mc.thumbnail_url && <img src={mc.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
                     <div>
                       <p className="text-foreground text-sm font-sans font-medium">{mc.title}</p>
-                      <p className="text-ui text-xs">{mc.duration_minutes} min{mc.is_premium ? " · Premium" : ""}{mc.theme ? ` · ${mc.theme}` : ""}{!mc.audio_url ? " · No audio" : ""}</p>
+                      <p className="text-ui text-xs">{mc.duration_minutes} min{mc.theme ? ` · ${mc.theme}` : ""}{!mc.audio_url ? " · No audio" : ""}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -926,7 +929,7 @@ export default function AdminPage() {
                       setEditingMastery(mc);
                       setMasteryForm({
                         title: mc.title, description: mc.description || "", duration_minutes: mc.duration_minutes,
-                        is_premium: mc.is_premium, audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "",
+                        audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "",
                         theme: mc.theme || "", cover_image_url: mc.cover_image_url || "",
                         pause_prompts: JSON.stringify(mc.pause_prompts || [], null, 2),
                       });
