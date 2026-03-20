@@ -674,8 +674,10 @@ export default function AdminPage() {
                     />
                   </div>
 
-                  <UploadRow label="Thumbnail Image" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
+                  <UploadRow label="Thumbnail — Horizontal (16:9)" field="thumbnail_url" folder="images" value={trackForm.thumbnail_url}
                     setForm={setTrackFormWrapped} uploadKey="trackImage" />
+                  <UploadRow label="Thumbnail — Square (1:1)" field="thumbnail_square_url" folder="images" value={(trackForm as any).thumbnail_square_url}
+                    setForm={setTrackFormWrapped} uploadKey="trackSquareImage" />
 
                   {(trackForm.content_type === "audio" || trackForm.content_type === "video") && (
                     <>

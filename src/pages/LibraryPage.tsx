@@ -120,9 +120,9 @@ export default function LibraryPage() {
 
   const TrackCard = ({ track }: { track: any }) => (
     <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card overflow-hidden group">
-      <div className="aspect-video bg-surface-light relative">
-        {track.thumbnail_url ? (
-          <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
+      <div className="aspect-square bg-surface-light relative overflow-hidden rounded-xl">
+        {(track.thumbnail_square_url || track.thumbnail_url) ? (
+          <img src={track.thumbnail_square_url ?? track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
         )}
