@@ -119,7 +119,7 @@ export default function AdminPage() {
   const [newPromptCategory, setNewPromptCategory] = useState("");
 
   const [showCourseForm, setShowCourseForm] = useState(false);
-  const [courseForm, setCourseForm] = useState({ title: "", description: "", is_premium: true, thumbnail_url: "", category: "", cover_image_url: "" });
+  const [courseForm, setCourseForm] = useState({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "" });
   const [editingCourse, setEditingCourse] = useState<any>(null);
 
   const [showMasteryForm, setShowMasteryForm] = useState(false);
