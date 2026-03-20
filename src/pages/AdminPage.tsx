@@ -335,7 +335,7 @@ export default function AdminPage() {
       try { parsedPrompts = JSON.parse(data.pause_prompts); } catch { /* keep empty */ }
       const saveData = {
         title: data.title, description: data.description || null, duration_minutes: data.duration_minutes,
-        is_premium: data.is_premium, audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
+        audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
         theme: data.theme || null, cover_image_url: data.cover_image_url || null, pause_prompts: parsedPrompts,
       };
       if (editingMastery) {
