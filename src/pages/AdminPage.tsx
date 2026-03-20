@@ -1050,9 +1050,8 @@ export default function AdminPage() {
                     setForm={setMasteryFormWrapped} uploadKey="masteryCover" />
 
                   <div className="md:col-span-2">
-                    <label className={labelClass}>Pause Prompts (JSON array)</label>
-                    <textarea value={masteryForm.pause_prompts} onChange={e => setMasteryForm(f => ({ ...f, pause_prompts: e.target.value }))}
-                      rows={3} className={inputClass + " resize-none font-mono text-xs"} placeholder='[{"time_seconds": 300, "prompt": "Reflect on..."}]' />
+                    <label className={labelClass}>Guided Prompts</label>
+                    <MasteryPromptBuilder value={masteryForm.pause_prompts} onChange={(val) => setMasteryForm(f => ({ ...f, pause_prompts: val }))} />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 mt-6">
