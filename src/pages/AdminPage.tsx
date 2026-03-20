@@ -857,7 +857,7 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-display text-2xl">Mastery Classes</h2>
-              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, is_premium: true, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" }); setShowMasteryForm(true); }}
+              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" }); setShowMasteryForm(true); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
                 <Plus className="w-4 h-4" /> Add Class
               </button>
