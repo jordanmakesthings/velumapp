@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Play, Pause, SkipBack, SkipForward, RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 function formatTime(s: number) {
   if (!s || isNaN(s)) return "0:00";
@@ -25,9 +26,7 @@ export default function MasteryPlayerPage() {
   const [duration, setDuration] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [responses, setResponses] = useState<Record<string, string>>({});
-  const [activePausePrompt, setActivePausePrompt] = useState<any>(null);
-  const [completedPromptIds, setCompletedPromptIds] = useState<Set<string>>(new Set());
-  const [showPostPrompts, setShowPostPrompts] = useState(false);
+  const [visiblePromptIds, setVisiblePromptIds] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -40,46 +39,22 @@ export default function MasteryPlayerPage() {
     enabled: !!id,
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      if (!user || !mc) return;
-      const allPrompts = (mc as any).pause_prompts || [];
-      const responseEntries = allPrompts.map((p: any) => ({
-        prompt_text: p.text,
-        response: responses[p.prompt_id] || "",
-      }));
-      await supabase.from("mastery_class_responses").insert({
-        user_id: user.id,
-        mastery_class_id: mc.id,
-        mastery_class_title: mc.title,
-        mastery_class_theme: (mc as any).theme || "",
-        date: new Date().toISOString().split("T")[0],
-        responses: responseEntries,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["masteryResponses"] });
-      setSaved(true);
-    },
-  });
+  const allPrompts = useMemo(() => (mc as any)?.pause_prompts || [], [mc]);
+  const midPrompts = useMemo(() => allPrompts.filter((p: any) => p.post_completion === false), [allPrompts]);
+  const postPrompts = useMemo(() => allPrompts.filter((p: any) => p.post_completion !== false), [allPrompts]);
 
+  // Reveal mid-session prompts at their timestamp WITHOUT pausing audio
   const handleTimeUpdate = () => {
-    if (!audioRef.current || !mc) return;
+    if (!audioRef.current) return;
     const ct = audioRef.current.currentTime;
     setCurrentTime(ct);
-    const prompts = (mc as any).pause_prompts || [];
-    for (const prompt of prompts) {
+    for (const prompt of midPrompts) {
       if (
-        prompt.post_completion === false &&
         prompt.timestamp_seconds != null &&
-        !completedPromptIds.has(prompt.prompt_id) &&
         ct >= prompt.timestamp_seconds &&
-        ct < prompt.timestamp_seconds + 2
+        !visiblePromptIds.has(prompt.prompt_id)
       ) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-        setActivePausePrompt(prompt);
-        return;
+        setVisiblePromptIds(prev => new Set([...prev, prompt.prompt_id]));
       }
     }
   };
@@ -87,8 +62,11 @@ export default function MasteryPlayerPage() {
   const handleAudioEnded = () => {
     setIsPlaying(false);
     setCompleted(true);
-    const postPrompts = ((mc as any)?.pause_prompts || []).filter((p: any) => p.post_completion !== false);
-    if (postPrompts.length > 0) setShowPostPrompts(true);
+    // Reveal all post-completion prompts
+    const postIds = postPrompts.map((p: any) => p.prompt_id);
+    if (postIds.length > 0) {
+      setVisiblePromptIds(prev => new Set([...prev, ...postIds]));
+    }
   };
 
   const togglePlay = () => {
@@ -110,17 +88,39 @@ export default function MasteryPlayerPage() {
     setCurrentTime(pct * duration);
   };
 
-  const dismissPausePrompt = () => {
-    if (activePausePrompt) {
-      setCompletedPromptIds(prev => new Set([...prev, activePausePrompt.prompt_id]));
-      setActivePausePrompt(null);
-      audioRef.current?.play();
-      setIsPlaying(true);
-    }
-  };
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !mc) return;
+      const responseEntries = allPrompts.map((p: any) => ({
+        prompt_text: p.text,
+        response: responses[p.prompt_id] || "",
+      }));
+      await supabase.from("mastery_class_responses").insert({
+        user_id: user.id,
+        mastery_class_id: mc.id,
+        mastery_class_title: mc.title,
+        mastery_class_theme: (mc as any).theme || "",
+        date: new Date().toISOString().split("T")[0],
+        responses: responseEntries,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["masteryResponses"] });
+      setSaved(true);
+      toast.success("Reflections saved to your journal");
+    },
+  });
 
   const hasAccess = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
   const isGated = !hasAccess;
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  // Collect visible prompts in order
+  const activePrompts = useMemo(() => {
+    return allPrompts.filter((p: any) => visiblePromptIds.has(p.prompt_id));
+  }, [allPrompts, visiblePromptIds]);
+
+  const hasAnyResponse = Object.values(responses).some(r => r.trim().length > 0);
 
   if (isLoading) {
     return (
@@ -137,9 +137,6 @@ export default function MasteryPlayerPage() {
       </div>
     );
   }
-
-  const postPrompts = ((mc as any).pause_prompts || []).filter((p: any) => p.post_completion !== false);
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
@@ -231,33 +228,20 @@ export default function MasteryPlayerPage() {
               </button>
             </div>
 
-            {/* Mid-audio pause prompt */}
-            {activePausePrompt && (
-              <div className="velum-card p-6 max-w-sm w-full mb-6">
-                <p className="text-accent text-[10px] font-sans tracking-[2px] uppercase mb-3">Pause & Reflect</p>
-                <p className="text-display text-lg italic mb-4">{activePausePrompt.text}</p>
-                <textarea
-                  value={responses[activePausePrompt.prompt_id] || ""}
-                  onChange={(e) => setResponses(r => ({ ...r, [activePausePrompt.prompt_id]: e.target.value }))}
-                  rows={4}
-                  placeholder="Write your reflection here…"
-                  className="w-full bg-secondary rounded-lg p-4 text-foreground text-sm font-sans placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 mb-4"
-                />
-                <button onClick={dismissPausePrompt}
-                  className="px-5 py-2.5 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
-                  Continue listening →
-                </button>
-              </div>
-            )}
-
-            {/* Post-completion prompts */}
-            {showPostPrompts && postPrompts.length > 0 && (
+            {/* Prompts appear below player — never interrupt audio */}
+            {activePrompts.length > 0 && (
               <div className="max-w-sm w-full">
-                <div className="h-px bg-accent/10 mb-7" />
+                <div className="h-px bg-accent/10 mb-6" />
                 <p className="text-accent/50 text-[10px] font-sans tracking-[2.5px] uppercase mb-2">Reflect & Write</p>
-                <h3 className="text-display text-2xl mb-6">Pause Prompts</h3>
-                {postPrompts.map((prompt: any) => (
-                  <div key={prompt.prompt_id} className="mb-6">
+                <p className="text-muted-foreground text-xs font-sans mb-6">Journaling is optional — write as much or as little as you like.</p>
+                {activePrompts.map((prompt: any) => (
+                  <motion.div
+                    key={prompt.prompt_id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="mb-6"
+                  >
                     <p className="text-display text-base italic text-foreground/70 mb-3">"{prompt.text}"</p>
                     <textarea
                       value={responses[prompt.prompt_id] || ""}
@@ -266,15 +250,17 @@ export default function MasteryPlayerPage() {
                       placeholder="Your reflection…"
                       className="w-full bg-card rounded-xl p-4 text-foreground text-sm font-sans placeholder:text-muted-foreground/50 resize-none focus:outline-none border border-accent/10"
                     />
-                  </div>
+                  </motion.div>
                 ))}
+
+                {/* Save button */}
                 {!saved ? (
                   <button
                     onClick={() => saveMutation.mutate()}
-                    disabled={saveMutation.isPending}
-                    className="w-full py-4 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-bold active:scale-[0.98] transition-transform disabled:opacity-60"
+                    disabled={saveMutation.isPending || !hasAnyResponse}
+                    className="w-full py-4 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-bold active:scale-[0.98] transition-transform disabled:opacity-40"
                   >
-                    {saveMutation.isPending ? "Saving…" : "Save to Journal"}
+                    {saveMutation.isPending ? "Saving…" : "Save Reflections to Journal"}
                   </button>
                 ) : (
                   <div className="velum-card p-5 text-center">
@@ -285,7 +271,7 @@ export default function MasteryPlayerPage() {
             )}
 
             {/* Completed without prompts */}
-            {completed && !showPostPrompts && (
+            {completed && activePrompts.length === 0 && (
               <div className="flex flex-col items-center">
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }}
                   className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center mb-6">
@@ -294,7 +280,7 @@ export default function MasteryPlayerPage() {
                 <h3 className="text-display text-2xl mb-2">Class complete</h3>
                 <p className="text-ui text-sm mb-8">{mc.title}</p>
                 <div className="flex gap-3">
-                  <button onClick={() => { setCurrentTime(0); setCompleted(false); if (audioRef.current) audioRef.current.currentTime = 0; }}
+                  <button onClick={() => { setCurrentTime(0); setCompleted(false); setVisiblePromptIds(new Set()); if (audioRef.current) audioRef.current.currentTime = 0; }}
                     className="flex items-center gap-2 px-6 py-3 rounded-xl velum-card-flat text-foreground text-sm font-sans active:scale-95 transition-transform">
                     <RotateCcw className="w-4 h-4" /> Play again
                   </button>
