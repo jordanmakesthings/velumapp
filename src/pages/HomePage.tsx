@@ -325,22 +325,7 @@ export default function HomePage() {
       </div>
 
       {/* Featured Sessions carousel — auto-rotating */}
-      {featuredTracks.length > 0 && (() => {
-        const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
-          if (featuredTracks.length <= 1) return;
-          autoRef.current = setInterval(() => {
-            setCarouselIdx(prev => {
-              const next = (prev + 1) % featuredTracks.length;
-              if (carouselRef.current) {
-                const child = carouselRef.current.children[next] as HTMLElement;
-                if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
-              }
-              return next;
-            });
-          }, 5000);
-          return () => { if (autoRef.current) clearInterval(autoRef.current); };
-        }, [featuredTracks.length]);
-        return (
+      {featuredTracks.length > 0 &&
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <p className="text-ui text-[11px] tracking-[2.5px] uppercase">Featured Sessions</p>
@@ -380,8 +365,6 @@ export default function HomePage() {
             )}
           </div>
         </div>
-        );
-      })()
       }
 
       {/* Featured Courses */}
