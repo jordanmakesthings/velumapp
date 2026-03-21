@@ -834,10 +834,10 @@ export default function AdminPage() {
         pause_prompts: parsedPrompts,
       };
       if (editingMastery) {
-        const { error } = await supabase.from("mastery_classes").update(saveData).eq("id", editingMastery.id);
+        const { error } = await supabase.from("mastery_classes").update(saveData as any).eq("id", editingMastery.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("mastery_classes").insert(saveData);
+        const { error } = await supabase.from("mastery_classes").insert(saveData as any);
         if (error) throw error;
       }
     },
