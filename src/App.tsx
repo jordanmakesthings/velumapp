@@ -12,7 +12,6 @@ import BreathePage from "./pages/BreathePage";
 import CoursesPage from "./pages/CoursesPage";
 import ProfilePage from "./pages/ProfilePage";
 import JournalPage from "./pages/JournalPage";
-import BlueprintPage from "./pages/BlueprintPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import WelcomePage from "./pages/WelcomePage";
 import PremiumPage from "./pages/PremiumPage";
@@ -53,7 +52,6 @@ const App = () => (
               <Route path="/subcategory" element={<SubcategoryPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
-              <Route path="/blueprint" element={<ProtectedRoute><BlueprintPage /></ProtectedRoute>} />
             </Route>
 
             {/* Full-screen pages (no nav) */}
@@ -65,6 +63,9 @@ const App = () => (
             <Route path="/home-setup" element={<HomeScreenSetupPage />} />
             <Route path="/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+
+            {/* Redirect old routes */}
+            <Route path="/blueprint" element={<Navigate to="/profile" replace />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

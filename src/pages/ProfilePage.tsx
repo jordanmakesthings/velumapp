@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Flame, Sparkles, Wind, Crown, Bell, LogOut, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { Flame, Sparkles, Wind, Bell, LogOut, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { useState, useMemo } from "react";
 
@@ -22,7 +22,7 @@ export default function ProfilePage() {
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelSuccess, setCancelSuccess] = useState(false);
 
-  const isPremium = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
+  const hasAccess = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
   const isLifetime = profile?.subscription_plan === "lifetime";
   const isCanceling = profile?.subscription_status === "canceling";
 
@@ -192,17 +192,29 @@ export default function ProfilePage() {
       </div>
 
       {/* Subscription management */}
-      {isPremium && !isLifetime && (
-        <div className="velum-card p-4 flex items-center justify-between mb-6">
+      <div className="velum-card p-4 mb-6">
+        <div className="flex items-center justify-between">
           <div>
             <p className="text-foreground text-sm font-sans font-medium">
-              {cancelSuccess || isCanceling ? "Subscription canceling" : `${profile?.subscription_plan ? profile.subscription_plan.charAt(0).toUpperCase() + profile.subscription_plan.slice(1) : "Premium"} plan`}
+              {cancelSuccess || isCanceling
+                ? "Subscription canceling"
+                : hasAccess
+                  ? isLifetime
+                    ? "Lifetime member"
+                    : `${profile?.subscription_plan ? profile.subscription_plan.charAt(0).toUpperCase() + profile.subscription_plan.slice(1) : "Monthly"} plan`
+                  : "No active plan"
+              }
             </p>
             <p className="text-muted-foreground text-xs mt-0.5">
-              {cancelSuccess || isCanceling ? "Access continues until end of billing period" : "Active"}
+              {cancelSuccess || isCanceling
+                ? "Access continues until end of billing period"
+                : hasAccess
+                  ? isLifetime ? "You have lifetime access" : "Active"
+                  : "Subscribe to access all content"
+              }
             </p>
           </div>
-          {!cancelSuccess && !isCanceling && (
+          {hasAccess && !isLifetime && !cancelSuccess && !isCanceling && (
             <button
               onClick={handleCancelSubscription}
               disabled={canceling}
@@ -211,8 +223,16 @@ export default function ProfilePage() {
               {canceling ? "Canceling..." : "Cancel plan"}
             </button>
           )}
+          {!hasAccess && (
+            <Link
+              to="/premium"
+              className="text-xs text-accent border border-accent/30 rounded-lg px-3 py-1.5 hover:bg-accent/10 transition-colors"
+            >
+              Subscribe
+            </Link>
+          )}
         </div>
-      )}
+      </div>
       {cancelError && (
         <div className="flex items-center gap-2 mb-4 text-destructive text-xs">
           <AlertCircle className="w-3.5 h-3.5" />
@@ -272,20 +292,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Upgrade CTA (if not premium) */}
-      {!isPremium && (
-        <Link to="/premium" className="velum-card p-5 flex items-center justify-between mb-8 group">
-          <div className="flex items-center gap-3">
-            <Crown className="w-5 h-5 text-accent" />
-            <div>
-              <p className="text-foreground text-sm font-sans font-medium">Upgrade to Premium</p>
-              <p className="text-ui text-xs">Unlock the full library</p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-        </Link>
-      )}
-
       {/* Completed sessions */}
       <div className="mb-8">
         <p className="text-ui text-xs tracking-wide uppercase mb-4">Completed Sessions</p>
@@ -315,12 +321,6 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
-
-      {/* Blueprint link */}
-      <Link to="/blueprint" className="velum-card p-4 flex items-center justify-between mb-4 group">
-        <span className="text-foreground text-sm font-sans">Your Blueprint</span>
-        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-      </Link>
     </div>
   );
 }
