@@ -325,8 +325,64 @@ export default function HomePage() {
       </div>
 
       {/* Featured Sessions carousel — auto-rotating */}
-      {featuredTracks.length > 0 &&
-        <FeaturedCarousel tracks={featuredTracks} />
+      {featuredTracks.length > 0 && (() => {
+        const autoRef = useRef<NodeJS.Timeout | null>(null);
+        useEffect(() => {
+          if (featuredTracks.length <= 1) return;
+          autoRef.current = setInterval(() => {
+            setCarouselIdx(prev => {
+              const next = (prev + 1) % featuredTracks.length;
+              if (carouselRef.current) {
+                const child = carouselRef.current.children[next] as HTMLElement;
+                if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+              }
+              return next;
+            });
+          }, 5000);
+          return () => { if (autoRef.current) clearInterval(autoRef.current); };
+        }, [featuredTracks.length]);
+        return (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-ui text-[11px] tracking-[2.5px] uppercase">Featured Sessions</p>
+            <div className="flex gap-2">
+              <button onClick={() => scrollCarousel(-1)} className="w-8 h-8 rounded-full bg-surface-light flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button onClick={() => scrollCarousel(1)} className="w-8 h-8 rounded-full bg-surface-light flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          <div className="flex gap-1.5 justify-end mb-3">
+            {featuredTracks.map((_: any, i: number) =>
+            <div key={i} className={`h-1.5 rounded-full transition-all ${i === carouselIdx ? "w-5 bg-accent" : "w-1.5 bg-surface-light"}`} />
+            )}
+          </div>
+          <div ref={carouselRef} className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
+            {featuredTracks.map((track: any) =>
+            <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card min-w-[260px] max-w-[300px] overflow-hidden shrink-0 snap-start">
+                <div className="aspect-[16/9] bg-surface-light relative overflow-hidden">
+                  {track.thumbnail_url && <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />}
+                </div>
+                <div className="p-4">
+                  <p className="text-accent text-[10px] font-sans font-bold tracking-wide uppercase mb-1">
+                    {track.category?.replace("_", " ")}
+                  </p>
+                  <p className="text-foreground text-sm font-sans font-medium">{track.title}</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="flex items-center gap-1 text-ui text-xs"><Clock className="w-3 h-3" /> {track.duration_minutes} min</span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-accent/40 text-accent text-[10px] font-sans font-medium">
+                      Begin →
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            )}
+          </div>
+        </div>
+        );
+      })()
       }
 
       {/* Featured Courses */}
