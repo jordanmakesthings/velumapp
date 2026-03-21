@@ -165,9 +165,10 @@ export default function MasteryPlayerPage() {
 
       <div className="relative z-10 flex-1 flex flex-col items-center px-6 overflow-y-auto pb-24">
         {/* Cover */}
-        {(mc as any).cover_image_url ? (
-          <div className="w-full max-w-sm aspect-video rounded-2xl overflow-hidden mb-8">
-            <img src={(mc as any).cover_image_url} alt={mc.title} className="w-full h-full object-cover" />
+      {/* Cover — use player_image_url_1_1 if available, else cover_image_url_16_9, else cover_image_url */}
+        {((mc as any).player_image_url_1_1 || (mc as any).cover_image_url_16_9 || (mc as any).cover_image_url) ? (
+          <div className={`w-full max-w-sm overflow-hidden mb-8 ${(mc as any).player_image_url_1_1 ? "aspect-square rounded-3xl" : "aspect-video rounded-2xl"}`}>
+            <img src={(mc as any).player_image_url_1_1 || (mc as any).cover_image_url_16_9 || (mc as any).cover_image_url} alt={mc.title} className="w-full h-full object-cover" />
           </div>
         ) : (
           <motion.div

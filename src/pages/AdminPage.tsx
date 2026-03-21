@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, Plus, Upload, Trash2, Edit2, X, Check, Music, BookOpen,
-  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown, Users, Tag
+  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown, Users, Tag, SlidersHorizontal
 } from "lucide-react";
 import { toast } from "sonner";
 import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
@@ -160,7 +160,7 @@ function MasteryPromptBuilder({ value, onChange }: { value: string; onChange: (v
   );
 }
 
-type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "taxonomy" | "settings" | "users";
+type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "taxonomy" | "finder" | "settings" | "users";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
@@ -169,6 +169,7 @@ const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "mastery", label: "Mastery", icon: GraduationCap },
   { key: "prompts", label: "Prompts", icon: Feather },
   { key: "taxonomy", label: "Taxonomy", icon: Tag },
+  { key: "finder", label: "Session Finder", icon: SlidersHorizontal },
   { key: "settings", label: "Settings", icon: Settings },
   { key: "users", label: "Users", icon: Users },
 ];
@@ -347,6 +348,162 @@ function TaxonomyTab() {
   );
 }
 
+// ===== SESSION FINDER TAB =====
+interface FinderOption {
+  key: string;
+  label: string;
+  desc: string;
+  min?: number;
+  max?: number;
+}
+
+const FINDER_SECTIONS = [
+  { settingKey: "session_finder_categories", label: "Categories", desc: "Practice types shown in step 1" },
+  { settingKey: "session_finder_goals", label: "Goals", desc: "Goal options in step 2" },
+  { settingKey: "session_finder_moods", label: "Moods", desc: "Mood options in step 3 (multi-select)" },
+  { settingKey: "session_finder_durations", label: "Durations", desc: "Time ranges in step 4" },
+];
+
+function SessionFinderTab() {
+  const queryClient = useQueryClient();
+  const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
+  const labelClass = "block text-xs text-muted-foreground mb-1.5 uppercase tracking-wider";
+
+  return (
+    <div className="space-y-10">
+      <div>
+        <h2 className="text-display text-2xl mb-2">Session Finder</h2>
+        <p className="text-muted-foreground text-sm mb-6">Configure all the options shown in the Session Finder wizard.</p>
+      </div>
+      {FINDER_SECTIONS.map(section => (
+        <FinderSectionEditor key={section.settingKey} {...section} />
+      ))}
+    </div>
+  );
+}
+
+function FinderSectionEditor({ settingKey, label, desc }: { settingKey: string; label: string; desc: string }) {
+  const queryClient = useQueryClient();
+  const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
+  const labelClass = "block text-xs text-muted-foreground mb-1.5 uppercase tracking-wider";
+  const isDuration = settingKey.includes("duration");
+
+  const { data: options = [] } = useQuery({
+    queryKey: ["appSettings", settingKey],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", settingKey).single();
+      return (data?.value as unknown as FinderOption[]) || [];
+    },
+  });
+
+  const [newKey, setNewKey] = useState("");
+  const [newLabel, setNewLabel] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newMin, setNewMin] = useState(0);
+  const [newMax, setNewMax] = useState(10);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+
+  const saveMutation = useMutation({
+    mutationFn: async (newOptions: FinderOption[]) => {
+      await supabase.from("app_settings").update({ value: newOptions as any }).eq("key", settingKey);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appSettings", settingKey] });
+      toast.success(`${label} updated`);
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const addOption = () => {
+    const key = newKey.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\-+]/g, "");
+    if (!key || !newLabel.trim()) return;
+    const opt: FinderOption = { key, label: newLabel.trim(), desc: newDesc.trim() };
+    if (isDuration) { opt.min = newMin; opt.max = newMax; }
+    saveMutation.mutate([...options, opt]);
+    setNewKey(""); setNewLabel(""); setNewDesc(""); setNewMin(0); setNewMax(10);
+  };
+
+  const removeOption = (key: string) => {
+    saveMutation.mutate(options.filter((o: FinderOption) => o.key !== key));
+  };
+
+  const saveEdit = (key: string) => {
+    saveMutation.mutate(options.map((o: FinderOption) => o.key === key ? { ...o, label: editLabel.trim(), desc: editDesc.trim() } : o));
+    setEditingKey(null);
+  };
+
+  return (
+    <div>
+      <h3 className="text-display text-lg mb-1">{label}</h3>
+      <p className="text-muted-foreground text-xs mb-4">{desc}</p>
+
+      <div className="space-y-2 mb-4">
+        {options.map((opt: FinderOption) => (
+          <div key={opt.key} className="velum-card p-3 flex items-center gap-3">
+            {editingKey === opt.key ? (
+              <div className="flex-1 flex flex-col gap-2">
+                <input value={editLabel} onChange={e => setEditLabel(e.target.value)} className={inputClass} placeholder="Label" />
+                <input value={editDesc} onChange={e => setEditDesc(e.target.value)} className={inputClass} placeholder="Description" />
+                <div className="flex gap-2">
+                  <button onClick={() => saveEdit(opt.key)} className="text-accent text-xs font-sans hover:underline">Save</button>
+                  <button onClick={() => setEditingKey(null)} className="text-muted-foreground text-xs font-sans hover:underline">Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-foreground text-sm font-sans font-medium">{opt.label}</span>
+                    <span className="text-muted-foreground/40 text-[10px] font-mono">{opt.key}</span>
+                    {isDuration && opt.min != null && <span className="text-accent text-[10px] font-sans">{opt.min}–{opt.max} min</span>}
+                  </div>
+                  <p className="text-muted-foreground text-xs">{opt.desc}</p>
+                </div>
+                <button onClick={() => { setEditingKey(opt.key); setEditLabel(opt.label); setEditDesc(opt.desc); }}
+                  className="text-muted-foreground hover:text-foreground p-1"><Edit2 className="w-3.5 h-3.5" /></button>
+                <button onClick={() => removeOption(opt.key)}
+                  className="text-muted-foreground hover:text-destructive p-1"><X className="w-3.5 h-3.5" /></button>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="velum-card p-4">
+        <p className={labelClass}>Add Option</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+          <div>
+            <input value={newLabel} onChange={e => {
+              setNewLabel(e.target.value);
+              setNewKey(e.target.value.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\-+]/g, ""));
+            }} className={inputClass} placeholder="Label (e.g. Calm)" />
+            {newKey && <span className="text-[10px] text-muted-foreground/50 mt-0.5 block">Key: {newKey}</span>}
+          </div>
+          <input value={newDesc} onChange={e => setNewDesc(e.target.value)} className={inputClass} placeholder="Description" />
+        </div>
+        {isDuration && (
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase">Min (minutes)</label>
+              <input type="number" value={newMin} onChange={e => setNewMin(Number(e.target.value))} className={inputClass} />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase">Max (minutes)</label>
+              <input type="number" value={newMax} onChange={e => setNewMax(Number(e.target.value))} className={inputClass} />
+            </div>
+          </div>
+        )}
+        <button onClick={addOption} disabled={!newLabel.trim()}
+          className="px-4 py-2.5 rounded-xl text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50">
+          <Plus className="w-4 h-4 inline mr-1" /> Add
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const emptyTrackForm = {
   title: "", description: "", category: "meditation",
   duration_minutes: 10, is_featured: false,
@@ -439,7 +596,7 @@ export default function AdminPage() {
   const [editingCourse, setEditingCourse] = useState<any>(null);
 
   const [showMasteryForm, setShowMasteryForm] = useState(false);
-  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" });
+  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]" });
   const [editingMastery, setEditingMastery] = useState<any>(null);
 
   const [showSubcatForm, setShowSubcatForm] = useState(false);
@@ -668,23 +825,26 @@ export default function AdminPage() {
     mutationFn: async (data: typeof masteryForm) => {
       let parsedPrompts: any[] = [];
       try { parsedPrompts = JSON.parse(data.pause_prompts); } catch { /* keep empty */ }
-      const saveData = {
+      const saveData: Record<string, any> = {
         title: data.title, description: data.description || null, duration_minutes: data.duration_minutes,
         audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
-        theme: data.theme || null, cover_image_url: data.cover_image_url || null, pause_prompts: parsedPrompts,
+        theme: data.theme || null, cover_image_url: data.cover_image_url || null,
+        cover_image_url_16_9: (data as any).cover_image_url_16_9 || null,
+        player_image_url_1_1: (data as any).player_image_url_1_1 || null,
+        pause_prompts: parsedPrompts,
       };
       if (editingMastery) {
-        const { error } = await supabase.from("mastery_classes").update(saveData).eq("id", editingMastery.id);
+        const { error } = await supabase.from("mastery_classes").update(saveData as any).eq("id", editingMastery.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("mastery_classes").insert(saveData);
+        const { error } = await supabase.from("mastery_classes").insert(saveData as any);
         if (error) throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
       setShowMasteryForm(false); setEditingMastery(null);
-      setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" });
+      setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]" });
       toast.success(editingMastery ? "Class updated" : "Class created");
     },
     onError: (err: any) => toast.error(err.message),
@@ -1195,7 +1355,7 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-display text-2xl">Mastery Classes</h2>
-              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", pause_prompts: "[]" }); setShowMasteryForm(true); }}
+              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]" }); setShowMasteryForm(true); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
                 <Plus className="w-4 h-4" /> Add Class
               </button>
@@ -1230,8 +1390,12 @@ export default function AdminPage() {
                     setForm={setMasteryFormWrapped} uploadKey="masteryAudio" accept="audio/*" preview="audio" />
                   <UploadRow label="Thumbnail" field="thumbnail_url" folder="images" value={masteryForm.thumbnail_url}
                     setForm={setMasteryFormWrapped} uploadKey="masteryThumb" />
-                  <UploadRow label="Cover Image" field="cover_image_url" folder="images" value={masteryForm.cover_image_url}
+                  <UploadRow label="Cover Image (Legacy)" field="cover_image_url" folder="images" value={masteryForm.cover_image_url}
                     setForm={setMasteryFormWrapped} uploadKey="masteryCover" />
+                  <UploadRow label="Cover Image — 16:9 (Library/List)" field="cover_image_url_16_9" folder="images" value={masteryForm.cover_image_url_16_9}
+                    setForm={setMasteryFormWrapped} uploadKey="masteryCover169" />
+                  <UploadRow label="Player Image — 1:1 (Square)" field="player_image_url_1_1" folder="images" value={masteryForm.player_image_url_1_1}
+                    setForm={setMasteryFormWrapped} uploadKey="masteryPlayer11" />
 
                   <div className="md:col-span-2">
                     <label className={labelClass}>Guided Prompts</label>
@@ -1268,6 +1432,8 @@ export default function AdminPage() {
                         title: mc.title, description: mc.description || "", duration_minutes: mc.duration_minutes,
                         audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "",
                         theme: mc.theme || "", cover_image_url: mc.cover_image_url || "",
+                        cover_image_url_16_9: (mc as any).cover_image_url_16_9 || "",
+                        player_image_url_1_1: (mc as any).player_image_url_1_1 || "",
                         pause_prompts: JSON.stringify(mc.pause_prompts || [], null, 2),
                       });
                       setShowMasteryForm(true);
@@ -1339,6 +1505,9 @@ export default function AdminPage() {
 
         {/* ============ TAXONOMY TAB ============ */}
         {activeTab === "taxonomy" && <TaxonomyTab />}
+
+        {/* ============ SESSION FINDER TAB ============ */}
+        {activeTab === "finder" && <SessionFinderTab />}
 
         {/* ============ USERS TAB ============ */}
         {activeTab === "users" && <UsersTab />}

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, ChevronLeft, ChevronRight, Clock, BookOpen } from "lucide-react";
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -192,6 +193,22 @@ export default function HomePage() {
     if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
   };
 
+  // Auto-rotate featured carousel every 5 seconds
+  useEffect(() => {
+    if (featuredTracks.length <= 1) return;
+    const timer = setInterval(() => {
+      setCarouselIdx(prev => {
+        const next = (prev + 1) % featuredTracks.length;
+        if (carouselRef.current) {
+          const child = carouselRef.current.children[next] as HTMLElement;
+          if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+        }
+        return next;
+      });
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [featuredTracks.length]);
+
   const handleSaveReflection = async () => {
     if (!user || !reflectionText.trim()) return;
     setSavingReflection(true);
@@ -323,7 +340,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Featured Sessions carousel */}
+      {/* Featured Sessions carousel — auto-rotating */}
       {featuredTracks.length > 0 &&
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -364,7 +381,7 @@ export default function HomePage() {
             )}
           </div>
         </div>
-        }
+      }
 
       {/* Featured Courses */}
       {courses.length > 0 &&
