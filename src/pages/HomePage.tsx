@@ -234,7 +234,7 @@ export default function HomePage() {
       </div>
 
       {/* Stats pills */}
-      <div className="flex gap-3 mb-8 overflow-x-auto">
+      <div className="flex flex-wrap gap-3 mb-8 w-full">
         {[
           { label: `${streak} day streak`, icon: Flame },
           { label: `${totalSessions} sessions`, icon: Sparkles },
