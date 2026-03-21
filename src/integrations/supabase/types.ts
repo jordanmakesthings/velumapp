@@ -455,6 +455,7 @@ export type Database = {
         Row: {
           audio_url: string | null
           cover_image_url: string | null
+          cover_image_url_16_9: string | null
           created_at: string
           description: string | null
           duration_minutes: number
@@ -462,6 +463,7 @@ export type Database = {
           is_premium: boolean
           order_index: number
           pause_prompts: Json | null
+          player_image_url_1_1: string | null
           theme: string | null
           thumbnail_url: string | null
           title: string
@@ -469,6 +471,7 @@ export type Database = {
         Insert: {
           audio_url?: string | null
           cover_image_url?: string | null
+          cover_image_url_16_9?: string | null
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -476,6 +479,7 @@ export type Database = {
           is_premium?: boolean
           order_index?: number
           pause_prompts?: Json | null
+          player_image_url_1_1?: string | null
           theme?: string | null
           thumbnail_url?: string | null
           title: string
@@ -483,6 +487,7 @@ export type Database = {
         Update: {
           audio_url?: string | null
           cover_image_url?: string | null
+          cover_image_url_16_9?: string | null
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -490,6 +495,7 @@ export type Database = {
           is_premium?: boolean
           order_index?: number
           pause_prompts?: Json | null
+          player_image_url_1_1?: string | null
           theme?: string | null
           thumbnail_url?: string | null
           title?: string
