@@ -160,7 +160,7 @@ function MasteryPromptBuilder({ value, onChange }: { value: string; onChange: (v
   );
 }
 
-type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "taxonomy" | "settings" | "users";
+type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "taxonomy" | "finder" | "settings" | "users";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
@@ -169,6 +169,7 @@ const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "mastery", label: "Mastery", icon: GraduationCap },
   { key: "prompts", label: "Prompts", icon: Feather },
   { key: "taxonomy", label: "Taxonomy", icon: Tag },
+  { key: "finder", label: "Session Finder", icon: SlidersHorizontal },
   { key: "settings", label: "Settings", icon: Settings },
   { key: "users", label: "Users", icon: Users },
 ];

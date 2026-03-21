@@ -1,11 +1,19 @@
-import { useState, useMemo } from "react";
-import { X, ArrowLeft, RotateCcw, Play, SlidersHorizontal, Clock } from "lucide-react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { X, ArrowLeft, RotateCcw, Play, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const CATEGORIES = [
+interface FinderOption {
+  key: string;
+  label: string;
+  desc: string;
+  min?: number;
+  max?: number;
+}
+
+const FALLBACK_CATEGORIES: FinderOption[] = [
   { key: "meditation", label: "Meditation", desc: "Guided & unguided practices" },
   { key: "rapid_resets", label: "Rapid Resets", desc: "Under 10 min, instant calm" },
   { key: "breathwork", label: "Breathwork", desc: "Shift your nervous system" },
@@ -13,7 +21,7 @@ const CATEGORIES = [
   { key: "journaling", label: "Journaling", desc: "Deeper self-awareness" },
 ];
 
-const GOALS = [
+const FALLBACK_GOALS: FinderOption[] = [
   { key: "calm", label: "Calm", desc: "Settle the nervous system" },
   { key: "focus", label: "Focus", desc: "Sharpen attention & clarity" },
   { key: "energize", label: "Energize", desc: "Boost vitality & drive" },
@@ -22,7 +30,7 @@ const GOALS = [
   { key: "confidence", label: "Confidence", desc: "Strengthen self-trust" },
 ];
 
-const MOODS = [
+const FALLBACK_MOODS: FinderOption[] = [
   { key: "calm", label: "Calm", desc: "Already feeling settled" },
   { key: "energize", label: "Energized", desc: "Need a boost" },
   { key: "focus", label: "Focused", desc: "Mind is scattered" },
@@ -31,19 +39,30 @@ const MOODS = [
   { key: "sleep", label: "Tired", desc: "Ready to wind down" },
 ];
 
-const DURATION_RANGES = [
+const FALLBACK_DURATIONS: FinderOption[] = [
   { key: "0-5", label: "Under 5 min", desc: "Quick reset", min: 0, max: 5 },
   { key: "5-10", label: "5–10 min", desc: "Short session", min: 5, max: 10 },
   { key: "10-20", label: "10–20 min", desc: "Deep practice", min: 10, max: 20 },
   { key: "20+", label: "20+ min", desc: "Extended journey", min: 20, max: 999 },
 ];
 
+function useFinderSetting(key: string, fallback: FinderOption[]) {
+  return useQuery({
+    queryKey: ["appSettings", key],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", key).single();
+      return (data?.value as FinderOption[]) || fallback;
+    },
+    initialData: fallback,
+  });
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-const TOTAL_STEPS = 5; // 0=category, 1=goal, 2=mood, 3=duration, 4=results
+const TOTAL_STEPS = 5;
 
 export function SessionFinderModal({ open, onClose }: Props) {
   const [step, setStep] = useState(0);
@@ -51,6 +70,11 @@ export function SessionFinderModal({ open, onClose }: Props) {
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
   const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
+
+  const { data: categories } = useFinderSetting("session_finder_categories", FALLBACK_CATEGORIES);
+  const { data: goals } = useFinderSetting("session_finder_goals", FALLBACK_GOALS);
+  const { data: moods } = useFinderSetting("session_finder_moods", FALLBACK_MOODS);
+  const { data: durations } = useFinderSetting("session_finder_durations", FALLBACK_DURATIONS);
 
   const { data: tracks = [] } = useQuery({
     queryKey: ["tracks"],
@@ -62,29 +86,22 @@ export function SessionFinderModal({ open, onClose }: Props) {
 
   const filteredTracks = useMemo(() => {
     return (tracks as any[]).filter(t => {
-      // AND across filter types
       if (selectedCategory && t.category !== selectedCategory) return false;
-
       if (selectedDuration) {
-        const range = DURATION_RANGES.find(r => r.key === selectedDuration);
-        if (range && (t.duration_minutes < range.min || t.duration_minutes > range.max)) return false;
+        const range = durations.find((r: FinderOption) => r.key === selectedDuration);
+        if (range && range.min != null && range.max != null && (t.duration_minutes < range.min || t.duration_minutes > range.max)) return false;
       }
-
-      // Mood: OR within multi-select, matched against tags
       if (selectedMoods.length > 0 && t.tags) {
         const tags = (Array.isArray(t.tags) ? t.tags : []).map((tag: string) => tag.toLowerCase());
         if (tags.length > 0 && !selectedMoods.some(m => tags.some((tag: string) => tag.includes(m)))) return false;
       }
-
-      // Goal: matched against tags
       if (selectedGoal && t.tags) {
         const tags = (Array.isArray(t.tags) ? t.tags : []).map((tag: string) => tag.toLowerCase());
         if (tags.length > 0 && !tags.some((tag: string) => tag.includes(selectedGoal))) return false;
       }
-
       return true;
     });
-  }, [tracks, selectedCategory, selectedMoods, selectedGoal, selectedDuration]);
+  }, [tracks, selectedCategory, selectedMoods, selectedGoal, selectedDuration, durations]);
 
   const clearAll = () => {
     setSelectedCategory(null);
@@ -124,23 +141,23 @@ export function SessionFinderModal({ open, onClose }: Props) {
   const activeFilters = useMemo(() => {
     const filters: { type: string; label: string }[] = [];
     if (selectedCategory) {
-      const cat = CATEGORIES.find(c => c.key === selectedCategory);
+      const cat = categories.find((c: FinderOption) => c.key === selectedCategory);
       filters.push({ type: "category", label: cat?.label || selectedCategory });
     }
     if (selectedGoal) {
-      const goal = GOALS.find(g => g.key === selectedGoal);
+      const goal = goals.find((g: FinderOption) => g.key === selectedGoal);
       filters.push({ type: "goal", label: goal?.label || selectedGoal });
     }
     if (selectedMoods.length > 0) {
-      const moodLabels = selectedMoods.map(m => MOODS.find(mo => mo.key === m)?.label || m).join(", ");
+      const moodLabels = selectedMoods.map(m => moods.find((mo: FinderOption) => mo.key === m)?.label || m).join(", ");
       filters.push({ type: "mood", label: moodLabels });
     }
     if (selectedDuration) {
-      const dur = DURATION_RANGES.find(d => d.key === selectedDuration);
+      const dur = durations.find((d: FinderOption) => d.key === selectedDuration);
       filters.push({ type: "duration", label: dur?.label || selectedDuration });
     }
     return filters;
-  }, [selectedCategory, selectedGoal, selectedMoods, selectedDuration]);
+  }, [selectedCategory, selectedGoal, selectedMoods, selectedDuration, categories, goals, moods, durations]);
 
   const SelectionCard = ({ label, desc, selected, onSelect }: { label: string; desc: string; selected: boolean; onSelect: () => void }) => (
     <button
@@ -213,95 +230,81 @@ export function SessionFinderModal({ open, onClose }: Props) {
             </div>
 
             <AnimatePresence mode="wait">
-              {/* Step 0: Category */}
               {step === 0 && (
                 <motion.div key="s0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                   <h2 className="text-display text-2xl mb-1">{stepConfig[0].title}</h2>
                   <p className="text-ui text-sm mb-5">{stepConfig[0].subtitle}</p>
                   <div className="flex flex-col gap-2">
-                    {CATEGORIES.map(({ key, label, desc }) => (
-                      <SelectionCard key={key} label={label} desc={desc}
-                        selected={selectedCategory === key}
-                        onSelect={() => handleSingleSelect(key, setSelectedCategory)} />
+                    {categories.map((opt: FinderOption) => (
+                      <SelectionCard key={opt.key} label={opt.label} desc={opt.desc}
+                        selected={selectedCategory === opt.key}
+                        onSelect={() => handleSingleSelect(opt.key, setSelectedCategory)} />
                     ))}
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 1: Goal */}
               {step === 1 && (
                 <motion.div key="s1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                   <h2 className="text-display text-2xl mb-1">{stepConfig[1].title}</h2>
                   <p className="text-ui text-sm mb-5">{stepConfig[1].subtitle}</p>
                   <div className="grid grid-cols-2 gap-2">
-                    {GOALS.map(({ key, label, desc }) => (
-                      <SelectionCard key={key} label={label} desc={desc}
-                        selected={selectedGoal === key}
-                        onSelect={() => handleSingleSelect(key, setSelectedGoal)} />
+                    {goals.map((opt: FinderOption) => (
+                      <SelectionCard key={opt.key} label={opt.label} desc={opt.desc}
+                        selected={selectedGoal === opt.key}
+                        onSelect={() => handleSingleSelect(opt.key, setSelectedGoal)} />
                     ))}
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 2: Mood (multi-select) */}
               {step === 2 && (
                 <motion.div key="s2" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                   <h2 className="text-display text-2xl mb-1">{stepConfig[2].title}</h2>
                   <p className="text-ui text-sm mb-5">{stepConfig[2].subtitle}</p>
                   <div className="grid grid-cols-2 gap-2 mb-5">
-                    {MOODS.map(({ key, label, desc }) => (
-                      <SelectionCard key={key} label={label} desc={desc}
-                        selected={selectedMoods.includes(key)}
-                        onSelect={() => toggleMood(key)} />
+                    {moods.map((opt: FinderOption) => (
+                      <SelectionCard key={opt.key} label={opt.label} desc={opt.desc}
+                        selected={selectedMoods.includes(opt.key)}
+                        onSelect={() => toggleMood(opt.key)} />
                     ))}
                   </div>
-                  <button
-                    onClick={() => setStep(3)}
-                    className="w-full py-3.5 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-[0.98] transition-transform"
-                  >
+                  <button onClick={() => setStep(3)}
+                    className="w-full py-3.5 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-[0.98] transition-transform">
                     {selectedMoods.length > 0 ? `Continue with ${selectedMoods.length} selected →` : "Skip →"}
                   </button>
                 </motion.div>
               )}
 
-              {/* Step 3: Duration */}
               {step === 3 && (
                 <motion.div key="s3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                   <h2 className="text-display text-2xl mb-1">{stepConfig[3].title}</h2>
                   <p className="text-ui text-sm mb-5">{stepConfig[3].subtitle}</p>
                   <div className="flex flex-col gap-2">
-                    {DURATION_RANGES.map(({ key, label, desc }) => (
-                      <SelectionCard key={key} label={label} desc={desc}
-                        selected={selectedDuration === key}
-                        onSelect={() => handleSingleSelect(key, setSelectedDuration)} />
+                    {durations.map((opt: FinderOption) => (
+                      <SelectionCard key={opt.key} label={opt.label} desc={opt.desc}
+                        selected={selectedDuration === opt.key}
+                        onSelect={() => handleSingleSelect(opt.key, setSelectedDuration)} />
                     ))}
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 4: Results */}
               {step === 4 && (
                 <motion.div key="s4" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                   <h2 className="text-display text-2xl mb-1">{stepConfig[4].title}</h2>
                   <p className="text-ui text-sm mb-3">{stepConfig[4].subtitle}</p>
 
-                  {/* Active filter badges */}
                   {activeFilters.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-4">
                       {activeFilters.map(f => (
-                        <button
-                          key={f.type}
-                          onClick={() => removeFilter(f.type)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 text-accent text-[11px] font-sans font-medium hover:bg-accent/20 transition-colors"
-                        >
-                          {f.label}
-                          <X className="w-3 h-3" />
+                        <button key={f.type} onClick={() => removeFilter(f.type)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 text-accent text-[11px] font-sans font-medium hover:bg-accent/20 transition-colors">
+                          {f.label} <X className="w-3 h-3" />
                         </button>
                       ))}
-                      <button
-                        onClick={clearAll}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-muted-foreground/10 text-muted-foreground text-[11px] font-sans hover:text-foreground transition-colors"
-                      >
+                      <button onClick={clearAll}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-muted-foreground/10 text-muted-foreground text-[11px] font-sans hover:text-foreground transition-colors">
                         <RotateCcw className="w-3 h-3" /> Clear all
                       </button>
                     </div>
@@ -315,12 +318,8 @@ export function SessionFinderModal({ open, onClose }: Props) {
                   ) : (
                     <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto">
                       {filteredTracks.slice(0, 25).map((track: any) => (
-                        <Link
-                          key={track.id}
-                          to={`/player?trackId=${track.id}`}
-                          onClick={handleClose}
-                          className="flex items-center gap-3 p-3 rounded-xl bg-card/50 border border-foreground/5 hover:border-accent/30 hover:bg-card transition-all active:scale-[0.98]"
-                        >
+                        <Link key={track.id} to={`/player?trackId=${track.id}`} onClick={handleClose}
+                          className="flex items-center gap-3 p-3 rounded-xl bg-card/50 border border-foreground/5 hover:border-accent/30 hover:bg-card transition-all active:scale-[0.98]">
                           <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
                             <Play className="w-3.5 h-3.5 text-accent" />
                           </div>
