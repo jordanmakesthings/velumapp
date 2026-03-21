@@ -621,6 +621,30 @@ export default function AdminPage() {
     },
   });
 
+  const { data: finderTypes = [] } = useQuery({
+    queryKey: ["appSettings", "session_finder_types"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "session_finder_types").single();
+      return (data?.value as unknown as FinderOption[]) || [];
+    },
+  });
+
+  const { data: finderGoals = [] } = useQuery({
+    queryKey: ["appSettings", "session_finder_goals"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "session_finder_goals").single();
+      return (data?.value as unknown as FinderOption[]) || [];
+    },
+  });
+
+  const { data: finderStates = [] } = useQuery({
+    queryKey: ["appSettings", "session_finder_states"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "session_finder_states").single();
+      return (data?.value as unknown as FinderOption[]) || [];
+    },
+  });
+
   // Queries
   const { data: tracks = [], isLoading: tracksLoading } = useQuery({
     queryKey: ["adminTracks"],
