@@ -358,9 +358,9 @@ interface FinderOption {
 }
 
 const FINDER_SECTIONS = [
-  { settingKey: "session_finder_categories", label: "Categories", desc: "Practice types shown in step 1" },
+  { settingKey: "session_finder_types", label: "Session Types", desc: "Session type options in step 1 (Guided, Unguided, etc.)" },
   { settingKey: "session_finder_goals", label: "Goals", desc: "Goal options in step 2" },
-  { settingKey: "session_finder_moods", label: "Moods", desc: "Mood options in step 3 (multi-select)" },
+  { settingKey: "session_finder_states", label: "Current States", desc: "Current state options in step 3 (multi-select)" },
   { settingKey: "session_finder_durations", label: "Durations", desc: "Time ranges in step 4" },
 ];
 
@@ -1092,6 +1092,68 @@ export default function AdminPage() {
                       allTags={allTags}
                     />
                   </div>
+
+                  {/* Session Finder Tags */}
+                  <div className="md:col-span-2 border-t border-foreground/5 pt-4">
+                    <p className="text-accent text-[10px] font-sans font-medium tracking-wider uppercase mb-3">Session Finder Tags</p>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Session Type</label>
+                    <select
+                      value={trackForm.tags.find(t => t.startsWith("type:"))?.replace("type:", "") || ""}
+                      onChange={e => {
+                        const filtered = trackForm.tags.filter(t => !t.startsWith("type:"));
+                        if (e.target.value) filtered.push(`type:${e.target.value}`);
+                        setTrackForm(f => ({ ...f, tags: filtered }));
+                      }}
+                      className={inputClass}
+                    >
+                      <option value="">— None —</option>
+                      <option value="guided">Guided</option>
+                      <option value="unguided">Unguided</option>
+                      <option value="interactive">Interactive</option>
+                      <option value="walking">Walking</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Goal</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["calm","focus","energize","process","sleep","confidence"].map(g => {
+                        const tagKey = `goal:${g}`;
+                        const active = trackForm.tags.includes(tagKey);
+                        return (
+                          <button key={g} type="button" onClick={() => {
+                            const filtered = trackForm.tags.filter(t => t !== tagKey);
+                            if (!active) filtered.push(tagKey);
+                            setTrackForm(f => ({ ...f, tags: filtered }));
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-sans capitalize transition-colors ${active ? "bg-accent/20 text-accent" : "bg-card text-muted-foreground hover:text-foreground"}`}>
+                            {g}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Current State Match</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["calm","energized","focused","processing","grounded","tired"].map(s => {
+                        const tagKey = `state:${s}`;
+                        const active = trackForm.tags.includes(tagKey);
+                        return (
+                          <button key={s} type="button" onClick={() => {
+                            const filtered = trackForm.tags.filter(t => t !== tagKey);
+                            if (!active) filtered.push(tagKey);
+                            setTrackForm(f => ({ ...f, tags: filtered }));
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-sans capitalize transition-colors ${active ? "bg-accent/20 text-accent" : "bg-card text-muted-foreground hover:text-foreground"}`}>
+                            {s}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
 
                   {/* Thumbnail Generator at top */}
                   <div className="md:col-span-2 border-b border-foreground/5 pb-4">
