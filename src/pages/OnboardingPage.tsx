@@ -183,6 +183,11 @@ export default function OnboardingPage() {
       else throw new Error("No checkout URL returned");
     } catch (err: any) {
       console.error("Checkout error:", err);
+      if (err?.message?.includes("Unauthorized") || err?.status === 401) {
+        toast.error("Your session has expired. Please sign in again.");
+        navigate("/auth");
+        return;
+      }
       toast.error(err.message || "Failed to start checkout");
     } finally {
       setCheckoutLoading(false);
