@@ -93,12 +93,10 @@ export default function CourseDetailPage() {
       </div>
 
       <div className="px-4 lg:px-8 -mt-8 relative z-10 max-w-2xl mx-auto pb-8">
-        {/* Category & Premium badge */}
         <div className="flex items-center gap-3 mb-3">
           {(course as any).category && (
             <p className="text-accent text-[10px] font-sans tracking-[0.15em] uppercase">{(course as any).category}</p>
           )}
-          {isPremium && <Crown className="w-3.5 h-3.5 text-accent" />}
         </div>
 
         <h1 className="text-display text-3xl mb-2">{course.title}</h1>
