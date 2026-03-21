@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { X, ArrowRight, ArrowLeft, RotateCcw, Play, SlidersHorizontal, Clock } from "lucide-react";
+import { X, ArrowLeft, RotateCcw, Play, SlidersHorizontal, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -24,11 +24,11 @@ const GOALS = [
 
 const MOODS = [
   { key: "calm", label: "Calm", desc: "Already feeling settled" },
-  { key: "energize", label: "Energize", desc: "Need a boost" },
-  { key: "focus", label: "Focus", desc: "Mind is scattered" },
-  { key: "process", label: "Process", desc: "Something heavy to work through" },
-  { key: "confidence", label: "Confidence", desc: "Need grounding" },
-  { key: "sleep", label: "Sleep", desc: "Ready to wind down" },
+  { key: "energize", label: "Energized", desc: "Need a boost" },
+  { key: "focus", label: "Focused", desc: "Mind is scattered" },
+  { key: "process", label: "Processing", desc: "Something heavy to work through" },
+  { key: "confidence", label: "Grounded", desc: "Need grounding" },
+  { key: "sleep", label: "Tired", desc: "Ready to wind down" },
 ];
 
 const DURATION_RANGES = [
@@ -43,13 +43,13 @@ interface Props {
   onClose: () => void;
 }
 
-type WizardStep = 0 | 1 | 2 | 3;
+const TOTAL_STEPS = 5; // 0=category, 1=goal, 2=mood, 3=duration, 4=results
 
 export function SessionFinderModal({ open, onClose }: Props) {
-  const [wizardStep, setWizardStep] = useState<WizardStep>(0);
+  const [step, setStep] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
   const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
 
   const { data: tracks = [] } = useQuery({
@@ -62,29 +62,36 @@ export function SessionFinderModal({ open, onClose }: Props) {
 
   const filteredTracks = useMemo(() => {
     return (tracks as any[]).filter(t => {
+      // AND across filter types
       if (selectedCategory && t.category !== selectedCategory) return false;
+
       if (selectedDuration) {
         const range = DURATION_RANGES.find(r => r.key === selectedDuration);
         if (range && (t.duration_minutes < range.min || t.duration_minutes > range.max)) return false;
       }
-      if (selectedMood && t.tags) {
-        const tags = Array.isArray(t.tags) ? t.tags : [];
-        if (tags.length > 0 && !tags.some((tag: string) => tag.toLowerCase().includes(selectedMood))) return false;
+
+      // Mood: OR within multi-select, matched against tags
+      if (selectedMoods.length > 0 && t.tags) {
+        const tags = (Array.isArray(t.tags) ? t.tags : []).map((tag: string) => tag.toLowerCase());
+        if (tags.length > 0 && !selectedMoods.some(m => tags.some((tag: string) => tag.includes(m)))) return false;
       }
+
+      // Goal: matched against tags
       if (selectedGoal && t.tags) {
-        const tags = Array.isArray(t.tags) ? t.tags : [];
-        if (tags.length > 0 && !tags.some((tag: string) => tag.toLowerCase().includes(selectedGoal))) return false;
+        const tags = (Array.isArray(t.tags) ? t.tags : []).map((tag: string) => tag.toLowerCase());
+        if (tags.length > 0 && !tags.some((tag: string) => tag.includes(selectedGoal))) return false;
       }
+
       return true;
     });
-  }, [tracks, selectedCategory, selectedMood, selectedGoal, selectedDuration]);
+  }, [tracks, selectedCategory, selectedMoods, selectedGoal, selectedDuration]);
 
   const clearAll = () => {
     setSelectedCategory(null);
     setSelectedGoal(null);
-    setSelectedMood(null);
+    setSelectedMoods([]);
     setSelectedDuration(null);
-    setWizardStep(0);
+    setStep(0);
   };
 
   const handleClose = () => {
@@ -92,12 +99,20 @@ export function SessionFinderModal({ open, onClose }: Props) {
     setTimeout(clearAll, 300);
   };
 
-  const handleCardSelect = (step: WizardStep, value: string, setter: (v: string | null) => void) => {
+  const handleSingleSelect = (value: string, setter: (v: string | null) => void) => {
     setter(value);
-    // Auto-advance to next step after a brief delay
-    setTimeout(() => {
-      if (step < 3) setWizardStep((step + 1) as WizardStep);
-    }, 250);
+    setTimeout(() => setStep(s => Math.min(TOTAL_STEPS - 1, s + 1)), 250);
+  };
+
+  const toggleMood = (key: string) => {
+    setSelectedMoods(prev => prev.includes(key) ? prev.filter(m => m !== key) : [...prev, key]);
+  };
+
+  const removeFilter = (type: string) => {
+    if (type === "category") setSelectedCategory(null);
+    else if (type === "goal") setSelectedGoal(null);
+    else if (type === "mood") setSelectedMoods([]);
+    else if (type === "duration") setSelectedDuration(null);
   };
 
   const slideVariants = {
@@ -106,19 +121,26 @@ export function SessionFinderModal({ open, onClose }: Props) {
     exit: { opacity: 0, x: -60 },
   };
 
-  const stepTitles = [
-    "What are you looking for?",
-    "What's your goal?",
-    "How are you feeling?",
-    `${filteredTracks.length} ${filteredTracks.length === 1 ? "session" : "sessions"} found`,
-  ];
-
-  const stepSubtitles = [
-    "Choose a practice type",
-    "What do you want to walk away with?",
-    "We'll match your current state",
-    "Here are your curated sessions",
-  ];
+  const activeFilters = useMemo(() => {
+    const filters: { type: string; label: string }[] = [];
+    if (selectedCategory) {
+      const cat = CATEGORIES.find(c => c.key === selectedCategory);
+      filters.push({ type: "category", label: cat?.label || selectedCategory });
+    }
+    if (selectedGoal) {
+      const goal = GOALS.find(g => g.key === selectedGoal);
+      filters.push({ type: "goal", label: goal?.label || selectedGoal });
+    }
+    if (selectedMoods.length > 0) {
+      const moodLabels = selectedMoods.map(m => MOODS.find(mo => mo.key === m)?.label || m).join(", ");
+      filters.push({ type: "mood", label: moodLabels });
+    }
+    if (selectedDuration) {
+      const dur = DURATION_RANGES.find(d => d.key === selectedDuration);
+      filters.push({ type: "duration", label: dur?.label || selectedDuration });
+    }
+    return filters;
+  }, [selectedCategory, selectedGoal, selectedMoods, selectedDuration]);
 
   const SelectionCard = ({ label, desc, selected, onSelect }: { label: string; desc: string; selected: boolean; onSelect: () => void }) => (
     <button
@@ -140,6 +162,17 @@ export function SessionFinderModal({ open, onClose }: Props) {
       </div>
     </button>
   );
+
+  const stepConfig = [
+    { title: "What are you looking for?", subtitle: "Choose a practice type" },
+    { title: "What's your goal?", subtitle: "What do you want to walk away with?" },
+    { title: "How are you feeling?", subtitle: "Select all that apply — we'll match your current state" },
+    { title: "How much time do you have?", subtitle: "Choose a duration" },
+    {
+      title: `${filteredTracks.length} ${filteredTracks.length === 1 ? "session" : "sessions"} found`,
+      subtitle: "Here are your curated sessions",
+    },
+  ];
 
   return (
     <AnimatePresence>
@@ -172,76 +205,107 @@ export function SessionFinderModal({ open, onClose }: Props) {
 
             {/* Progress dots */}
             <div className="flex gap-1.5 mb-6">
-              {[0, 1, 2, 3].map(i => (
+              {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
                 <div key={i} className={`h-[3px] flex-1 rounded-full transition-colors duration-300 ${
-                  i <= wizardStep ? "bg-accent" : "bg-muted-foreground/15"
+                  i <= step ? "bg-accent" : "bg-muted-foreground/15"
                 }`} />
               ))}
             </div>
 
             <AnimatePresence mode="wait">
               {/* Step 0: Category */}
-              {wizardStep === 0 && (
-                <motion.div key="step0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
-                  <h2 className="text-display text-2xl mb-1">{stepTitles[0]}</h2>
-                  <p className="text-ui text-sm mb-5">{stepSubtitles[0]}</p>
+              {step === 0 && (
+                <motion.div key="s0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+                  <h2 className="text-display text-2xl mb-1">{stepConfig[0].title}</h2>
+                  <p className="text-ui text-sm mb-5">{stepConfig[0].subtitle}</p>
                   <div className="flex flex-col gap-2">
                     {CATEGORIES.map(({ key, label, desc }) => (
-                      <SelectionCard
-                        key={key}
-                        label={label}
-                        desc={desc}
+                      <SelectionCard key={key} label={label} desc={desc}
                         selected={selectedCategory === key}
-                        onSelect={() => handleCardSelect(0, key, setSelectedCategory)}
-                      />
+                        onSelect={() => handleSingleSelect(key, setSelectedCategory)} />
                     ))}
                   </div>
                 </motion.div>
               )}
 
               {/* Step 1: Goal */}
-              {wizardStep === 1 && (
-                <motion.div key="step1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
-                  <h2 className="text-display text-2xl mb-1">{stepTitles[1]}</h2>
-                  <p className="text-ui text-sm mb-5">{stepSubtitles[1]}</p>
+              {step === 1 && (
+                <motion.div key="s1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+                  <h2 className="text-display text-2xl mb-1">{stepConfig[1].title}</h2>
+                  <p className="text-ui text-sm mb-5">{stepConfig[1].subtitle}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {GOALS.map(({ key, label, desc }) => (
-                      <SelectionCard
-                        key={key}
-                        label={label}
-                        desc={desc}
+                      <SelectionCard key={key} label={label} desc={desc}
                         selected={selectedGoal === key}
-                        onSelect={() => handleCardSelect(1, key, setSelectedGoal)}
-                      />
+                        onSelect={() => handleSingleSelect(key, setSelectedGoal)} />
                     ))}
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 2: Duration */}
-              {wizardStep === 2 && (
-                <motion.div key="step2" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
-                  <h2 className="text-display text-2xl mb-1">{stepTitles[2]}</h2>
-                  <p className="text-ui text-sm mb-5">{stepSubtitles[2]}</p>
+              {/* Step 2: Mood (multi-select) */}
+              {step === 2 && (
+                <motion.div key="s2" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+                  <h2 className="text-display text-2xl mb-1">{stepConfig[2].title}</h2>
+                  <p className="text-ui text-sm mb-5">{stepConfig[2].subtitle}</p>
+                  <div className="grid grid-cols-2 gap-2 mb-5">
+                    {MOODS.map(({ key, label, desc }) => (
+                      <SelectionCard key={key} label={label} desc={desc}
+                        selected={selectedMoods.includes(key)}
+                        onSelect={() => toggleMood(key)} />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setStep(3)}
+                    className="w-full py-3.5 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-[0.98] transition-transform"
+                  >
+                    {selectedMoods.length > 0 ? `Continue with ${selectedMoods.length} selected →` : "Skip →"}
+                  </button>
+                </motion.div>
+              )}
+
+              {/* Step 3: Duration */}
+              {step === 3 && (
+                <motion.div key="s3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+                  <h2 className="text-display text-2xl mb-1">{stepConfig[3].title}</h2>
+                  <p className="text-ui text-sm mb-5">{stepConfig[3].subtitle}</p>
                   <div className="flex flex-col gap-2">
                     {DURATION_RANGES.map(({ key, label, desc }) => (
-                      <SelectionCard
-                        key={key}
-                        label={label}
-                        desc={desc}
+                      <SelectionCard key={key} label={label} desc={desc}
                         selected={selectedDuration === key}
-                        onSelect={() => handleCardSelect(2, key, setSelectedDuration)}
-                      />
+                        onSelect={() => handleSingleSelect(key, setSelectedDuration)} />
                     ))}
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 3: Results */}
-              {wizardStep === 3 && (
-                <motion.div key="step3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
-                  <h2 className="text-display text-2xl mb-1">{stepTitles[3]}</h2>
-                  <p className="text-ui text-sm mb-4">{stepSubtitles[3]}</p>
+              {/* Step 4: Results */}
+              {step === 4 && (
+                <motion.div key="s4" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+                  <h2 className="text-display text-2xl mb-1">{stepConfig[4].title}</h2>
+                  <p className="text-ui text-sm mb-3">{stepConfig[4].subtitle}</p>
+
+                  {/* Active filter badges */}
+                  {activeFilters.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {activeFilters.map(f => (
+                        <button
+                          key={f.type}
+                          onClick={() => removeFilter(f.type)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 text-accent text-[11px] font-sans font-medium hover:bg-accent/20 transition-colors"
+                        >
+                          {f.label}
+                          <X className="w-3 h-3" />
+                        </button>
+                      ))}
+                      <button
+                        onClick={clearAll}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-muted-foreground/10 text-muted-foreground text-[11px] font-sans hover:text-foreground transition-colors"
+                      >
+                        <RotateCcw className="w-3 h-3" /> Clear all
+                      </button>
+                    </div>
+                  )}
 
                   {filteredTracks.length === 0 ? (
                     <div className="text-center py-10">
@@ -277,25 +341,25 @@ export function SessionFinderModal({ open, onClose }: Props) {
             {/* Navigation */}
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-foreground/10">
               <div>
-                {wizardStep > 0 && (
-                  <button onClick={() => setWizardStep((wizardStep - 1) as WizardStep)} className="flex items-center gap-1.5 text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
+                {step > 0 && (
+                  <button onClick={() => setStep(s => s - 1)} className="flex items-center gap-1.5 text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back
                   </button>
                 )}
-                {wizardStep === 0 && (
-                  <button onClick={() => { clearAll(); setWizardStep(3 as WizardStep); }} className="text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
-                    Skip all
+                {step === 0 && (
+                  <button onClick={() => { clearAll(); setStep(4); }} className="text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
+                    Skip all → Browse everything
                   </button>
                 )}
               </div>
               <div className="flex gap-3">
-                {wizardStep === 3 && (
+                {step === 4 && (
                   <button onClick={clearAll} className="flex items-center gap-1.5 text-accent text-sm font-sans hover:underline">
                     <RotateCcw className="w-3.5 h-3.5" /> Start over
                   </button>
                 )}
-                {wizardStep > 0 && wizardStep < 3 && (
-                  <button onClick={() => setWizardStep((wizardStep + 1) as WizardStep)}
+                {step > 0 && step < 4 && step !== 2 && (
+                  <button onClick={() => setStep(s => s + 1)}
                     className="text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
                     Skip
                   </button>
