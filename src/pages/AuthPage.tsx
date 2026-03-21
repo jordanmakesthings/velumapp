@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, Mail, Sparkles } from "lucide-react";
+import { lovable } from "@/integrations/lovable/index";
 import logoLotus from "@/assets/logo-lotus.jpg";
 
 type Mode = "login" | "signup" | "magic-link" | "forgot-password";
