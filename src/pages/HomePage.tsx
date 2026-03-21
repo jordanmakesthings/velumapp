@@ -240,7 +240,7 @@ export default function HomePage() {
           { label: `${totalSessions} sessions`, icon: Sparkles },
           { label: `${Math.round(totalMinutes)} mins`, icon: Wind }].
           map(({ label, icon: Icon }) =>
-          <div key={label} className="velum-card-flat flex items-center gap-2 px-4 py-2.5 shrink-0">
+          <div key={label} className="velum-card-flat flex items-center gap-2 px-4 py-2.5">
             <Icon className="w-3.5 h-3.5 text-accent" />
             <span className="text-ui text-xs">{label}</span>
           </div>
