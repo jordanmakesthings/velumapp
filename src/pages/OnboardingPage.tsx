@@ -215,191 +215,179 @@ export default function OnboardingPage() {
         <ProgressBar current={step} total={totalSteps} />
 
         <AnimatePresence mode="wait">
-          {/* Step 0: Name + Email */}
-          {step === 0 &&
-          <motion.div key="name" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
-              <h1 className="text-display text-3xl mb-2">Before we begin.</h1>
-              <p className="text-muted-foreground text-sm font-sans font-light mb-10">Tell us a little about yourself.</p>
-              <div className="text-left mb-5">
-                <p className="text-accent text-[10px] font-sans font-medium tracking-[2px] uppercase mb-2">Your Name</p>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-              placeholder="First name"
-              className="w-full bg-transparent border border-muted-foreground/25 rounded-xl px-5 py-4 text-foreground text-base font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:border-accent/40 transition-colors"
-              autoFocus />
-              </div>
-              <div className="text-left mb-6">
-                <p className="text-accent text-[10px] font-sans font-medium tracking-[2px] uppercase mb-2">Your Email</p>
-                <input type="email" value={email} readOnly
-              placeholder="you@example.com"
-              className="w-full bg-transparent border border-muted-foreground/25 rounded-xl px-5 py-4 text-foreground/50 text-base font-sans placeholder:text-muted-foreground/40 focus:outline-none" />
-              </div>
-              <p className="text-accent text-sm font-sans text-center">
-                <button onClick={() => navigate("/auth")} className="hover:underline underline-offset-2">
-                  Have an account? Log in here →
-                </button>
-              </p>
-            </motion.div>
-          }
-
-          {/* Step 1: Goals */}
-          {step === 1 &&
-          <motion.div key="goals" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-              <h1 className="text-display text-3xl mb-2 text-center">Something brought you here.</h1>
-              <p className="text-muted-foreground text-sm font-sans font-light mb-8 text-center">
-                Whatever it is — it was right to listen. Choose everything that resonates.
-              </p>
-              <div className="flex flex-col gap-3">
-                {GOAL_OPTIONS.map(({ key, label, icon }) => {
-                const isSelected = goals.includes(key);
-                return (
-                  <button key={key} onClick={() => toggleGoal(key)}
-                  className={`w-full border rounded-xl px-5 py-4 flex items-center gap-4 text-left transition-all duration-200 ${
-                  isSelected ? "border-accent/40 bg-surface-light/30" : "border-muted-foreground/20"}`
-                  }>
-                      <span className={`text-lg ${isSelected ? "text-accent" : "text-accent/40"}`}>{icon}</span>
-                      <span className="text-foreground text-sm font-sans font-semibold">{label}</span>
-                    </button>);
-
-              })}
-              </div>
-            </motion.div>
-          }
-
-          {/* Step 2: Experience */}
-          {step === 2 &&
-          <motion.div key="experience" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-              <h1 className="text-display text-3xl mb-2 text-center">Where are you starting from?</h1>
-              <p className="text-muted-foreground text-sm font-sans font-light mb-8 text-center">
-                There's no right answer. Every path through Velum begins exactly where you are.
-              </p>
-              <div className="flex flex-col gap-3">
-                {EXPERIENCE_OPTIONS.map(({ key, label, description }) =>
-              <button key={key} onClick={() => setExperience(key)}
-              className={`w-full border rounded-xl px-5 py-5 flex items-center justify-between text-left transition-all duration-200 ${
-              experience === key ? "border-accent/40 bg-surface-light/30" : "border-muted-foreground/20"}`
-              }>
-                    <div>
-                      <p className="text-foreground text-sm font-sans font-bold">{label}</p>
-                      <p className="text-muted-foreground text-xs font-sans mt-1">{description}</p>
-                    </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 ml-4 ${
-                experience === key ? "border-accent bg-accent" : "border-muted-foreground/30"}`
-                } />
+          <motion.div key={`step-${step}`} variants={slideVariants} initial="enter" animate="center" exit="exit" className={`w-full ${step === 0 || step === 3 || step === 4 || step === 5 ? "text-center" : ""}`}>
+            {step === 0 && (
+              <>
+                <h1 className="text-display text-3xl mb-2">Before we begin.</h1>
+                <p className="text-muted-foreground text-sm font-sans font-light mb-10">Tell us a little about yourself.</p>
+                <div className="text-left mb-5">
+                  <p className="text-accent text-[10px] font-sans font-medium tracking-[2px] uppercase mb-2">Your Name</p>
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                    placeholder="First name"
+                    className="w-full bg-transparent border border-muted-foreground/25 rounded-xl px-5 py-4 text-foreground text-base font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:border-accent/40 transition-colors"
+                    autoFocus />
+                </div>
+                <div className="text-left mb-6">
+                  <p className="text-accent text-[10px] font-sans font-medium tracking-[2px] uppercase mb-2">Your Email</p>
+                  <input type="email" value={email} readOnly
+                    placeholder="you@example.com"
+                    className="w-full bg-transparent border border-muted-foreground/25 rounded-xl px-5 py-4 text-foreground/50 text-base font-sans placeholder:text-muted-foreground/40 focus:outline-none" />
+                </div>
+                <p className="text-accent text-sm font-sans text-center">
+                  <button onClick={() => navigate("/auth")} className="hover:underline underline-offset-2">
+                    Have an account? Log in here →
                   </button>
-              )}
-              </div>
-            </motion.div>
-          }
-
-          {/* Step 3: Stress */}
-          {step === 3 &&
-          <motion.div key="stress" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
-              <h1 className="text-display text-3xl mb-2">How stressed do you feel on a typical day?</h1>
-              <p className="text-muted-foreground text-sm font-sans font-light mb-12">
-                Be honest with yourself. This is just between you and Velum.
-              </p>
-              <StressSlider value={stress} onChange={setStress} />
-            </motion.div>
-          }
-
-          {/* Step 4: Emotional */}
-          {step === 4 &&
-          <motion.div key="emotional" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
-              <h1 className="text-display text-3xl mb-2">How does your inner world usually feel?</h1>
-              <p className="text-muted-foreground text-sm font-sans font-light mb-12">
-                Drag the scale to reflect the balance of your emotional life.
-              </p>
-              <EmotionSplit value={emotional} onChange={setEmotional} />
-            </motion.div>
-          }
-
-          {/* Step 5: 30-day vision */}
-          {step === 5 &&
-          <motion.div key="vision" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
-              <h1 className="text-display text-3xl mb-2">
-                In one sentence — what would a true mark of success look like for you 30 days from now?
-              </h1>
-              <p className="text-muted-foreground text-sm font-sans font-light mb-6">
-                There's no wrong answer. This is just for you.
-              </p>
-              <div className="border border-muted-foreground/20 rounded-xl p-5 mb-4 text-left">
-                <p className="text-muted-foreground text-sm font-sans italic leading-relaxed">
-                  "The people who transform their lives aren't the ones who tried the hardest — they're the ones who finally got honest about what they truly wanted."
                 </p>
-              </div>
-              <textarea
-              value={vision}
-              onChange={(e) => setVision(e.target.value)}
-              placeholder="e.g. I wake up feeling calm and excited about my day..."
-              className="w-full bg-transparent border border-muted-foreground/20 rounded-xl p-5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 resize-none h-32 focus:outline-none focus:border-accent/40 transition-colors" />
-            
-            </motion.div>
-          }
+              </>
+            )}
 
-          {/* Step 6: Paywall */}
-          {step === 6 &&
-          <motion.div key="paywall" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-              <div className="text-center mb-8">
-                <h1 className="text-display text-4xl italic mb-2">Invest in Your Nervous System.</h1>
-                <p className="text-muted-foreground text-[15px] font-sans font-light">
-                  Full access to everything in Velum.
+            {step === 1 && (
+              <>
+                <h1 className="text-display text-3xl mb-2 text-center">Something brought you here.</h1>
+                <p className="text-muted-foreground text-sm font-sans font-light mb-8 text-center">
+                  Whatever it is — it was right to listen. Choose everything that resonates.
                 </p>
-              </div>
+                <div className="flex flex-col gap-3">
+                  {GOAL_OPTIONS.map(({ key, label, icon }) => {
+                    const isSelected = goals.includes(key);
+                    return (
+                      <button key={key} onClick={() => toggleGoal(key)}
+                        className={`w-full border rounded-xl px-5 py-4 flex items-center gap-4 text-left transition-all duration-200 ${
+                          isSelected ? "border-accent/40 bg-surface-light/30" : "border-muted-foreground/20"}`}>
+                        <span className={`text-lg ${isSelected ? "text-accent" : "text-accent/40"}`}>{icon}</span>
+                        <span className="text-foreground text-sm font-sans font-semibold">{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
-              {/* Monthly */}
-              <div className="text-center mb-8">
-                <p className="text-display mb-1 text-accent text-5xl">$29 / month<span className="text-muted-foreground text-lg font-sans font-light">/ month</span></p>
-                <p className="text-muted-foreground text-sm font-sans font-light mb-4">Cancel anytime</p>
-                <button onClick={() => handleCheckout("monthly")} disabled={checkoutLoading}
-              className="w-full border border-accent/30 rounded-xl p-5 flex items-center justify-between text-left mb-1">
-                  <span className="text-foreground text-lg font-sans font-semibold">Start Free Trial</span>
-                  <span className="text-accent text-xl">→</span>
-                </button>
-                <p className="text-muted-foreground/40 text-xs font-sans">​</p>
-              </div>
+            {step === 2 && (
+              <>
+                <h1 className="text-display text-3xl mb-2 text-center">Where are you starting from?</h1>
+                <p className="text-muted-foreground text-sm font-sans font-light mb-8 text-center">
+                  There's no right answer. Every path through Velum begins exactly where you are.
+                </p>
+                <div className="flex flex-col gap-3">
+                  {EXPERIENCE_OPTIONS.map(({ key, label, description }) =>
+                    <button key={key} onClick={() => setExperience(key)}
+                      className={`w-full border rounded-xl px-5 py-5 flex items-center justify-between text-left transition-all duration-200 ${
+                        experience === key ? "border-accent/40 bg-surface-light/30" : "border-muted-foreground/20"}`}>
+                      <div>
+                        <p className="text-foreground text-sm font-sans font-bold">{label}</p>
+                        <p className="text-muted-foreground text-xs font-sans mt-1">{description}</p>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 ml-4 ${
+                        experience === key ? "border-accent bg-accent" : "border-muted-foreground/30"}`} />
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
 
-              <div className="w-full h-px bg-accent/15 mb-8" />
+            {step === 3 && (
+              <>
+                <h1 className="text-display text-3xl mb-2">How stressed do you feel on a typical day?</h1>
+                <p className="text-muted-foreground text-sm font-sans font-light mb-12">
+                  Be honest with yourself. This is just between you and Velum.
+                </p>
+                <StressSlider value={stress} onChange={setStress} />
+              </>
+            )}
 
-              {/* Lifetime */}
-              <div className="text-center mb-8">
-                <p className="text-display mb-1 text-accent text-4xl">US$299</p>
-                <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">Lifetime Access</p>
-                <button onClick={() => handleCheckout("lifetime")} disabled={checkoutLoading}
-              className="w-full border border-muted-foreground/20 rounded-xl p-5 flex items-center justify-between text-left mb-1">
-                  <span className="text-foreground text-lg font-sans font-semibold">Begin My Journey</span>
-                  <span className="text-accent text-xl">→</span>
-                </button>
-                <p className="text-muted-foreground/40 text-xs font-sans">One time payment</p>
-              </div>
+            {step === 4 && (
+              <>
+                <h1 className="text-display text-3xl mb-2">How does your inner world usually feel?</h1>
+                <p className="text-muted-foreground text-sm font-sans font-light mb-12">
+                  Drag the scale to reflect the balance of your emotional life.
+                </p>
+                <EmotionSplit value={emotional} onChange={setEmotional} />
+              </>
+            )}
 
-              <p className="text-accent text-sm font-sans text-center mb-6">​</p>
+            {step === 5 && (
+              <>
+                <h1 className="text-display text-3xl mb-2">
+                  In one sentence — what would a true mark of success look like for you 30 days from now?
+                </h1>
+                <p className="text-muted-foreground text-sm font-sans font-light mb-6">
+                  There's no wrong answer. This is just for you.
+                </p>
+                <div className="border border-muted-foreground/20 rounded-xl p-5 mb-4 text-left">
+                  <p className="text-muted-foreground text-sm font-sans italic leading-relaxed">
+                    "The people who transform their lives aren't the ones who tried the hardest — they're the ones who finally got honest about what they truly wanted."
+                  </p>
+                </div>
+                <textarea
+                  value={vision}
+                  onChange={(e) => setVision(e.target.value)}
+                  placeholder="e.g. I wake up feeling calm and excited about my day..."
+                  className="w-full bg-transparent border border-muted-foreground/20 rounded-xl p-5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 resize-none h-32 focus:outline-none focus:border-accent/40 transition-colors" />
+              </>
+            )}
 
-              <div className="w-full h-px bg-accent/15 mb-6" />
+            {step === 6 && (
+              <>
+                <div className="text-center mb-8">
+                  <h1 className="text-display text-4xl italic mb-2">Invest in Your Nervous System.</h1>
+                  <p className="text-muted-foreground text-[15px] font-sans font-light">
+                    Full access to everything in Velum.
+                  </p>
+                </div>
 
-              {/* Everything Included */}
-              <p className="text-accent font-sans tracking-[2.5px] uppercase text-center mb-6 font-bold text-lg">
-                Everything Included
-              </p>
-              <div className="flex flex-col">
-                {INCLUDED_FEATURES.map((f, i) =>
-              <div key={i} className={`py-5 ${i < INCLUDED_FEATURES.length - 1 ? "border-b border-accent/10" : ""}`}>
-                    <div className="flex items-start gap-3 mb-1.5">
-                      <span className="text-accent text-lg mt-0.5">✓</span>
-                      <h3 className="text-foreground text-lg font-serif font-bold">{f.title}</h3>
+                <div className="text-center mb-8">
+                  <p className="text-display mb-1 text-accent text-5xl">$29 / month<span className="text-muted-foreground text-lg font-sans font-light">/ month</span></p>
+                  <p className="text-muted-foreground text-sm font-sans font-light mb-4">Cancel anytime</p>
+                  <button onClick={() => handleCheckout("monthly")} disabled={checkoutLoading}
+                    className="w-full border border-accent/30 rounded-xl p-5 flex items-center justify-between text-left mb-1">
+                    <span className="text-foreground text-lg font-sans font-semibold">Start Free Trial</span>
+                    <span className="text-accent text-xl">→</span>
+                  </button>
+                  <p className="text-muted-foreground/40 text-xs font-sans">​</p>
+                </div>
+
+                <div className="w-full h-px bg-accent/15 mb-8" />
+
+                <div className="text-center mb-8">
+                  <p className="text-display mb-1 text-accent text-4xl">US$299</p>
+                  <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">Lifetime Access</p>
+                  <button onClick={() => handleCheckout("lifetime")} disabled={checkoutLoading}
+                    className="w-full border border-muted-foreground/20 rounded-xl p-5 flex items-center justify-between text-left mb-1">
+                    <span className="text-foreground text-lg font-sans font-semibold">Begin My Journey</span>
+                    <span className="text-accent text-xl">→</span>
+                  </button>
+                  <p className="text-muted-foreground/40 text-xs font-sans">One time payment</p>
+                </div>
+
+                <p className="text-accent text-sm font-sans text-center mb-6">​</p>
+
+                <div className="w-full h-px bg-accent/15 mb-6" />
+
+                <p className="text-accent font-sans tracking-[2.5px] uppercase text-center mb-6 font-bold text-lg">
+                  Everything Included
+                </p>
+                <div className="flex flex-col">
+                  {INCLUDED_FEATURES.map((f, i) =>
+                    <div key={i} className={`py-5 ${i < INCLUDED_FEATURES.length - 1 ? "border-b border-accent/10" : ""}`}>
+                      <div className="flex items-start gap-3 mb-1.5">
+                        <span className="text-accent text-lg mt-0.5">✓</span>
+                        <h3 className="text-foreground text-lg font-serif font-bold">{f.title}</h3>
+                      </div>
+                      <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed pl-8">{f.desc}</p>
                     </div>
-                    <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed pl-8">{f.desc}</p>
-                  </div>
-              )}
-              </div>
+                  )}
+                </div>
 
-              <div className="mt-8">
-                <button onClick={handleSkip}
-              className="w-full text-center text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
-                  Continue without subscribing
-                </button>
-              </div>
-            </motion.div>
-          }
+                <div className="mt-8">
+                  <button onClick={handleSkip}
+                    className="w-full text-center text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
+                    Continue without subscribing
+                  </button>
+                </div>
+              </>
+            )}
+          </motion.div>
         </AnimatePresence>
       </div>
 
