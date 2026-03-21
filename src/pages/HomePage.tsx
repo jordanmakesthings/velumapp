@@ -107,6 +107,7 @@ function getDayOfYear() {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [finderOpen, setFinderOpen] = useState(false);
   const [reflectionText, setReflectionText] = useState("");
   const [savingReflection, setSavingReflection] = useState(false);
@@ -114,6 +115,13 @@ export default function HomePage() {
   const firstName = profile?.full_name?.split(" ")[0];
   const carouselRef = useRef<HTMLDivElement>(null);
   const [carouselIdx, setCarouselIdx] = useState(0);
+
+  // Redirect to onboarding if not completed
+  useEffect(() => {
+    if (profile && !profile.onboarding_completed) {
+      navigate("/onboarding", { replace: true });
+    }
+  }, [profile, navigate]);
 
   const dayOfYear = getDayOfYear();
   const todayQuote = QUOTES[dayOfYear % QUOTES.length];
