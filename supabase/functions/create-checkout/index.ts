@@ -87,8 +87,7 @@ Deno.serve(async (req) => {
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
-      allow_promotion_codes: true,
-      success_url: "https://app.govelum.com",
+      success_url: `${returnUrl || "https://velumapp.lovable.app"}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${returnUrl || "https://velumapp.lovable.app"}/premium`,
       metadata: { supabase_user_id: userId, plan },
       line_items: [{ price: priceId, quantity: 1 }],
@@ -104,6 +103,16 @@ Deno.serve(async (req) => {
       sessionParams.mode = "payment";
     }
 
+    if (promoCode) {
+      try {
+        const promotionCodes = await stripe.promotionCodes.list({ code: promoCode, active: true, limit: 1 });
+        if (promotionCodes.data.length > 0) {
+          sessionParams.discounts = [{ promotion_code: promotionCodes.data[0].id }];
+        }
+      } catch (e) {
+        console.warn("Promo code lookup failed:", e);
+      }
+    }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
