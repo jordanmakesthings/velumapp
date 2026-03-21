@@ -348,21 +348,21 @@ export default function OnboardingPage() {
 
               {/* Monthly */}
               <div className="text-center mb-8">
-                <p className="text-display mb-1 text-accent text-5xl">$29 <span className="text-muted-foreground text-lg font-sans font-light">/ month</span></p>
+                <p className="text-display mb-1 text-accent text-5xl">$29 / month<span className="text-muted-foreground text-lg font-sans font-light">/ month</span></p>
                 <p className="text-muted-foreground text-sm font-sans font-light mb-4">Cancel anytime</p>
                 <button onClick={() => handleCheckout("monthly")} disabled={checkoutLoading}
               className="w-full border border-accent/30 rounded-xl p-5 flex items-center justify-between text-left mb-1">
                   <span className="text-foreground text-lg font-sans font-semibold">Start Free Trial</span>
                   <span className="text-accent text-xl">→</span>
                 </button>
-                <p className="text-muted-foreground/40 text-xs font-sans">Cancel anytime</p>
+                <p className="text-muted-foreground/40 text-xs font-sans">​</p>
               </div>
 
               <div className="w-full h-px bg-accent/15 mb-8" />
 
               {/* Lifetime */}
               <div className="text-center mb-8">
-                <p className="text-display mb-1 text-accent text-lg">US$299 <span className="text-muted-foreground text-lg font-sans font-light">Lifetime Access</span></p>
+                <p className="text-display mb-1 text-accent text-4xl">Lifetime Access<span className="text-muted-foreground text-lg font-sans font-light">· One time</span></p>
                 <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">Single Payment
                 <br />Pay once, never think about it again.
                 </p>
