@@ -1390,8 +1390,12 @@ export default function AdminPage() {
                     setForm={setMasteryFormWrapped} uploadKey="masteryAudio" accept="audio/*" preview="audio" />
                   <UploadRow label="Thumbnail" field="thumbnail_url" folder="images" value={masteryForm.thumbnail_url}
                     setForm={setMasteryFormWrapped} uploadKey="masteryThumb" />
-                  <UploadRow label="Cover Image" field="cover_image_url" folder="images" value={masteryForm.cover_image_url}
+                  <UploadRow label="Cover Image (Legacy)" field="cover_image_url" folder="images" value={masteryForm.cover_image_url}
                     setForm={setMasteryFormWrapped} uploadKey="masteryCover" />
+                  <UploadRow label="Cover Image — 16:9 (Library/List)" field="cover_image_url_16_9" folder="images" value={masteryForm.cover_image_url_16_9}
+                    setForm={setMasteryFormWrapped} uploadKey="masteryCover169" />
+                  <UploadRow label="Player Image — 1:1 (Square)" field="player_image_url_1_1" folder="images" value={masteryForm.player_image_url_1_1}
+                    setForm={setMasteryFormWrapped} uploadKey="masteryPlayer11" />
 
                   <div className="md:col-span-2">
                     <label className={labelClass}>Guided Prompts</label>
