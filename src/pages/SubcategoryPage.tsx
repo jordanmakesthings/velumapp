@@ -48,20 +48,23 @@ export default function SubcategoryPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
       {/* Header */}
       <div className="px-4 pt-4 flex items-center gap-2">
         <button
           onClick={() => navigate(-1)}
-          className="p-1 text-foreground"
+          className="flex items-center gap-1 text-foreground font-sans text-sm"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ChevronLeft className="w-4 h-4" />
+          Back
         </button>
-        <h1 className="text-display text-2xl">{subcategory}</h1>
       </div>
-      <p className="text-ui text-xs tracking-widest uppercase ml-12 mt-1 mb-6">
-        {CATEGORY_LABELS[category] || category}
-      </p>
+      <div className="px-4 mt-3 mb-6">
+        <h1 className="text-display text-2xl">{subcategory}</h1>
+        <p className="text-ui text-xs tracking-widest uppercase mt-1">
+          {CATEGORY_LABELS[category] || category}
+        </p>
+      </div>
 
       {/* Track Grid */}
       <div className="px-4">

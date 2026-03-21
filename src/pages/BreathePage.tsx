@@ -428,7 +428,7 @@ export default function BreathePage() {
 
           {step === "checkin_before" && (
             <motion.div key="checkin_before" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-              <StressRating label="How stressed do you feel right now?" onSelect={handleBeforeRated} />
+              <StressRating label="Rate your levels of stress or negative emotions." onSelect={handleBeforeRated} />
             </motion.div>
           )}
 
