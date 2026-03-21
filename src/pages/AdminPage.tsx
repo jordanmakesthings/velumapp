@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, Plus, Upload, Trash2, Edit2, X, Check, Music, BookOpen,
-  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown, Users
+  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown, Users, Tag
 } from "lucide-react";
 import { toast } from "sonner";
 import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
@@ -160,7 +160,7 @@ function MasteryPromptBuilder({ value, onChange }: { value: string; onChange: (v
   );
 }
 
-type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "settings" | "users";
+type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "taxonomy" | "settings" | "users";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
@@ -168,11 +168,12 @@ const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "courses", label: "Courses", icon: BookOpen },
   { key: "mastery", label: "Mastery", icon: GraduationCap },
   { key: "prompts", label: "Prompts", icon: Feather },
+  { key: "taxonomy", label: "Taxonomy", icon: Tag },
   { key: "settings", label: "Settings", icon: Settings },
   { key: "users", label: "Users", icon: Users },
 ];
 
-const CATEGORIES: Record<string, string> = {
+const DEFAULT_CATEGORIES: Record<string, string> = {
   meditation: "Meditation",
   rapid_resets: "Rapid Resets",
   breathwork: "Breathwork",
@@ -180,6 +181,171 @@ const CATEGORIES: Record<string, string> = {
   sleep_journeys: "Sleep Journeys",
   journaling: "Journaling",
 };
+
+// ===== TAXONOMY TAB =====
+function TaxonomyTab() {
+  const queryClient = useQueryClient();
+  const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
+  const labelClass = "block text-xs text-muted-foreground mb-1.5 uppercase tracking-wider";
+
+  const { data: categoryLabels = {} } = useQuery({
+    queryKey: ["appSettings", "category_labels"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "category_labels").single();
+      return (data?.value as Record<string, string>) || {};
+    },
+  });
+
+  const { data: masterTags = [] } = useQuery({
+    queryKey: ["appSettings", "master_tags"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "master_tags").single();
+      return (data?.value as string[]) || [];
+    },
+  });
+
+  const [newCatKey, setNewCatKey] = useState("");
+  const [newCatLabel, setNewCatLabel] = useState("");
+  const [editingCatKey, setEditingCatKey] = useState<string | null>(null);
+  const [editCatLabel, setEditCatLabel] = useState("");
+  const [newTag, setNewTag] = useState("");
+
+  const saveCategoriesMutation = useMutation({
+    mutationFn: async (newLabels: Record<string, string>) => {
+      const keys = Object.keys(newLabels);
+      await Promise.all([
+        supabase.from("app_settings").update({ value: keys as any }).eq("key", "categories"),
+        supabase.from("app_settings").update({ value: newLabels as any }).eq("key", "category_labels"),
+      ]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appSettings"] });
+      toast.success("Categories updated");
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const saveTagsMutation = useMutation({
+    mutationFn: async (newTags: string[]) => {
+      await supabase.from("app_settings").update({ value: newTags as any }).eq("key", "master_tags");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appSettings", "master_tags"] });
+      toast.success("Tags updated");
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const addCategory = () => {
+    const key = newCatKey.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    const label = newCatLabel.trim();
+    if (!key || !label || categoryLabels[key]) return;
+    saveCategoriesMutation.mutate({ ...categoryLabels, [key]: label });
+    setNewCatKey("");
+    setNewCatLabel("");
+  };
+
+  const removeCategory = (key: string) => {
+    if (!confirm(`Remove category "${categoryLabels[key]}"? Sessions in this category won't be deleted but will show as uncategorized.`)) return;
+    const next = { ...categoryLabels };
+    delete next[key];
+    saveCategoriesMutation.mutate(next);
+  };
+
+  const saveEditCategory = (key: string) => {
+    if (!editCatLabel.trim()) return;
+    saveCategoriesMutation.mutate({ ...categoryLabels, [key]: editCatLabel.trim() });
+    setEditingCatKey(null);
+    setEditCatLabel("");
+  };
+
+  const addTag = () => {
+    const tag = newTag.trim().toLowerCase();
+    if (!tag || masterTags.includes(tag)) return;
+    saveTagsMutation.mutate([...masterTags, tag].sort());
+    setNewTag("");
+  };
+
+  const removeTag = (tag: string) => {
+    saveTagsMutation.mutate(masterTags.filter((t: string) => t !== tag));
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Categories */}
+      <div>
+        <h2 className="text-display text-2xl mb-4">Categories</h2>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {Object.entries(categoryLabels).map(([key, label]) => (
+            <div key={key} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card border border-foreground/5">
+              {editingCatKey === key ? (
+                <>
+                  <input value={editCatLabel} onChange={e => setEditCatLabel(e.target.value)}
+                    className="bg-transparent text-foreground text-sm font-sans w-28 focus:outline-none border-b border-accent/40"
+                    onKeyDown={e => e.key === "Enter" && saveEditCategory(key)} autoFocus />
+                  <button onClick={() => saveEditCategory(key)} className="text-accent hover:text-foreground"><Check className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => setEditingCatKey(null)} className="text-muted-foreground hover:text-foreground"><X className="w-3.5 h-3.5" /></button>
+                </>
+              ) : (
+                <>
+                  <span className="text-foreground text-sm font-sans">{label as string}</span>
+                  <span className="text-muted-foreground/40 text-[10px] font-mono">{key}</span>
+                  <button onClick={() => { setEditingCatKey(key); setEditCatLabel(label as string); }}
+                    className="text-muted-foreground hover:text-foreground ml-1"><Edit2 className="w-3 h-3" /></button>
+                  <button onClick={() => removeCategory(key)}
+                    className="text-muted-foreground hover:text-destructive"><X className="w-3 h-3" /></button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="velum-card p-4">
+          <p className={labelClass}>Add Category</p>
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <input value={newCatLabel} onChange={e => {
+                setNewCatLabel(e.target.value);
+                setNewCatKey(e.target.value.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, ""));
+              }} className={inputClass} placeholder="Display name (e.g. Sound Baths)" />
+              {newCatKey && <span className="text-[10px] text-muted-foreground/50 mt-0.5 block">Key: {newCatKey}</span>}
+            </div>
+            <button onClick={addCategory} disabled={!newCatLabel.trim()}
+              className="px-4 py-2.5 rounded-xl text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50 shrink-0">
+              <Plus className="w-4 h-4 inline mr-1" /> Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Master Tags */}
+      <div>
+        <h2 className="text-display text-2xl mb-4">Master Tags</h2>
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {masterTags.map((tag: string) => (
+            <span key={tag} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent/15 text-accent text-xs font-sans">
+              {tag}
+              <button onClick={() => removeTag(tag)} className="hover:text-foreground transition-colors">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+          {masterTags.length === 0 && <p className="text-muted-foreground text-sm">No tags yet.</p>}
+        </div>
+        <div className="velum-card p-4">
+          <p className={labelClass}>Add Tag</p>
+          <div className="flex gap-3">
+            <input value={newTag} onChange={e => setNewTag(e.target.value)} className={inputClass}
+              placeholder="e.g. grounding" onKeyDown={e => e.key === "Enter" && addTag()} />
+            <button onClick={addTag} disabled={!newTag.trim()}
+              className="px-4 py-2.5 rounded-xl text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50 shrink-0">
+              <Plus className="w-4 h-4 inline mr-1" /> Add
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const emptyTrackForm = {
   title: "", description: "", category: "meditation",
@@ -279,6 +445,24 @@ export default function AdminPage() {
   const [showSubcatForm, setShowSubcatForm] = useState(false);
   const [subcatForm, setSubcatForm] = useState({ name: "", category: "meditation", thumbnail_url: "", order_index: 0 });
   const [editingSubcat, setEditingSubcat] = useState<any>(null);
+
+  // Dynamic categories from app_settings
+  const { data: CATEGORIES } = useQuery({
+    queryKey: ["appSettings", "category_labels"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "category_labels").single();
+      return (data?.value as Record<string, string>) || DEFAULT_CATEGORIES;
+    },
+    initialData: DEFAULT_CATEGORIES,
+  });
+
+  const { data: masterTagList = [] } = useQuery({
+    queryKey: ["appSettings", "master_tags"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "master_tags").single();
+      return (data?.value as string[]) || [];
+    },
+  });
 
   // Queries
   const { data: tracks = [], isLoading: tracksLoading } = useQuery({
@@ -574,12 +758,12 @@ export default function AdminPage() {
   };
 
   const allTags = useMemo(() => {
-    const tagSet = new Set<string>();
+    const tagSet = new Set<string>(masterTagList);
     tracks.forEach((t: any) => {
       if (Array.isArray(t.tags)) t.tags.forEach((tag: string) => tagSet.add(tag));
     });
     return Array.from(tagSet).sort();
-  }, [tracks]);
+  }, [tracks, masterTagList]);
 
   const tracksByCategory = useMemo(() => {
     const grouped: Record<string, any[]> = {};
@@ -1152,6 +1336,9 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* ============ TAXONOMY TAB ============ */}
+        {activeTab === "taxonomy" && <TaxonomyTab />}
 
         {/* ============ USERS TAB ============ */}
         {activeTab === "users" && <UsersTab />}
