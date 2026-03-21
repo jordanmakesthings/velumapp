@@ -217,62 +217,61 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-radial-subtle overflow-x-hidden">
-    <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto overflow-x-hidden">
+    <div className="min-h-screen w-full max-w-full bg-radial-subtle overflow-x-hidden">
+    <div className="mx-auto w-full max-w-3xl overflow-x-hidden px-4 pt-14 pb-8 lg:px-8">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-3">
+      <div className="mb-8 min-w-0 w-full max-w-full">
+        <div className="mb-3 flex items-center gap-3 min-w-0">
           <img src={logoLotus} alt="Velum" className="w-7 h-7 rounded-md object-cover" />
           <span className="text-accent text-[10px] font-sans font-medium tracking-[4px] uppercase">VELUM</span>
         </div>
-        <h1 className="text-display text-4xl lg:text-5xl leading-tight mb-4">
+        <h1 className="text-display mb-4 max-w-full break-words text-4xl leading-tight lg:text-5xl">
           {getGreeting()}{firstName ? `, ${firstName}` : ""}.
         </h1>
-        <p className="text-foreground/70 text-sm italic font-serif leading-relaxed max-w-full" style={{ overflowWrap: "break-word" }}>
+        <p className="text-foreground/70 max-w-full break-words text-sm italic font-serif leading-relaxed" style={{ overflowWrap: "break-word" }}>
           "{todayQuote.text}" — {todayQuote.author}
         </p>
       </div>
 
       {/* Stats pills */}
-      <div className="flex flex-wrap gap-3 mb-8 w-full">
+      <div className="mb-8 flex w-full min-w-0 flex-wrap gap-3">
         {[
           { label: `${streak} day streak`, icon: Flame },
           { label: `${totalSessions} sessions`, icon: Sparkles },
           { label: `${Math.round(totalMinutes)} mins`, icon: Wind }].
           map(({ label, icon: Icon }) =>
-          <div key={label} className="velum-card-flat flex items-center gap-2 px-4 py-2.5">
-            <Icon className="w-3.5 h-3.5 text-accent" />
-            <span className="text-ui text-xs">{label}</span>
+          <div key={label} className="velum-card-flat flex min-w-0 flex-1 items-center justify-center gap-2 px-3 py-2.5">
+            <Icon className="w-3.5 h-3.5 shrink-0 text-accent" />
+            <span className="text-ui min-w-0 text-center text-xs leading-tight break-words">{label}</span>
           </div>
           )}
       </div>
 
       {/* Session Finder */}
-      <button onClick={() => setFinderOpen(true)} className="velum-card w-full text-left p-5 mb-8 group">
-        <p className="text-ui text-xs tracking-wide uppercase mb-1">Quick Start</p>
-        <div className="flex items-center justify-between">
-          <p className="text-foreground font-serif text-lg">Not sure where to start? Use Session Finder</p>
-          <ArrowRight className="w-5 h-5 text-accent group-hover:translate-x-1 transition-transform duration-200" />
+      <button onClick={() => setFinderOpen(true)} className="velum-card group mb-8 w-full max-w-full min-w-0 p-5 text-left">
+        <p className="text-ui mb-1 text-xs tracking-wide uppercase">Quick Start</p>
+        <div className="flex min-w-0 items-center justify-between gap-4">
+          <p className="text-foreground min-w-0 flex-1 break-words font-serif text-lg">Not sure where to start? Use Session Finder</p>
+          <ArrowRight className="h-5 w-5 shrink-0 text-accent group-hover:translate-x-1 transition-transform duration-200" />
         </div>
       </button>
 
       {/* Explore - Category Grid */}
-      <div className="mb-8">
-        <p className="text-ui text-[11px] tracking-[2.5px] uppercase mb-4">Explore</p>
-        <div className="grid grid-cols-2 gap-3">
+      <div className="mb-8 min-w-0 w-full max-w-full">
+        <p className="text-ui mb-4 text-[11px] tracking-[2.5px] uppercase">Explore</p>
+        <div className="grid w-full max-w-full grid-cols-2 gap-3 [grid-template-columns:repeat(2,minmax(0,1fr))]">
           {categories.map(({ key, label, icon: Icon, count, description }) =>
             <Link
               key={key}
               to={getCategoryLink(key)}
-              className="velum-card p-5 flex flex-col justify-between min-h-[130px] group bg-secondary">
-              
-              <div className="flex items-start justify-between mb-3">
-                <Icon className="w-5 h-5 text-accent" />
-                <span className="text-accent text-[10px] font-sans bg-surface px-2.5 py-0.5 rounded-full">{count} sessions</span>
+              className="velum-card group flex min-w-0 max-w-full flex-col justify-between bg-secondary p-5 min-h-[130px]">
+              <div className="mb-3 flex min-w-0 items-start justify-between gap-2">
+                <Icon className="w-5 h-5 shrink-0 text-accent" />
+                <span className="max-w-full rounded-full bg-surface px-2.5 py-0.5 text-[10px] font-sans text-accent">{count} sessions</span>
               </div>
-              <div>
-                <p className="text-foreground text-sm font-sans font-medium mb-1">{label}</p>
-                <p className="text-ui text-[11px] leading-snug">{description}</p>
+              <div className="min-w-0">
+                <p className="text-foreground mb-1 break-words text-sm font-sans font-medium">{label}</p>
+                <p className="text-ui break-words text-[11px] leading-snug">{description}</p>
               </div>
             </Link>
             )}
@@ -280,8 +279,8 @@ export default function HomePage() {
       </div>
 
       {/* Breathwork CTA - matches user screenshot */}
-      <Link to="/breathe" className="block mb-8">
-        <div className="velum-card p-6 relative overflow-hidden border border-accent/25">
+      <Link to="/breathe" className="block mb-8 w-full max-w-full min-w-0">
+        <div className="velum-card relative w-full max-w-full min-w-0 overflow-hidden border border-accent/25 p-6">
           {/* Animated orb */}
           <div className="absolute top-1/2 right-8 -translate-y-1/2">
             <div className="relative w-20 h-20">
@@ -292,39 +291,39 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <p className="text-accent text-xs font-sans font-bold tracking-wide uppercase mb-1">Interactive Breathwork</p>
-          <p className="text-foreground font-serif text-xl mb-1">Real-Time Nervous System Regulation</p>
-          <p className="text-ui text-xs mb-4">Guided Breathing Techniques</p>
-          <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-background text-sm font-sans font-medium">
-            Start breathing <ArrowRight className="w-4 h-4" />
+          <p className="text-accent mb-1 text-xs font-sans font-bold tracking-wide uppercase">Interactive Breathwork</p>
+          <p className="text-foreground max-w-full break-words pr-20 font-serif text-xl">Real-Time Nervous System Regulation</p>
+          <p className="text-ui mb-4 max-w-full break-words pr-20 text-xs">Guided Breathing Techniques</p>
+          <span className="inline-flex max-w-full items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-sans font-medium text-background">
+            Start breathing <ArrowRight className="w-4 h-4 shrink-0" />
           </span>
         </div>
       </Link>
 
       {/* Today's Reflection */}
-      <div className="mb-8">
-        <div className="flex gap-6 mb-4">
-          <button className="text-accent text-[11px] tracking-[2.5px] uppercase border-b-2 border-accent pb-1">Today's Reflection</button>
-          <Link to="/journal" className="text-muted-foreground text-[11px] tracking-[2.5px] uppercase pb-1 hover:text-foreground transition-colors">Past Entries</Link>
+      <div className="mb-8 min-w-0 w-full max-w-full">
+        <div className="mb-4 flex flex-wrap gap-6">
+          <button className="text-accent border-b-2 border-accent pb-1 text-[11px] tracking-[2.5px] uppercase">Today's Reflection</button>
+          <Link to="/journal" className="text-muted-foreground pb-1 text-[11px] tracking-[2.5px] uppercase hover:text-foreground transition-colors">Past Entries</Link>
         </div>
-        <div className="velum-card p-6">
-          <p className="text-accent text-[10px] font-sans font-bold tracking-wide uppercase mb-3">
+        <div className="velum-card w-full max-w-full min-w-0 p-6">
+          <p className="text-accent mb-3 text-[10px] font-sans font-bold tracking-wide uppercase">
             {format(new Date(), "EEE, MMMM d").toUpperCase()}
           </p>
-          <p className="text-foreground font-serif text-lg italic mb-5">"{todayPrompt}"</p>
+          <p className="text-foreground mb-5 max-w-full break-words font-serif text-lg italic">"{todayPrompt}"</p>
           <textarea
               value={reflectionText}
               onChange={(e) => setReflectionText(e.target.value)}
               placeholder="Take a breath, then write freely..."
-              className="w-full bg-card rounded-xl p-4 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 resize-none h-28 focus:outline-none focus:ring-1 focus:ring-accent/30 transition-shadow mb-4" />
-            
+              className="mb-4 h-28 w-full max-w-full rounded-xl bg-card p-4 text-sm font-sans text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 transition-shadow" />
+
           {user &&
             <div className="flex justify-end">
               <button
                 onClick={handleSaveReflection}
                 disabled={!reflectionText.trim() || savingReflection}
-                className="px-5 py-2.5 rounded-lg bg-surface-light text-foreground text-sm font-sans font-medium disabled:opacity-30 hover:bg-surface transition-colors">
-                
+                className="rounded-lg bg-surface-light px-5 py-2.5 text-sm font-sans font-medium text-foreground disabled:opacity-30 hover:bg-surface transition-colors">
+
                 Save reflection →
               </button>
             </div>
@@ -334,40 +333,40 @@ export default function HomePage() {
 
       {/* Featured Sessions — centered carousel with peek */}
       {featuredTracks.length > 0 &&
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+        <div className="mb-8 min-w-0 w-full max-w-full overflow-x-hidden">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <p className="text-ui text-[11px] tracking-[2.5px] uppercase">Featured Sessions</p>
-            <div className="flex gap-2">
-              <button onClick={() => scrollCarousel(-1)} className="w-8 h-8 rounded-full bg-surface-light flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => scrollCarousel(-1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-light text-muted-foreground hover:text-foreground transition-colors">
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button onClick={() => scrollCarousel(1)} className="w-8 h-8 rounded-full bg-surface-light flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+              <button onClick={() => scrollCarousel(1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-light text-muted-foreground hover:text-foreground transition-colors">
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
-          <div className="flex gap-1.5 justify-center mb-3">
+          <div className="mb-3 flex justify-center gap-1.5">
             {featuredTracks.map((_: any, i: number) =>
             <div key={i} className={`h-1.5 rounded-full transition-all ${i === carouselIdx ? "w-5 bg-accent" : "w-1.5 bg-surface-light"}`} />
             )}
           </div>
-          <div ref={carouselRef} className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth hide-scrollbar">
+          <div ref={carouselRef} className="hide-scrollbar flex w-full max-w-full gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
             {featuredTracks.map((track: any, i: number) =>
             <Link key={track.id} to={`/player?trackId=${track.id}`}
-              className={`velum-card min-w-[75%] max-w-[75%] sm:min-w-[280px] sm:max-w-[300px] overflow-hidden shrink-0 snap-center transition-all duration-300 ${
+              className={`velum-card max-w-[75%] min-w-[75%] shrink-0 snap-center overflow-hidden transition-all duration-300 sm:max-w-[300px] sm:min-w-[280px] ${
                 i === carouselIdx ? "opacity-100 scale-100" : "opacity-50 scale-95"
               }`}>
-                <div className="aspect-[16/9] bg-surface-light relative overflow-hidden">
+                <div className="relative aspect-[16/9] overflow-hidden bg-surface-light">
                   {track.thumbnail_url && <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />}
                 </div>
-                <div className="p-4">
-                  <p className="text-accent text-[10px] font-sans font-bold tracking-wide uppercase mb-1">
+                <div className="min-w-0 p-4">
+                  <p className="text-accent mb-1 text-[10px] font-sans font-bold tracking-wide uppercase">
                     {track.category?.replace("_", " ")}
                   </p>
-                  <p className="text-foreground text-sm font-sans font-medium">{track.title}</p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="flex items-center gap-1 text-ui text-xs"><Clock className="w-3 h-3" /> {track.duration_minutes} min</span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-accent/40 text-accent text-[10px] font-sans font-medium">
+                  <p className="text-foreground break-words text-sm font-sans font-medium">{track.title}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <span className="text-ui flex items-center gap-1 text-xs"><Clock className="w-3 h-3 shrink-0" /> {track.duration_minutes} min</span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-accent/40 px-2.5 py-0.5 text-[10px] font-sans font-medium text-accent">
                       Begin →
                     </span>
                   </div>
