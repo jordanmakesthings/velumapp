@@ -3,7 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Flame, Sparkles, Wind, Bell, LogOut, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { useState, useMemo } from "react";
+import NervousSystemScore from "@/components/profile/NervousSystemScore";
 import { useState, useMemo } from "react";
 
 const categoryLabels: Record<string, string> = {
