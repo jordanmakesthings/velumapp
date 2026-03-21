@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -13,27 +14,29 @@ export default function PaymentSuccessPage() {
       .from("profiles")
       .update({ onboarding_completed: true })
       .eq("id", user.id)
-      .then(() => refreshProfile());
+      .then(() => refreshProfile())
+      .then(() => setReady(true));
+  }, [user]);
 
+  useEffect(() => {
+    if (!ready) return;
     const timer = setTimeout(() => {
-      navigate("/home", { replace: true });
-    }, 3000);
+      navigate("/home-setup", { replace: true });
+    }, 4000);
     return () => clearTimeout(timer);
-  }, [user, navigate, refreshProfile]);
+  }, [ready, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: "#111111" }}>
-      <h1
-        style={{
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
-          fontStyle: "italic",
-          color: "#F2EFE7",
-          fontSize: "2.25rem",
-          textAlign: "center",
-        }}
-      >
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
+      <h1 className="text-display text-4xl italic text-foreground text-center mb-10">
         You're in. Welcome to Velum.
       </h1>
+      <button
+        onClick={() => navigate("/home-setup", { replace: true })}
+        className="w-full max-w-[360px] h-14 rounded-full gold-gradient text-primary-foreground text-[15px] font-sans font-bold tracking-wide active:scale-[0.98] transition-transform"
+      >
+        Continue →
+      </button>
     </div>
   );
 }
