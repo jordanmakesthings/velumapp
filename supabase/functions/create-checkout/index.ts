@@ -59,7 +59,11 @@ Deno.serve(async (req) => {
     // Verify the stored customer ID actually exists in Stripe
     if (customerId) {
       try {
-        await stripe.customers.retrieve(customerId);
+        const existing = await stripe.customers.retrieve(customerId);
+        if ((existing as any).deleted) {
+          console.warn(`Stored customer ${customerId} was deleted in Stripe, will create new one`);
+          customerId = null;
+        }
       } catch {
         console.warn(`Stored customer ${customerId} not found in Stripe, will create new one`);
         customerId = null;
