@@ -9,10 +9,14 @@ export default function PaymentSuccessPage() {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
 
-  // Refresh profile to pick up new subscription status
+  // Mark onboarding complete and refresh profile
   useEffect(() => {
     if (user) {
-      refreshProfile();
+      supabase
+        .from("profiles")
+        .update({ onboarding_completed: true })
+        .eq("id", user.id)
+        .then(() => refreshProfile());
     }
   }, [user]);
 

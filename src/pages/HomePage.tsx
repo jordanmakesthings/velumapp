@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, ChevronLeft, ChevronRight, Clock, BookOpen } from "lucide-react";
 import { useState, useRef } from "react";
