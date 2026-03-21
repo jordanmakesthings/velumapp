@@ -322,7 +322,7 @@ export default function PlayerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+    <div className="relative flex min-h-screen w-full max-w-full flex-col overflow-x-hidden bg-background">
       {track.audio_url && (
         <audio
           ref={audioRef}
@@ -336,23 +336,23 @@ export default function PlayerPage() {
       <div className="absolute inset-0 bg-surface opacity-40" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(42,53%,54%,0.08)_0%,_transparent_60%)]" />
 
-      <div className="relative z-10 flex items-center justify-between px-4 py-4">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-foreground font-sans text-sm">
-          <ArrowLeft className="w-4 h-4" />
+      <div className="safe-area-pt relative z-10 flex items-center justify-between px-4 pt-4">
+        <button onClick={() => navigate(-1)} className="flex min-h-10 items-center gap-1 text-sm font-sans text-foreground">
+          <ArrowLeft className="w-4 h-4 shrink-0" />
           Back
         </button>
-        <p className="text-ui text-xs tracking-wide uppercase">
+        <p className="text-ui max-w-[40vw] truncate text-xs tracking-wide uppercase text-center">
           {categoryLabels[track.category] || track.category}
         </p>
-        <button onClick={() => toggleFavMutation.mutate()} className="p-2">
+        <button onClick={() => toggleFavMutation.mutate()} className="p-2 shrink-0" aria-label="Toggle favorite">
           <Star className={`w-5 h-5 transition-all ${isFavorited ? "text-accent fill-accent" : "text-muted-foreground hover:text-foreground"}`} />
         </button>
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6">
         {step === "before" ? (
           <>
-            <div className="aspect-square w-48 relative overflow-hidden rounded-xl mb-6 shadow-2xl">
+            <div className="mb-6 aspect-square w-48 relative overflow-hidden rounded-xl shadow-2xl">
               {((track as any).thumbnail_square_url || track.thumbnail_url) ? (
                 <img src={(track as any).thumbnail_square_url ?? track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
               ) : (
@@ -361,8 +361,8 @@ export default function PlayerPage() {
                 </div>
               )}
             </div>
-            <h2 className="text-display text-2xl mb-1 text-center">{track.title}</h2>
-            {track.description && <p className="text-ui text-sm mb-6 text-center max-w-md">{track.description}</p>}
+            <h2 className="text-display text-2xl mb-1 text-center break-words max-w-full">{track.title}</h2>
+            {track.description && <p className="text-ui text-sm mb-6 text-center max-w-md break-words">{track.description}</p>}
             <StressCheckin
               title="Rate your levels of stress or negative emotions."
               subtitle="Before this session"
@@ -375,7 +375,7 @@ export default function PlayerPage() {
             <motion.div
               animate={{ scale: isPlaying ? [1, 1.02, 1] : 1 }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="aspect-square w-64 lg:w-72 relative overflow-hidden rounded-xl mb-10 shadow-2xl"
+              className="mb-10 aspect-square w-64 relative overflow-hidden rounded-xl shadow-2xl lg:w-72"
             >
               {((track as any).thumbnail_square_url || track.thumbnail_url) ? (
                 <img src={(track as any).thumbnail_square_url ?? track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
@@ -386,7 +386,7 @@ export default function PlayerPage() {
               )}
             </motion.div>
 
-            <h2 className="text-display text-2xl mb-1 text-center">{track.title}</h2>
+            <h2 className="text-display text-2xl mb-1 text-center break-words max-w-full">{track.title}</h2>
             <p className="text-ui text-sm mb-10">{track.duration_minutes} min</p>
 
             <div className="w-full max-w-sm mb-3">
@@ -400,12 +400,12 @@ export default function PlayerPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-8 mb-8">
+            <div className="mb-8 flex items-center gap-8">
               <button onClick={() => skip(-15)} className="text-muted-foreground hover:text-foreground transition-colors">
                 <SkipBack className="w-6 h-6" />
               </button>
-              <button onClick={togglePlay} className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center active:scale-95 transition-transform">
-                {isPlaying ? <Pause className="w-6 h-6 text-primary-foreground" /> : <Play className="w-6 h-6 text-primary-foreground ml-1" />}
+              <button onClick={togglePlay} className="flex h-16 w-16 items-center justify-center rounded-full gold-gradient active:scale-95 transition-transform">
+                {isPlaying ? <Pause className="w-6 h-6 text-primary-foreground" /> : <Play className="w-6 h-6 ml-1 text-primary-foreground" />}
               </button>
               <button onClick={() => skip(15)} className="text-muted-foreground hover:text-foreground transition-colors">
                 <SkipForward className="w-6 h-6" />
@@ -414,7 +414,7 @@ export default function PlayerPage() {
 
             <button
               onClick={cycleSpeed}
-              className="text-muted-foreground hover:text-foreground text-xs font-sans font-medium px-3 py-1.5 rounded-full bg-card transition-colors"
+              className="rounded-full bg-card px-3 py-1.5 text-xs font-sans font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               {speed}x
             </button>

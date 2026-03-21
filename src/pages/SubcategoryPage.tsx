@@ -48,20 +48,20 @@ export default function SubcategoryPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background pb-24">
       {/* Header */}
-      <div className="px-4 pt-4 flex items-center gap-2">
+      <div className="safe-area-pt px-4 pt-4">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1 text-foreground font-sans text-sm"
+          className="flex min-h-10 items-center gap-1 text-sm font-sans text-foreground"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-4 h-4 shrink-0" />
           Back
         </button>
       </div>
-      <div className="px-4 mt-3 mb-6">
-        <h1 className="text-display text-2xl">{subcategory}</h1>
-        <p className="text-ui text-xs tracking-widest uppercase mt-1">
+      <div className="mb-6 mt-3 px-4">
+        <h1 className="text-display break-words text-2xl">{subcategory}</h1>
+        <p className="text-ui mt-1 text-xs tracking-widest uppercase break-words">
           {CATEGORY_LABELS[category] || category}
         </p>
       </div>
@@ -69,7 +69,7 @@ export default function SubcategoryPage() {
       {/* Track Grid */}
       <div className="px-4">
         {tracks.length === 0 ? (
-          <p className="text-ui text-sm text-center mt-10">No sessions found in this collection.</p>
+          <p className="text-ui mt-10 text-center text-sm">No sessions found in this collection.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {tracks.map((track: any) => {
@@ -78,30 +78,30 @@ export default function SubcategoryPage() {
                 <Link
                   key={track.id}
                   to={`/player?trackId=${track.id}`}
-                  className="velum-card overflow-hidden"
+                  className="velum-card min-w-0 max-w-full overflow-hidden"
                 >
                   {track.thumbnail_url ? (
-                    <div className="aspect-video overflow-hidden relative">
+                    <div className="relative aspect-video overflow-hidden">
                       <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
                       {isCompleted && (
-                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full gold-gradient flex items-center justify-center">
+                        <div className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full gold-gradient">
                           <CheckCircle2 className="w-3 h-3 text-primary-foreground" />
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="aspect-video bg-surface-light relative">
+                    <div className="relative aspect-video bg-surface-light">
                       {isCompleted && (
-                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full gold-gradient flex items-center justify-center">
+                        <div className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full gold-gradient">
                           <CheckCircle2 className="w-3 h-3 text-primary-foreground" />
                         </div>
                       )}
                     </div>
                   )}
-                  <div className="p-2.5">
-                    <p className="text-foreground text-xs font-sans font-medium leading-tight">{track.title}</p>
+                  <div className="p-2.5 min-w-0">
+                    <p className="text-foreground break-words text-xs font-sans font-medium leading-tight">{track.title}</p>
                     {track.duration_minutes && (
-                      <p className="text-muted-foreground text-[11px] mt-1">{track.duration_minutes}m</p>
+                      <p className="text-muted-foreground mt-1 text-[11px]">{track.duration_minutes}m</p>
                     )}
                   </div>
                 </Link>
