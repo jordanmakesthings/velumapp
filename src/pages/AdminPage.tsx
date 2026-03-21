@@ -1428,6 +1428,8 @@ export default function AdminPage() {
                         title: mc.title, description: mc.description || "", duration_minutes: mc.duration_minutes,
                         audio_url: mc.audio_url || "", thumbnail_url: mc.thumbnail_url || "",
                         theme: mc.theme || "", cover_image_url: mc.cover_image_url || "",
+                        cover_image_url_16_9: (mc as any).cover_image_url_16_9 || "",
+                        player_image_url_1_1: (mc as any).player_image_url_1_1 || "",
                         pause_prompts: JSON.stringify(mc.pause_prompts || [], null, 2),
                       });
                       setShowMasteryForm(true);
