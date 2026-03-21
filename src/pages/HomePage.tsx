@@ -186,28 +186,20 @@ export default function HomePage() {
   const nextTrack = (tracks as any[]).find((t) => !completedTrackIds.has(t.id));
 
   const scrollCarousel = (dir: number) => {
-    if (!carouselRef.current) return;
     const newIdx = Math.max(0, Math.min(featuredTracks.length - 1, carouselIdx + dir));
     setCarouselIdx(newIdx);
-    const child = carouselRef.current.children[newIdx] as HTMLElement;
-    if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
   };
 
-  // Auto-rotate featured carousel every 5 seconds
+  // Scroll to center item when index changes
   useEffect(() => {
-    if (featuredTracks.length <= 1) return;
-    const timer = setInterval(() => {
-      setCarouselIdx(prev => {
-        const next = (prev + 1) % featuredTracks.length;
-        if (carouselRef.current) {
-          const child = carouselRef.current.children[next] as HTMLElement;
-          if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
-        }
-        return next;
-      });
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [featuredTracks.length]);
+    if (!carouselRef.current || featuredTracks.length === 0) return;
+    const child = carouselRef.current.children[carouselIdx] as HTMLElement;
+    if (child) {
+      const container = carouselRef.current;
+      const scrollLeft = child.offsetLeft - container.offsetWidth / 2 + child.offsetWidth / 2;
+      container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+    }
+  }, [carouselIdx, featuredTracks.length]);
 
   const handleSaveReflection = async () => {
     if (!user || !reflectionText.trim()) return;
@@ -340,7 +332,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Featured Sessions carousel — auto-rotating */}
+      {/* Featured Sessions — centered carousel with peek */}
       {featuredTracks.length > 0 &&
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -354,14 +346,17 @@ export default function HomePage() {
               </button>
             </div>
           </div>
-          <div className="flex gap-1.5 justify-end mb-3">
+          <div className="flex gap-1.5 justify-center mb-3">
             {featuredTracks.map((_: any, i: number) =>
             <div key={i} className={`h-1.5 rounded-full transition-all ${i === carouselIdx ? "w-5 bg-accent" : "w-1.5 bg-surface-light"}`} />
             )}
           </div>
-          <div ref={carouselRef} className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
-            {featuredTracks.map((track: any) =>
-            <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card min-w-[260px] max-w-[300px] overflow-hidden shrink-0 snap-start">
+          <div ref={carouselRef} className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory scroll-smooth hide-scrollbar">
+            {featuredTracks.map((track: any, i: number) =>
+            <Link key={track.id} to={`/player?trackId=${track.id}`}
+              className={`velum-card min-w-[75%] max-w-[75%] sm:min-w-[280px] sm:max-w-[300px] overflow-hidden shrink-0 snap-center transition-all duration-300 ${
+                i === carouselIdx ? "opacity-100 scale-100" : "opacity-50 scale-95"
+              }`}>
                 <div className="aspect-[16/9] bg-surface-light relative overflow-hidden">
                   {track.thumbnail_url && <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />}
                 </div>

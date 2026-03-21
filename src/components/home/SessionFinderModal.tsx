@@ -198,7 +198,7 @@ export function SessionFinderModal({ open, onClose }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex items-end lg:items-center justify-center"
+          className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex items-end lg:items-center justify-center overflow-y-auto"
           onClick={handleClose}
         >
           <motion.div
@@ -206,7 +206,7 @@ export function SessionFinderModal({ open, onClose }: Props) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: "spring", damping: 25 }}
-            className="velum-card w-full max-w-lg p-6 mx-4 mb-4 lg:mb-0 max-h-[85vh] overflow-y-auto"
+            className="velum-card w-full max-w-lg p-6 mx-4 mb-4 lg:mb-0 max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -229,6 +229,7 @@ export function SessionFinderModal({ open, onClose }: Props) {
               ))}
             </div>
 
+            <div className="flex-1 overflow-y-auto min-h-0">
             <AnimatePresence mode="wait">
               {step === 0 && (
                 <motion.div key="s0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
@@ -316,7 +317,7 @@ export function SessionFinderModal({ open, onClose }: Props) {
                       <button onClick={clearAll} className="text-accent text-sm font-sans hover:underline">Start over</button>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto">
+                    <div className="flex flex-col gap-2">
                       {filteredTracks.slice(0, 25).map((track: any) => (
                         <Link key={track.id} to={`/player?trackId=${track.id}`} onClick={handleClose}
                           className="flex items-center gap-3 p-3 rounded-xl bg-card/50 border border-foreground/5 hover:border-accent/30 hover:bg-card transition-all active:scale-[0.98]">
@@ -336,6 +337,7 @@ export function SessionFinderModal({ open, onClose }: Props) {
                 </motion.div>
               )}
             </AnimatePresence>
+            </div>
 
             {/* Navigation */}
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-foreground/10">
