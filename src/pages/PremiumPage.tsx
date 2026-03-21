@@ -105,7 +105,8 @@ export default function PremiumPage() {
             className="w-20 h-20 rounded-3xl gold-gradient flex items-center justify-center mx-auto mb-6">
             <Crown className="w-9 h-9 text-primary-foreground" />
           </motion.div>
-          <h1 className="text-display text-3xl mb-3">You Have Full Access</h1>
+           <h1 className="text-display text-3xl mb-3">You Have Full Access</h1>
+
           <p className="text-ui text-sm mb-2">You have access to everything in Velum.</p>
           {profile?.subscription_plan && (
             <p className="text-ui text-xs mb-6 capitalize">

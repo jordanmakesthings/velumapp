@@ -151,7 +151,6 @@ export default function CourseDetailPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {track.is_premium && <Crown className="w-3.5 h-3.5 text-accent" />}
                   {!locked && (
                     <div className="w-8 h-8 rounded-full bg-surface-light flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Play className="w-3.5 h-3.5 text-foreground ml-0.5" />

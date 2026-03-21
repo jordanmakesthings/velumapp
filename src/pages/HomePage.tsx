@@ -344,8 +344,8 @@ export default function HomePage() {
           </div>
           <div ref={carouselRef} className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
             {featuredTracks.map((track: any) => (
-              <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card min-w-[280px] overflow-hidden shrink-0 snap-start">
-                <div className="aspect-[16/9] bg-surface-light relative">
+              <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card min-w-[260px] max-w-[300px] overflow-hidden shrink-0 snap-start">
+                <div className="aspect-[16/9] bg-surface-light relative overflow-hidden">
                   {track.thumbnail_url && <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />}
                 </div>
                 <div className="p-4">
