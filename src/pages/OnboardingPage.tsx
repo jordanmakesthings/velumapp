@@ -348,7 +348,7 @@ export default function OnboardingPage() {
 
               {/* Monthly */}
               <div className="text-center mb-8">
-                <p className="text-display text-5xl text-foreground mb-1">$29 <span className="text-muted-foreground text-lg font-sans font-light">/ month</span></p>
+                <p className="text-display mb-1 text-lg text-accent">$29 <span className="text-muted-foreground text-lg font-sans font-light">/ month</span></p>
                 <p className="text-muted-foreground text-sm font-sans font-light mb-4">Cancel anytime</p>
                 <button onClick={() => handleCheckout("monthly")} disabled={checkoutLoading}
               className="w-full border border-accent/30 rounded-xl p-5 flex items-center justify-between text-left mb-1">
@@ -362,9 +362,9 @@ export default function OnboardingPage() {
 
               {/* Lifetime */}
               <div className="text-center mb-8">
-                <p className="text-display text-5xl text-foreground mb-1">$299 <span className="text-muted-foreground text-lg font-sans font-light">· One time</span></p>
-                <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">
-                  Every course. Every tool. Every future update.<br />Pay once, never think about it again.
+                <p className="text-display mb-1 text-accent text-lg">Lifetime Access<span className="text-muted-foreground text-lg font-sans font-light">· One time</span></p>
+                <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">Single Payment
+                <br />Pay once, never think about it again.
                 </p>
                 <button onClick={() => handleCheckout("lifetime")} disabled={checkoutLoading}
               className="w-full border border-muted-foreground/20 rounded-xl p-5 flex items-center justify-between text-left mb-1">
