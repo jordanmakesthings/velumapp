@@ -248,10 +248,10 @@ export default function PlayerPage() {
   // Subscription gate
   if (!hasSubscription) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <div className="px-4 py-4">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-foreground font-sans text-sm">
-            <ArrowLeft className="w-4 h-4" />
+      <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background flex flex-col">
+        <div className="safe-area-pt px-4 pt-4">
+          <button onClick={() => navigate(-1)} className="flex min-h-10 items-center gap-1 text-sm font-sans text-foreground">
+            <ArrowLeft className="w-4 h-4 shrink-0" />
             Back
           </button>
         </div>
