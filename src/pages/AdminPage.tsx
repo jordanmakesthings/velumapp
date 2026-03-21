@@ -1337,6 +1337,9 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ============ TAXONOMY TAB ============ */}
+        {activeTab === "taxonomy" && <TaxonomyTab />}
+
         {/* ============ USERS TAB ============ */}
         {activeTab === "users" && <UsersTab />}
         </div>
