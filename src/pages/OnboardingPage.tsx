@@ -363,9 +363,7 @@ export default function OnboardingPage() {
               {/* Lifetime */}
               <div className="text-center mb-8">
                 <p className="text-display mb-1 text-accent text-4xl">US$299</p>
-                <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">Single Payment
-                <br />Pay once, never think about it again.
-                </p>
+                <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">Lifetime Access</p>
                 <button onClick={() => handleCheckout("lifetime")} disabled={checkoutLoading}
               className="w-full border border-muted-foreground/20 rounded-xl p-5 flex items-center justify-between text-left mb-1">
                   <span className="text-foreground text-lg font-sans font-semibold">Begin My Journey</span>
