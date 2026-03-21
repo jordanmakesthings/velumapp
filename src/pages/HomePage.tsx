@@ -193,6 +193,22 @@ export default function HomePage() {
     if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
   };
 
+  // Auto-rotate featured carousel every 5 seconds
+  useEffect(() => {
+    if (featuredTracks.length <= 1) return;
+    const timer = setInterval(() => {
+      setCarouselIdx(prev => {
+        const next = (prev + 1) % featuredTracks.length;
+        if (carouselRef.current) {
+          const child = carouselRef.current.children[next] as HTMLElement;
+          if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+        }
+        return next;
+      });
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [featuredTracks.length]);
+
   const handleSaveReflection = async () => {
     if (!user || !reflectionText.trim()) return;
     setSavingReflection(true);
