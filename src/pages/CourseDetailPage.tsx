@@ -163,13 +163,12 @@ export default function CourseDetailPage() {
           })}
         </div>
 
-        {/* Premium CTA */}
         {!canAccess && (
           <div className="velum-card p-6 mt-8 text-center border border-accent/20">
             <h3 className="text-display text-lg text-accent mb-2">Unlock this course</h3>
-            <p className="text-ui text-sm mb-4">Upgrade to Premium to access all courses and the full library.</p>
+            <p className="text-ui text-sm mb-4">Subscribe to access all courses and the full library.</p>
             <Link to="/premium" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-medium">
-              Upgrade to Premium
+              Begin My Journey
             </Link>
           </div>
         )}
