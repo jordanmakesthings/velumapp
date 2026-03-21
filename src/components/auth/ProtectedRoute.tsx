@@ -1,9 +1,10 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReactNode } from "react";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -14,7 +15,23 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/signup" replace />;
+  }
+
+  // If user has active access, let them through to any page
+  const hasActiveAccess =
+    profile?.subscription_status === "active" ||
+    profile?.subscription_plan === "lifetime";
+
+  // If user hasn't completed onboarding and isn't already on onboarding or paymentsuccess, redirect
+  if (
+    profile &&
+    !profile.onboarding_completed &&
+    !hasActiveAccess &&
+    location.pathname !== "/onboarding" &&
+    location.pathname !== "/paymentsuccess"
+  ) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;

@@ -10,7 +10,7 @@ type Mode = "login" | "signup" | "magic-link" | "forgot-password";
 export default function AuthPage() {
   const navigate = useNavigate();
   const { signIn, signUp, signInWithMagicLink } = useAuth();
-  const [mode, setMode] = useState<Mode>("login");
+  const [mode, setMode] = useState<Mode>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -28,7 +28,7 @@ export default function AuthPage() {
       if (mode === "login") {
         const { error } = await signIn(email, password);
         if (error) throw error;
-        navigate("/");
+        navigate("/home");
       } else if (mode === "signup") {
         const { error } = await signUp(email, password, fullName);
         if (error) throw error;
@@ -38,7 +38,6 @@ export default function AuthPage() {
         if (error) throw error;
         setMessage("Check your email for a sign-in link.");
       } else if (mode === "forgot-password") {
-        // Will implement with supabase.auth.resetPasswordForEmail
         const { default: supabase } = await import("@/integrations/supabase/client").then((m) => ({ default: m.supabase }));
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`
@@ -81,7 +80,6 @@ export default function AuthPage() {
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Full name"
             className="w-full bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30" />
-
           }
 
           <input
@@ -91,7 +89,6 @@ export default function AuthPage() {
             placeholder="Email"
             required
             className="w-full bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30" />
-          
 
           {(mode === "login" || mode === "signup") &&
           <input
@@ -102,7 +99,6 @@ export default function AuthPage() {
             required
             minLength={6}
             className="w-full bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30" />
-
           }
 
           {mode === "login" &&
@@ -110,7 +106,6 @@ export default function AuthPage() {
             type="button"
             onClick={() => setMode("forgot-password")}
             className="text-right text-accent text-xs font-sans -mt-2">
-            
               Forgot password?
             </button>
           }
@@ -126,10 +121,8 @@ export default function AuthPage() {
             type="submit"
             disabled={loading}
             className="w-full py-3.5 rounded-xl gold-gradient text-primary-foreground font-sans font-medium text-sm active:scale-[0.98] transition-transform disabled:opacity-50 flex items-center justify-center gap-2">
-            
             {loading ?
             <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> :
-
             <>
                 {mode === "login" && "Sign in"}
                 {mode === "signup" && "Create account"}
@@ -200,7 +193,16 @@ export default function AuthPage() {
             </p>
           }
 
-          {(mode === "signup" || mode === "magic-link" || mode === "forgot-password") &&
+          {mode === "signup" &&
+          <p className="text-muted-foreground text-xs font-sans">
+              Already have an account?{" "}
+              <button onClick={() => setMode("login")} className="text-accent hover:underline">
+                Sign in
+              </button>
+            </p>
+          }
+
+          {(mode === "magic-link" || mode === "forgot-password") &&
           <button
             onClick={() => setMode("login")}
             className="text-accent text-xs font-sans hover:underline">
@@ -214,6 +216,6 @@ export default function AuthPage() {
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,_hsl(42,53%,54%)_0%,_transparent_70%)] opacity-[0.05]" />
       </div>
-    </div>);
-
+    </div>
+  );
 }
