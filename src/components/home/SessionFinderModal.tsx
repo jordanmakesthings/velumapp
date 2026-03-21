@@ -6,42 +6,36 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const CATEGORIES = [
-  { key: "meditation", label: "Meditation" },
-  { key: "rapid_resets", label: "Rapid Resets" },
-  { key: "breathwork", label: "Breathwork" },
-  { key: "tapping", label: "Tapping" },
-  { key: "journaling", label: "Journaling" },
-];
-
-const MOODS = [
-  { key: "calm", label: "Calm" },
-  { key: "energize", label: "Energize" },
-  { key: "focus", label: "Focus" },
-  { key: "process", label: "Process" },
-  { key: "confidence", label: "Confidence" },
-  { key: "sleep", label: "Sleep" },
+  { key: "meditation", label: "Meditation", desc: "Guided & unguided practices" },
+  { key: "rapid_resets", label: "Rapid Resets", desc: "Under 10 min, instant calm" },
+  { key: "breathwork", label: "Breathwork", desc: "Shift your nervous system" },
+  { key: "tapping", label: "Tapping", desc: "Clear stress & limiting beliefs" },
+  { key: "journaling", label: "Journaling", desc: "Deeper self-awareness" },
 ];
 
 const GOALS = [
-  { key: "calm", label: "Calm" },
-  { key: "focus", label: "Focus" },
-  { key: "energize", label: "Energize" },
-  { key: "process", label: "Process" },
-  { key: "sleep", label: "Sleep" },
-  { key: "confidence", label: "Confidence" },
+  { key: "calm", label: "Calm", desc: "Settle the nervous system" },
+  { key: "focus", label: "Focus", desc: "Sharpen attention & clarity" },
+  { key: "energize", label: "Energize", desc: "Boost vitality & drive" },
+  { key: "process", label: "Process", desc: "Work through emotions" },
+  { key: "sleep", label: "Sleep", desc: "Wind down & rest deeply" },
+  { key: "confidence", label: "Confidence", desc: "Strengthen self-trust" },
 ];
 
-const SESSION_TYPES = [
-  { key: "guided", label: "Guided" },
-  { key: "unguided", label: "Unguided" },
-  { key: "interactive", label: "Interactive" },
+const MOODS = [
+  { key: "calm", label: "Calm", desc: "Already feeling settled" },
+  { key: "energize", label: "Energize", desc: "Need a boost" },
+  { key: "focus", label: "Focus", desc: "Mind is scattered" },
+  { key: "process", label: "Process", desc: "Something heavy to work through" },
+  { key: "confidence", label: "Confidence", desc: "Need grounding" },
+  { key: "sleep", label: "Sleep", desc: "Ready to wind down" },
 ];
 
 const DURATION_RANGES = [
-  { key: "0-5", label: "Under 5 min", min: 0, max: 5 },
-  { key: "5-10", label: "5–10 min", min: 5, max: 10 },
-  { key: "10-20", label: "10–20 min", min: 10, max: 20 },
-  { key: "20+", label: "20+ min", min: 20, max: 999 },
+  { key: "0-5", label: "Under 5 min", desc: "Quick reset", min: 0, max: 5 },
+  { key: "5-10", label: "5–10 min", desc: "Short session", min: 5, max: 10 },
+  { key: "10-20", label: "10–20 min", desc: "Deep practice", min: 10, max: 20 },
+  { key: "20+", label: "20+ min", desc: "Extended journey", min: 20, max: 999 },
 ];
 
 interface Props {
@@ -49,14 +43,13 @@ interface Props {
   onClose: () => void;
 }
 
-type WizardStep = 0 | 1 | 2;
+type WizardStep = 0 | 1 | 2 | 3;
 
 export function SessionFinderModal({ open, onClose }: Props) {
   const [wizardStep, setWizardStep] = useState<WizardStep>(0);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
 
   const { data: tracks = [] } = useQuery({
@@ -69,7 +62,7 @@ export function SessionFinderModal({ open, onClose }: Props) {
 
   const filteredTracks = useMemo(() => {
     return (tracks as any[]).filter(t => {
-      if (selectedCategories.length > 0 && !selectedCategories.includes(t.category)) return false;
+      if (selectedCategory && t.category !== selectedCategory) return false;
       if (selectedDuration) {
         const range = DURATION_RANGES.find(r => r.key === selectedDuration);
         if (range && (t.duration_minutes < range.min || t.duration_minutes > range.max)) return false;
@@ -78,19 +71,18 @@ export function SessionFinderModal({ open, onClose }: Props) {
         const tags = Array.isArray(t.tags) ? t.tags : [];
         if (tags.length > 0 && !tags.some((tag: string) => tag.toLowerCase().includes(selectedMood))) return false;
       }
-      if (selectedGoals.length > 0 && t.tags) {
+      if (selectedGoal && t.tags) {
         const tags = Array.isArray(t.tags) ? t.tags : [];
-        if (tags.length > 0 && !selectedGoals.some(g => tags.some((tag: string) => tag.toLowerCase().includes(g)))) return false;
+        if (tags.length > 0 && !tags.some((tag: string) => tag.toLowerCase().includes(selectedGoal))) return false;
       }
       return true;
     });
-  }, [tracks, selectedCategories, selectedMood, selectedGoals, selectedType, selectedDuration]);
+  }, [tracks, selectedCategory, selectedMood, selectedGoal, selectedDuration]);
 
   const clearAll = () => {
-    setSelectedCategories([]);
-    setSelectedGoals([]);
+    setSelectedCategory(null);
+    setSelectedGoal(null);
     setSelectedMood(null);
-    setSelectedType(null);
     setSelectedDuration(null);
     setWizardStep(0);
   };
@@ -100,12 +92,12 @@ export function SessionFinderModal({ open, onClose }: Props) {
     setTimeout(clearAll, 300);
   };
 
-  const toggleCategory = (key: string) => {
-    setSelectedCategories(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
-  };
-
-  const toggleGoal = (key: string) => {
-    setSelectedGoals(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  const handleCardSelect = (step: WizardStep, value: string, setter: (v: string | null) => void) => {
+    setter(value);
+    // Auto-advance to next step after a brief delay
+    setTimeout(() => {
+      if (step < 3) setWizardStep((step + 1) as WizardStep);
+    }, 250);
   };
 
   const slideVariants = {
@@ -114,24 +106,40 @@ export function SessionFinderModal({ open, onClose }: Props) {
     exit: { opacity: 0, x: -60 },
   };
 
-  const PillToggle = ({ label, selected, onToggle }: { label: string; selected: boolean; onToggle: () => void }) => (
-    <button
-      onClick={onToggle}
-      className={`px-4 py-2.5 rounded-xl text-sm font-sans transition-all duration-200 ${
-        selected
-          ? "gold-gradient text-primary-foreground font-semibold"
-          : "bg-card text-muted-foreground hover:text-foreground border border-foreground/10"
-      }`}
-    >
-      {label}
-    </button>
-  );
-
   const stepTitles = [
-    "What brings you here today?",
-    "Let's refine your session.",
+    "What are you looking for?",
+    "What's your goal?",
+    "How are you feeling?",
     `${filteredTracks.length} ${filteredTracks.length === 1 ? "session" : "sessions"} found`,
   ];
+
+  const stepSubtitles = [
+    "Choose a practice type",
+    "What do you want to walk away with?",
+    "We'll match your current state",
+    "Here are your curated sessions",
+  ];
+
+  const SelectionCard = ({ label, desc, selected, onSelect }: { label: string; desc: string; selected: boolean; onSelect: () => void }) => (
+    <button
+      onClick={onSelect}
+      className={`velum-card p-4 text-left transition-all duration-200 w-full ${
+        selected ? "ring-1 ring-accent/50 border-accent/30" : "hover:border-accent/20"
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className={`text-sm font-sans font-medium ${selected ? "text-accent" : "text-foreground"}`}>{label}</p>
+          <p className="text-muted-foreground text-[11px] mt-0.5">{desc}</p>
+        </div>
+        {selected && (
+          <div className="w-5 h-5 rounded-full gold-gradient flex items-center justify-center shrink-0">
+            <span className="text-primary-foreground text-[10px]">✓</span>
+          </div>
+        )}
+      </div>
+    </button>
+  );
 
   return (
     <AnimatePresence>
@@ -164,7 +172,7 @@ export function SessionFinderModal({ open, onClose }: Props) {
 
             {/* Progress dots */}
             <div className="flex gap-1.5 mb-6">
-              {[0, 1, 2].map(i => (
+              {[0, 1, 2, 3].map(i => (
                 <div key={i} className={`h-[3px] flex-1 rounded-full transition-colors duration-300 ${
                   i <= wizardStep ? "bg-accent" : "bg-muted-foreground/15"
                 }`} />
@@ -172,62 +180,68 @@ export function SessionFinderModal({ open, onClose }: Props) {
             </div>
 
             <AnimatePresence mode="wait">
-              {/* Step 0: Category + Goal */}
+              {/* Step 0: Category */}
               {wizardStep === 0 && (
                 <motion.div key="step0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                   <h2 className="text-display text-2xl mb-1">{stepTitles[0]}</h2>
-                  <p className="text-ui text-sm mb-6">Choose categories and goals that resonate.</p>
-
-                  <p className="text-ui text-[10px] tracking-[2px] uppercase mb-2.5">Category</p>
-                  <div className="flex flex-wrap gap-2 mb-5">
-                    {CATEGORIES.map(({ key, label }) => (
-                      <PillToggle key={key} label={label} selected={selectedCategories.includes(key)} onToggle={() => toggleCategory(key)} />
-                    ))}
-                  </div>
-
-                  <p className="text-ui text-[10px] tracking-[2px] uppercase mb-2.5">Goal</p>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {GOALS.map(({ key, label }) => (
-                      <PillToggle key={key} label={label} selected={selectedGoals.includes(key)} onToggle={() => toggleGoal(key)} />
+                  <p className="text-ui text-sm mb-5">{stepSubtitles[0]}</p>
+                  <div className="flex flex-col gap-2">
+                    {CATEGORIES.map(({ key, label, desc }) => (
+                      <SelectionCard
+                        key={key}
+                        label={label}
+                        desc={desc}
+                        selected={selectedCategory === key}
+                        onSelect={() => handleCardSelect(0, key, setSelectedCategory)}
+                      />
                     ))}
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 1: Mood, Type, Duration */}
+              {/* Step 1: Goal */}
               {wizardStep === 1 && (
                 <motion.div key="step1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                   <h2 className="text-display text-2xl mb-1">{stepTitles[1]}</h2>
-                  <p className="text-ui text-sm mb-6">Fine-tune to find the perfect match.</p>
-
-                  <p className="text-ui text-[10px] tracking-[2px] uppercase mb-2.5">How are you feeling</p>
-                  <div className="flex flex-wrap gap-2 mb-5">
-                    {MOODS.map(({ key, label }) => (
-                      <PillToggle key={key} label={label} selected={selectedMood === key} onToggle={() => setSelectedMood(selectedMood === key ? null : key)} />
-                    ))}
-                  </div>
-
-                  <p className="text-ui text-[10px] tracking-[2px] uppercase mb-2.5">Session type</p>
-                  <div className="flex flex-wrap gap-2 mb-5">
-                    {SESSION_TYPES.map(({ key, label }) => (
-                      <PillToggle key={key} label={label} selected={selectedType === key} onToggle={() => setSelectedType(selectedType === key ? null : key)} />
-                    ))}
-                  </div>
-
-                  <p className="text-ui text-[10px] tracking-[2px] uppercase mb-2.5">Duration</p>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {DURATION_RANGES.map(({ key, label }) => (
-                      <PillToggle key={key} label={label} selected={selectedDuration === key} onToggle={() => setSelectedDuration(selectedDuration === key ? null : key)} />
+                  <p className="text-ui text-sm mb-5">{stepSubtitles[1]}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {GOALS.map(({ key, label, desc }) => (
+                      <SelectionCard
+                        key={key}
+                        label={label}
+                        desc={desc}
+                        selected={selectedGoal === key}
+                        onSelect={() => handleCardSelect(1, key, setSelectedGoal)}
+                      />
                     ))}
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 2: Results */}
+              {/* Step 2: Duration */}
               {wizardStep === 2 && (
                 <motion.div key="step2" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
                   <h2 className="text-display text-2xl mb-1">{stepTitles[2]}</h2>
-                  <p className="text-ui text-sm mb-4">Here are your curated sessions.</p>
+                  <p className="text-ui text-sm mb-5">{stepSubtitles[2]}</p>
+                  <div className="flex flex-col gap-2">
+                    {DURATION_RANGES.map(({ key, label, desc }) => (
+                      <SelectionCard
+                        key={key}
+                        label={label}
+                        desc={desc}
+                        selected={selectedDuration === key}
+                        onSelect={() => handleCardSelect(2, key, setSelectedDuration)}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 3: Results */}
+              {wizardStep === 3 && (
+                <motion.div key="step3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+                  <h2 className="text-display text-2xl mb-1">{stepTitles[3]}</h2>
+                  <p className="text-ui text-sm mb-4">{stepSubtitles[3]}</p>
 
                   {filteredTracks.length === 0 ? (
                     <div className="text-center py-10">
@@ -269,23 +283,21 @@ export function SessionFinderModal({ open, onClose }: Props) {
                   </button>
                 )}
                 {wizardStep === 0 && (
-                  <button onClick={clearAll} className="text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
-                    Skip
+                  <button onClick={() => { clearAll(); setWizardStep(3 as WizardStep); }} className="text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
+                    Skip all
                   </button>
                 )}
               </div>
               <div className="flex gap-3">
-                {wizardStep === 2 && (
+                {wizardStep === 3 && (
                   <button onClick={clearAll} className="flex items-center gap-1.5 text-accent text-sm font-sans hover:underline">
                     <RotateCcw className="w-3.5 h-3.5" /> Start over
                   </button>
                 )}
-                {wizardStep < 2 && (
-                  <button
-                    onClick={() => setWizardStep((wizardStep + 1) as WizardStep)}
-                    className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-[0.98] transition-transform"
-                  >
-                    {wizardStep === 0 ? "Next" : "Show results"} <ArrowRight className="w-4 h-4" />
+                {wizardStep > 0 && wizardStep < 3 && (
+                  <button onClick={() => setWizardStep((wizardStep + 1) as WizardStep)}
+                    className="text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
+                    Skip
                   </button>
                 )}
               </div>
