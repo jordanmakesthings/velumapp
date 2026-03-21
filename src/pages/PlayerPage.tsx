@@ -421,8 +421,8 @@ export default function PlayerPage() {
           </>
         ) : step === "after" ? (
           <StressCheckin
-            title="How do you feel now?"
-            subtitle="Rate your stress level after this session"
+            title="Rate your levels of stress or negative emotions."
+            subtitle="After this session"
             onSubmit={handleStressAfter}
             submitLabel="Complete Session"
           />
