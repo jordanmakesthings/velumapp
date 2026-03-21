@@ -56,12 +56,28 @@ Deno.serve(async (req) => {
 
     let customerId = profile?.stripe_customer_id;
 
+    // Verify the stored customer ID actually exists in Stripe
+    if (customerId) {
+      try {
+        await stripe.customers.retrieve(customerId);
+      } catch {
+        console.warn(`Stored customer ${customerId} not found in Stripe, will create new one`);
+        customerId = null;
+      }
+    }
+
     if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: userEmail,
-        metadata: { supabase_user_id: userId },
-      });
-      customerId = customer.id;
+      // Check if customer exists by email first
+      const existing = await stripe.customers.list({ email: userEmail, limit: 1 });
+      if (existing.data.length > 0) {
+        customerId = existing.data[0].id;
+      } else {
+        const customer = await stripe.customers.create({
+          email: userEmail,
+          metadata: { supabase_user_id: userId },
+        });
+        customerId = customer.id;
+      }
 
       const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       await supabaseAdmin.from("profiles").update({ stripe_customer_id: customerId }).eq("id", userId);
