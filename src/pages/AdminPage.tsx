@@ -358,9 +358,9 @@ interface FinderOption {
 }
 
 const FINDER_SECTIONS = [
-  { settingKey: "session_finder_categories", label: "Categories", desc: "Practice types shown in step 1" },
+  { settingKey: "session_finder_types", label: "Session Types", desc: "Session type options in step 1 (Guided, Unguided, etc.)" },
   { settingKey: "session_finder_goals", label: "Goals", desc: "Goal options in step 2" },
-  { settingKey: "session_finder_moods", label: "Moods", desc: "Mood options in step 3 (multi-select)" },
+  { settingKey: "session_finder_states", label: "Current States", desc: "Current state options in step 3 (multi-select)" },
   { settingKey: "session_finder_durations", label: "Durations", desc: "Time ranges in step 4" },
 ];
 
