@@ -87,7 +87,8 @@ Deno.serve(async (req) => {
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
-      success_url: `${returnUrl || "https://velumapp.lovable.app"}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      allow_promotion_codes: true,
+      success_url: "https://app.govelum.com",
       cancel_url: `${returnUrl || "https://velumapp.lovable.app"}/premium`,
       metadata: { supabase_user_id: userId, plan },
       line_items: [{ price: priceId, quantity: 1 }],
