@@ -325,7 +325,10 @@ export default function JournalingPlayer({ track, isFavorited, onToggleFavorite 
                     value={responses[currentStep] || ""}
                     onChange={(e) => setResponses(prev => ({ ...prev, [currentStep]: e.target.value }))}
                     placeholder="Write freely here..."
-                    className="mt-4 bg-background border-foreground/10 text-foreground placeholder:text-muted-foreground/40 min-h-[120px] rounded-xl resize-y"
+                    className="mt-4 bg-background border-foreground/10 text-foreground placeholder:text-muted-foreground/40 min-h-[120px] rounded-xl resize-y text-base"
+                    style={{ fontSize: "16px" }}
+                    autoComplete="off"
+                    autoCorrect="on"
                   />
                 )}
 

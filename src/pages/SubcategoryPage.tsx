@@ -16,17 +16,31 @@ export default function SubcategoryPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const category = searchParams.get("category") || "";
-  const subcategory = searchParams.get("subcategory") || "";
+  const subcategoryId = searchParams.get("subcategory") || "";
   const { user } = useAuth();
 
+  // Fetch subcategory name
+  const { data: subcategory } = useQuery({
+    queryKey: ["subcategory", subcategoryId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("subcategories")
+        .select("name")
+        .eq("id", subcategoryId)
+        .single();
+      return data;
+    },
+    enabled: !!subcategoryId,
+  });
+
   const { data: tracks = [] } = useQuery({
-    queryKey: ["subcategoryTracks", category, subcategory],
+    queryKey: ["subcategoryTracks", category, subcategoryId],
     queryFn: async () => {
       const { data } = await supabase
         .from("tracks")
         .select("*")
         .eq("category", category)
-        .eq("subcategory_id", subcategory)
+        .eq("subcategory_id", subcategoryId)
         .order("order_index");
       return data || [];
     },
@@ -47,6 +61,8 @@ export default function SubcategoryPage() {
     enabled: !!user,
   });
 
+  const displayName = subcategory?.name || "";
+
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background pb-24">
       {/* Header */}
@@ -60,7 +76,7 @@ export default function SubcategoryPage() {
         </button>
       </div>
       <div className="mb-6 mt-3 px-4">
-        <h1 className="text-display break-words text-2xl">{subcategory}</h1>
+        <h1 className="text-display break-words text-2xl">{displayName}</h1>
         <p className="text-ui mt-1 text-xs tracking-widest uppercase break-words">
           {CATEGORY_LABELS[category] || category}
         </p>
