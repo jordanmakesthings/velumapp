@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Search, Heart, Sparkles, Wind, Zap, GraduationCap, Feather, BookOpen, Check, Play } from "lucide-react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Search, Heart, Sparkles, Wind, Zap, GraduationCap, Feather, BookOpen, Check, Play, ChevronLeft } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,13 +26,14 @@ const CATEGORIES = [
 
 export default function LibraryPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>("sessions");
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showAllSessions, setShowAllSessions] = useState(false);
 
-  // Handle URL params for deep linking from homepage
   useEffect(() => {
     const tabParam = searchParams.get("tab");
     const categoryParam = searchParams.get("category");
@@ -65,6 +66,14 @@ export default function LibraryPage() {
     queryKey: ["masteryClasses"],
     queryFn: async () => {
       const { data } = await supabase.from("mastery_classes").select("*").order("order_index");
+      return data || [];
+    },
+  });
+
+  const { data: subcategories = [] } = useQuery({
+    queryKey: ["subcategories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("subcategories").select("*").order("order_index");
       return data || [];
     },
   });
@@ -117,9 +126,10 @@ export default function LibraryPage() {
   });
 
   const favoriteTracks = tracks.filter((t: any) => favoriteTrackIds.has(t.id));
+  const categorySubcats = selectedCategory ? subcategories.filter((s: any) => s.category === selectedCategory) : [];
 
   const TrackCard = ({ track }: { track: any }) => (
-    <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card overflow-hidden group">
+    <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card overflow-hidden group min-w-0">
       <div className="aspect-square bg-surface-light relative overflow-hidden rounded-xl">
         {(track.thumbnail_square_url || track.thumbnail_url) ? (
           <img src={track.thumbnail_square_url ?? track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
@@ -137,13 +147,16 @@ export default function LibraryPage() {
           </div>
         )}
       </div>
-      <div className="p-4 flex items-start justify-between">
-        <div>
-          <p className="text-foreground text-sm font-sans">{track.title}</p>
-          <p className="text-ui text-xs mt-1">{track.duration_minutes} min</p>
+      <div className="p-3 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-foreground text-xs font-sans leading-tight line-clamp-2">{track.title}</p>
+          {track.description && (
+            <p className="text-muted-foreground text-[11px] mt-1 line-clamp-2 leading-snug">{track.description}</p>
+          )}
+          <p className="text-ui text-[10px] mt-1">{track.duration_minutes} min</p>
         </div>
         <button onClick={(e) => { e.preventDefault(); toggleFavMutation.mutate(track.id); }}
-          className={`transition-colors ${favoriteTrackIds.has(track.id) ? "text-accent" : "text-muted-foreground hover:text-accent"}`}>
+          className={`transition-colors shrink-0 ${favoriteTrackIds.has(track.id) ? "text-accent" : "text-muted-foreground hover:text-accent"}`}>
           <Heart className={`w-4 h-4 ${favoriteTrackIds.has(track.id) ? "fill-current" : ""}`} />
         </button>
       </div>
@@ -151,14 +164,14 @@ export default function LibraryPage() {
   );
 
   return (
-    <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto">
+    <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto overflow-x-hidden">
       <h1 className="text-display text-3xl mb-6">Library</h1>
 
       <div className="flex gap-1 mb-6 overflow-x-auto pb-1 -mx-4 px-4">
         {TABS.map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => { setActiveTab(key); setSelectedCategory(null); setSearch(""); }}
+            onClick={() => { setActiveTab(key); setSelectedCategory(null); setSearch(""); setShowAllSessions(false); }}
             className={`px-4 py-2 rounded-full text-xs font-sans font-medium tracking-wide whitespace-nowrap transition-all ${
               activeTab === key ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"
             }`}
@@ -189,6 +202,7 @@ export default function LibraryPage() {
                     setSelectedCategory(null);
                   } else {
                     setSelectedCategory(key);
+                    setShowAllSessions(false);
                   }
                 }}
                   className="velum-card p-5 flex flex-col gap-3 text-left group">
@@ -202,17 +216,51 @@ export default function LibraryPage() {
             </div>
           ) : (
             <>
-              <button onClick={() => setSelectedCategory(null)} className="text-accent text-xs font-sans mb-4 inline-block">
-                ← All categories
+              {/* Back button */}
+              <button onClick={() => { setSelectedCategory(null); setShowAllSessions(false); }}
+                className="flex items-center gap-1 text-foreground font-sans text-sm mb-4">
+                <ChevronLeft className="w-4 h-4" />
+                Back
               </button>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {filteredTracks.map((track: any) => (
-                  <TrackCard key={track.id} track={track} />
-                ))}
-                {filteredTracks.length === 0 && (
-                  <p className="text-muted-foreground text-sm col-span-2 text-center py-8">No sessions in this category yet.</p>
-                )}
-              </div>
+
+              {/* Subcategory grid or all sessions */}
+              {!showAllSessions && categorySubcats.length > 0 ? (
+                <>
+                  <button onClick={() => setShowAllSessions(true)}
+                    className="text-accent text-xs font-sans mb-4 inline-block">
+                    See All →
+                  </button>
+                  <div className="grid grid-cols-2 gap-3">
+                    {categorySubcats.map((sc: any) => (
+                      <Link
+                        key={sc.id}
+                        to={`/subcategory?category=${selectedCategory}&subcategory=${sc.id}`}
+                        className="velum-card overflow-hidden"
+                      >
+                        <div className="aspect-video bg-surface-light relative overflow-hidden">
+                          {sc.thumbnail_url ? (
+                            <img src={sc.thumbnail_url} alt={sc.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
+                          )}
+                        </div>
+                        <div className="p-3">
+                          <p className="text-foreground text-xs font-sans font-medium">{sc.name}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {filteredTracks.map((track: any) => (
+                    <TrackCard key={track.id} track={track} />
+                  ))}
+                  {filteredTracks.length === 0 && (
+                    <p className="text-muted-foreground text-sm col-span-2 text-center py-8">No sessions in this category yet.</p>
+                  )}
+                </div>
+              )}
             </>
           )}
         </>
@@ -226,7 +274,7 @@ export default function LibraryPage() {
             <p className="text-ui text-sm">Tap the heart icon on any session to save it here.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {favoriteTracks.map((track: any) => (
               <TrackCard key={track.id} track={track} />
             ))}
@@ -253,17 +301,24 @@ export default function LibraryPage() {
       )}
 
       {activeTab === "mastery" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {masteryClasses.length === 0 ? (
             <p className="text-muted-foreground text-sm col-span-2 text-center py-8">No mastery classes yet.</p>
           ) : masteryClasses.map((mc: any) => (
-            <Link key={mc.id} to={`/mastery-player?id=${mc.id}`} className="velum-card overflow-hidden group">
-              <div className="aspect-video bg-surface-light relative">
-                {mc.thumbnail_url && <img src={mc.thumbnail_url} alt={mc.title} className="w-full h-full object-cover" />}
+            <Link key={mc.id} to={`/mastery-player?id=${mc.id}`} className="velum-card overflow-hidden group min-w-0">
+              <div className="aspect-video bg-surface-light relative overflow-hidden">
+                {(mc.cover_image_url_16_9 || mc.thumbnail_url || mc.cover_image_url) ? (
+                  <img src={mc.cover_image_url_16_9 || mc.thumbnail_url || mc.cover_image_url} alt={mc.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
+                )}
               </div>
-              <div className="p-4">
-                <p className="text-foreground text-sm font-sans">{mc.title}</p>
-                <p className="text-ui text-xs mt-1">{mc.duration_minutes} min</p>
+              <div className="p-3">
+                <p className="text-foreground text-xs font-sans font-medium leading-tight line-clamp-2">{mc.title}</p>
+                {mc.description && (
+                  <p className="text-muted-foreground text-[11px] mt-1 line-clamp-2 leading-snug">{mc.description}</p>
+                )}
+                <p className="text-ui text-[10px] mt-1">{mc.duration_minutes} min</p>
               </div>
             </Link>
           ))}
@@ -272,7 +327,7 @@ export default function LibraryPage() {
 
       {activeTab === "journal" && (
         <div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {tracks.filter((t: any) => t.category === "journaling").length === 0 ? (
               <div className="col-span-2 velum-card p-8 text-center">
                 <Feather className="w-6 h-6 text-muted-foreground mx-auto mb-3" />

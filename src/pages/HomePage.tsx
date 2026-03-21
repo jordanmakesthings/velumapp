@@ -217,8 +217,8 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-radial-subtle">
-    <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto">
+    <div className="min-h-screen bg-radial-subtle overflow-x-hidden">
+    <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto overflow-x-hidden">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-3">

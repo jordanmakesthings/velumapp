@@ -250,8 +250,9 @@ export default function PlayerPage() {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="px-4 py-4">
-          <button onClick={() => navigate(-1)} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-5 h-5" />
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-foreground font-sans text-sm">
+            <ArrowLeft className="w-4 h-4" />
+            Back
           </button>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-6">
@@ -336,8 +337,9 @@ export default function PlayerPage() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(42,53%,54%,0.08)_0%,_transparent_60%)]" />
 
       <div className="relative z-10 flex items-center justify-between px-4 py-4">
-        <button onClick={() => navigate(-1)} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="w-5 h-5" />
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-foreground font-sans text-sm">
+          <ArrowLeft className="w-4 h-4" />
+          Back
         </button>
         <p className="text-ui text-xs tracking-wide uppercase">
           {categoryLabels[track.category] || track.category}
@@ -362,8 +364,8 @@ export default function PlayerPage() {
             <h2 className="text-display text-2xl mb-1 text-center">{track.title}</h2>
             {track.description && <p className="text-ui text-sm mb-6 text-center max-w-md">{track.description}</p>}
             <StressCheckin
-              title="How are you feeling?"
-              subtitle="Rate your stress level before this session"
+              title="Rate your levels of stress or negative emotions."
+              subtitle="Before this session"
               onSubmit={handleStressBefore}
               submitLabel="Begin Session"
             />
@@ -419,8 +421,8 @@ export default function PlayerPage() {
           </>
         ) : step === "after" ? (
           <StressCheckin
-            title="How do you feel now?"
-            subtitle="Rate your stress level after this session"
+            title="Rate your levels of stress or negative emotions."
+            subtitle="After this session"
             onSubmit={handleStressAfter}
             submitLabel="Complete Session"
           />
