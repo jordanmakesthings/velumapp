@@ -38,12 +38,14 @@ const App = () => (
         <AuthProvider>
           <Routes>
             {/* Public routes */}
-            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/signup" element={<AuthPage />} />
+            <Route path="/auth" element={<Navigate to="/signup" replace />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-            {/* App routes with layout */}
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<HomePage />} />
+            {/* App routes with layout — all protected */}
+            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/breathe" element={<BreathePage />} />
               <Route path="/courses" element={<CoursesPage />} />
@@ -51,17 +53,18 @@ const App = () => (
               <Route path="/course-v2" element={<CourseExperiencePage />} />
               <Route path="/subcategory" element={<SubcategoryPage />} />
               <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
+              <Route path="/journal" element={<JournalPage />} />
             </Route>
 
-            {/* Full-screen pages (no nav) */}
+            {/* Full-screen protected pages (no nav) */}
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
             <Route path="/welcome" element={<WelcomePage />} />
-            <Route path="/premium" element={<PremiumPage />} />
-            <Route path="/player" element={<PlayerPage />} />
-            <Route path="/mastery-player" element={<MasteryPlayerPage />} />
-            <Route path="/home-setup" element={<HomeScreenSetupPage />} />
-            <Route path="/payment-success" element={<PaymentSuccessPage />} />
+            <Route path="/premium" element={<ProtectedRoute><PremiumPage /></ProtectedRoute>} />
+            <Route path="/player" element={<ProtectedRoute><PlayerPage /></ProtectedRoute>} />
+            <Route path="/mastery-player" element={<ProtectedRoute><MasteryPlayerPage /></ProtectedRoute>} />
+            <Route path="/home-setup" element={<ProtectedRoute><HomeScreenSetupPage /></ProtectedRoute>} />
+            <Route path="/paymentsuccess" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
+            <Route path="/payment-success" element={<Navigate to="/paymentsuccess" replace />} />
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
 
             {/* Redirect old routes */}

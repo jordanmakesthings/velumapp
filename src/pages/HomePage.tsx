@@ -116,12 +116,7 @@ export default function HomePage() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [carouselIdx, setCarouselIdx] = useState(0);
 
-  // Redirect to onboarding if not completed
-  useEffect(() => {
-    if (profile && !profile.onboarding_completed) {
-      navigate("/onboarding", { replace: true });
-    }
-  }, [profile, navigate]);
+  // Onboarding redirect is handled by ProtectedRoute
 
   const dayOfYear = getDayOfYear();
   const todayQuote = QUOTES[dayOfYear % QUOTES.length];

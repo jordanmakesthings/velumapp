@@ -46,7 +46,7 @@ export default function PremiumPage() {
 
   const handleSubscribe = async () => {
     if (!session) {
-      navigate("/auth");
+      navigate("/signup");
       return;
     }
     setLoading(true);
