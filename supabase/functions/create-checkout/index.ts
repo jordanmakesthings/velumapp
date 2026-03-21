@@ -104,16 +104,6 @@ Deno.serve(async (req) => {
       sessionParams.mode = "payment";
     }
 
-    if (promoCode) {
-      try {
-        const promotionCodes = await stripe.promotionCodes.list({ code: promoCode, active: true, limit: 1 });
-        if (promotionCodes.data.length > 0) {
-          sessionParams.discounts = [{ promotion_code: promotionCodes.data[0].id }];
-        }
-      } catch (e) {
-        console.warn("Promo code lookup failed:", e);
-      }
-    }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
