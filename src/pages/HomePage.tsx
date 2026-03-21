@@ -326,8 +326,7 @@ export default function HomePage() {
 
       {/* Featured Sessions carousel — auto-rotating */}
       {featuredTracks.length > 0 && (() => {
-        const autoRef = useRef<NodeJS.Timeout | null>(null);
-        useEffect(() => {
+        const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
           if (featuredTracks.length <= 1) return;
           autoRef.current = setInterval(() => {
             setCarouselIdx(prev => {
