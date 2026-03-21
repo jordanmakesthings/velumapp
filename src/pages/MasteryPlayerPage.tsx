@@ -156,8 +156,9 @@ export default function MasteryPlayerPage() {
 
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between px-4 py-4">
-        <button onClick={() => navigate(-1)} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="w-5 h-5" />
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-foreground font-sans text-sm">
+          <ArrowLeft className="w-4 h-4" />
+          Back
         </button>
         <p className="text-ui text-xs tracking-wide uppercase">Mastery Class</p>
         <div className="w-9" />
