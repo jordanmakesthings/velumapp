@@ -1341,6 +1341,9 @@ export default function AdminPage() {
         {/* ============ TAXONOMY TAB ============ */}
         {activeTab === "taxonomy" && <TaxonomyTab />}
 
+        {/* ============ SESSION FINDER TAB ============ */}
+        {activeTab === "finder" && <SessionFinderTab />}
+
         {/* ============ USERS TAB ============ */}
         {activeTab === "users" && <UsersTab />}
         </div>
