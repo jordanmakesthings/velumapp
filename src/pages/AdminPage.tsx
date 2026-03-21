@@ -446,6 +446,24 @@ export default function AdminPage() {
   const [subcatForm, setSubcatForm] = useState({ name: "", category: "meditation", thumbnail_url: "", order_index: 0 });
   const [editingSubcat, setEditingSubcat] = useState<any>(null);
 
+  // Dynamic categories from app_settings
+  const { data: CATEGORIES } = useQuery({
+    queryKey: ["appSettings", "category_labels"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "category_labels").single();
+      return (data?.value as Record<string, string>) || DEFAULT_CATEGORIES;
+    },
+    initialData: DEFAULT_CATEGORIES,
+  });
+
+  const { data: masterTagList = [] } = useQuery({
+    queryKey: ["appSettings", "master_tags"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "master_tags").single();
+      return (data?.value as string[]) || [];
+    },
+  });
+
   // Queries
   const { data: tracks = [], isLoading: tracksLoading } = useQuery({
     queryKey: ["adminTracks"],
