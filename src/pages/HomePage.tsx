@@ -193,21 +193,16 @@ export default function HomePage() {
     if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
   };
 
-  // Auto-rotate featured carousel every 5 seconds
+  // Scroll to center item when index changes
   useEffect(() => {
-    if (featuredTracks.length <= 1) return;
-    const timer = setInterval(() => {
-      setCarouselIdx(prev => {
-        const next = (prev + 1) % featuredTracks.length;
-        if (carouselRef.current) {
-          const child = carouselRef.current.children[next] as HTMLElement;
-          if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
-        }
-        return next;
-      });
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [featuredTracks.length]);
+    if (!carouselRef.current || featuredTracks.length === 0) return;
+    const child = carouselRef.current.children[carouselIdx] as HTMLElement;
+    if (child) {
+      const container = carouselRef.current;
+      const scrollLeft = child.offsetLeft - container.offsetWidth / 2 + child.offsetWidth / 2;
+      container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+    }
+  }, [carouselIdx, featuredTracks.length]);
 
   const handleSaveReflection = async () => {
     if (!user || !reflectionText.trim()) return;
