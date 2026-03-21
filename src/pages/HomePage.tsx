@@ -228,19 +228,19 @@ export default function HomePage() {
         <h1 className="text-display text-4xl lg:text-5xl leading-tight mb-4">
           {getGreeting()}{firstName ? `, ${firstName}` : ""}.
         </h1>
-        <p className="text-foreground/70 text-sm italic font-serif leading-relaxed">
+        <p className="text-foreground/70 text-sm italic font-serif leading-relaxed max-w-full" style={{ overflowWrap: "break-word" }}>
           "{todayQuote.text}" — {todayQuote.author}
         </p>
       </div>
 
       {/* Stats pills */}
-      <div className="flex gap-3 mb-8 overflow-x-auto">
+      <div className="flex flex-wrap gap-3 mb-8 w-full">
         {[
           { label: `${streak} day streak`, icon: Flame },
           { label: `${totalSessions} sessions`, icon: Sparkles },
           { label: `${Math.round(totalMinutes)} mins`, icon: Wind }].
           map(({ label, icon: Icon }) =>
-          <div key={label} className="velum-card-flat flex items-center gap-2 px-4 py-2.5 shrink-0">
+          <div key={label} className="velum-card-flat flex items-center gap-2 px-4 py-2.5">
             <Icon className="w-3.5 h-3.5 text-accent" />
             <span className="text-ui text-xs">{label}</span>
           </div>
@@ -351,7 +351,7 @@ export default function HomePage() {
             <div key={i} className={`h-1.5 rounded-full transition-all ${i === carouselIdx ? "w-5 bg-accent" : "w-1.5 bg-surface-light"}`} />
             )}
           </div>
-          <div ref={carouselRef} className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory scroll-smooth hide-scrollbar">
+          <div ref={carouselRef} className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth hide-scrollbar">
             {featuredTracks.map((track: any, i: number) =>
             <Link key={track.id} to={`/player?trackId=${track.id}`}
               className={`velum-card min-w-[75%] max-w-[75%] sm:min-w-[280px] sm:max-w-[300px] overflow-hidden shrink-0 snap-center transition-all duration-300 ${
