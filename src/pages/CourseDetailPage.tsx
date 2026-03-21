@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Play, Check, Crown, Lock, Clock, BookOpen } from "lucide-react";
+import { ArrowLeft, Play, Check, Lock, Clock, BookOpen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -93,12 +93,10 @@ export default function CourseDetailPage() {
       </div>
 
       <div className="px-4 lg:px-8 -mt-8 relative z-10 max-w-2xl mx-auto pb-8">
-        {/* Category & Premium badge */}
         <div className="flex items-center gap-3 mb-3">
           {(course as any).category && (
             <p className="text-accent text-[10px] font-sans tracking-[0.15em] uppercase">{(course as any).category}</p>
           )}
-          {isPremium && <Crown className="w-3.5 h-3.5 text-accent" />}
         </div>
 
         <h1 className="text-display text-3xl mb-2">{course.title}</h1>
@@ -153,7 +151,6 @@ export default function CourseDetailPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {track.is_premium && <Crown className="w-3.5 h-3.5 text-accent" />}
                   {!locked && (
                     <div className="w-8 h-8 rounded-full bg-surface-light flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Play className="w-3.5 h-3.5 text-foreground ml-0.5" />
@@ -165,13 +162,12 @@ export default function CourseDetailPage() {
           })}
         </div>
 
-        {/* Premium CTA */}
         {!canAccess && (
           <div className="velum-card p-6 mt-8 text-center border border-accent/20">
             <h3 className="text-display text-lg text-accent mb-2">Unlock this course</h3>
-            <p className="text-ui text-sm mb-4">Upgrade to Premium to access all courses and the full library.</p>
+            <p className="text-ui text-sm mb-4">Subscribe to access all courses and the full library.</p>
             <Link to="/premium" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl gold-gradient text-primary-foreground text-sm font-sans font-medium">
-              Upgrade to Premium
+              Begin My Journey
             </Link>
           </div>
         )}

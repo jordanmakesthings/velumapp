@@ -19,14 +19,12 @@ Velum wellness app design system and architecture decisions.
 - AppLayout with bottom nav (mobile) + sidebar (desktop)
 - Nav hidden on: /onboarding, /premium, /welcome, /player, /mastery-player
 - Mobile-first, max-w-2xl centered content
+- Blueprint page removed — /blueprint redirects to /profile
 
 ## Anti-patterns
 - No pure white — use Cream (#F2EFE7)
 - No sharp corners — min 8px radius
 - No system fonts — Georgia/system-ui fallback only
 - No exclamation points in copy
-- NO "premium", "free tier", "free trial" language anywhere
-- NO is_premium checkboxes in admin — all content is equal
-- Users are either: active subscribers, trialling, or not subscribed
-- Onboarding emblems/icons must be gold (text-accent)
-- Library tab labeled "MasteryClasses" not "Mastery"
+- NEVER use "premium" language — users are trial, paid, or no access
+- NEVER reference "blueprint" — feature removed
