@@ -228,7 +228,7 @@ export default function HomePage() {
         <h1 className="text-display text-4xl lg:text-5xl leading-tight mb-4">
           {getGreeting()}{firstName ? `, ${firstName}` : ""}.
         </h1>
-        <p className="text-foreground/70 text-sm italic font-serif leading-relaxed">
+        <p className="text-foreground/70 text-sm italic font-serif leading-relaxed max-w-full" style={{ overflowWrap: "break-word" }}>
           "{todayQuote.text}" — {todayQuote.author}
         </p>
       </div>
