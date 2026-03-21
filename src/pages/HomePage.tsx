@@ -186,11 +186,8 @@ export default function HomePage() {
   const nextTrack = (tracks as any[]).find((t) => !completedTrackIds.has(t.id));
 
   const scrollCarousel = (dir: number) => {
-    if (!carouselRef.current) return;
     const newIdx = Math.max(0, Math.min(featuredTracks.length - 1, carouselIdx + dir));
     setCarouselIdx(newIdx);
-    const child = carouselRef.current.children[newIdx] as HTMLElement;
-    if (child) child.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
   };
 
   // Scroll to center item when index changes
