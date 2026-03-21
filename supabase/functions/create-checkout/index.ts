@@ -85,12 +85,16 @@ Deno.serve(async (req) => {
 
     const priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS];
 
+    const successBase = returnUrl || "https://app.govelum.com";
+    const cancelBase = returnUrl || "https://app.govelum.com";
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
-      success_url: `${returnUrl || "https://velumapp.lovable.app"}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${returnUrl || "https://velumapp.lovable.app"}/premium`,
+      success_url: `${successBase}/paymentsuccess?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${cancelBase}/onboarding`,
       metadata: { supabase_user_id: userId, plan },
       line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true,
     };
 
     if (plan === "monthly") {
@@ -101,17 +105,6 @@ Deno.serve(async (req) => {
       };
     } else {
       sessionParams.mode = "payment";
-    }
-
-    if (promoCode) {
-      try {
-        const promotionCodes = await stripe.promotionCodes.list({ code: promoCode, active: true, limit: 1 });
-        if (promotionCodes.data.length > 0) {
-          sessionParams.discounts = [{ promotion_code: promotionCodes.data[0].id }];
-        }
-      } catch (e) {
-        console.warn("Promo code lookup failed:", e);
-      }
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);

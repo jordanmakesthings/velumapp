@@ -30,27 +30,16 @@ export const SignupEmail = ({
 }: SignupEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Confirm your email for Velum</Preview>
+    <Preview>Confirm your Velum account</Preview>
     <Body style={main}>
       <Container style={container}>
         <Img src="https://icwcszaasekfhzpxrxzd.supabase.co/storage/v1/object/public/email-assets/logo-lotus.jpg" width="48" height="48" alt="Velum" style={logo} />
-        <Heading style={h1}>Confirm your email</Heading>
+        <Heading style={h1}>Confirm your Velum account</Heading>
         <Text style={text}>
-          Welcome to{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>Velum</strong>
-          </Link>
-          . Your journey begins here.
-        </Text>
-        <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
+          Welcome to Velum. Please confirm your email address to get started.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Verify Email
+          Confirm Email
         </Button>
         <Text style={footer}>
           If you didn't create an account, you can safely ignore this email.
