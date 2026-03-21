@@ -51,7 +51,7 @@ function useFinderSetting(key: string, fallback: FinderOption[]) {
     queryKey: ["appSettings", key],
     queryFn: async () => {
       const { data } = await supabase.from("app_settings").select("value").eq("key", key).single();
-      return (data?.value as FinderOption[]) || fallback;
+      return (data?.value as unknown as FinderOption[]) || fallback;
     },
     initialData: fallback,
   });
