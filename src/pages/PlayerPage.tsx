@@ -364,8 +364,8 @@ export default function PlayerPage() {
             <h2 className="text-display text-2xl mb-1 text-center">{track.title}</h2>
             {track.description && <p className="text-ui text-sm mb-6 text-center max-w-md">{track.description}</p>}
             <StressCheckin
-              title="How are you feeling?"
-              subtitle="Rate your stress level before this session"
+              title="Rate your levels of stress or negative emotions."
+              subtitle="Before this session"
               onSubmit={handleStressBefore}
               submitLabel="Begin Session"
             />
