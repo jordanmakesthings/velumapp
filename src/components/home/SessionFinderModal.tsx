@@ -229,6 +229,7 @@ export function SessionFinderModal({ open, onClose }: Props) {
               ))}
             </div>
 
+            <div className="flex-1 overflow-y-auto min-h-0">
             <AnimatePresence mode="wait">
               {step === 0 && (
                 <motion.div key="s0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
@@ -316,7 +317,7 @@ export function SessionFinderModal({ open, onClose }: Props) {
                       <button onClick={clearAll} className="text-accent text-sm font-sans hover:underline">Start over</button>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto">
+                    <div className="flex flex-col gap-2">
                       {filteredTracks.slice(0, 25).map((track: any) => (
                         <Link key={track.id} to={`/player?trackId=${track.id}`} onClick={handleClose}
                           className="flex items-center gap-3 p-3 rounded-xl bg-card/50 border border-foreground/5 hover:border-accent/30 hover:bg-card transition-all active:scale-[0.98]">
@@ -336,6 +337,7 @@ export function SessionFinderModal({ open, onClose }: Props) {
                 </motion.div>
               )}
             </AnimatePresence>
+            </div>
 
             {/* Navigation */}
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-foreground/10">
