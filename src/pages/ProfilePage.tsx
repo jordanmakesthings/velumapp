@@ -257,23 +257,8 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Stress Chart */}
-      {stressChartData.length >= 2 && (
-        <div className="velum-card p-5 mb-8">
-          <p className="text-ui text-xs tracking-wide uppercase mb-4">Stress Tracker</p>
-          <div className="h-40">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={stressChartData}>
-                <XAxis dataKey="session" tick={{ fontSize: 10, fill: "hsl(156,13%,49%)" }} axisLine={false} tickLine={false} />
-                <YAxis domain={[0, 10]} tick={{ fontSize: 10, fill: "hsl(156,13%,49%)" }} axisLine={false} tickLine={false} width={20} />
-                <Tooltip contentStyle={{ background: "hsl(156,51%,12%)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "10px", fontSize: 12 }} />
-                <Line type="monotone" dataKey="before" stroke="hsl(156,13%,49%)" strokeWidth={1.5} dot={{ r: 3 }} name="Before" />
-                <Line type="monotone" dataKey="after" stroke="hsl(42,53%,54%)" strokeWidth={2} dot={{ r: 3 }} name="After" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
+      {/* Nervous System Score Dashboard */}
+      <NervousSystemScore />
 
       {/* Category breakdown */}
       {Object.keys(categoryCounts).length > 0 && (
