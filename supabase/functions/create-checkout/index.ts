@@ -107,7 +107,20 @@ Deno.serve(async (req) => {
       sessionParams.mode = "payment";
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create(sessionParams);
+    } catch (stripeErr: unknown) {
+      const msg = stripeErr instanceof Error ? stripeErr.message : "";
+      if (msg.includes("currencies") || msg.includes("currency")) {
+        console.warn("Currency conflict on customer, falling back to customer_email");
+        delete (sessionParams as any).customer;
+        (sessionParams as any).customer_email = userEmail;
+        session = await stripe.checkout.sessions.create(sessionParams);
+      } else {
+        throw stripeErr;
+      }
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200,
