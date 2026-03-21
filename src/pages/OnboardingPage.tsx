@@ -362,7 +362,7 @@ export default function OnboardingPage() {
 
               {/* Lifetime */}
               <div className="text-center mb-8">
-                <p className="text-display mb-1 text-accent text-4xl">Lifetime Access<span className="text-muted-foreground text-lg font-sans font-light">· One time</span></p>
+                <p className="text-display mb-1 text-accent text-4xl">US$299</p>
                 <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">Single Payment
                 <br />Pay once, never think about it again.
                 </p>
