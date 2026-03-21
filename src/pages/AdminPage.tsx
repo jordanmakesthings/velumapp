@@ -621,6 +621,30 @@ export default function AdminPage() {
     },
   });
 
+  const { data: finderTypes = [] } = useQuery({
+    queryKey: ["appSettings", "session_finder_types"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "session_finder_types").single();
+      return (data?.value as unknown as FinderOption[]) || [];
+    },
+  });
+
+  const { data: finderGoals = [] } = useQuery({
+    queryKey: ["appSettings", "session_finder_goals"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "session_finder_goals").single();
+      return (data?.value as unknown as FinderOption[]) || [];
+    },
+  });
+
+  const { data: finderStates = [] } = useQuery({
+    queryKey: ["appSettings", "session_finder_states"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "session_finder_states").single();
+      return (data?.value as unknown as FinderOption[]) || [];
+    },
+  });
+
   // Queries
   const { data: tracks = [], isLoading: tracksLoading } = useQuery({
     queryKey: ["adminTracks"],
@@ -1109,26 +1133,25 @@ export default function AdminPage() {
                       className={inputClass}
                     >
                       <option value="">— None —</option>
-                      <option value="guided">Guided</option>
-                      <option value="unguided">Unguided</option>
-                      <option value="interactive">Interactive</option>
-                      <option value="walking">Walking</option>
+                      {(finderTypes as FinderOption[]).map(opt => (
+                        <option key={opt.key} value={opt.key}>{opt.label}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
                     <label className={labelClass}>Goal</label>
                     <div className="flex flex-wrap gap-1.5">
-                      {["calm","focus","energize","process","sleep","confidence"].map(g => {
-                        const tagKey = `goal:${g}`;
+                      {(finderGoals as FinderOption[]).map(opt => {
+                        const tagKey = `goal:${opt.key}`;
                         const active = trackForm.tags.includes(tagKey);
                         return (
-                          <button key={g} type="button" onClick={() => {
+                          <button key={opt.key} type="button" onClick={() => {
                             const filtered = trackForm.tags.filter(t => t !== tagKey);
                             if (!active) filtered.push(tagKey);
                             setTrackForm(f => ({ ...f, tags: filtered }));
                           }}
                           className={`px-2.5 py-1 rounded-lg text-xs font-sans capitalize transition-colors ${active ? "bg-accent/20 text-accent" : "bg-card text-muted-foreground hover:text-foreground"}`}>
-                            {g}
+                            {opt.label}
                           </button>
                         );
                       })}
@@ -1137,17 +1160,17 @@ export default function AdminPage() {
                   <div className="md:col-span-2">
                     <label className={labelClass}>Current State Match</label>
                     <div className="flex flex-wrap gap-1.5">
-                      {["calm","energized","focused","processing","grounded","tired"].map(s => {
-                        const tagKey = `state:${s}`;
+                      {(finderStates as FinderOption[]).map(opt => {
+                        const tagKey = `state:${opt.key}`;
                         const active = trackForm.tags.includes(tagKey);
                         return (
-                          <button key={s} type="button" onClick={() => {
+                          <button key={opt.key} type="button" onClick={() => {
                             const filtered = trackForm.tags.filter(t => t !== tagKey);
                             if (!active) filtered.push(tagKey);
                             setTrackForm(f => ({ ...f, tags: filtered }));
                           }}
                           className={`px-2.5 py-1 rounded-lg text-xs font-sans capitalize transition-colors ${active ? "bg-accent/20 text-accent" : "bg-card text-muted-foreground hover:text-foreground"}`}>
-                            {s}
+                            {opt.label}
                           </button>
                         );
                       })}
