@@ -825,10 +825,13 @@ export default function AdminPage() {
     mutationFn: async (data: typeof masteryForm) => {
       let parsedPrompts: any[] = [];
       try { parsedPrompts = JSON.parse(data.pause_prompts); } catch { /* keep empty */ }
-      const saveData = {
+      const saveData: Record<string, any> = {
         title: data.title, description: data.description || null, duration_minutes: data.duration_minutes,
         audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
-        theme: data.theme || null, cover_image_url: data.cover_image_url || null, pause_prompts: parsedPrompts,
+        theme: data.theme || null, cover_image_url: data.cover_image_url || null,
+        cover_image_url_16_9: (data as any).cover_image_url_16_9 || null,
+        player_image_url_1_1: (data as any).player_image_url_1_1 || null,
+        pause_prompts: parsedPrompts,
       };
       if (editingMastery) {
         const { error } = await supabase.from("mastery_classes").update(saveData).eq("id", editingMastery.id);
