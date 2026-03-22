@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Trash2, Edit2, X, ChevronDown, ChevronUp, Upload, Check, Music, Video, FileText } from "lucide-react";
 import { toast } from "sonner";
+import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
 
 interface LessonForm {
   id?: string;
@@ -15,6 +16,8 @@ interface LessonForm {
   order_index: number;
   downloadable_files: { name: string; url: string }[];
   lesson_type: "audio" | "video" | "writing";
+  thumbnail_url: string;
+  thumbnail_square_url: string;
 }
 
 interface ModuleData {
@@ -27,6 +30,7 @@ const emptyLesson: LessonForm = {
   title: "", description: "", duration_minutes: 0, media_url: "",
   written_content: "", is_free_preview: false, order_index: 0,
   downloadable_files: [], lesson_type: "audio",
+  thumbnail_url: "", thumbnail_square_url: "",
 };
 
 const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
@@ -155,6 +159,8 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
         order_index: data.order_index,
         course_id: courseId,
         downloadable_files: data.downloadable_files as any,
+        thumbnail_url: data.thumbnail_url || null,
+        thumbnail_square_url: data.thumbnail_square_url || null,
       };
       if (editingLesson) {
         const { error } = await supabase.from("lessons").update(saveData).eq("id", editingLesson.id);
@@ -360,8 +366,18 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                     onChange={e => setLessonForm(f => ({ ...f, written_content: e.target.value }))}
                     rows={6} className={inputClass + " resize-none"} placeholder="Lesson content (supports markdown)" />
                 </div>
-              )}
-            </div>
+                )}
+
+                {/* Thumbnail Generator */}
+                <div className="md:col-span-2 border-t border-foreground/5 pt-4">
+                  <ThumbnailGenerator
+                    title={lessonForm.title}
+                    category={course?.course_type || "course"}
+                    autoUpload
+                    onGenerated={(landscapeUrl, squareUrl) => setLessonForm(f => ({ ...f, thumbnail_url: landscapeUrl, thumbnail_square_url: squareUrl }))}
+                  />
+                </div>
+              </div>
 
             <div className="flex justify-end gap-3 pt-2">
               <button onClick={() => { setShowLessonForm(false); setEditingLesson(null); }}
@@ -406,6 +422,8 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                         order_index: lesson.order_index,
                         downloadable_files: Array.isArray(lesson.downloadable_files) ? lesson.downloadable_files as any : [],
                         lesson_type: detectLessonType(lesson) as any,
+                        thumbnail_url: lesson.thumbnail_url || "",
+                        thumbnail_square_url: lesson.thumbnail_square_url || "",
                       });
                       setShowLessonForm(true);
                     }} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground">

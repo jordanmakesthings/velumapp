@@ -420,6 +420,8 @@ export type Database = {
           journal_prompt: string | null
           media_url: string | null
           order_index: number
+          thumbnail_square_url: string | null
+          thumbnail_url: string | null
           title: string
           written_content: string | null
         }
@@ -434,6 +436,8 @@ export type Database = {
           journal_prompt?: string | null
           media_url?: string | null
           order_index?: number
+          thumbnail_square_url?: string | null
+          thumbnail_url?: string | null
           title: string
           written_content?: string | null
         }
@@ -448,6 +452,8 @@ export type Database = {
           journal_prompt?: string | null
           media_url?: string | null
           order_index?: number
+          thumbnail_square_url?: string | null
+          thumbnail_url?: string | null
           title?: string
           written_content?: string | null
         }
