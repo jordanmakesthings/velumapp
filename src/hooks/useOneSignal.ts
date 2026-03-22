@@ -17,7 +17,7 @@ export function useOneSignalInit(userId: string | undefined) {
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async (OneSignal: any) => {
       await OneSignal.init({
-        appId: "YOUR_ONESIGNAL_APP_ID",
+        appId: "bc52f1c1-77aa-4ad0-97fc-7c261e120e4a",
         notifyButton: { enable: false },
       });
 
