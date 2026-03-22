@@ -137,7 +137,7 @@ export default function HomePage() {
   const { data: courses = [] } = useQuery({
     queryKey: ["courses-home"],
     queryFn: async () => {
-      const { data } = await supabase.from("courses").select("*").order("order_index").limit(4);
+      const { data } = await supabase.from("courses_v2").select("*").eq("is_published", true).order("order_index").limit(4);
       return data || [];
     }
   });
