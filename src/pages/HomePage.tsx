@@ -393,6 +393,9 @@ export default function HomePage() {
         </div>
         }
 
+      {/* Nervous System Score */}
+      <NervousSystemScore />
+
       <SessionFinderModal open={finderOpen} onClose={() => setFinderOpen(false)} />
     </div>
     </div>);
