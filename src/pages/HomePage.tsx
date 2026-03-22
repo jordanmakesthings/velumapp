@@ -133,6 +133,14 @@ export default function HomePage() {
     }
   });
 
+  const { data: masteryCount = 0 } = useQuery({
+    queryKey: ["masteryCount"],
+    queryFn: async () => {
+      const { count } = await supabase.from("mastery_classes").select("*", { count: "exact", head: true });
+      return count || 0;
+    }
+  });
+
   const { data: courses = [] } = useQuery({
     queryKey: ["courses-home"],
     queryFn: async () => {
