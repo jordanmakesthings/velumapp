@@ -1412,13 +1412,17 @@ export default function AdminPage() {
               </div>
             )}
 
+            {managingCourseId && (
+              <CourseBuilder courseId={managingCourseId} onClose={() => setManagingCourseId(null)} />
+            )}
+
             <div className="space-y-3">
               {courses.length === 0 ? (
                 <p className="text-muted-foreground text-sm text-center py-8">No courses yet.</p>
               ) : courses.map((course: any, idx: number) => (
                 <div key={course.id} className="velum-card p-4 flex items-center gap-3">
                   <ReorderButtons table="courses" item={course} siblings={courses as any[]} />
-                  <div className="flex items-center gap-3 flex-1">
+                  <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => setManagingCourseId(managingCourseId === course.id ? null : course.id)}>
                     {course.thumbnail_url && <img src={course.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
                     <div>
                       <p className="text-foreground text-sm font-sans font-medium">{course.title}</p>
@@ -1426,7 +1430,11 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", thumbnail_url: course.thumbnail_url || "", category: course.category || "", cover_image_url: course.cover_image_url || "" }); setShowCourseForm(true); }}
+                    <button onClick={() => setManagingCourseId(course.id)}
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-sans text-accent hover:text-foreground border border-accent/20 hover:border-accent/40 transition-colors">
+                      Manage
+                    </button>
+                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", thumbnail_url: course.thumbnail_url || "", category: course.category || "", cover_image_url: course.cover_image_url || "", course_type: "audio", is_premium: course.is_premium ?? true, is_published: false }); setShowCourseForm(true); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => { if (confirm("Delete?")) deleteCourseMutation.mutate(course.id); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
