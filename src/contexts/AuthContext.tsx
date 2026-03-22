@@ -21,7 +21,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   isAdmin: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName?: string, phone?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -94,16 +94,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string, fullName?: string, phone?: string) => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { full_name: fullName || "" },
+        data: { full_name: fullName || "", phone: phone || "" },
       },
     });
-    if (!error) {
+    if (!error && data.user) {
+      // Save phone to profile
+      if (phone) {
+        supabase.from("profiles").update({ phone }).eq("id", data.user.id);
+      }
       // Fire-and-forget: add contact to Loops
       supabase.functions.invoke("loops-signup", {
         body: { email, firstName: fullName || "" },

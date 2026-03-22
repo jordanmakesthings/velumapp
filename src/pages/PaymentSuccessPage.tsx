@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import velumLogo from "@/assets/velum-logo-full.jpg";
 
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ export default function PaymentSuccessPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-background">
+      <img src={velumLogo} alt="Velum" className="w-28 h-28 rounded-2xl object-cover mb-8" />
       <h1 className="text-display text-4xl italic text-foreground text-center mb-10">
         You're in. Welcome to Velum.
       </h1>

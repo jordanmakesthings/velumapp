@@ -123,7 +123,7 @@ export default function OnboardingPage() {
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "lifetime">("monthly");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  const totalSteps = 7;
+  const totalSteps = 6;
 
   useEffect(() => {
     if (user?.email) setEmail(user.email);
@@ -231,12 +231,12 @@ export default function OnboardingPage() {
 
           {/* Step 1: Goals */}
           {step === 1 && (
-            <motion.div key="goals" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
+            <motion.div key="goals" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full overflow-y-auto max-h-[calc(100vh-280px)]">
               <h1 className="text-display text-3xl mb-2 text-center">Something brought you here.</h1>
               <p className="text-muted-foreground text-sm font-sans font-light mb-8 text-center">
                 Whatever it is — it was right to listen. Choose everything that resonates.
               </p>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 pb-4">
                 {GOAL_OPTIONS.map(({ key, label, icon }) => {
                   const isSelected = goals.includes(key);
                   return (
@@ -301,31 +301,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 5: 30-day vision */}
+          {/* Step 5: Paywall */}
           {step === 5 && (
-            <motion.div key="vision" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
-              <h1 className="text-display text-3xl mb-2">
-                In one sentence — what would a true mark of success look like for you 30 days from now?
-              </h1>
-              <p className="text-muted-foreground text-sm font-sans font-light mb-6">
-                There's no wrong answer. This is just for you.
-              </p>
-              <div className="border border-muted-foreground/20 rounded-xl p-5 mb-4 text-left">
-                <p className="text-muted-foreground text-sm font-sans italic leading-relaxed">
-                  "The people who transform their lives aren't the ones who tried the hardest — they're the ones who finally got honest about what they truly wanted."
-                </p>
-              </div>
-              <textarea
-                value={vision}
-                onChange={(e) => setVision(e.target.value)}
-                placeholder="e.g. I wake up feeling calm and excited about my day..."
-                className="w-full bg-transparent border border-muted-foreground/20 rounded-xl p-5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 resize-none h-32 focus:outline-none focus:border-accent/40 transition-colors"
-              />
-            </motion.div>
-          )}
-
-          {/* Step 6: Paywall */}
-          {step === 6 && (
             <motion.div key="paywall" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
               <div className="text-center mb-8">
                 <h1 className="text-display text-4xl italic mb-2">Final Step.</h1>
@@ -403,14 +380,14 @@ export default function OnboardingPage() {
       </div>
 
       {/* Bottom CTA (not on paywall) */}
-      {step < 6 && (
+      {step < 5 && (
         <div className="fixed bottom-0 inset-x-0 p-6 bg-gradient-to-t from-background via-background to-transparent">
           <button
             onClick={handleNext}
             disabled={!canProceed()}
             className="w-full max-w-[440px] mx-auto flex items-center justify-center gap-2 py-5 rounded-xl gold-gradient text-primary-foreground font-sans font-bold text-base disabled:opacity-30 active:scale-[0.98] transition-transform"
           >
-            {step === 5 ? "Almost there →" : "Continue →"}
+            {step === 4 ? "Almost there →" : "Continue →"}
           </button>
         </div>
       )}

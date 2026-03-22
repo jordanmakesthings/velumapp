@@ -14,6 +14,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -30,7 +31,7 @@ export default function AuthPage() {
         if (error) throw error;
         navigate("/home");
       } else if (mode === "signup") {
-        const { error } = await signUp(email, password, fullName);
+        const { error } = await signUp(email, password, fullName, phone);
         if (error) throw error;
         setMessage("Check your email for a confirmation link.");
       } else if (mode === "magic-link") {
@@ -73,14 +74,23 @@ export default function AuthPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {mode === "signup" &&
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Full name"
-            className="w-full bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30" />
-          }
+          {mode === "signup" && (
+            <>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Full name"
+                className="w-full bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30" />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Phone number (for SMS notifications)"
+                className="w-full bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30"
+                style={{ fontSize: "16px" }} />
+            </>
+          )}
 
           <input
             type="email"
