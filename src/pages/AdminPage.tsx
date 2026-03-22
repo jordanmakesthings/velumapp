@@ -1453,9 +1453,15 @@ export default function AdminPage() {
                     </select>
                   </div>
                   <div>{/* spacer */}</div>
-                  <UploadRow label="Thumbnail" field="thumbnail_url" folder="images" value={courseForm.thumbnail_url}
-                    setForm={(fn) => setCourseForm(fn)} uploadKey="courseThumb" />
-                  <UploadRow label="Cover Image" field="cover_image_url" folder="images" value={courseForm.cover_image_url}
+                  <div className="md:col-span-2 border-b border-foreground/5 pb-4">
+                    <ThumbnailGenerator
+                      title={courseForm.title}
+                      category={courseForm.category || "course"}
+                      autoUpload
+                      onGenerated={(landscapeUrl, squareUrl) => setCourseForm(f => ({ ...f, cover_image_url: landscapeUrl, thumbnail_url: squareUrl || f.thumbnail_url }))}
+                    />
+                  </div>
+                  <UploadRow label="Cover Image (16:9)" field="cover_image_url" folder="images" value={courseForm.cover_image_url}
                     setForm={(fn) => setCourseForm(fn)} uploadKey="courseCover" />
                 </div>
                 <div className="flex justify-end gap-3 mt-6">
