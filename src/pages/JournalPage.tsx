@@ -297,7 +297,7 @@ export default function JournalPage() {
                         <span className="text-foreground/25 text-[11px] font-sans">{formatDate(entry.date)}</span>
                       </div>
                       <p className="text-foreground/80 font-serif text-sm truncate leading-snug">
-                        {isReflection ? `"${entry.data.prompt}"` : isMastery ? entry.data.mastery_class_title : entry.data.track?.title}
+                        {isReflection ? `"${entry.data.prompt}"` : isMastery ? entry.data.mastery_class_title : isCourse ? (entry.data.lessons?.title ? `Day ${entry.data.day_number} — ${entry.data.lessons.title}` : `Day ${entry.data.day_number}`) : entry.data.track?.title}
                       </p>
                       {isMastery && entry.data.mastery_class_theme && (
                         <p className="text-accent/45 text-[11px] font-sans mt-0.5">{entry.data.mastery_class_theme}</p>
