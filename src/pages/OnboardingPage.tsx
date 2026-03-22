@@ -231,12 +231,12 @@ export default function OnboardingPage() {
 
           {/* Step 1: Goals */}
           {step === 1 && (
-            <motion.div key="goals" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
+            <motion.div key="goals" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full overflow-y-auto max-h-[calc(100vh-280px)]">
               <h1 className="text-display text-3xl mb-2 text-center">Something brought you here.</h1>
               <p className="text-muted-foreground text-sm font-sans font-light mb-8 text-center">
                 Whatever it is — it was right to listen. Choose everything that resonates.
               </p>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 pb-4">
                 {GOAL_OPTIONS.map(({ key, label, icon }) => {
                   const isSelected = goals.includes(key);
                   return (
