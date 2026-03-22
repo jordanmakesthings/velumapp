@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOneSignalInit } from "@/hooks/useOneSignal";
 import logoLotus from "@/assets/logo-lotus.jpg";
 import { format } from "date-fns";
+import NervousSystemScore from "@/components/profile/NervousSystemScore";
 
 const QUOTES = [
 { text: "The present moment is the only place where life exists.", author: "Eckhart Tolle" },
@@ -186,6 +187,15 @@ export default function HomePage() {
   const totalSessions = progress.length;
   const totalMinutes = progress.reduce((sum: number, p: any) => sum + (p.progress_seconds || 0), 0) / 60;
 
+  const stressSessions = useMemo(() => progress.filter((p: any) => p.stress_before != null && p.stress_after != null), [progress]);
+  const weeklyReductionPct = useMemo(() => {
+    if (stressSessions.length === 0) return null;
+    const avgBefore = stressSessions.reduce((s: number, p: any) => s + p.stress_before, 0) / stressSessions.length;
+    const avgAfter = stressSessions.reduce((s: number, p: any) => s + p.stress_after, 0) / stressSessions.length;
+    if (avgBefore === 0) return null;
+    return Math.round(((avgBefore - avgAfter) / avgBefore) * 100);
+  }, [stressSessions]);
+
   const completedDates = new Set(progress.map((p: any) => p.completed_date));
   let streak = 0;
   const today = new Date();
@@ -238,7 +248,9 @@ export default function HomePage() {
         {[
           { label: `${streak} day streak`, icon: Flame },
           { label: `${totalSessions} sessions`, icon: Sparkles },
-          { label: `${Math.round(totalMinutes)} mins`, icon: Wind }].
+          { label: `${Math.round(totalMinutes)} mins`, icon: Wind },
+          ...(weeklyReductionPct !== null ? [{ label: `${weeklyReductionPct}% stress ↓`, icon: Heart }] : []),
+        ].
           map(({ label, icon: Icon }) =>
           <div key={label} className="velum-card-flat flex min-w-0 flex-1 items-center justify-center gap-2 px-3 py-2.5">
             <Icon className="w-3.5 h-3.5 shrink-0 text-accent" />
@@ -342,7 +354,7 @@ export default function HomePage() {
             {courses.slice(0, 2).map((course: any) => {
               const courseTracks = (tracks as any[]).filter((t) => t.course_id === course.id);
               return (
-                <Link key={course.id} to={`/course/${course.id}`} className="velum-card overflow-hidden">
+                <Link key={course.id} to={`/course-v2?courseId=${course.id}`} className="velum-card overflow-hidden">
                   <div className="aspect-[16/9] bg-surface-light relative">
                     {(course.cover_image_url || course.thumbnail_url) &&
                     <img src={course.cover_image_url || course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
@@ -380,6 +392,9 @@ export default function HomePage() {
           </div>
         </div>
         }
+
+      {/* Nervous System Score */}
+      <NervousSystemScore />
 
       <SessionFinderModal open={finderOpen} onClose={() => setFinderOpen(false)} />
     </div>
