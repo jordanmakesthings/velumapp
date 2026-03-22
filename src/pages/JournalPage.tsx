@@ -337,6 +337,17 @@ export default function JournalPage() {
                           ))}
                           <p className="text-foreground/20 text-[10px] font-sans tracking-wide mt-2">{formatDate(entry.date)}</p>
                         </div>
+                      ) : isCourse ? (
+                        <div>
+                          <p className="text-accent/50 text-[10px] tracking-[2px] uppercase font-sans mb-2">
+                            Day {entry.data.day_number} — {entry.data.lessons?.title || "Lesson"}
+                          </p>
+                          {entry.data.prompt && (
+                            <p className="text-display text-sm italic text-foreground/50 mb-3">"{entry.data.prompt}"</p>
+                          )}
+                          <p className="text-foreground/80 text-sm font-sans leading-relaxed whitespace-pre-wrap">{entry.data.content}</p>
+                          <p className="text-foreground/20 text-[10px] font-sans tracking-wide mt-3">{countWords(entry.data.content)} words · {formatDate(entry.date)}</p>
+                        </div>
                       ) : (
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-card flex items-center justify-center text-lg text-accent shrink-0">◈</div>
