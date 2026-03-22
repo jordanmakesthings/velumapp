@@ -23,6 +23,10 @@ export default function ProfilePage() {
   const [canceling, setCanceling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelSuccess, setCancelSuccess] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(profile?.full_name || "");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const hasAccess = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
   const isLifetime = profile?.subscription_plan === "lifetime";
