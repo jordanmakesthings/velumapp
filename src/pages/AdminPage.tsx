@@ -578,6 +578,61 @@ function UsersTab() {
   );
 }
 
+function NotificationsTab() {
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-notification", {
+        body: { message: message.trim() },
+      });
+      if (error) throw error;
+      toast.success(`Content alert sent to ${data?.recipients || 0} users`);
+      setMessage("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send notification");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div>
+      <h2 className="text-display text-2xl mb-6">Push Notifications</h2>
+      <div className="velum-card p-6">
+        <p className="text-ui text-xs tracking-wide uppercase mb-4">Send Content Alert</p>
+        <p className="text-muted-foreground text-sm mb-4">Send a push notification to all subscribed users about new content.</p>
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={3}
+          className={inputClass + " resize-none mb-4"}
+          placeholder="e.g. New breathwork session just dropped — try it now"
+        />
+        <button
+          onClick={handleSend}
+          disabled={!message.trim() || sending}
+          className="px-6 py-2.5 rounded-full text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50 active:scale-95 transition-transform flex items-center gap-2"
+        >
+          <Bell className="w-4 h-4" />
+          {sending ? "Sending..." : "Send Content Alert"}
+        </button>
+      </div>
+      <div className="velum-card p-6 mt-6">
+        <p className="text-ui text-xs tracking-wide uppercase mb-4">Daily Practice Reminders</p>
+        <p className="text-muted-foreground text-sm">
+          Daily reminders are sent automatically via a scheduled job. Users set their preferred time in their profile settings.
+          Reminders only fire if the user has not completed a session that day.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPage() {
 
   const navigate = useNavigate();
