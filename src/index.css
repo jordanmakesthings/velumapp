@@ -60,6 +60,17 @@
     @apply border-border;
   }
 
+  /* Fix browser autofill purple/blue background */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px hsl(var(--card)) inset !important;
+    -webkit-text-fill-color: hsl(var(--accent)) !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
   html, body, #root {
     width: 100%;
     max-width: 100vw;

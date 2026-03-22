@@ -36,15 +36,28 @@ export default function SubcategoryPage() {
   const { data: tracks = [] } = useQuery({
     queryKey: ["subcategoryTracks", category, subcategoryId],
     queryFn: async () => {
-      const { data } = await supabase
+      // Get tracks with this as primary subcategory
+      const { data: primary } = await supabase
         .from("tracks")
         .select("*")
-        .eq("category", category)
         .eq("subcategory_id", subcategoryId)
         .order("order_index");
-      return data || [];
+      // Also get tracks that have this subcategory in their tags
+      const { data: tagged } = await supabase
+        .from("tracks")
+        .select("*")
+        .contains("tags", [`subcat:${subcategoryId}`])
+        .order("order_index");
+      // Merge and deduplicate
+      const all = [...(primary || []), ...(tagged || [])];
+      const seen = new Set<string>();
+      return all.filter(t => {
+        if (seen.has(t.id)) return false;
+        seen.add(t.id);
+        return true;
+      });
     },
-    enabled: !!category,
+    enabled: !!subcategoryId,
   });
 
   const { data: completedIds = new Set() } = useQuery({

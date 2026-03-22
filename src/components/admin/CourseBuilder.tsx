@@ -377,6 +377,28 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                     onGenerated={(landscapeUrl, squareUrl) => setLessonForm(f => ({ ...f, thumbnail_url: landscapeUrl, thumbnail_square_url: squareUrl }))}
                   />
                 </div>
+
+                {/* Downloadable Files */}
+                <div className="md:col-span-2 border-t border-foreground/5 pt-4">
+                  <label className={labelClass}>Downloadable Files (PDFs, Audio, etc.)</label>
+                  {lessonForm.downloadable_files.map((file, idx) => (
+                    <div key={idx} className="flex items-center gap-2 mb-2">
+                      <span className="flex-1 text-xs text-foreground font-sans truncate">{file.name}</span>
+                      <button type="button" onClick={() => setLessonForm(f => ({ ...f, downloadable_files: f.downloadable_files.filter((_, i) => i !== idx) }))}
+                        className="text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
+                  ))}
+                  <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm cursor-pointer border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-accent/30 transition-all">
+                    <Upload className="w-4 h-4" /> Upload file
+                    <input type="file" accept=".pdf,.mp3,.wav,.m4a,.zip,.doc,.docx" className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const url = await uploadFile(file, "downloads");
+                        if (url) setLessonForm(f => ({ ...f, downloadable_files: [...f.downloadable_files, { name: file.name, url }] }));
+                      }} />
+                  </label>
+                </div>
               </div>
 
             <div className="flex justify-end gap-3 pt-2">

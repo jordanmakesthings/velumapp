@@ -170,7 +170,7 @@ export default function HomePage() {
   { key: "tapping", label: "Tapping" },
   { key: "journaling", label: "Journaling" },
   { key: "mastery", label: "Mastery Classes" }].
-  map((c) => ({ ...c, icon: CATEGORY_ICONS[c.key] || Sparkles, count: categoryCounts[c.key] || 0, description: CATEGORY_DESCRIPTIONS[c.key] || "" }));
+  map((c) => ({ ...c, icon: CATEGORY_ICONS[c.key] || Sparkles, count: c.key === "mastery" ? masteryCount : (categoryCounts[c.key] || 0), description: CATEGORY_DESCRIPTIONS[c.key] || "" }));
 
   const getCategoryLink = (key: string) => {
     if (key === "mastery") return "/library?tab=mastery";
