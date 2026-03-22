@@ -1607,6 +1607,9 @@ export default function AdminPage() {
 
         {/* ============ USERS TAB ============ */}
         {activeTab === "users" && <UsersTab />}
+
+        {/* ============ NOTIFICATIONS TAB ============ */}
+        {activeTab === "notifications" && <NotificationsTab />}
         </div>
       </div>
     </div>
