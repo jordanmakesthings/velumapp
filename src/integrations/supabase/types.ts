@@ -512,6 +512,7 @@ export type Database = {
           is_admin: boolean | null
           onboarding_answers: Json | null
           onboarding_completed: boolean
+          phone: string | null
           stripe_customer_id: string | null
           subscription_expires_at: string | null
           subscription_plan: string | null
@@ -527,6 +528,7 @@ export type Database = {
           is_admin?: boolean | null
           onboarding_answers?: Json | null
           onboarding_completed?: boolean
+          phone?: string | null
           stripe_customer_id?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null
@@ -542,6 +544,7 @@ export type Database = {
           is_admin?: boolean | null
           onboarding_answers?: Json | null
           onboarding_completed?: boolean
+          phone?: string | null
           stripe_customer_id?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null
