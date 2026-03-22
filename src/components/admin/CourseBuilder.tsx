@@ -412,6 +412,8 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                         order_index: lesson.order_index,
                         downloadable_files: Array.isArray(lesson.downloadable_files) ? lesson.downloadable_files as any : [],
                         lesson_type: detectLessonType(lesson) as any,
+                        thumbnail_url: lesson.thumbnail_url || "",
+                        thumbnail_square_url: lesson.thumbnail_square_url || "",
                       });
                       setShowLessonForm(true);
                     }} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground">
