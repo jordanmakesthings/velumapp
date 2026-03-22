@@ -61,16 +61,15 @@ export default function CoursesPage() {
     },
   });
 
-  const searched = searchQuery
-    ? courses.filter((c: any) => c.title?.toLowerCase().includes(searchQuery.toLowerCase()) || c.description?.toLowerCase().includes(searchQuery.toLowerCase()))
-    : courses;
+  // Merge both course sources into one unified list
+  const allCoursesUnified = [
+    ...coursesV2.map((c: any) => ({ ...c, source: "v2" as const })),
+    ...courses.map((c: any) => ({ ...c, source: "v1" as const })),
+  ];
 
-  const v2Searched = searchQuery
-    ? coursesV2.filter((c: any) => c.title?.toLowerCase().includes(searchQuery.toLowerCase()) || c.description?.toLowerCase().includes(searchQuery.toLowerCase()))
-    : coursesV2;
-
-  // Show all courses together — no free/premium separation
-  const allCourses = searched;
+  const filtered = searchQuery
+    ? allCoursesUnified.filter((c: any) => c.title?.toLowerCase().includes(searchQuery.toLowerCase()) || c.description?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : allCoursesUnified;
 
   const getTrackCount = (courseId: string) => tracks.filter((t: any) => t.course_id === courseId).length;
   const getCompletedCount = (courseId: string) => {
@@ -108,64 +107,44 @@ export default function CoursesPage() {
             </div>
           ))}
         </div>
+      ) : filtered.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {filtered.map((course: any) => {
+            if (course.source === "v2") {
+              const courseLessons = lessons.filter((l: any) => l.course_id === course.id);
+              const completedLessons = lessonProgress.filter((p: any) => p.course_id === course.id).length;
+              return (
+                <Link key={course.id} to={`/course-v2?courseId=${course.id}`} className="velum-card overflow-hidden group">
+                  <div className="h-36 bg-surface-light relative">
+                    {course.cover_image_url ? (
+                      <img src={course.cover_image_url} alt={course.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_hsl(42,53%,54%,0.1)_0%,_transparent_60%)]" />
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <h3 className="text-foreground font-serif text-lg mb-1">{course.title}</h3>
+                    <p className="text-ui text-xs mb-4">{course.description}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-1.5 bg-surface-light rounded-full overflow-hidden">
+                        <div className="h-full gold-gradient rounded-full" style={{ width: `${courseLessons.length ? (completedLessons / courseLessons.length) * 100 : 0}%` }} />
+                      </div>
+                      <span className="text-ui text-[10px] font-sans tabular-nums">{completedLessons}/{courseLessons.length}</span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            } else {
+              const trackCount = getTrackCount(course.id);
+              const completedCount = getCompletedCount(course.id);
+              return <CourseCard key={course.id} course={course} trackCount={trackCount} completedCount={completedCount} />;
+            }
+          })}
+        </div>
       ) : (
-        <>
-          {/* CourseV2 cards */}
-          {v2Searched.length > 0 && (
-            <section className="mb-10">
-              <p className="text-accent text-[10px] font-sans tracking-[2.5px] uppercase mb-4">Courses</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {v2Searched.map((course: any) => {
-                  const courseLessons = lessons.filter((l: any) => l.course_id === course.id);
-                  const completedLessons = lessonProgress.filter((p: any) => p.course_id === course.id).length;
-                  return (
-                    <Link key={course.id} to={`/course-v2?courseId=${course.id}`} className="velum-card overflow-hidden group">
-                      <div className="h-36 bg-surface-light relative">
-                        {course.cover_image_url ? (
-                          <img src={course.cover_image_url} alt={course.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_hsl(42,53%,54%,0.1)_0%,_transparent_60%)]" />
-                        )}
-                      </div>
-                      <div className="p-5">
-                        <h3 className="text-foreground font-serif text-lg mb-1">{course.title}</h3>
-                        <p className="text-ui text-xs mb-4">{course.description}</p>
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 h-1.5 bg-surface-light rounded-full overflow-hidden">
-                            <div className="h-full gold-gradient rounded-full" style={{ width: `${courseLessons.length ? (completedLessons / courseLessons.length) * 100 : 0}%` }} />
-                          </div>
-                          <span className="text-ui text-[10px] font-sans tabular-nums">{completedLessons}/{courseLessons.length}</span>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* All courses */}
-          {allCourses.length > 0 && (
-            <section className="mb-10">
-              <p className="text-accent text-[10px] font-sans tracking-[2.5px] uppercase mb-4">Programs</p>
-              <div className="flex flex-col gap-4">
-                {allCourses.map((course: any) => {
-                  const trackCount = getTrackCount(course.id);
-                  const completedCount = getCompletedCount(course.id);
-                  return (
-                    <CourseCard key={course.id} course={course} trackCount={trackCount} completedCount={completedCount} />
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          {searched.length === 0 && v2Searched.length === 0 && (
-            <div className="text-center py-16">
-              <p className="text-ui text-sm">No courses found.</p>
-            </div>
-          )}
-        </>
+        <div className="text-center py-16">
+          <p className="text-ui text-sm">No courses found.</p>
+        </div>
       )}
     </div>
   );
