@@ -366,8 +366,18 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                     onChange={e => setLessonForm(f => ({ ...f, written_content: e.target.value }))}
                     rows={6} className={inputClass + " resize-none"} placeholder="Lesson content (supports markdown)" />
                 </div>
-              )}
-            </div>
+                )}
+
+                {/* Thumbnail Generator */}
+                <div className="md:col-span-2 border-t border-foreground/5 pt-4">
+                  <ThumbnailGenerator
+                    title={lessonForm.title}
+                    category={course?.course_type || "course"}
+                    autoUpload
+                    onGenerated={(landscapeUrl, squareUrl) => setLessonForm(f => ({ ...f, thumbnail_url: landscapeUrl, thumbnail_square_url: squareUrl }))}
+                  />
+                </div>
+              </div>
 
             <div className="flex justify-end gap-3 pt-2">
               <button onClick={() => { setShowLessonForm(false); setEditingLesson(null); }}
