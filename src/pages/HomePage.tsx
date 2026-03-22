@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, ChevronLeft, ChevronRight, Clock, BookOpen } from "lucide-react";
-import { useState, useRef } from "react";
+import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen } from "lucide-react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SessionFinderModal } from "@/components/home/SessionFinderModal";
