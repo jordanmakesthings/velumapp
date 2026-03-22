@@ -175,7 +175,7 @@ export default function HomePage() {
     return `/library?category=${key}`;
   };
 
-  const featuredTracks = (tracks as any[]).filter((t) => t.is_featured).slice(0, 5);
+  // featuredTracks removed — replaced by courses section
   const totalSessions = progress.length;
   const totalMinutes = progress.reduce((sum: number, p: any) => sum + (p.progress_seconds || 0), 0) / 60;
 
