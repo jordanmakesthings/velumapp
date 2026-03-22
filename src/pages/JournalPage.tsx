@@ -283,9 +283,9 @@ export default function JournalPage() {
                 }`}>
                   <button onClick={() => setExpandedId(isExpanded ? null : entryId)} className="w-full text-left flex items-center gap-4 p-5">
                     <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-sm ${
-                      isReflection || isMastery ? "bg-accent/10 text-accent" : "bg-muted-foreground/10 text-muted-foreground"
+                      isReflection || isMastery || isCourse ? "bg-accent/10 text-accent" : "bg-muted-foreground/10 text-muted-foreground"
                     }`}>
-                      {isReflection ? "✎" : "◈"}
+                      {isReflection ? "✎" : isCourse ? "📖" : "◈"}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2.5 mb-1">
