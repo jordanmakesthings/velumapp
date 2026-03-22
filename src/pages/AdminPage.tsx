@@ -1124,7 +1124,7 @@ export default function AdminPage() {
                       rows={2} className={inputClass + " resize-none"} placeholder="Brief description" />
                   </div>
                   <div>
-                    <label className={labelClass}>Category</label>
+                    <label className={labelClass}>Primary Category</label>
                     <select value={trackForm.category} onChange={e => setTrackForm(f => ({ ...f, category: e.target.value }))} className={inputClass}>
                       {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
@@ -1134,12 +1134,52 @@ export default function AdminPage() {
                     <input type="number" value={trackForm.duration_minutes}
                       onChange={e => setTrackForm(f => ({ ...f, duration_minutes: Number(e.target.value) || 0 }))} className={inputClass} />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Additional Categories</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(CATEGORIES).filter(([k]) => k !== trackForm.category).map(([k, v]) => {
+                        const tagKey = `cat:${k}`;
+                        const active = trackForm.tags.includes(tagKey);
+                        return (
+                          <button key={k} type="button" onClick={() => {
+                            const filtered = trackForm.tags.filter(t => t !== tagKey);
+                            if (!active) filtered.push(tagKey);
+                            setTrackForm(f => ({ ...f, tags: filtered }));
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-sans transition-colors ${active ? "bg-accent/20 text-accent" : "bg-card text-muted-foreground hover:text-foreground"}`}>
+                            {v}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/50 mt-1">Session will appear in these categories in addition to the primary one</p>
+                  </div>
                   <div>
-                    <label className={labelClass}>Subcategory</label>
+                    <label className={labelClass}>Primary Subcategory</label>
                     <select value={trackForm.subcategory_id} onChange={e => setTrackForm(f => ({ ...f, subcategory_id: e.target.value }))} className={inputClass}>
                       <option value="">— None —</option>
                       {subcategories.filter((s: any) => s.category === trackForm.category).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={labelClass}>Additional Subcategories</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {subcategories.filter((s: any) => s.id !== trackForm.subcategory_id).map((s: any) => {
+                        const tagKey = `subcat:${s.id}`;
+                        const active = trackForm.tags.includes(tagKey);
+                        return (
+                          <button key={s.id} type="button" onClick={() => {
+                            const filtered = trackForm.tags.filter(t => t !== tagKey);
+                            if (!active) filtered.push(tagKey);
+                            setTrackForm(f => ({ ...f, tags: filtered }));
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-sans transition-colors ${active ? "bg-accent/20 text-accent" : "bg-card text-muted-foreground hover:text-foreground"}`}>
+                            {CATEGORIES[s.category] || s.category}: {s.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/50 mt-1">Session will also appear in these subcategory pages</p>
                   </div>
                   <div>
                     <label className={labelClass}>Course</label>
