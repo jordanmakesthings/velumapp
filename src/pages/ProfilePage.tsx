@@ -174,17 +174,81 @@ export default function ProfilePage() {
   }
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Friend";
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(profile?.full_name || "");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `avatars/${user.id}_${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("track-media").upload(path, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from("track-media").getPublicUrl(path);
+      await supabase.from("profiles").update({ avatar_url: data.publicUrl }).eq("id", user.id);
+      await refreshProfile();
+      toast.success("Photo updated");
+    } catch (err: any) {
+      toast.error("Upload failed: " + err.message);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!user || !nameInput.trim()) return;
+    await supabase.from("profiles").update({ full_name: nameInput.trim() }).eq("id", user.id);
+    await refreshProfile();
+    setEditingName(false);
+    toast.success("Name updated");
+  };
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-card flex items-center justify-center text-display text-xl">
-            {displayName[0]?.toUpperCase() || "V"}
+          <div className="relative group">
+            <div className="w-14 h-14 rounded-2xl bg-card flex items-center justify-center text-display text-xl overflow-hidden">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                displayName[0]?.toUpperCase() || "V"
+              )}
+            </div>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              className="absolute inset-0 rounded-2xl bg-background/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+            >
+              <Camera className="w-5 h-5 text-foreground" />
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+            {uploadingAvatar && <div className="absolute inset-0 rounded-2xl bg-background/80 flex items-center justify-center"><div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>}
           </div>
           <div>
-            <h1 className="text-display text-2xl">{displayName}</h1>
+            {editingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  className="bg-card border border-accent/30 rounded-lg px-3 py-1 text-foreground text-lg font-serif focus:outline-none w-40"
+                  autoFocus
+                />
+                <button onClick={handleSaveName} className="text-accent"><Check className="w-4 h-4" /></button>
+                <button onClick={() => setEditingName(false)} className="text-muted-foreground"><X className="w-4 h-4" /></button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h1 className="text-display text-2xl">{displayName}</h1>
+                <button onClick={() => { setNameInput(profile?.full_name || ""); setEditingName(true); }} className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
             <p className="text-muted-foreground text-xs">{user?.email}</p>
           </div>
         </div>
