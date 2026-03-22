@@ -278,7 +278,7 @@ export default function JournalPage() {
               return (
                 <div key={entryId} className={`rounded-2xl border transition-all ${
                   isExpanded
-                    ? (isReflection ? "bg-card/80 border-accent/25" : isMastery ? "bg-card/90 border-accent/30" : "bg-surface/50 border-muted-foreground/20")
+                    ? (isReflection ? "bg-card/80 border-accent/25" : isMastery ? "bg-card/90 border-accent/30" : isCourse ? "bg-card/80 border-accent/20" : "bg-surface/50 border-muted-foreground/20")
                     : "bg-transparent border-transparent"
                 }`}>
                   <button onClick={() => setExpandedId(isExpanded ? null : entryId)} className="w-full text-left flex items-center gap-4 p-5">
