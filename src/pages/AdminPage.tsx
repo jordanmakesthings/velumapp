@@ -1276,11 +1276,13 @@ export default function AdminPage() {
                   </div>
 
 
-                  {/* Thumbnail Generator at top */}
+                  {/* Thumbnail Generator */}
                   <div className="md:col-span-2 border-b border-foreground/5 pb-4">
                     <ThumbnailGenerator
                       title={trackForm.title}
                       category={trackForm.category}
+                      autoUpload
+                      onGenerated={(landscapeUrl, squareUrl) => setTrackForm(f => ({ ...f, thumbnail_url: landscapeUrl, thumbnail_square_url: squareUrl || f.thumbnail_square_url }))}
                     />
                   </div>
 
