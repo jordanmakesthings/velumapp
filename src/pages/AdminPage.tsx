@@ -592,8 +592,9 @@ export default function AdminPage() {
   const [newPromptCategory, setNewPromptCategory] = useState("");
 
   const [showCourseForm, setShowCourseForm] = useState(false);
-  const [courseForm, setCourseForm] = useState({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "" });
+  const [courseForm, setCourseForm] = useState({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "", course_type: "audio", is_premium: true, is_published: false });
   const [editingCourse, setEditingCourse] = useState<any>(null);
+  const [managingCourseId, setManagingCourseId] = useState<string | null>(null);
 
   const [showMasteryForm, setShowMasteryForm] = useState(false);
   const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]" });
