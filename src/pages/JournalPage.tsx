@@ -72,6 +72,21 @@ export default function JournalPage() {
     enabled: !!user,
   });
 
+  const { data: courseJournalEntries = [] } = useQuery({
+    queryKey: ["courseJournalEntries", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from("course_journal_entries")
+        .select("*, courses_v2(title), lessons(title)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const todayPrompt = prompts.length > 0 ? prompts[dayOfYear % prompts.length]?.prompt : "What does your body need from you today?";
   const today = new Date().toISOString().split("T")[0];
