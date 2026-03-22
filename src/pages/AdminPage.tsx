@@ -1652,6 +1652,7 @@ export default function AdminPage() {
                         cover_image_url_16_9: (mc as any).cover_image_url_16_9 || "",
                         player_image_url_1_1: (mc as any).player_image_url_1_1 || "",
                         pause_prompts: JSON.stringify(mc.pause_prompts || [], null, 2),
+                        downloadable_files: Array.isArray((mc as any).downloadable_files) ? (mc as any).downloadable_files : [],
                       });
                       setShowMasteryForm(true);
                     }} className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
