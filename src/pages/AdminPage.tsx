@@ -877,12 +877,12 @@ export default function AdminPage() {
 
   const saveCourseMutation = useMutation({
     mutationFn: async (data: typeof courseForm) => {
-      const saveData = { title: data.title, description: data.description || null, thumbnail_url: data.thumbnail_url || null, category: data.category || null, cover_image_url: data.cover_image_url || null };
+      const saveData = { title: data.title, description: data.description || null, cover_image_url: data.cover_image_url || null, course_type: data.course_type || "audio", is_premium: data.is_premium, is_published: data.is_published };
       if (editingCourse) {
-        const { error } = await supabase.from("courses").update(saveData).eq("id", editingCourse.id);
+        const { error } = await supabase.from("courses_v2").update(saveData).eq("id", editingCourse.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("courses").insert(saveData);
+        const { error } = await supabase.from("courses_v2").insert(saveData);
         if (error) throw error;
       }
     },
