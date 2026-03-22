@@ -290,9 +290,9 @@ export default function JournalPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2.5 mb-1">
                         <span className={`text-[9px] tracking-[2px] uppercase font-sans shrink-0 ${
-                          isReflection ? "text-accent/55" : isMastery ? "text-accent/65" : "text-muted-foreground/70"
+                          isReflection ? "text-accent/55" : isMastery ? "text-accent/65" : isCourse ? "text-accent/55" : "text-muted-foreground/70"
                         }`}>
-                          {isReflection ? "Daily Reflection" : isMastery ? "Mastery Class" : "Guided Exercise"}
+                          {isReflection ? "Daily Reflection" : isMastery ? "Mastery Class" : isCourse ? (entry.data.courses_v2?.title || "Course") : "Guided Exercise"}
                         </span>
                         <span className="text-foreground/25 text-[11px] font-sans">{formatDate(entry.date)}</span>
                       </div>
