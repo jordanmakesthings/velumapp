@@ -1477,7 +1477,7 @@ export default function AdminPage() {
                 <p className="text-muted-foreground text-sm text-center py-8">No courses yet.</p>
               ) : courses.map((course: any, idx: number) => (
                 <div key={course.id} className="velum-card p-4 flex items-center gap-3">
-                  <ReorderButtons table="courses" item={course} siblings={courses as any[]} />
+                  <ReorderButtons table="courses_v2" item={course} siblings={courses as any[]} />
                   <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => setManagingCourseId(managingCourseId === course.id ? null : course.id)}>
                     {course.thumbnail_url && <img src={course.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
                     <div>
