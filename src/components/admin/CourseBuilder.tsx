@@ -16,6 +16,8 @@ interface LessonForm {
   order_index: number;
   downloadable_files: { name: string; url: string }[];
   lesson_type: "audio" | "video" | "writing";
+  thumbnail_url: string;
+  thumbnail_square_url: string;
 }
 
 interface ModuleData {
