@@ -17,7 +17,7 @@ function countWords(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-type FilterType = "all" | "reflection" | "exercise" | "mastery";
+type FilterType = "all" | "reflection" | "exercise" | "mastery" | "course";
 
 export default function JournalPage() {
   const { user } = useAuth();
