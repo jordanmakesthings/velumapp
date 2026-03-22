@@ -715,7 +715,7 @@ export default function AdminPage() {
   const { data: courses = [] } = useQuery({
     queryKey: ["adminCourses"],
     queryFn: async () => {
-      const { data } = await supabase.from("courses").select("*").order("order_index");
+      const { data } = await supabase.from("courses_v2").select("*").order("order_index");
       return data || [];
     },
   });
@@ -877,12 +877,12 @@ export default function AdminPage() {
 
   const saveCourseMutation = useMutation({
     mutationFn: async (data: typeof courseForm) => {
-      const saveData = { title: data.title, description: data.description || null, thumbnail_url: data.thumbnail_url || null, category: data.category || null, cover_image_url: data.cover_image_url || null };
+      const saveData = { title: data.title, description: data.description || null, cover_image_url: data.cover_image_url || null, course_type: data.course_type || "audio", is_premium: data.is_premium, is_published: data.is_published };
       if (editingCourse) {
-        const { error } = await supabase.from("courses").update(saveData).eq("id", editingCourse.id);
+        const { error } = await supabase.from("courses_v2").update(saveData).eq("id", editingCourse.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("courses").insert(saveData);
+        const { error } = await supabase.from("courses_v2").insert(saveData);
         if (error) throw error;
       }
     },
@@ -897,7 +897,7 @@ export default function AdminPage() {
 
   const deleteCourseMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("courses").delete().eq("id", id);
+      const { error } = await supabase.from("courses_v2").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminCourses"] }); toast.success("Course deleted"); },
@@ -1477,7 +1477,7 @@ export default function AdminPage() {
                 <p className="text-muted-foreground text-sm text-center py-8">No courses yet.</p>
               ) : courses.map((course: any, idx: number) => (
                 <div key={course.id} className="velum-card p-4 flex items-center gap-3">
-                  <ReorderButtons table="courses" item={course} siblings={courses as any[]} />
+                  <ReorderButtons table="courses_v2" item={course} siblings={courses as any[]} />
                   <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => setManagingCourseId(managingCourseId === course.id ? null : course.id)}>
                     {course.thumbnail_url && <img src={course.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
                     <div>
@@ -1490,7 +1490,7 @@ export default function AdminPage() {
                       className="px-2.5 py-1.5 rounded-lg text-xs font-sans text-accent hover:text-foreground border border-accent/20 hover:border-accent/40 transition-colors">
                       Manage
                     </button>
-                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", thumbnail_url: course.thumbnail_url || "", category: course.category || "", cover_image_url: course.cover_image_url || "", course_type: "audio", is_premium: course.is_premium ?? true, is_published: false }); setShowCourseForm(true); }}
+                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", thumbnail_url: "", category: "", cover_image_url: course.cover_image_url || "", course_type: course.course_type || "audio", is_premium: course.is_premium ?? true, is_published: course.is_published ?? false }); setShowCourseForm(true); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => { if (confirm("Delete?")) deleteCourseMutation.mutate(course.id); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
