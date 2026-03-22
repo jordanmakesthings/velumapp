@@ -117,6 +117,9 @@ export default function HomePage() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [carouselIdx, setCarouselIdx] = useState(0);
 
+  // Initialize OneSignal push notifications
+  useOneSignalInit(user?.id);
+
   // Onboarding redirect is handled by ProtectedRoute
 
   const dayOfYear = getDayOfYear();
