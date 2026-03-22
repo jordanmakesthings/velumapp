@@ -231,8 +231,6 @@ export function SessionFinderModal({ open, onClose }: Props) {
     }
   }, [open]);
 
-  if (!open) return null;
-
   return (
     <AnimatePresence>
       {open && (
