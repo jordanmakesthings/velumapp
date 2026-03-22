@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Trash2, Edit2, X, ChevronDown, ChevronUp, Upload, Check, Music, Video, FileText } from "lucide-react";
 import { toast } from "sonner";
+import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
 
 interface LessonForm {
   id?: string;
