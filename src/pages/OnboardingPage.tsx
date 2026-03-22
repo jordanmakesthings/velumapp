@@ -301,31 +301,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 5: 30-day vision */}
+          {/* Step 5: Paywall */}
           {step === 5 && (
-            <motion.div key="vision" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
-              <h1 className="text-display text-3xl mb-2">
-                In one sentence — what would a true mark of success look like for you 30 days from now?
-              </h1>
-              <p className="text-muted-foreground text-sm font-sans font-light mb-6">
-                There's no wrong answer. This is just for you.
-              </p>
-              <div className="border border-muted-foreground/20 rounded-xl p-5 mb-4 text-left">
-                <p className="text-muted-foreground text-sm font-sans italic leading-relaxed">
-                  "The people who transform their lives aren't the ones who tried the hardest — they're the ones who finally got honest about what they truly wanted."
-                </p>
-              </div>
-              <textarea
-                value={vision}
-                onChange={(e) => setVision(e.target.value)}
-                placeholder="e.g. I wake up feeling calm and excited about my day..."
-                className="w-full bg-transparent border border-muted-foreground/20 rounded-xl p-5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 resize-none h-32 focus:outline-none focus:border-accent/40 transition-colors"
-              />
-            </motion.div>
-          )}
-
-          {/* Step 6: Paywall */}
-          {step === 6 && (
             <motion.div key="paywall" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
               <div className="text-center mb-8">
                 <h1 className="text-display text-4xl italic mb-2">Final Step.</h1>
