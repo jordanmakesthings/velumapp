@@ -32,6 +32,54 @@ export type Database = {
         }
         Relationships: []
       }
+      course_journal_entries: {
+        Row: {
+          content: string
+          course_id: string
+          created_at: string
+          day_number: number
+          id: string
+          lesson_id: string
+          prompt: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          course_id: string
+          created_at?: string
+          day_number?: number
+          id?: string
+          lesson_id: string
+          prompt?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          course_id?: string
+          created_at?: string
+          day_number?: number
+          id?: string
+          lesson_id?: string
+          prompt?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_journal_entries_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_journal_entries_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           category: string | null
@@ -369,6 +417,7 @@ export type Database = {
           duration_minutes: number
           id: string
           is_free_preview: boolean
+          journal_prompt: string | null
           media_url: string | null
           order_index: number
           title: string
@@ -382,6 +431,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_free_preview?: boolean
+          journal_prompt?: string | null
           media_url?: string | null
           order_index?: number
           title: string
@@ -395,6 +445,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_free_preview?: boolean
+          journal_prompt?: string | null
           media_url?: string | null
           order_index?: number
           title?: string

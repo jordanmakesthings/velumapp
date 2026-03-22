@@ -17,7 +17,7 @@ function countWords(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-type FilterType = "all" | "reflection" | "exercise" | "mastery";
+type FilterType = "all" | "reflection" | "exercise" | "mastery" | "course";
 
 export default function JournalPage() {
   const { user } = useAuth();
@@ -72,6 +72,21 @@ export default function JournalPage() {
     enabled: !!user,
   });
 
+  const { data: courseJournalEntries = [] } = useQuery({
+    queryKey: ["courseJournalEntries", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from("course_journal_entries")
+        .select("*, courses_v2(title), lessons(title)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   const todayPrompt = prompts.length > 0 ? prompts[dayOfYear % prompts.length]?.prompt : "What does your body need from you today?";
   const today = new Date().toISOString().split("T")[0];
@@ -121,9 +136,14 @@ export default function JournalPage() {
     reflections.forEach((r: any) => items.push({ type: "reflection", date: r.reflection_date, data: r }));
     completedJournaling.forEach((p: any) => items.push({ type: "exercise", date: p.completed_date || p.created_at?.split("T")[0], data: p }));
     masteryResponses.forEach((m: any) => items.push({ type: "mastery", date: (m as any).date, data: m }));
+    courseJournalEntries.forEach((e: any) => items.push({
+      type: "course",
+      date: e.created_at?.split("T")[0],
+      data: e,
+    }));
     items.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
     return items;
-  }, [reflections, completedJournaling, masteryResponses]);
+  }, [reflections, completedJournaling, masteryResponses, courseJournalEntries]);
 
   const filtered = useMemo(() => {
     if (filter === "all") return allEntries;
@@ -213,6 +233,7 @@ export default function JournalPage() {
           {([
             { key: "all" as FilterType, label: "All" },
             { key: "reflection" as FilterType, label: "My Entries" },
+            { key: "course" as FilterType, label: "Courses" },
             { key: "exercise" as FilterType, label: "Guided Exercises" },
             { key: "mastery" as FilterType, label: "Mastery Classes" },
           ]).map(({ key, label }) => (
@@ -252,30 +273,31 @@ export default function JournalPage() {
               const isExpanded = expandedId === entryId;
               const isReflection = entry.type === "reflection";
               const isMastery = entry.type === "mastery";
+              const isCourse = entry.type === "course";
 
               return (
                 <div key={entryId} className={`rounded-2xl border transition-all ${
                   isExpanded
-                    ? (isReflection ? "bg-card/80 border-accent/25" : isMastery ? "bg-card/90 border-accent/30" : "bg-surface/50 border-muted-foreground/20")
+                    ? (isReflection ? "bg-card/80 border-accent/25" : isMastery ? "bg-card/90 border-accent/30" : isCourse ? "bg-card/80 border-accent/20" : "bg-surface/50 border-muted-foreground/20")
                     : "bg-transparent border-transparent"
                 }`}>
                   <button onClick={() => setExpandedId(isExpanded ? null : entryId)} className="w-full text-left flex items-center gap-4 p-5">
                     <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-sm ${
-                      isReflection || isMastery ? "bg-accent/10 text-accent" : "bg-muted-foreground/10 text-muted-foreground"
+                      isReflection || isMastery || isCourse ? "bg-accent/10 text-accent" : "bg-muted-foreground/10 text-muted-foreground"
                     }`}>
-                      {isReflection ? "✎" : "◈"}
+                      {isReflection ? "✎" : isCourse ? "📖" : "◈"}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2.5 mb-1">
                         <span className={`text-[9px] tracking-[2px] uppercase font-sans shrink-0 ${
-                          isReflection ? "text-accent/55" : isMastery ? "text-accent/65" : "text-muted-foreground/70"
+                          isReflection ? "text-accent/55" : isMastery ? "text-accent/65" : isCourse ? "text-accent/55" : "text-muted-foreground/70"
                         }`}>
-                          {isReflection ? "Daily Reflection" : isMastery ? "Mastery Class" : "Guided Exercise"}
+                          {isReflection ? "Daily Reflection" : isMastery ? "Mastery Class" : isCourse ? (entry.data.courses_v2?.title || "Course") : "Guided Exercise"}
                         </span>
                         <span className="text-foreground/25 text-[11px] font-sans">{formatDate(entry.date)}</span>
                       </div>
                       <p className="text-foreground/80 font-serif text-sm truncate leading-snug">
-                        {isReflection ? `"${entry.data.prompt}"` : isMastery ? entry.data.mastery_class_title : entry.data.track?.title}
+                        {isReflection ? `"${entry.data.prompt}"` : isMastery ? entry.data.mastery_class_title : isCourse ? (entry.data.lessons?.title ? `Day ${entry.data.day_number} — ${entry.data.lessons.title}` : `Day ${entry.data.day_number}`) : entry.data.track?.title}
                       </p>
                       {isMastery && entry.data.mastery_class_theme && (
                         <p className="text-accent/45 text-[11px] font-sans mt-0.5">{entry.data.mastery_class_theme}</p>
@@ -314,6 +336,17 @@ export default function JournalPage() {
                             </div>
                           ))}
                           <p className="text-foreground/20 text-[10px] font-sans tracking-wide mt-2">{formatDate(entry.date)}</p>
+                        </div>
+                      ) : isCourse ? (
+                        <div>
+                          <p className="text-accent/50 text-[10px] tracking-[2px] uppercase font-sans mb-2">
+                            Day {entry.data.day_number} — {entry.data.lessons?.title || "Lesson"}
+                          </p>
+                          {entry.data.prompt && (
+                            <p className="text-display text-sm italic text-foreground/50 mb-3">"{entry.data.prompt}"</p>
+                          )}
+                          <p className="text-foreground/80 text-sm font-sans leading-relaxed whitespace-pre-wrap">{entry.data.content}</p>
+                          <p className="text-foreground/20 text-[10px] font-sans tracking-wide mt-3">{countWords(entry.data.content)} words · {formatDate(entry.date)}</p>
                         </div>
                       ) : (
                         <div className="flex items-center gap-3">

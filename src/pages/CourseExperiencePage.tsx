@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, ChevronDown, ChevronRight, CheckCircle2, Circle, Download, Play, Pause, ChevronLeft } from "lucide-react";
 import { PaywallModal } from "@/components/PaywallModal";
+import LessonJournal from "@/components/course/LessonJournal";
 
 function AudioPlayerSimple({ src }: { src: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -242,6 +243,16 @@ export default function CourseExperiencePage() {
                     </a>
                   ))}
                 </div>
+              )}
+
+              {/* Journal */}
+              {activeLesson.journal_prompt && (
+                <LessonJournal
+                  courseId={courseId}
+                  lessonId={activeLesson.id}
+                  dayNumber={activeIndex + 1}
+                  prompt={activeLesson.journal_prompt}
+                />
               )}
 
               {/* Actions */}
