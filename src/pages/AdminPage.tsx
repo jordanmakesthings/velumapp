@@ -1212,6 +1212,10 @@ export default function AdminPage() {
                       value={trackForm.tags}
                       onChange={(tags) => setTrackForm(f => ({ ...f, tags }))}
                       allTags={allTags}
+                      labelMap={Object.fromEntries([
+                        ...subcategories.map((s: any) => [`subcat:${s.id}`, `subcat: ${s.name} (${s.category})`]),
+                        ...Object.entries(CATEGORIES).map(([k, v]) => [`cat:${k}`, `cat: ${v}`]),
+                      ])}
                     />
                   </div>
 
