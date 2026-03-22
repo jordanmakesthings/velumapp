@@ -245,6 +245,16 @@ export default function CourseExperiencePage() {
                 </div>
               )}
 
+              {/* Journal */}
+              {activeLesson.journal_prompt && (
+                <LessonJournal
+                  courseId={courseId}
+                  lessonId={activeLesson.id}
+                  dayNumber={activeIndex + 1}
+                  prompt={activeLesson.journal_prompt}
+                />
+              )}
+
               {/* Actions */}
               <div className="flex gap-3 flex-wrap items-center">
                 {!completedIds.has(activeLesson.id) ? (
