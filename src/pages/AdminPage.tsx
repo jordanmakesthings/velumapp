@@ -715,7 +715,7 @@ export default function AdminPage() {
   const { data: courses = [] } = useQuery({
     queryKey: ["adminCourses"],
     queryFn: async () => {
-      const { data } = await supabase.from("courses").select("*").order("order_index");
+      const { data } = await supabase.from("courses_v2").select("*").order("order_index");
       return data || [];
     },
   });
