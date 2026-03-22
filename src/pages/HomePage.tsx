@@ -323,52 +323,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Featured Sessions — centered carousel with peek */}
-      {featuredTracks.length > 0 &&
-        <div className="mb-8 min-w-0 w-full max-w-full overflow-x-hidden">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-ui text-[11px] tracking-[2.5px] uppercase">Featured Sessions</p>
-            <div className="flex gap-2 shrink-0">
-              <button onClick={() => scrollCarousel(-1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-light text-muted-foreground hover:text-foreground transition-colors">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button onClick={() => scrollCarousel(1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-light text-muted-foreground hover:text-foreground transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          <div className="mb-3 flex justify-center gap-1.5">
-            {featuredTracks.map((_: any, i: number) =>
-            <div key={i} className={`h-1.5 rounded-full transition-all ${i === carouselIdx ? "w-5 bg-accent" : "w-1.5 bg-surface-light"}`} />
-            )}
-          </div>
-          <div ref={carouselRef} className="hide-scrollbar flex w-full max-w-full gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
-            {featuredTracks.map((track: any, i: number) =>
-            <Link key={track.id} to={`/player?trackId=${track.id}`}
-            className={`velum-card max-w-[75%] min-w-[75%] shrink-0 snap-center overflow-hidden transition-all duration-300 sm:max-w-[300px] sm:min-w-[280px] ${
-            i === carouselIdx ? "opacity-100 scale-100" : "opacity-50 scale-95"}`
-            }>
-                <div className="relative aspect-[16/9] overflow-hidden bg-surface-light">
-                  {track.thumbnail_url && <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />}
-                </div>
-                <div className="min-w-0 p-4">
-                  <p className="text-accent mb-1 text-[10px] font-sans font-bold tracking-wide uppercase">
-                    {track.category?.replace("_", " ")}
-                  </p>
-                  <p className="text-foreground break-words text-sm font-sans font-medium">{track.title}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <span className="text-ui flex items-center gap-1 text-xs"><Clock className="w-3 h-3 shrink-0" /> {track.duration_minutes} min</span>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-accent/40 px-2.5 py-0.5 text-[10px] font-sans font-medium text-accent">
-                      Begin →
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            )}
-          </div>
-        </div>
-        }
-
       {/* Featured Courses */}
       {courses.length > 0 &&
         <div className="mb-8">
