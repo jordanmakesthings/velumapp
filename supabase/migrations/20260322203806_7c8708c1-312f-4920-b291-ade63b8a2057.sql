@@ -1,0 +1,1 @@
+ALTER TABLE public.mastery_classes ADD COLUMN IF NOT EXISTS downloadable_files jsonb DEFAULT '[]'::jsonb;
