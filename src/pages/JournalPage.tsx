@@ -273,6 +273,7 @@ export default function JournalPage() {
               const isExpanded = expandedId === entryId;
               const isReflection = entry.type === "reflection";
               const isMastery = entry.type === "mastery";
+              const isCourse = entry.type === "course";
 
               return (
                 <div key={entryId} className={`rounded-2xl border transition-all ${
