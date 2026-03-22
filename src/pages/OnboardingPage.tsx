@@ -380,14 +380,14 @@ export default function OnboardingPage() {
       </div>
 
       {/* Bottom CTA (not on paywall) */}
-      {step < 6 && (
+      {step < 5 && (
         <div className="fixed bottom-0 inset-x-0 p-6 bg-gradient-to-t from-background via-background to-transparent">
           <button
             onClick={handleNext}
             disabled={!canProceed()}
             className="w-full max-w-[440px] mx-auto flex items-center justify-center gap-2 py-5 rounded-xl gold-gradient text-primary-foreground font-sans font-bold text-base disabled:opacity-30 active:scale-[0.98] transition-transform"
           >
-            {step === 5 ? "Almost there →" : "Continue →"}
+            {step === 4 ? "Almost there →" : "Continue →"}
           </button>
         </div>
       )}

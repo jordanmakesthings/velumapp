@@ -74,14 +74,23 @@ export default function AuthPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {mode === "signup" &&
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Full name"
-            className="w-full bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30" />
-          }
+          {mode === "signup" && (
+            <>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Full name"
+                className="w-full bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30" />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Phone number (for SMS notifications)"
+                className="w-full bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30"
+                style={{ fontSize: "16px" }} />
+            </>
+          )}
 
           <input
             type="email"
