@@ -150,6 +150,19 @@ export default function HomePage() {
     }
   });
 
+  const { data: courseLessonCounts = {} } = useQuery({
+    queryKey: ["courseLessonCounts", courses.map((c: any) => c.id)],
+    queryFn: async () => {
+      if (courses.length === 0) return {};
+      const ids = courses.map((c: any) => c.id);
+      const { data } = await supabase.from("lessons").select("id, course_id").in("course_id", ids);
+      const counts: Record<string, number> = {};
+      (data || []).forEach((l: any) => { counts[l.course_id] = (counts[l.course_id] || 0) + 1; });
+      return counts;
+    },
+    enabled: courses.length > 0,
+  });
+
   const { data: progress = [] } = useQuery({
     queryKey: ["userProgress", user?.id],
     queryFn: async () => {
@@ -352,7 +365,7 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {courses.slice(0, 2).map((course: any) => {
-              const courseTracks = (tracks as any[]).filter((t) => t.course_id === course.id);
+              const lessonCount = (courseLessonCounts as Record<string, number>)[course.id] || 0;
               return (
                 <Link key={course.id} to={`/course-v2?courseId=${course.id}`} className="velum-card overflow-hidden">
                   <div className="aspect-[16/9] bg-surface-light relative">
@@ -367,7 +380,7 @@ export default function HomePage() {
                     <p className="text-foreground text-sm font-sans font-medium mb-1">{course.title}</p>
                     <p className="text-ui text-xs line-clamp-2 mb-3">{course.description}</p>
                     <div className="flex items-center gap-4 text-ui text-xs">
-                      <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" /> {courseTracks.length} sessions</span>
+                      <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" /> {lessonCount} lessons</span>
                     </div>
                   </div>
                 </Link>);
