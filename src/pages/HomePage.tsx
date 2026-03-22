@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SessionFinderModal } from "@/components/home/SessionFinderModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOneSignalInit } from "@/hooks/useOneSignal";
 import logoLotus from "@/assets/logo-lotus.jpg";
 import { format } from "date-fns";
 
