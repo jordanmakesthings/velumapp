@@ -123,7 +123,7 @@ export default function OnboardingPage() {
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "lifetime">("monthly");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  const totalSteps = 7;
+  const totalSteps = 6;
 
   useEffect(() => {
     if (user?.email) setEmail(user.email);
