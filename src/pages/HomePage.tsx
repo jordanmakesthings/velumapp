@@ -187,6 +187,15 @@ export default function HomePage() {
   const totalSessions = progress.length;
   const totalMinutes = progress.reduce((sum: number, p: any) => sum + (p.progress_seconds || 0), 0) / 60;
 
+  const stressSessions = useMemo(() => progress.filter((p: any) => p.stress_before != null && p.stress_after != null), [progress]);
+  const weeklyReductionPct = useMemo(() => {
+    if (stressSessions.length === 0) return null;
+    const avgBefore = stressSessions.reduce((s: number, p: any) => s + p.stress_before, 0) / stressSessions.length;
+    const avgAfter = stressSessions.reduce((s: number, p: any) => s + p.stress_after, 0) / stressSessions.length;
+    if (avgBefore === 0) return null;
+    return Math.round(((avgBefore - avgAfter) / avgBefore) * 100);
+  }, [stressSessions]);
+
   const completedDates = new Set(progress.map((p: any) => p.completed_date));
   let streak = 0;
   const today = new Date();
