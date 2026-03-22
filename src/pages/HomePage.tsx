@@ -322,7 +322,7 @@ export default function HomePage() {
               value={reflectionText}
               onChange={(e) => setReflectionText(e.target.value)}
               placeholder="Take a breath, then write freely..."
-              className="mb-4 h-28 w-full max-w-full rounded-xl bg-card p-4 text-sm font-sans text-foreground placeholder:text-muted-foreground/40 resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 transition-shadow" />
+              className="mb-4 h-28 w-full max-w-full rounded-xl p-4 text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 transition-shadow bg-[sidebar-primary-foreground] bg-primary-foreground text-accent" />
 
           {user &&
             <div className="flex justify-end">
@@ -360,9 +360,9 @@ export default function HomePage() {
           <div ref={carouselRef} className="hide-scrollbar flex w-full max-w-full gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth">
             {featuredTracks.map((track: any, i: number) =>
             <Link key={track.id} to={`/player?trackId=${track.id}`}
-              className={`velum-card max-w-[75%] min-w-[75%] shrink-0 snap-center overflow-hidden transition-all duration-300 sm:max-w-[300px] sm:min-w-[280px] ${
-                i === carouselIdx ? "opacity-100 scale-100" : "opacity-50 scale-95"
-              }`}>
+            className={`velum-card max-w-[75%] min-w-[75%] shrink-0 snap-center overflow-hidden transition-all duration-300 sm:max-w-[300px] sm:min-w-[280px] ${
+            i === carouselIdx ? "opacity-100 scale-100" : "opacity-50 scale-95"}`
+            }>
                 <div className="relative aspect-[16/9] overflow-hidden bg-surface-light">
                   {track.thumbnail_url && <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />}
                 </div>
@@ -382,7 +382,7 @@ export default function HomePage() {
             )}
           </div>
         </div>
-      }
+        }
 
       {/* Featured Courses */}
       {courses.length > 0 &&
