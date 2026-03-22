@@ -192,21 +192,7 @@ export default function HomePage() {
   const completedTrackIds = new Set(progress.map((p: any) => p.track_id));
   const nextTrack = (tracks as any[]).find((t) => !completedTrackIds.has(t.id));
 
-  const scrollCarousel = (dir: number) => {
-    const newIdx = Math.max(0, Math.min(featuredTracks.length - 1, carouselIdx + dir));
-    setCarouselIdx(newIdx);
-  };
-
-  // Scroll to center item when index changes
-  useEffect(() => {
-    if (!carouselRef.current || featuredTracks.length === 0) return;
-    const child = carouselRef.current.children[carouselIdx] as HTMLElement;
-    if (child) {
-      const container = carouselRef.current;
-      const scrollLeft = child.offsetLeft - container.offsetWidth / 2 + child.offsetWidth / 2;
-      container.scrollTo({ left: scrollLeft, behavior: "smooth" });
-    }
-  }, [carouselIdx, featuredTracks.length]);
+  // carousel removed
 
   const handleSaveReflection = async () => {
     if (!user || !reflectionText.trim()) return;
