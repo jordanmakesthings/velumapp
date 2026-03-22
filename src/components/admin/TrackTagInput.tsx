@@ -5,6 +5,7 @@ interface TrackTagInputProps {
   value: string[];
   onChange: (tags: string[]) => void;
   allTags: string[];
+  labelMap?: Record<string, string>;
 }
 
 export default function TrackTagInput({ value, onChange, allTags }: TrackTagInputProps) {
