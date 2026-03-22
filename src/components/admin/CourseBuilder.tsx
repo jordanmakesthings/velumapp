@@ -30,6 +30,7 @@ const emptyLesson: LessonForm = {
   title: "", description: "", duration_minutes: 0, media_url: "",
   written_content: "", is_free_preview: false, order_index: 0,
   downloadable_files: [], lesson_type: "audio",
+  thumbnail_url: "", thumbnail_square_url: "",
 };
 
 const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
