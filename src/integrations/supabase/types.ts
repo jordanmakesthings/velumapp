@@ -515,6 +515,7 @@ export type Database = {
           cover_image_url_16_9: string | null
           created_at: string
           description: string | null
+          downloadable_files: Json | null
           duration_minutes: number
           id: string
           is_premium: boolean
@@ -531,6 +532,7 @@ export type Database = {
           cover_image_url_16_9?: string | null
           created_at?: string
           description?: string | null
+          downloadable_files?: Json | null
           duration_minutes?: number
           id?: string
           is_premium?: boolean
@@ -547,6 +549,7 @@ export type Database = {
           cover_image_url_16_9?: string | null
           created_at?: string
           description?: string | null
+          downloadable_files?: Json | null
           duration_minutes?: number
           id?: string
           is_premium?: boolean

@@ -654,7 +654,7 @@ export default function AdminPage() {
   const [managingCourseId, setManagingCourseId] = useState<string | null>(null);
 
   const [showMasteryForm, setShowMasteryForm] = useState(false);
-  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]" });
+  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [] as { name: string; url: string }[] });
   const [editingMastery, setEditingMastery] = useState<any>(null);
 
   const [showSubcatForm, setShowSubcatForm] = useState(false);
@@ -914,6 +914,7 @@ export default function AdminPage() {
         cover_image_url_16_9: (data as any).cover_image_url_16_9 || null,
         player_image_url_1_1: (data as any).player_image_url_1_1 || null,
         pause_prompts: parsedPrompts,
+        downloadable_files: data.downloadable_files || [],
       };
       if (editingMastery) {
         const { error } = await supabase.from("mastery_classes").update(saveData as any).eq("id", editingMastery.id);
@@ -926,7 +927,7 @@ export default function AdminPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
       setShowMasteryForm(false); setEditingMastery(null);
-      setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]" });
+      setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [] });
       toast.success(editingMastery ? "Class updated" : "Class created");
     },
     onError: (err: any) => toast.error(err.message),
@@ -1571,7 +1572,7 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-display text-2xl">Mastery Classes</h2>
-              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]" }); setShowMasteryForm(true); }}
+              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [] }); setShowMasteryForm(true); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
                 <Plus className="w-4 h-4" /> Add Class
               </button>
@@ -1617,6 +1618,28 @@ export default function AdminPage() {
                     <label className={labelClass}>Guided Prompts</label>
                     <MasteryPromptBuilder value={masteryForm.pause_prompts} onChange={(val) => setMasteryForm(f => ({ ...f, pause_prompts: val }))} />
                   </div>
+
+                  {/* Downloadable Files */}
+                  <div className="md:col-span-2 border-t border-foreground/5 pt-4">
+                    <label className={labelClass}>Downloadable Files (PDFs, Audio, etc.)</label>
+                    {masteryForm.downloadable_files.map((file, idx) => (
+                      <div key={idx} className="flex items-center gap-2 mb-2">
+                        <span className="flex-1 text-xs text-foreground font-sans truncate">{file.name}</span>
+                        <button type="button" onClick={() => setMasteryForm(f => ({ ...f, downloadable_files: f.downloadable_files.filter((_, i) => i !== idx) }))}
+                          className="text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    ))}
+                    <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm cursor-pointer border border-foreground/10 text-muted-foreground hover:text-foreground hover:border-accent/30 transition-all">
+                      <Upload className="w-4 h-4" /> Upload file
+                      <input type="file" accept=".pdf,.mp3,.wav,.m4a,.zip,.doc,.docx" className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const url = await uploadFile(file, "downloads");
+                          if (url) setMasteryForm(f => ({ ...f, downloadable_files: [...f.downloadable_files, { name: file.name, url }] }));
+                        }} />
+                    </label>
+                  </div>
                 </div>
                 <div className="flex justify-end gap-3 mt-6">
                   <button onClick={() => setShowMasteryForm(false)} className="px-5 py-2 rounded-full text-sm border border-foreground/10 text-muted-foreground">Cancel</button>
@@ -1651,6 +1674,7 @@ export default function AdminPage() {
                         cover_image_url_16_9: (mc as any).cover_image_url_16_9 || "",
                         player_image_url_1_1: (mc as any).player_image_url_1_1 || "",
                         pause_prompts: JSON.stringify(mc.pause_prompts || [], null, 2),
+                        downloadable_files: Array.isArray((mc as any).downloadable_files) ? (mc as any).downloadable_files : [],
                       });
                       setShowMasteryForm(true);
                     }} className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>

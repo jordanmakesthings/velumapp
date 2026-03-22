@@ -133,6 +133,14 @@ export default function HomePage() {
     }
   });
 
+  const { data: masteryCount = 0 } = useQuery({
+    queryKey: ["masteryCount"],
+    queryFn: async () => {
+      const { count } = await supabase.from("mastery_classes").select("*", { count: "exact", head: true });
+      return count || 0;
+    }
+  });
+
   const { data: courses = [] } = useQuery({
     queryKey: ["courses-home"],
     queryFn: async () => {
@@ -162,7 +170,7 @@ export default function HomePage() {
   { key: "tapping", label: "Tapping" },
   { key: "journaling", label: "Journaling" },
   { key: "mastery", label: "Mastery Classes" }].
-  map((c) => ({ ...c, icon: CATEGORY_ICONS[c.key] || Sparkles, count: categoryCounts[c.key] || 0, description: CATEGORY_DESCRIPTIONS[c.key] || "" }));
+  map((c) => ({ ...c, icon: CATEGORY_ICONS[c.key] || Sparkles, count: c.key === "mastery" ? masteryCount : (categoryCounts[c.key] || 0), description: CATEGORY_DESCRIPTIONS[c.key] || "" }));
 
   const getCategoryLink = (key: string) => {
     if (key === "mastery") return "/library?tab=mastery";
