@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOneSignalInit } from "@/hooks/useOneSignal";
 import logoLotus from "@/assets/logo-lotus.jpg";
 import { format } from "date-fns";
+import NervousSystemScore from "@/components/profile/NervousSystemScore";
 
 const QUOTES = [
 { text: "The present moment is the only place where life exists.", author: "Eckhart Tolle" },
