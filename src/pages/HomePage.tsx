@@ -342,7 +342,7 @@ export default function HomePage() {
             {courses.slice(0, 2).map((course: any) => {
               const courseTracks = (tracks as any[]).filter((t) => t.course_id === course.id);
               return (
-                <Link key={course.id} to={`/course/${course.id}`} className="velum-card overflow-hidden">
+                <Link key={course.id} to={`/course-v2?courseId=${course.id}`} className="velum-card overflow-hidden">
                   <div className="aspect-[16/9] bg-surface-light relative">
                     {(course.cover_image_url || course.thumbnail_url) &&
                     <img src={course.cover_image_url || course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />

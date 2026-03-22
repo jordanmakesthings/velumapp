@@ -1159,7 +1159,7 @@ export default function AdminPage() {
                     <label className={labelClass}>Primary Subcategory</label>
                     <select value={trackForm.subcategory_id} onChange={e => setTrackForm(f => ({ ...f, subcategory_id: e.target.value }))} className={inputClass}>
                       <option value="">— None —</option>
-                      {subcategories.filter((s: any) => s.category === trackForm.category).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      {subcategories.map((s: any) => <option key={s.id} value={s.id}>{CATEGORIES[s.category] || s.category}: {s.name}</option>)}
                     </select>
                   </div>
                   <div className="md:col-span-2">
