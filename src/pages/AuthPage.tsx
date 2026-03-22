@@ -87,7 +87,7 @@ export default function AuthPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
 
-              className="w-full bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30"
+              className="w-full bg-card rounded-xl px-4 py-3.5 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-accent/30 text-accent"
               style={{ fontSize: "16px" }} placeholder="Phone number" />
             </>
           }
