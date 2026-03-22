@@ -914,6 +914,7 @@ export default function AdminPage() {
         cover_image_url_16_9: (data as any).cover_image_url_16_9 || null,
         player_image_url_1_1: (data as any).player_image_url_1_1 || null,
         pause_prompts: parsedPrompts,
+        downloadable_files: data.downloadable_files || [],
       };
       if (editingMastery) {
         const { error } = await supabase.from("mastery_classes").update(saveData as any).eq("id", editingMastery.id);
