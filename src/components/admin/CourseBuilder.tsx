@@ -159,6 +159,8 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
         order_index: data.order_index,
         course_id: courseId,
         downloadable_files: data.downloadable_files as any,
+        thumbnail_url: data.thumbnail_url || null,
+        thumbnail_square_url: data.thumbnail_square_url || null,
       };
       if (editingLesson) {
         const { error } = await supabase.from("lessons").update(saveData).eq("id", editingLesson.id);
