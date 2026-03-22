@@ -61,7 +61,7 @@ export default function TrackTagInput({ value, onChange, allTags, labelMap = {} 
       <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-background border border-foreground/10 focus-within:border-accent/40 transition-colors min-h-[42px]">
         {value.map(tag => (
           <span key={tag} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent/15 text-accent text-xs font-sans">
-            {tag}
+            {labelMap[tag] || tag}
             <button onClick={() => removeTag(tag)} className="hover:text-foreground transition-colors">
               <X className="w-3 h-3" />
             </button>
