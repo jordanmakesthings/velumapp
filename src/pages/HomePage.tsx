@@ -248,7 +248,9 @@ export default function HomePage() {
         {[
           { label: `${streak} day streak`, icon: Flame },
           { label: `${totalSessions} sessions`, icon: Sparkles },
-          { label: `${Math.round(totalMinutes)} mins`, icon: Wind }].
+          { label: `${Math.round(totalMinutes)} mins`, icon: Wind },
+          ...(weeklyReductionPct !== null ? [{ label: `${weeklyReductionPct}% stress ↓`, icon: Heart }] : []),
+        ].
           map(({ label, icon: Icon }) =>
           <div key={label} className="velum-card-flat flex min-w-0 flex-1 items-center justify-center gap-2 px-3 py-2.5">
             <Icon className="w-3.5 h-3.5 shrink-0 text-accent" />
