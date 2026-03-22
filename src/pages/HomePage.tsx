@@ -150,6 +150,19 @@ export default function HomePage() {
     }
   });
 
+  const { data: courseLessonCounts = {} } = useQuery({
+    queryKey: ["courseLessonCounts", courses.map((c: any) => c.id)],
+    queryFn: async () => {
+      if (courses.length === 0) return {};
+      const ids = courses.map((c: any) => c.id);
+      const { data } = await supabase.from("lessons").select("id, course_id").in("course_id", ids);
+      const counts: Record<string, number> = {};
+      (data || []).forEach((l: any) => { counts[l.course_id] = (counts[l.course_id] || 0) + 1; });
+      return counts;
+    },
+    enabled: courses.length > 0,
+  });
+
   const { data: progress = [] } = useQuery({
     queryKey: ["userProgress", user?.id],
     queryFn: async () => {
