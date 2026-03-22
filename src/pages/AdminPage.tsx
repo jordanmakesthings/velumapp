@@ -654,7 +654,7 @@ export default function AdminPage() {
   const [managingCourseId, setManagingCourseId] = useState<string | null>(null);
 
   const [showMasteryForm, setShowMasteryForm] = useState(false);
-  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]" });
+  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [] as { name: string; url: string }[] });
   const [editingMastery, setEditingMastery] = useState<any>(null);
 
   const [showSubcatForm, setShowSubcatForm] = useState(false);
