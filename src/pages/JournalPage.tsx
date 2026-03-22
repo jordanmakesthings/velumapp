@@ -233,6 +233,7 @@ export default function JournalPage() {
           {([
             { key: "all" as FilterType, label: "All" },
             { key: "reflection" as FilterType, label: "My Entries" },
+            { key: "course" as FilterType, label: "Courses" },
             { key: "exercise" as FilterType, label: "Guided Exercises" },
             { key: "mastery" as FilterType, label: "Mastery Classes" },
           ]).map(({ key, label }) => (
