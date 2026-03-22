@@ -145,7 +145,17 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
 
   const saveLessonMutation = useMutation({
     mutationFn: async (data: LessonForm) => {
-      const saveData: Record<string, any> = {
+      const saveData = {
+        title: data.title,
+        description: data.description || null,
+        duration_minutes: data.duration_minutes,
+        media_url: data.media_url || null,
+        written_content: data.written_content || null,
+        is_free_preview: data.is_free_preview,
+        order_index: data.order_index,
+        course_id: courseId,
+        downloadable_files: data.downloadable_files as any,
+      };
         title: data.title,
         description: data.description || null,
         duration_minutes: data.duration_minutes,
