@@ -114,8 +114,7 @@ export default function HomePage() {
   const [savingReflection, setSavingReflection] = useState(false);
   const { user, profile } = useAuth();
   const firstName = profile?.full_name?.split(" ")[0];
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [carouselIdx, setCarouselIdx] = useState(0);
+  // carousel refs removed
 
   // Initialize OneSignal push notifications
   useOneSignalInit(user?.id);
@@ -137,7 +136,7 @@ export default function HomePage() {
   const { data: courses = [] } = useQuery({
     queryKey: ["courses-home"],
     queryFn: async () => {
-      const { data } = await supabase.from("courses").select("*").order("order_index").limit(4);
+      const { data } = await supabase.from("courses_v2").select("*").eq("is_published", true).order("order_index").limit(4);
       return data || [];
     }
   });
@@ -175,7 +174,7 @@ export default function HomePage() {
     return `/library?category=${key}`;
   };
 
-  const featuredTracks = (tracks as any[]).filter((t) => t.is_featured).slice(0, 5);
+  // featuredTracks removed — replaced by courses section
   const totalSessions = progress.length;
   const totalMinutes = progress.reduce((sum: number, p: any) => sum + (p.progress_seconds || 0), 0) / 60;
 
@@ -192,21 +191,7 @@ export default function HomePage() {
   const completedTrackIds = new Set(progress.map((p: any) => p.track_id));
   const nextTrack = (tracks as any[]).find((t) => !completedTrackIds.has(t.id));
 
-  const scrollCarousel = (dir: number) => {
-    const newIdx = Math.max(0, Math.min(featuredTracks.length - 1, carouselIdx + dir));
-    setCarouselIdx(newIdx);
-  };
-
-  // Scroll to center item when index changes
-  useEffect(() => {
-    if (!carouselRef.current || featuredTracks.length === 0) return;
-    const child = carouselRef.current.children[carouselIdx] as HTMLElement;
-    if (child) {
-      const container = carouselRef.current;
-      const scrollLeft = child.offsetLeft - container.offsetWidth / 2 + child.offsetWidth / 2;
-      container.scrollTo({ left: scrollLeft, behavior: "smooth" });
-    }
-  }, [carouselIdx, featuredTracks.length]);
+  // carousel removed
 
   const handleSaveReflection = async () => {
     if (!user || !reflectionText.trim()) return;
