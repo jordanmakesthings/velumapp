@@ -1,5 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { Download } from "lucide-react";
+import { Download, Upload, Check, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const LOGO_URL =
   "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69a2873bb8066a6ad6856b40/da248335d_CopyofCopyofLogo.png";
@@ -179,6 +181,14 @@ function drawPlayer(canvas: HTMLCanvasElement, title: string, category: string, 
   }
 }
 
+async function uploadBlob(blob: Blob, folder: string, suffix: string): Promise<string | null> {
+  const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}_${suffix}.png`;
+  const { error } = await supabase.storage.from("track-media").upload(path, blob, { contentType: "image/png" });
+  if (error) { toast.error("Thumbnail upload failed: " + error.message); return null; }
+  const { data } = supabase.storage.from("track-media").getPublicUrl(path);
+  return data.publicUrl;
+}
+
 interface ThumbnailGeneratorProps {
   title: string;
   category: string;
@@ -188,9 +198,11 @@ interface ThumbnailGeneratorProps {
   onPlayerBlob?: (blob: Blob | null) => void;
   onGenerated?: (landscapeUrl: string, squareUrl: string) => void;
   showPlayerCanvas?: boolean;
+  /** When true, show an "Upload & Apply" button that uploads both thumbnails to storage and calls onGenerated with URLs */
+  autoUpload?: boolean;
 }
 
-export default function ThumbnailGenerator({ title, category, enabled: externalEnabled, onToggle, onLibraryBlob, onPlayerBlob, onGenerated, showPlayerCanvas = true }: ThumbnailGeneratorProps) {
+export default function ThumbnailGenerator({ title, category, enabled: externalEnabled, onToggle, onLibraryBlob, onPlayerBlob, onGenerated, showPlayerCanvas = true, autoUpload = false }: ThumbnailGeneratorProps) {
   const [internalEnabled, setInternalEnabled] = useState(false);
   const enabled = externalEnabled !== undefined ? externalEnabled : internalEnabled;
   const handleToggle = onToggle || (() => setInternalEnabled(p => !p));
@@ -199,9 +211,12 @@ export default function ThumbnailGenerator({ title, category, enabled: externalE
   const readyRef = useRef(false);
   const pendingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const logoRef = useRef<HTMLCanvasElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploaded, setUploaded] = useState(false);
 
   const redrawAndNotify = useCallback(() => {
     if (!enabled) return;
+    setUploaded(false);
     if (libraryRef.current) drawLibrary(libraryRef.current, title, category, logoRef.current);
     if (playerRef.current) drawPlayer(playerRef.current, title, category, logoRef.current);
     if (pendingRef.current) clearTimeout(pendingRef.current);
@@ -231,6 +246,35 @@ export default function ThumbnailGenerator({ title, category, enabled: externalE
     a.click();
   };
 
+  const handleUploadAndApply = async () => {
+    if (!libraryRef.current || !onGenerated) return;
+    setUploading(true);
+    try {
+      const getBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> =>
+        new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+
+      const [libBlob, playerBlob] = await Promise.all([
+        getBlob(libraryRef.current),
+        playerRef.current ? getBlob(playerRef.current) : Promise.resolve(null),
+      ]);
+
+      if (!libBlob) { toast.error("Failed to generate thumbnail"); return; }
+
+      const [libUrl, playerUrl] = await Promise.all([
+        uploadBlob(libBlob, "images", "16x9"),
+        playerBlob ? uploadBlob(playerBlob, "images", "1x1") : Promise.resolve(""),
+      ]);
+
+      if (libUrl) {
+        onGenerated(libUrl, playerUrl || "");
+        setUploaded(true);
+        toast.success("Thumbnails uploaded and applied");
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="md:col-span-2">
       <div className="flex items-center justify-between mb-3">
@@ -242,22 +286,40 @@ export default function ThumbnailGenerator({ title, category, enabled: externalE
         </button>
       </div>
       {enabled && (
-        <div className="flex gap-5 flex-wrap items-start">
-          <div className="flex flex-col items-center gap-1.5">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">Library (16:9)</span>
-            <canvas ref={libraryRef} style={{ width: 256, height: 144, borderRadius: 8, border: "1px solid hsl(var(--foreground)/0.1)", display: "block", background: "#111" }} />
-            <button type="button" onClick={() => download(libraryRef, "thumbnail_library.png")} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-accent transition-colors">
-              <Download className="w-3 h-3" /> Download
-            </button>
-          </div>
-          {showPlayerCanvas && (
+        <div className="space-y-3">
+          <div className="flex gap-5 flex-wrap items-start">
             <div className="flex flex-col items-center gap-1.5">
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">Player (1:1)</span>
-              <canvas ref={playerRef} style={{ width: 144, height: 144, borderRadius: 8, border: "1px solid hsl(var(--foreground)/0.1)", display: "block", background: "#111" }} />
-              <button type="button" onClick={() => download(playerRef, "thumbnail_player.png")} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-accent transition-colors">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">Library (16:9)</span>
+              <canvas ref={libraryRef} style={{ width: 256, height: 144, borderRadius: 8, border: "1px solid hsl(var(--foreground)/0.1)", display: "block", background: "#111" }} />
+              <button type="button" onClick={() => download(libraryRef, "thumbnail_library.png")} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-accent transition-colors">
                 <Download className="w-3 h-3" /> Download
               </button>
             </div>
+            {showPlayerCanvas && (
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60">Player (1:1)</span>
+                <canvas ref={playerRef} style={{ width: 144, height: 144, borderRadius: 8, border: "1px solid hsl(var(--foreground)/0.1)", display: "block", background: "#111" }} />
+                <button type="button" onClick={() => download(playerRef, "thumbnail_player.png")} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-accent transition-colors">
+                  <Download className="w-3 h-3" /> Download
+                </button>
+              </div>
+            )}
+          </div>
+          {autoUpload && onGenerated && (
+            <button
+              type="button"
+              onClick={handleUploadAndApply}
+              disabled={uploading || !title}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-sans font-medium border border-accent/30 text-accent hover:text-foreground hover:border-accent/50 transition-colors disabled:opacity-40"
+            >
+              {uploading ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading...</>
+              ) : uploaded ? (
+                <><Check className="w-3.5 h-3.5" /> Applied</>
+              ) : (
+                <><Upload className="w-3.5 h-3.5" /> Upload &amp; Apply</>
+              )}
+            </button>
           )}
         </div>
       )}
