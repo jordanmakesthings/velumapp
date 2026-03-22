@@ -226,10 +226,13 @@ export default function LibraryPage() {
               {/* Subcategory grid or all sessions */}
               {!showAllSessions && categorySubcats.length > 0 ? (
                 <>
-                  <button onClick={() => setShowAllSessions(true)}
-                    className="text-accent text-xs font-sans mb-4 inline-block">
-                    See All →
-                  </button>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-accent text-[10px] font-sans font-medium tracking-[2.5px] uppercase">Categories</p>
+                    <button onClick={() => setShowAllSessions(true)}
+                      className="text-accent text-xs font-sans">
+                      See All →
+                    </button>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     {categorySubcats.map((sc: any) => (
                       <Link
