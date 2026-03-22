@@ -8,7 +8,7 @@ interface TrackTagInputProps {
   labelMap?: Record<string, string>;
 }
 
-export default function TrackTagInput({ value, onChange, allTags }: TrackTagInputProps) {
+export default function TrackTagInput({ value, onChange, allTags, labelMap = {} }: TrackTagInputProps) {
   const [input, setInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
