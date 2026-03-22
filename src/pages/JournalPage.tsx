@@ -136,9 +136,14 @@ export default function JournalPage() {
     reflections.forEach((r: any) => items.push({ type: "reflection", date: r.reflection_date, data: r }));
     completedJournaling.forEach((p: any) => items.push({ type: "exercise", date: p.completed_date || p.created_at?.split("T")[0], data: p }));
     masteryResponses.forEach((m: any) => items.push({ type: "mastery", date: (m as any).date, data: m }));
+    courseJournalEntries.forEach((e: any) => items.push({
+      type: "course",
+      date: e.created_at?.split("T")[0],
+      data: e,
+    }));
     items.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
     return items;
-  }, [reflections, completedJournaling, masteryResponses]);
+  }, [reflections, completedJournaling, masteryResponses, courseJournalEntries]);
 
   const filtered = useMemo(() => {
     if (filter === "all") return allEntries;
