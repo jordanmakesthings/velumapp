@@ -31,7 +31,7 @@ export default function AuthPage() {
         if (error) throw error;
         navigate("/home");
       } else if (mode === "signup") {
-        const { error } = await signUp(email, password, fullName);
+        const { error } = await signUp(email, password, fullName, phone);
         if (error) throw error;
         setMessage("Check your email for a confirmation link.");
       } else if (mode === "magic-link") {
