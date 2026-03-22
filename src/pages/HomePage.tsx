@@ -114,8 +114,7 @@ export default function HomePage() {
   const [savingReflection, setSavingReflection] = useState(false);
   const { user, profile } = useAuth();
   const firstName = profile?.full_name?.split(" ")[0];
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [carouselIdx, setCarouselIdx] = useState(0);
+  // carousel refs removed
 
   // Initialize OneSignal push notifications
   useOneSignalInit(user?.id);
