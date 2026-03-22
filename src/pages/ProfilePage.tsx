@@ -178,10 +178,6 @@ export default function ProfilePage() {
   }
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Friend";
-  const [editingName, setEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState(profile?.full_name || "");
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
