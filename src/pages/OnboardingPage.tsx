@@ -335,7 +335,7 @@ export default function OnboardingPage() {
                 <p className="text-accent text-sm font-sans font-medium mb-2">● Only 16 spots remaining</p>
                 <p className="text-display text-5xl text-foreground mb-1">$299 <span className="text-muted-foreground text-lg font-sans font-light">· One time</span></p>
                 <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">
-                  Every course. Every tool. Every future update.<br />Pay once, never think about it again.
+                  Every course. Every tool. Every future update.
                 </p>
                 <button onClick={() => handleCheckout("lifetime")} disabled={checkoutLoading}
                   className="w-full border border-muted-foreground/20 rounded-xl p-5 flex items-center justify-between text-left mb-1">
