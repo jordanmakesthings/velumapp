@@ -512,7 +512,9 @@ export type Database = {
           is_admin: boolean | null
           onboarding_answers: Json | null
           onboarding_completed: boolean
+          onesignal_player_id: string | null
           phone: string | null
+          reminder_time: string | null
           stripe_customer_id: string | null
           subscription_expires_at: string | null
           subscription_plan: string | null
@@ -528,7 +530,9 @@ export type Database = {
           is_admin?: boolean | null
           onboarding_answers?: Json | null
           onboarding_completed?: boolean
+          onesignal_player_id?: string | null
           phone?: string | null
+          reminder_time?: string | null
           stripe_customer_id?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null
@@ -544,7 +548,9 @@ export type Database = {
           is_admin?: boolean | null
           onboarding_answers?: Json | null
           onboarding_completed?: boolean
+          onesignal_player_id?: string | null
           phone?: string | null
+          reminder_time?: string | null
           stripe_customer_id?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null

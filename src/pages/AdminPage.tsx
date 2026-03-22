@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, Plus, Upload, Trash2, Edit2, X, Check, Music, BookOpen,
-  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown, Users, Tag, SlidersHorizontal
+  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown, Users, Tag, SlidersHorizontal, Bell
 } from "lucide-react";
 import { toast } from "sonner";
 import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
@@ -161,7 +161,7 @@ function MasteryPromptBuilder({ value, onChange }: { value: string; onChange: (v
   );
 }
 
-type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "taxonomy" | "finder" | "settings" | "users";
+type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "taxonomy" | "finder" | "settings" | "users" | "notifications";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
@@ -171,6 +171,7 @@ const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "prompts", label: "Prompts", icon: Feather },
   { key: "taxonomy", label: "Taxonomy", icon: Tag },
   { key: "finder", label: "Session Finder", icon: SlidersHorizontal },
+  { key: "notifications", label: "Notifications", icon: Bell },
   { key: "settings", label: "Settings", icon: Settings },
   { key: "users", label: "Users", icon: Users },
 ];
@@ -573,6 +574,61 @@ function UsersTab() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function NotificationsTab() {
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-notification", {
+        body: { message: message.trim() },
+      });
+      if (error) throw error;
+      toast.success(`Content alert sent to ${data?.recipients || 0} users`);
+      setMessage("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send notification");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div>
+      <h2 className="text-display text-2xl mb-6">Push Notifications</h2>
+      <div className="velum-card p-6">
+        <p className="text-ui text-xs tracking-wide uppercase mb-4">Send Content Alert</p>
+        <p className="text-muted-foreground text-sm mb-4">Send a push notification to all subscribed users about new content.</p>
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={3}
+          className={inputClass + " resize-none mb-4"}
+          placeholder="e.g. New breathwork session just dropped — try it now"
+        />
+        <button
+          onClick={handleSend}
+          disabled={!message.trim() || sending}
+          className="px-6 py-2.5 rounded-full text-sm font-medium gold-gradient text-primary-foreground disabled:opacity-50 active:scale-95 transition-transform flex items-center gap-2"
+        >
+          <Bell className="w-4 h-4" />
+          {sending ? "Sending..." : "Send Content Alert"}
+        </button>
+      </div>
+      <div className="velum-card p-6 mt-6">
+        <p className="text-ui text-xs tracking-wide uppercase mb-4">Daily Practice Reminders</p>
+        <p className="text-muted-foreground text-sm">
+          Daily reminders are sent automatically via a scheduled job. Users set their preferred time in their profile settings.
+          Reminders only fire if the user has not completed a session that day.
+        </p>
+      </div>
     </div>
   );
 }
@@ -1606,6 +1662,9 @@ export default function AdminPage() {
 
         {/* ============ USERS TAB ============ */}
         {activeTab === "users" && <UsersTab />}
+
+        {/* ============ NOTIFICATIONS TAB ============ */}
+        {activeTab === "notifications" && <NotificationsTab />}
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SessionFinderModal } from "@/components/home/SessionFinderModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOneSignalInit } from "@/hooks/useOneSignal";
 import logoLotus from "@/assets/logo-lotus.jpg";
 import { format } from "date-fns";
 
@@ -115,6 +116,9 @@ export default function HomePage() {
   const firstName = profile?.full_name?.split(" ")[0];
   const carouselRef = useRef<HTMLDivElement>(null);
   const [carouselIdx, setCarouselIdx] = useState(0);
+
+  // Initialize OneSignal push notifications
+  useOneSignalInit(user?.id);
 
   // Onboarding redirect is handled by ProtectedRoute
 

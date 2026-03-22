@@ -2,9 +2,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Flame, Sparkles, Wind, LogOut, CheckCircle2, AlertCircle } from "lucide-react";
+import { Flame, Sparkles, Wind, LogOut, CheckCircle2, AlertCircle, Bell } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import NervousSystemScore from "@/components/profile/NervousSystemScore";
 
 const categoryLabels: Record<string, string> = {
@@ -240,6 +241,33 @@ export default function ProfilePage() {
           {cancelError}
         </div>
       )}
+
+      {/* Notification Time */}
+      <div className="velum-card p-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Bell className="w-4 h-4 text-accent" />
+            <div>
+              <p className="text-foreground text-sm font-sans font-medium">Daily Reminder</p>
+              <p className="text-muted-foreground text-xs mt-0.5">Get reminded to practice</p>
+            </div>
+          </div>
+          <input
+            type="time"
+            defaultValue={(profile as any)?.reminder_time?.substring(0, 5) || "08:00"}
+            onChange={async (e) => {
+              if (!user) return;
+              const { error } = await supabase
+                .from("profiles")
+                .update({ reminder_time: e.target.value + ":00" } as any)
+                .eq("id", user.id);
+              if (!error) toast.success("Reminder time updated");
+            }}
+            className="bg-card border border-border rounded-lg px-3 py-1.5 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40"
+            style={{ fontSize: "16px" }}
+          />
+        </div>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 mb-8">
