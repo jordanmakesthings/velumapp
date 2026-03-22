@@ -927,7 +927,7 @@ export default function AdminPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
       setShowMasteryForm(false); setEditingMastery(null);
-      setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]" });
+      setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [] });
       toast.success(editingMastery ? "Class updated" : "Class created");
     },
     onError: (err: any) => toast.error(err.message),
