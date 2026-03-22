@@ -223,6 +223,14 @@ export function SessionFinderModal({ open, onClose }: Props) {
     "How much time do you have?",
   ];
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [open]);
+
   if (!open) return null;
 
   return (
