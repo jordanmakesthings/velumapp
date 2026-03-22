@@ -1452,7 +1452,20 @@ export default function AdminPage() {
                       {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
                   </div>
-                  <div>{/* spacer */}</div>
+                  <div className="flex items-center gap-3 pt-6">
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" checked={courseForm.is_premium}
+                        onChange={e => setCourseForm(f => ({ ...f, is_premium: e.target.checked }))}
+                        className="w-4 h-4 rounded accent-accent" />
+                      <label className="text-xs text-foreground/80 font-sans">Premium</label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" checked={courseForm.is_published}
+                        onChange={e => setCourseForm(f => ({ ...f, is_published: e.target.checked }))}
+                        className="w-4 h-4 rounded accent-accent" />
+                      <label className="text-xs text-foreground/80 font-sans">Published</label>
+                    </div>
+                  </div>
                   <div className="md:col-span-2 border-b border-foreground/5 pb-4">
                     <ThumbnailGenerator
                       title={courseForm.title}
