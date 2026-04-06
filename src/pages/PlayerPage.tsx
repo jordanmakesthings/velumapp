@@ -121,7 +121,7 @@ export default function PlayerPage() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
       setIsFavorited(!isFavorited);
     },
   });
@@ -157,7 +157,7 @@ export default function PlayerPage() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userProgress"] });
+      queryClient.invalidateQueries({ queryKey: ["user_progress", user?.id] });
       setStep("done");
     },
     onError: () => {

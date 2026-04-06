@@ -1,12 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Flame, Sparkles, Wind, LogOut, CheckCircle2, AlertCircle, Bell, Camera, Edit2, X, Check } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { useState, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import NervousSystemScore from "@/components/profile/NervousSystemScore";
+import { useUserProgress, useTracks, calculateStreak } from "@/hooks/useVelumData";
 
 const categoryLabels: Record<string, string> = {
   meditation: "Meditation",
@@ -32,91 +31,45 @@ export default function ProfilePage() {
   const isLifetime = profile?.subscription_plan === "lifetime";
   const isCanceling = profile?.subscription_status === "canceling";
 
-  // Fetch completed progress
-  const { data: progress = [] } = useQuery({
-    queryKey: ["profileProgress", user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase
-        .from("user_progress")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("completed", true)
-        .order("completed_date", { ascending: false });
-      return data || [];
-    },
-    enabled: !!user,
-  });
-
-  // Fetch all tracks for mapping
-  const { data: tracks = [] } = useQuery({
-    queryKey: ["allTracksProfile"],
-    queryFn: async () => {
-      const { data } = await supabase.from("tracks").select("*");
-      return data || [];
-    },
-  });
+  const { data: progress = [] } = useUserProgress(user?.id);
+  const { data: tracks = [] } = useTracks();
 
   const trackMap = useMemo(() => {
-    const map: Record<string, any> = {};
-    tracks.forEach((t: any) => (map[t.id] = t));
+    const map: Record<string, typeof tracks[number]> = {};
+    tracks.forEach((t) => (map[t.id] = t));
     return map;
   }, [tracks]);
 
-  const completedTracks = useMemo(() => 
-    progress.filter((p: any) => trackMap[p.track_id]).map((p: any) => ({ ...p, track: trackMap[p.track_id] })),
+  const completedTracks = useMemo(() =>
+    progress
+      .filter((p) => trackMap[p.track_id])
+      .map((p) => ({ ...p, track: trackMap[p.track_id] })),
     [progress, trackMap]
   );
 
-  const totalMinutes = useMemo(() => 
-    completedTracks.reduce((sum: number, p: any) => sum + (p.track?.duration_minutes || 0), 0),
+  const totalMinutes = useMemo(() =>
+    completedTracks.reduce((sum, p) => sum + (p.track?.duration_minutes ?? 0), 0),
     [completedTracks]
   );
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    completedTracks.forEach((p: any) => {
+    completedTracks.forEach((p) => {
       const cat = p.track?.category;
       if (cat) counts[cat] = (counts[cat] || 0) + 1;
     });
     return counts;
   }, [completedTracks]);
 
-  // Streak calculation
-  const currentStreak = useMemo(() => {
-    if (completedTracks.length === 0) return 0;
-    const dates = [...new Set(completedTracks.map((p: any) => p.completed_date).filter(Boolean))].sort().reverse();
-    let streak = 0;
-    let current = new Date();
-    current.setHours(0, 0, 0, 0);
-    for (const dateStr of dates) {
-      const d = new Date(dateStr as string);
-      d.setHours(0, 0, 0, 0);
-      const diff = Math.round((current.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-      if (diff === 0 || diff === 1) { streak++; current = d; }
-      else break;
-    }
-    return streak;
-  }, [completedTracks]);
+  const currentStreak = useMemo(() => calculateStreak(progress), [progress]);
 
-  // Stress chart data
-  const stressChartData = useMemo(() => {
-    return progress
-      .filter((p: any) => p.stress_before != null && p.stress_after != null)
-      .slice(0, 10)
-      .reverse()
-      .map((p: any, i: number) => ({
-        session: `${i + 1}`,
-        before: p.stress_before,
-        after: p.stress_after,
-      }));
-  }, [progress]);
-
-  // Average stress reduction
   const avgReduction = useMemo(() => {
-    const stressData = progress.filter((p: any) => p.stress_before != null && p.stress_after != null);
+    const stressData = progress.filter((p) => p.stress_before != null && p.stress_after != null);
     if (stressData.length === 0) return null;
-    return Math.round(stressData.reduce((sum: number, p: any) => sum + (p.stress_before - p.stress_after), 0) / stressData.length * 10) / 10;
+    return Math.round(
+      stressData.reduce((sum, p) => sum + ((p.stress_before ?? 0) - (p.stress_after ?? 0)), 0) /
+        stressData.length * 10
+    ) / 10;
   }, [progress]);
 
   const handleCancelSubscription = async () => {

@@ -813,6 +813,10 @@ export default function AdminPage() {
       queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
       queryClient.invalidateQueries({ queryKey: ["adminSubcategories"] });
       queryClient.invalidateQueries({ queryKey: ["adminPrompts"] });
+      // Also refresh user-facing caches
+      queryClient.invalidateQueries({ queryKey: ["tracks"] });
+      queryClient.invalidateQueries({ queryKey: ["mastery_classes"] });
+      queryClient.invalidateQueries({ queryKey: ["subcategories"] });
     },
   });
 
@@ -861,6 +865,7 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminTracks"] });
+      queryClient.invalidateQueries({ queryKey: ["tracks"] });
       setShowTrackForm(false); setEditingTrack(null); setTrackForm(emptyTrackForm);
       toast.success(editingTrack ? "Track updated" : "Track created");
     },
@@ -872,7 +877,11 @@ export default function AdminPage() {
       const { error } = await supabase.from("tracks").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminTracks"] }); toast.success("Track deleted"); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminTracks"] });
+      queryClient.invalidateQueries({ queryKey: ["tracks"] });
+      toast.success("Track deleted");
+    },
   });
 
   const saveCourseMutation = useMutation({
@@ -888,6 +897,8 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
+      queryClient.invalidateQueries({ queryKey: ["courses_v2", { publishedOnly: true }] });
+      queryClient.invalidateQueries({ queryKey: ["courses_v2", { publishedOnly: false }] });
       setShowCourseForm(false); setEditingCourse(null);
       setCourseForm({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "", course_type: "audio", is_premium: true, is_published: false });
       toast.success(editingCourse ? "Course updated" : "Course created");
@@ -900,7 +911,12 @@ export default function AdminPage() {
       const { error } = await supabase.from("courses_v2").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminCourses"] }); toast.success("Course deleted"); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
+      queryClient.invalidateQueries({ queryKey: ["courses_v2", { publishedOnly: true }] });
+      queryClient.invalidateQueries({ queryKey: ["courses_v2", { publishedOnly: false }] });
+      toast.success("Course deleted");
+    },
   });
 
   const saveMasteryMutation = useMutation({
@@ -926,6 +942,7 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
+      queryClient.invalidateQueries({ queryKey: ["mastery_classes"] });
       setShowMasteryForm(false); setEditingMastery(null);
       setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [] });
       toast.success(editingMastery ? "Class updated" : "Class created");
@@ -938,7 +955,11 @@ export default function AdminPage() {
       const { error } = await supabase.from("mastery_classes").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["adminMastery"] }); toast.success("Class deleted"); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
+      queryClient.invalidateQueries({ queryKey: ["mastery_classes"] });
+      toast.success("Class deleted");
+    },
   });
 
   const saveSubcatMutation = useMutation({

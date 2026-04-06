@@ -63,7 +63,7 @@ export default function LibraryPage() {
   });
 
   const { data: masteryClasses = [] } = useQuery({
-    queryKey: ["masteryClasses"],
+    queryKey: ["mastery_classes"],
     queryFn: async () => {
       const { data } = await supabase.from("mastery_classes").select("*").order("order_index");
       return data || [];
@@ -89,7 +89,7 @@ export default function LibraryPage() {
   });
 
   const { data: progress = [] } = useQuery({
-    queryKey: ["userProgress", user?.id],
+    queryKey: ["user_progress", user?.id],
     queryFn: async () => {
       if (!user) return [];
       const { data } = await supabase.from("user_progress").select("*").eq("user_id", user.id).eq("completed", true);
@@ -111,7 +111,7 @@ export default function LibraryPage() {
         await supabase.from("favorites").insert({ user_id: user.id, track_id: trackId });
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] }),
   });
 
   const categoryCounts = CATEGORIES.map(c => ({

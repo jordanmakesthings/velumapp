@@ -135,7 +135,7 @@ export default function HomePage() {
   });
 
   const { data: masteryCount = 0 } = useQuery({
-    queryKey: ["masteryCount"],
+    queryKey: ["mastery_classes", "count"],
     queryFn: async () => {
       const { count } = await supabase.from("mastery_classes").select("*", { count: "exact", head: true });
       return count || 0;
@@ -143,28 +143,27 @@ export default function HomePage() {
   });
 
   const { data: courses = [] } = useQuery({
-    queryKey: ["courses-home"],
+    queryKey: ["courses_v2", { publishedOnly: true }],
     queryFn: async () => {
       const { data } = await supabase.from("courses_v2").select("*").eq("is_published", true).order("order_index").limit(4);
       return data || [];
     }
   });
 
+  const courseIds = courses.map((c: any) => c.id);
   const { data: courseLessonCounts = {} } = useQuery({
-    queryKey: ["courseLessonCounts", courses.map((c: any) => c.id)],
+    queryKey: ["lessons", "counts", courseIds],
     queryFn: async () => {
-      if (courses.length === 0) return {};
-      const ids = courses.map((c: any) => c.id);
-      const { data } = await supabase.from("lessons").select("id, course_id").in("course_id", ids);
+      const { data } = await supabase.from("lessons").select("id, course_id").in("course_id", courseIds);
       const counts: Record<string, number> = {};
       (data || []).forEach((l: any) => { counts[l.course_id] = (counts[l.course_id] || 0) + 1; });
       return counts;
     },
-    enabled: courses.length > 0,
+    enabled: courseIds.length > 0,
   });
 
   const { data: progress = [] } = useQuery({
-    queryKey: ["userProgress", user?.id],
+    queryKey: ["user_progress", user?.id],
     queryFn: async () => {
       if (!user) return [];
       const { data } = await supabase.from("user_progress").select("*").eq("user_id", user.id).eq("completed", true);
