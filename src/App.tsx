@@ -17,6 +17,7 @@ import WelcomePage from "./pages/WelcomePage";
 import PremiumPage from "./pages/PremiumPage";
 import PlayerPage from "./pages/PlayerPage";
 import MasteryPlayerPage from "./pages/MasteryPlayerPage";
+import BilateralPage from "./pages/BilateralPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import CourseExperiencePage from "./pages/CourseExperiencePage";
 import HomeScreenSetupPage from "./pages/HomeScreenSetupPage";
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/premium" element={<ProtectedRoute><PremiumPage /></ProtectedRoute>} />
             <Route path="/player" element={<ProtectedRoute><PlayerPage /></ProtectedRoute>} />
+            <Route path="/bilateral" element={<ProtectedRoute><BilateralPage /></ProtectedRoute>} />
             <Route path="/mastery-player" element={<ProtectedRoute><MasteryPlayerPage /></ProtectedRoute>} />
             <Route path="/home-setup" element={<ProtectedRoute><HomeScreenSetupPage /></ProtectedRoute>} />
             <Route path="/paymentsuccess" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />

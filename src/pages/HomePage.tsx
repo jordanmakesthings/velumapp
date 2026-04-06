@@ -303,26 +303,48 @@ export default function HomePage() {
       </div>
 
       {/* Breathwork CTA - matches user screenshot */}
-      <Link to="/breathe" className="block mb-8 w-full max-w-full min-w-0">
-        <div className="velum-card relative w-full max-w-full min-w-0 overflow-hidden border border-accent/25 p-6">
-          {/* Animated orb */}
-          <div className="absolute top-1/2 right-8 -translate-y-1/2">
-            <div className="relative w-20 h-20">
-              <div className="absolute inset-0 rounded-full border border-accent/30" />
-              <div className="absolute inset-2 rounded-full border border-accent/20" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-accent/80 animate-pulse" />
+      {/* Interactive tools — 2-up row */}
+      <div className="mb-8 grid grid-cols-1 gap-3 min-w-0 w-full sm:grid-cols-2">
+        {/* Breathwork */}
+        <Link to="/breathe" className="block w-full min-w-0">
+          <div className="velum-card relative w-full min-w-0 overflow-hidden border border-accent/25 p-5 h-full">
+            <div className="absolute top-4 right-4">
+              <div className="relative w-12 h-12">
+                <div className="absolute inset-0 rounded-full border border-accent/30" />
+                <div className="absolute inset-1.5 rounded-full border border-accent/20" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-accent/80 animate-pulse" />
+                </div>
               </div>
             </div>
+            <p className="text-accent mb-1 text-[10px] font-sans font-bold tracking-wide uppercase">Breathwork</p>
+            <p className="text-foreground pr-14 font-serif text-lg leading-snug">Real-Time Breath Regulation</p>
+            <p className="text-ui mt-1 pr-14 text-[11px]">6 techniques</p>
+            <span className="inline-flex items-center gap-1.5 mt-4 rounded-lg bg-accent px-4 py-2 text-xs font-sans font-medium text-background">
+              Start <ArrowRight className="w-3 h-3" />
+            </span>
           </div>
-          <p className="text-accent mb-1 text-xs font-sans font-bold tracking-wide uppercase">Interactive Breathwork</p>
-          <p className="text-foreground max-w-full break-words pr-20 font-serif text-xl">Real-Time Nervous System Regulation</p>
-          <p className="text-ui mb-4 max-w-full break-words pr-20 text-xs">Guided Breathing Techniques</p>
-          <span className="inline-flex max-w-full items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-sans font-medium text-background">
-            Start breathing <ArrowRight className="w-4 h-4 shrink-0" />
-          </span>
-        </div>
-      </Link>
+        </Link>
+
+        {/* Bilateral */}
+        <Link to="/bilateral" className="block w-full min-w-0">
+          <div className="velum-card relative w-full min-w-0 overflow-hidden border border-accent/10 p-5 h-full">
+            {/* Travelling dot preview */}
+            <div className="absolute top-4 right-4 w-12 h-12 flex items-center justify-center">
+              <div className="w-full h-px bg-foreground/10 relative">
+                <div className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full gold-gradient animate-[ping_1.4s_ease-in-out_infinite] opacity-60" style={{ left: "30%" }} />
+                <div className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full gold-gradient" style={{ left: "30%" }} />
+              </div>
+            </div>
+            <p className="text-accent mb-1 text-[10px] font-sans font-bold tracking-wide uppercase">Bilateral</p>
+            <p className="text-foreground pr-14 font-serif text-lg leading-snug">Bilateral Stimulation</p>
+            <p className="text-ui mt-1 pr-14 text-[11px]">Visual + stereo audio</p>
+            <span className="inline-flex items-center gap-1.5 mt-4 rounded-lg bg-card px-4 py-2 text-xs font-sans font-medium text-foreground border border-foreground/10">
+              Start <ArrowRight className="w-3 h-3" />
+            </span>
+          </div>
+        </Link>
+      </div>
 
       {/* Today's Reflection */}
       <div className="mb-8 min-w-0 w-full max-w-full">
