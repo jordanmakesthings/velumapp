@@ -18,6 +18,8 @@ import PremiumPage from "./pages/PremiumPage";
 import PlayerPage from "./pages/PlayerPage";
 import MasteryPlayerPage from "./pages/MasteryPlayerPage";
 import BilateralPage from "./pages/BilateralPage";
+import ToolsPage from "./pages/ToolsPage";
+import TappingGeneratorPage from "./pages/TappingGeneratorPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import CourseExperiencePage from "./pages/CourseExperiencePage";
 import HomeScreenSetupPage from "./pages/HomeScreenSetupPage";
@@ -49,6 +51,7 @@ const App = () => (
               <Route path="/home" element={<HomePage />} />
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/breathe" element={<BreathePage />} />
+              <Route path="/tools" element={<ToolsPage />} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/course/:id" element={<CourseDetailPage />} />
               <Route path="/course-v2" element={<CourseExperiencePage />} />
@@ -63,6 +66,7 @@ const App = () => (
             <Route path="/premium" element={<ProtectedRoute><PremiumPage /></ProtectedRoute>} />
             <Route path="/player" element={<ProtectedRoute><PlayerPage /></ProtectedRoute>} />
             <Route path="/bilateral" element={<ProtectedRoute><BilateralPage /></ProtectedRoute>} />
+            <Route path="/tapping" element={<ProtectedRoute><TappingGeneratorPage /></ProtectedRoute>} />
             <Route path="/mastery-player" element={<ProtectedRoute><MasteryPlayerPage /></ProtectedRoute>} />
             <Route path="/home-setup" element={<ProtectedRoute><HomeScreenSetupPage /></ProtectedRoute>} />
             <Route path="/paymentsuccess" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />

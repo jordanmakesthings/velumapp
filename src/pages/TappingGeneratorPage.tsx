@@ -1,0 +1,454 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Sparkles, RotateCcw, ChevronLeft, ChevronRight, Hand } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+interface TappingPoint {
+  point: string;
+  phrase: string;
+}
+
+interface TappingRound {
+  label: string;
+  points: TappingPoint[];
+}
+
+interface TappingScript {
+  title: string;
+  setup_statements: string[];
+  rounds: TappingRound[];
+  closing: string;
+}
+
+// ---------------------------------------------------------------------------
+// Tapping point diagram positions (as % of a body silhouette area)
+// ---------------------------------------------------------------------------
+const POINT_LABELS: Record<string, string> = {
+  "Eyebrow": "Inner edge of eyebrow",
+  "Side of Eye": "Temple, beside eye",
+  "Under Eye": "Below the eye on cheekbone",
+  "Under Nose": "Between nose and lip",
+  "Chin": "Centre of chin",
+  "Collarbone": "Below collarbone, either side",
+  "Under Arm": "4 inches below armpit",
+  "Top of Head": "Crown of the head",
+};
+
+const EMOTION_TYPES = [
+  "Anxiety", "Anger", "Grief", "Fear", "Shame", "Overwhelm",
+  "Limiting belief", "Physical pain", "Relationship stress", "Work stress",
+];
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+type Phase = "input" | "generating" | "setup" | "round" | "closing" | "done";
+
+export default function TappingGeneratorPage() {
+  const navigate = useNavigate();
+
+  // Input state
+  const [issue, setIssue] = useState("");
+  const [intensity, setIntensity] = useState(7);
+  const [emotionType, setEmotionType] = useState("");
+  const [error, setError] = useState("");
+
+  // Script state
+  const [script, setScript] = useState<TappingScript | null>(null);
+  const [phase, setPhase] = useState<Phase>("input");
+
+  // Navigation within script
+  const [setupIdx, setSetupIdx] = useState(0);       // 0-2 for 3 setup statements
+  const [roundIdx, setRoundIdx] = useState(0);        // which round (0-2)
+  const [pointIdx, setPointIdx] = useState(0);        // which point in round (0-7)
+
+  // ---------------------------------------------------------------------------
+  // Generate
+  // ---------------------------------------------------------------------------
+  const generate = async () => {
+    if (!issue.trim()) { setError("Tell me what you'd like to work on."); return; }
+    setError("");
+    setPhase("generating");
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("generate-tapping-script", {
+        body: { issue, intensity, emotion_type: emotionType || null },
+      });
+
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.script) throw new Error("No script returned");
+
+      setScript(data.script);
+      setSetupIdx(0);
+      setRoundIdx(0);
+      setPointIdx(0);
+      setPhase("setup");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Try again.");
+      setPhase("input");
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Navigation helpers
+  // ---------------------------------------------------------------------------
+  const nextSetup = () => {
+    if (setupIdx < 2) setSetupIdx(setupIdx + 1);
+    else setPhase("round");
+  };
+
+  const nextPoint = () => {
+    if (!script) return;
+    const round = script.rounds[roundIdx];
+    if (pointIdx < round.points.length - 1) {
+      setPointIdx(pointIdx + 1);
+    } else {
+      // End of round
+      if (roundIdx < script.rounds.length - 1) {
+        setRoundIdx(roundIdx + 1);
+        setPointIdx(0);
+      } else {
+        setPhase("closing");
+      }
+    }
+  };
+
+  const prevPoint = () => {
+    if (pointIdx > 0) {
+      setPointIdx(pointIdx - 1);
+    } else if (roundIdx > 0) {
+      setRoundIdx(roundIdx - 1);
+      setPointIdx((script?.rounds[roundIdx - 1].points.length ?? 1) - 1);
+    } else {
+      setPhase("setup");
+      setSetupIdx(2);
+    }
+  };
+
+  const restart = () => {
+    setScript(null);
+    setIssue("");
+    setEmotionType("");
+    setIntensity(7);
+    setPhase("input");
+  };
+
+  // ---------------------------------------------------------------------------
+  // Render helpers
+  // ---------------------------------------------------------------------------
+  const totalPoints = script ? script.rounds.reduce((s, r) => s + r.points.length, 0) : 0;
+  const pointsCompleted = script
+    ? script.rounds.slice(0, roundIdx).reduce((s, r) => s + r.points.length, 0) + pointIdx
+    : 0;
+  const progressPct = totalPoints > 0 ? (pointsCompleted / totalPoints) * 100 : 0;
+
+  const slide = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -12 } };
+
+  // ---------------------------------------------------------------------------
+  // Input screen
+  // ---------------------------------------------------------------------------
+  if (phase === "input") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex items-center px-4 pt-4 mb-6">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+        </div>
+
+        <div className="flex-1 px-6 max-w-lg mx-auto w-full pb-8">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="w-12 h-12 rounded-2xl gold-gradient flex items-center justify-center mb-4">
+              <Hand className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <h1 className="text-display text-3xl mb-2">AI Tapping</h1>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Describe what you're feeling right now — a situation, emotion, or belief — and get a personalised EFT tapping script.
+            </p>
+          </div>
+
+          {/* Issue input */}
+          <div className="mb-6">
+            <label className="block text-xs text-muted-foreground uppercase tracking-widest mb-2">
+              What would you like to work on?
+            </label>
+            <textarea
+              value={issue}
+              onChange={(e) => setIssue(e.target.value)}
+              placeholder="e.g. I feel anxious about a difficult conversation I need to have…"
+              rows={4}
+              className="w-full bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40"
+            />
+          </div>
+
+          {/* Intensity */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs text-muted-foreground uppercase tracking-widest">
+                Intensity right now
+              </label>
+              <span className="text-accent text-lg font-display">{intensity}<span className="text-muted-foreground text-xs">/10</span></span>
+            </div>
+            <input
+              type="range" min={1} max={10} value={intensity}
+              onChange={(e) => setIntensity(Number(e.target.value))}
+              className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-accent"
+            />
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[10px] text-muted-foreground">Mild</span>
+              <span className="text-[10px] text-muted-foreground">Overwhelming</span>
+            </div>
+          </div>
+
+          {/* Emotion type (optional) */}
+          <div className="mb-8">
+            <label className="block text-xs text-muted-foreground uppercase tracking-widest mb-2">
+              Primary emotion <span className="normal-case">(optional)</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {EMOTION_TYPES.map((e) => (
+                <button
+                  key={e}
+                  onClick={() => setEmotionType(emotionType === e ? "" : e)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-sans transition-all ${
+                    emotionType === e
+                      ? "gold-gradient text-primary-foreground"
+                      : "bg-card text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && <p className="text-destructive text-xs mb-4">{error}</p>}
+
+          <button
+            onClick={generate}
+            disabled={!issue.trim()}
+            className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-40 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            Generate My Script
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Generating
+  // ---------------------------------------------------------------------------
+  if (phase === "generating") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-6">
+        <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center">
+          <Sparkles className="w-6 h-6 text-primary-foreground animate-pulse" />
+        </div>
+        <div className="text-center">
+          <p className="text-display text-xl mb-2">Creating your script…</p>
+          <p className="text-muted-foreground text-sm">Personalising to what you shared.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!script) return null;
+
+  // ---------------------------------------------------------------------------
+  // Setup statements (Karate chop)
+  // ---------------------------------------------------------------------------
+  if (phase === "setup") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex items-center justify-between px-4 pt-4 pb-2">
+          <button onClick={restart} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+            <ArrowLeft className="w-4 h-4" /> New script
+          </button>
+          <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Setup</p>
+          <div className="w-20" />
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full">
+          <AnimatePresence mode="wait">
+            <motion.div key={setupIdx} {...slide} className="w-full text-center">
+              {/* Karate chop illustration */}
+              <div className="mb-8 flex justify-center">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full bg-surface-light flex items-center justify-center">
+                    <Hand className="w-8 h-8 text-accent" />
+                  </div>
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground whitespace-nowrap">
+                    Karate chop point
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3">
+                Say this out loud · {setupIdx + 1} of 3
+              </p>
+              <p className="text-foreground font-serif text-xl leading-relaxed mb-8 px-4">
+                "{script.setup_statements[setupIdx]}"
+              </p>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Dots */}
+          <div className="flex gap-2 mb-8">
+            {script.setup_statements.map((_, i) => (
+              <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === setupIdx ? "bg-accent" : "bg-foreground/20"}`} />
+            ))}
+          </div>
+
+          <button
+            onClick={nextSetup}
+            className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+          >
+            {setupIdx < 2 ? "Next statement" : "Begin tapping"}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+
+          <p className="mt-4 text-center text-muted-foreground text-[11px] leading-relaxed">
+            Tap the side of your hand continuously<br />while repeating each statement 3 times.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tapping rounds
+  // ---------------------------------------------------------------------------
+  if (phase === "round") {
+    const round = script.rounds[roundIdx];
+    const point = round.points[pointIdx];
+
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        {/* Header + progress */}
+        <div className="px-4 pt-4 pb-2">
+          <div className="flex items-center justify-between mb-3">
+            <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+            <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">{round.label}</p>
+            <p className="text-muted-foreground text-xs font-sans">{pointIdx + 1}/8</p>
+          </div>
+          {/* Progress bar */}
+          <div className="h-1 bg-surface-light rounded-full overflow-hidden">
+            <div
+              className="h-full gold-gradient rounded-full transition-all duration-300"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full">
+          <AnimatePresence mode="wait">
+            <motion.div key={`${roundIdx}-${pointIdx}`} {...slide} className="w-full text-center">
+              {/* Point name */}
+              <div className="mb-6">
+                <span className="inline-block px-4 py-1.5 rounded-full bg-surface-light text-accent text-xs font-sans font-medium tracking-wide">
+                  {point.point}
+                </span>
+                <p className="text-muted-foreground text-[11px] mt-1.5">
+                  {POINT_LABELS[point.point] ?? ""}
+                </p>
+              </div>
+
+              {/* Phrase */}
+              <p className="text-foreground font-serif text-2xl leading-relaxed mb-10 px-2">
+                "{point.phrase}"
+              </p>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Nav buttons */}
+          <div className="flex gap-3 w-full mb-4">
+            <button
+              onClick={prevPoint}
+              className="flex-none px-5 py-3.5 rounded-2xl bg-card text-foreground font-sans text-sm active:scale-[0.97] transition-transform flex items-center gap-1"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={nextPoint}
+              className="flex-1 py-3.5 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+            >
+              Next point <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <p className="text-center text-muted-foreground text-[11px]">
+            Tap firmly but gently, 5–7 times on each point.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Closing
+  // ---------------------------------------------------------------------------
+  if (phase === "closing") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-sm w-full text-center">
+          <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6">
+            <Sparkles className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">Integration</p>
+          <p className="text-foreground font-serif text-xl leading-relaxed mb-10 px-2">
+            {script.closing}
+          </p>
+          <button
+            onClick={() => setPhase("done")}
+            className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium active:scale-[0.98] transition-transform"
+          >
+            Complete session
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Done
+  // ---------------------------------------------------------------------------
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full text-center">
+        <div className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6">
+          <Hand className="w-8 h-8 text-primary-foreground" />
+        </div>
+        <h2 className="text-display text-2xl mb-2">Session complete</h2>
+        <p className="text-muted-foreground text-sm mb-2">"{script.title}"</p>
+        <p className="text-muted-foreground text-sm mb-10">
+          Take a breath. Notice what has shifted.
+        </p>
+
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={() => { setSetupIdx(0); setRoundIdx(0); setPointIdx(0); setPhase("setup"); }}
+            className="w-full py-3.5 rounded-2xl bg-card text-foreground font-sans text-sm flex items-center justify-center gap-2 border border-foreground/10 active:scale-[0.98] transition-transform"
+          >
+            <RotateCcw className="w-4 h-4" /> Run again
+          </button>
+          <button
+            onClick={restart}
+            className="w-full py-3.5 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+          >
+            <Sparkles className="w-4 h-4" /> New script
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Eye, EyeOff } from "lucide-react";
-import { motion, useAnimationFrame } from "framer-motion";
+import { ArrowLeft, ArrowRight, Play, Pause, Volume2, VolumeX, Eye, EyeOff, RotateCcw } from "lucide-react";
+import { motion, AnimatePresence, useAnimationFrame } from "framer-motion";
 
 // ---------------------------------------------------------------------------
 // Speed presets — full left-to-right-to-left cycle in seconds
@@ -20,45 +20,35 @@ const DURATIONS = [
 ] as const;
 
 // ---------------------------------------------------------------------------
-// Web Audio engine for stereo-panning tones
+// Web Audio engine
 // ---------------------------------------------------------------------------
 class BilateralAudio {
   private ctx: AudioContext | null = null;
   private osc: OscillatorNode | null = null;
   private gainNode: GainNode | null = null;
   private panner: StereoPannerNode | null = null;
-  private clickGain: GainNode | null = null;
 
-  start(volume: number) {
+  start() {
     this.ctx = new AudioContext();
-
-    // Continuous low sine tone (barely audible carrier — 80Hz sub-bass feel)
     this.osc = this.ctx.createOscillator();
     this.osc.type = "sine";
     this.osc.frequency.setValueAtTime(220, this.ctx.currentTime);
 
     this.panner = this.ctx.createStereoPanner();
     this.gainNode = this.ctx.createGain();
-    this.gainNode.gain.setValueAtTime(volume * 0.18, this.ctx.currentTime);
+    this.gainNode.gain.setValueAtTime(0.18, this.ctx.currentTime);
 
     this.osc.connect(this.gainNode);
     this.gainNode.connect(this.panner);
     this.panner.connect(this.ctx.destination);
     this.osc.start();
-
-    // Separate click gain for the "tap" sounds
-    this.clickGain = this.ctx.createGain();
-    this.clickGain.gain.setValueAtTime(0, this.ctx.currentTime);
-    this.clickGain.connect(this.ctx.destination);
   }
 
-  /** Called every frame — position is -1 (left) to +1 (right) */
   setPan(position: number) {
     if (!this.panner || !this.ctx) return;
     this.panner.pan.setTargetAtTime(position, this.ctx.currentTime, 0.02);
   }
 
-  /** Play a soft tap when the orb reaches an edge */
   tap(side: "left" | "right") {
     if (!this.ctx) return;
     const osc = this.ctx.createOscillator();
@@ -68,10 +58,8 @@ class BilateralAudio {
     osc.type = "sine";
     osc.frequency.setValueAtTime(528, this.ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(264, this.ctx.currentTime + 0.12);
-
     gain.gain.setValueAtTime(0.28, this.ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.14);
-
     pan.pan.setValueAtTime(side === "left" ? -0.9 : 0.9, this.ctx.currentTime);
 
     osc.connect(gain);
@@ -96,75 +84,80 @@ class BilateralAudio {
 }
 
 // ---------------------------------------------------------------------------
+// Phases
+// ---------------------------------------------------------------------------
+type Phase = "intake-issue" | "intake-belief" | "intake-intensity" | "disclaimer" | "session" | "done";
+
+const slide = {
+  initial: { opacity: 0, x: 24 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -16 },
+  transition: { duration: 0.22 },
+};
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 export default function BilateralPage() {
   const navigate = useNavigate();
-  const [isRunning, setIsRunning] = useState(false);
+
+  // Intake
+  const [phase, setPhase] = useState<Phase>("intake-issue");
+  const [issue, setIssue] = useState("");
+  const [belief, setBelief] = useState("");
+  const [intensity, setIntensity] = useState(7);
+  const [startIntensity, setStartIntensity] = useState(7);
+
+  // Session config
   const [soundOn, setSoundOn] = useState(true);
   const [showOrb, setShowOrb] = useState(true);
-  const [speedIdx, setSpeedIdx] = useState(1); // Medium default
-  const [durationIdx, setDurationIdx] = useState(1); // 5 min default
+  const [speedIdx, setSpeedIdx] = useState(1);
+  const [durationIdx, setDurationIdx] = useState(1);
+  const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
-  const [orbX, setOrbX] = useState(0); // -1 to +1
+  const [orbX, setOrbX] = useState(0);
 
   const audioRef = useRef<BilateralAudio>(new BilateralAudio());
-  const startTimeRef = useRef<number>(0);
   const lastEdgeRef = useRef<"left" | "right" | null>(null);
-  const elapsedRef = useRef(0);
 
   const speed = SPEEDS[speedIdx];
   const duration = DURATIONS[durationIdx];
-
-  // Keep elapsedRef in sync
-  useEffect(() => { elapsedRef.current = elapsed; }, [elapsed]);
 
   const stop = useCallback(() => {
     setIsRunning(false);
     audioRef.current.stop();
   }, []);
 
-  const start = useCallback(() => {
+  const startSession = useCallback(() => {
     setElapsed(0);
-    elapsedRef.current = 0;
-    startTimeRef.current = performance.now();
     lastEdgeRef.current = null;
-    if (soundOn) audioRef.current.start(1);
+    if (soundOn) audioRef.current.start();
     setIsRunning(true);
   }, [soundOn]);
 
-  // Session timer
+  // Timer
   useEffect(() => {
     if (!isRunning) return;
-    const interval = setInterval(() => {
+    const id = setInterval(() => {
       setElapsed((e) => {
         const next = e + 1;
-        if (duration.seconds > 0 && next >= duration.seconds) {
-          stop();
-        }
+        if (duration.seconds > 0 && next >= duration.seconds) stop();
         return next;
       });
     }, 1000);
-    return () => clearInterval(interval);
+    return () => clearInterval(id);
   }, [isRunning, duration.seconds, stop]);
 
-  // Animation loop — drives orb position and audio panning
+  // Animation loop
   useAnimationFrame((time) => {
     if (!isRunning) return;
-
-    // Position: sine wave cycling at the chosen speed
-    // cycleDuration = half-period (L→R or R→L) in ms
     const halfCycleMs = (speed.value / 2) * 1000;
-    const phase = (time % (halfCycleMs * 2)) / (halfCycleMs * 2); // 0..1
-    // Use sine to get smooth -1..+1 travel
-    const pos = Math.sin(phase * Math.PI * 2); // -1 to +1
-
+    const phase_ = (time % (halfCycleMs * 2)) / (halfCycleMs * 2);
+    const pos = Math.sin(phase_ * Math.PI * 2);
     setOrbX(pos);
 
     if (soundOn && audioRef.current.isRunning()) {
       audioRef.current.setPan(pos);
-
-      // Tap sound at each edge (debounced — only once per edge visit)
       if (pos > 0.92 && lastEdgeRef.current !== "right") {
         lastEdgeRef.current = "right";
         audioRef.current.tap("right");
@@ -175,213 +168,380 @@ export default function BilateralPage() {
     }
   });
 
-  // Cleanup on unmount
   useEffect(() => () => audioRef.current.stop(), []);
 
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, "0")}`;
-  };
-
-  const remaining =
-    duration.seconds > 0 ? Math.max(0, duration.seconds - elapsed) : elapsed;
-
-  // Map orbX (-1..+1) to screen percentage (5%..95%)
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
+  const remaining = duration.seconds > 0 ? Math.max(0, duration.seconds - elapsed) : elapsed;
   const orbPercent = ((orbX + 1) / 2) * 90 + 5;
 
-  return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-safe pt-4 pb-2">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back
-        </button>
-        <div className="text-center">
-          <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">
-            Bilateral
-          </p>
+  // ---------------------------------------------------------------------------
+  // Intake — Issue
+  // ---------------------------------------------------------------------------
+  if (phase === "intake-issue") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex items-center px-4 pt-4 mb-6">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
         </div>
-        <div className="w-16" />
-      </div>
 
-      {/* Main stage */}
-      <div className="flex-1 flex flex-col">
-        {/* Orb track */}
-        <div className="relative flex items-center justify-center" style={{ height: "40vh" }}>
-          {/* Track line */}
-          <div className="absolute inset-x-[5%] top-1/2 -translate-y-1/2 h-px bg-foreground/8" />
-
-          {/* Left / Right markers */}
-          <div className="absolute left-[5%] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-foreground/15" />
-          <div className="absolute right-[5%] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-foreground/15" />
-
-          {/* Orb */}
-          {showOrb && (
-            <motion.div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
-              style={{ left: `${orbPercent}%` }}
-              transition={{ type: "tween", duration: 0 }}
-            >
-              {/* Outer glow */}
-              <div
-                className="absolute inset-0 rounded-full blur-xl opacity-60 scale-150"
-                style={{
-                  background: "radial-gradient(circle, hsl(42,53%,54%) 0%, transparent 70%)",
-                  width: "3.5rem",
-                  height: "3.5rem",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%) scale(2)",
-                }}
-              />
-              {/* Core */}
-              <div
-                className="relative rounded-full gold-gradient shadow-lg"
-                style={{ width: "2.25rem", height: "2.25rem" }}
-              />
-            </motion.div>
-          )}
-
-          {/* Eyes-closed instruction */}
-          {!showOrb && isRunning && (
-            <p className="text-muted-foreground text-sm font-serif italic text-center px-8">
-              Let the sound guide you.<br />Follow it with your mind's eye.
-            </p>
-          )}
-
-          {/* Idle instruction */}
-          {!isRunning && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-8">
-              <p className="text-foreground font-serif text-xl text-center">
-                Bilateral Stimulation
-              </p>
-              <p className="text-muted-foreground text-sm text-center leading-relaxed">
-                Follow the light with your eyes as it moves.<br />
-                Let your thoughts process without effort.
+        <AnimatePresence mode="wait">
+          <motion.div key="issue" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+            <div className="mb-8">
+              <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-3">Step 1 of 3</p>
+              <h1 className="text-display text-3xl mb-3">What's bothering you?</h1>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Be as specific as you can. The more honest, the more effective the session.
               </p>
             </div>
-          )}
+
+            <textarea
+              value={issue}
+              onChange={(e) => setIssue(e.target.value)}
+              placeholder="e.g. I'm feeling anxious about a conversation with my manager tomorrow. My chest is tight and I can't stop replaying it."
+              rows={5}
+              autoFocus
+              className="flex-1 bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40 mb-6"
+            />
+
+            <button
+              onClick={() => setPhase("intake-belief")}
+              disabled={issue.trim().length < 5}
+              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-40 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+            >
+              Continue <ArrowRight className="w-4 h-4" />
+            </button>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Intake — Belief
+  // ---------------------------------------------------------------------------
+  if (phase === "intake-belief") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex items-center px-4 pt-4 mb-6">
+          <button onClick={() => setPhase("intake-issue")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
         </div>
 
-        {/* Timer */}
-        {isRunning && (
-          <div className="text-center mb-2">
-            <p className="text-display text-3xl text-accent tabular-nums">
-              {formatTime(remaining)}
-            </p>
-            <p className="text-muted-foreground text-[10px] font-sans tracking-widest uppercase mt-1">
-              {duration.seconds > 0 ? "remaining" : "elapsed"}
-            </p>
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          <motion.div key="belief" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+            <div className="mb-8">
+              <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-3">Step 2 of 3</p>
+              <h1 className="text-display text-3xl mb-3">What do you believe to be true about this?</h1>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                What does this situation make you believe — about yourself, others, or the world?
+              </p>
+            </div>
 
-        {/* Controls */}
-        <div className="px-6 pb-safe pb-8 space-y-5 mt-auto">
+            <textarea
+              value={belief}
+              onChange={(e) => setBelief(e.target.value)}
+              placeholder="e.g. I believe I'm not good enough and that I'm going to say something wrong. I feel like people don't respect me."
+              rows={5}
+              autoFocus
+              className="flex-1 bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40 mb-6"
+            />
 
-          {/* Speed + Duration — only visible when stopped */}
-          {!isRunning && (
-            <>
+            <button
+              onClick={() => setPhase("intake-intensity")}
+              disabled={belief.trim().length < 3}
+              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-40 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+            >
+              Continue <ArrowRight className="w-4 h-4" />
+            </button>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Intake — Intensity
+  // ---------------------------------------------------------------------------
+  if (phase === "intake-intensity") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex items-center px-4 pt-4 mb-6">
+          <button onClick={() => setPhase("intake-belief")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div key="intensity" {...slide} className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full pb-8">
+            <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-6">Step 3 of 3</p>
+            <h1 className="text-display text-3xl mb-3 text-center">Rate your intensity right now</h1>
+            <p className="text-muted-foreground text-sm mb-10 text-center">
+              How distressing does this feel in your body, from 1 (mild) to 10 (overwhelming)?
+            </p>
+
+            <p className="text-display text-7xl text-accent mb-2 tabular-nums">{intensity}</p>
+            <p className="text-muted-foreground text-xs uppercase tracking-widest mb-10">
+              {intensity <= 3 ? "Mild" : intensity <= 6 ? "Moderate" : intensity <= 8 ? "High" : "Overwhelming"}
+            </p>
+
+            <div className="w-full mb-10">
+              <input
+                type="range" min={1} max={10} value={intensity}
+                onChange={(e) => setIntensity(Number(e.target.value))}
+                className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:shadow-lg"
+              />
+              <div className="flex justify-between mt-2">
+                <span className="text-[10px] text-muted-foreground">1 · Mild</span>
+                <span className="text-[10px] text-muted-foreground">10 · Overwhelming</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => { setStartIntensity(intensity); setPhase("disclaimer"); }}
+              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+            >
+              Continue
+            </button>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Disclaimer
+  // ---------------------------------------------------------------------------
+  if (phase === "disclaimer") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+        <AnimatePresence mode="wait">
+          <motion.div key="disclaimer" {...slide} className="max-w-sm w-full">
+            <div className="w-12 h-12 rounded-xl bg-surface-light flex items-center justify-center mb-6">
+              <span className="text-xl">⚠️</span>
+            </div>
+            <h2 className="text-display text-2xl mb-4">Before you begin</h2>
+            <div className="space-y-3 mb-8">
+              <p className="text-foreground/80 text-sm leading-relaxed">
+                Bilateral stimulation is a self-regulation tool. It can support emotional processing and help calm your nervous system.
+              </p>
+              <p className="text-foreground/80 text-sm leading-relaxed">
+                It is <strong>not</strong> a replacement for working with a licensed mental health professional, therapist, or trauma specialist.
+              </p>
+              <p className="text-foreground/80 text-sm leading-relaxed">
+                If you are working through trauma, significant distress, or a mental health condition, please do so with professional support.
+              </p>
+            </div>
+
+            {/* Config in disclaimer so they can set it before the session starts */}
+            <div className="space-y-4 mb-8">
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2.5 text-center">Speed</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Speed</p>
                 <div className="flex gap-2">
                   {SPEEDS.map((s, i) => (
-                    <button
-                      key={s.label}
-                      onClick={() => setSpeedIdx(i)}
-                      className={`flex-1 py-3 rounded-xl text-sm font-sans transition-all ${
-                        speedIdx === i
-                          ? "gold-gradient text-primary-foreground"
-                          : "bg-card text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <span className="block font-medium">{s.label}</span>
-                      <span className="block text-[10px] opacity-70 mt-0.5">{s.description}</span>
+                    <button key={s.label} onClick={() => setSpeedIdx(i)}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-sans transition-all ${speedIdx === i ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"}`}>
+                      {s.label}
                     </button>
                   ))}
                 </div>
               </div>
-
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2.5 text-center">Duration</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Duration</p>
                 <div className="flex gap-2">
                   {DURATIONS.map((d, i) => (
-                    <button
-                      key={d.label}
-                      onClick={() => setDurationIdx(i)}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-sans transition-all ${
-                        durationIdx === i
-                          ? "gold-gradient text-primary-foreground"
-                          : "bg-card text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
+                    <button key={d.label} onClick={() => setDurationIdx(i)}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-sans transition-all ${durationIdx === i ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"}`}>
                       {d.label}
                     </button>
                   ))}
                 </div>
               </div>
-            </>
-          )}
-
-          {/* Option toggles */}
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => {
-                setSoundOn(!soundOn);
-                if (isRunning) {
-                  if (soundOn) audioRef.current.stop();
-                  else audioRef.current.start(1);
-                }
-              }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans transition-colors ${
-                soundOn ? "bg-card text-foreground" : "bg-card text-muted-foreground"
-              }`}
-            >
-              {soundOn ? <Volume2 className="w-4 h-4 text-accent" /> : <VolumeX className="w-4 h-4" />}
-              {soundOn ? "Sound on" : "Sound off"}
-            </button>
+            </div>
 
             <button
-              onClick={() => setShowOrb(!showOrb)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans transition-colors ${
-                showOrb ? "bg-card text-foreground" : "bg-card text-muted-foreground"
-              }`}
+              onClick={() => setPhase("session")}
+              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
             >
-              {showOrb ? <Eye className="w-4 h-4 text-accent" /> : <EyeOff className="w-4 h-4" />}
-              {showOrb ? "Visual on" : "Eyes closed"}
+              I understand — begin
             </button>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Done
+  // ---------------------------------------------------------------------------
+  if (phase === "done") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full text-center">
+          <div className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6">
+            <span className="text-2xl">✦</span>
+          </div>
+          <h2 className="text-display text-2xl mb-2">Session complete</h2>
+          <p className="text-muted-foreground text-sm mb-8">Take a breath. Notice what's different.</p>
+
+          <div className="velum-card p-5 mb-8 text-left">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3">Your session</p>
+            <p className="text-foreground text-sm mb-1 font-sans font-medium">What you worked on:</p>
+            <p className="text-muted-foreground text-sm mb-4 italic">"{issue}"</p>
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <p className="text-display text-2xl text-accent">{startIntensity}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Before</p>
+              </div>
+              <div className="flex-1 h-px bg-foreground/10 relative">
+                <div className="absolute inset-y-0 left-0 bg-accent/40 rounded-full transition-all" style={{ width: `${Math.max(0, (startIntensity - intensity) / startIntensity * 100)}%` }} />
+              </div>
+              <div className="text-center">
+                <p className="text-display text-2xl text-accent">{intensity}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">After</p>
+              </div>
+            </div>
+            {intensity < startIntensity && (
+              <p className="text-accent text-xs text-center mt-3">
+                ↓ {startIntensity - intensity} point{startIntensity - intensity !== 1 ? "s" : ""} shift
+              </p>
+            )}
           </div>
 
-          {/* Play / Stop */}
-          <button
-            onClick={isRunning ? stop : start}
-            className={`w-full py-4 rounded-2xl font-sans font-medium text-base transition-all active:scale-[0.98] ${
-              isRunning
-                ? "bg-card text-foreground border border-foreground/10"
-                : "gold-gradient text-primary-foreground"
-            }`}
-          >
-            {isRunning ? (
-              <span className="flex items-center justify-center gap-2">
-                <Pause className="w-5 h-5" /> Stop
-              </span>
-            ) : (
-              <span className="flex items-center justify-center gap-2">
-                <Play className="w-5 h-5 ml-0.5" /> Begin
-              </span>
-            )}
-          </button>
+          <div className="flex flex-col gap-3">
+            <div className="velum-card p-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">How does it feel now?</p>
+              <input
+                type="range" min={1} max={10} value={intensity}
+                onChange={(e) => setIntensity(Number(e.target.value))}
+                className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-accent"
+              />
+              <div className="flex justify-between mt-1">
+                <span className="text-[10px] text-muted-foreground">1</span>
+                <span className="text-display text-lg text-accent">{intensity}</span>
+                <span className="text-[10px] text-muted-foreground">10</span>
+              </div>
+            </div>
 
-          {!isRunning && (
-            <p className="text-center text-muted-foreground text-[11px] leading-relaxed">
-              Use headphones for the full stereo experience.<br />
-              Follow the light with soft, relaxed eyes.
+            <button onClick={() => { setPhase("session"); startSession(); }}
+              className="w-full py-3.5 rounded-2xl bg-card text-foreground font-sans text-sm flex items-center justify-center gap-2 border border-foreground/10 active:scale-[0.98] transition-transform">
+              <RotateCcw className="w-4 h-4" /> Another round
+            </button>
+            <button onClick={() => navigate("/tools")}
+              className="w-full py-3.5 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-sm active:scale-[0.98] transition-transform">
+              Done
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Session
+  // ---------------------------------------------------------------------------
+  return (
+    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
+        <button onClick={() => { stop(); setPhase("disclaimer"); }}
+          className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+        <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Bilateral</p>
+        <div className="w-16" />
+      </div>
+
+      {/* Landscape hint on mobile — shown only before session starts */}
+      {!isRunning && (
+        <div className="lg:hidden mx-4 mb-2 px-3 py-2 rounded-xl bg-surface-light flex items-center gap-2">
+          <span className="text-sm">📱</span>
+          <p className="text-[11px] text-muted-foreground">Turn your phone sideways for the best experience.</p>
+        </div>
+      )}
+
+      {/* Orb track */}
+      <div className="relative flex items-center justify-center flex-1" style={{ minHeight: "35vh" }}>
+        <div className="absolute inset-x-[5%] top-1/2 -translate-y-1/2 h-px bg-foreground/8" />
+        <div className="absolute left-[5%] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-foreground/15" />
+        <div className="absolute right-[5%] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-foreground/15" />
+
+        {showOrb && (
+          <motion.div
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
+            style={{ left: `${orbPercent}%` }}
+          >
+            <div className="absolute top-1/2 left-1/2"
+              style={{ transform: "translate(-50%, -50%) scale(2)", width: "3.5rem", height: "3.5rem",
+                background: "radial-gradient(circle, hsl(42,53%,54%) 0%, transparent 70%)",
+                borderRadius: "50%", filter: "blur(12px)", opacity: 0.6 }} />
+            <div className="relative rounded-full gold-gradient shadow-lg" style={{ width: "2.25rem", height: "2.25rem" }} />
+          </motion.div>
+        )}
+
+        {!showOrb && isRunning && (
+          <p className="text-muted-foreground text-sm font-serif italic text-center px-8">
+            Let the sound guide you.<br />Follow it with your mind's eye.
+          </p>
+        )}
+
+        {!isRunning && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-8">
+            <p className="text-muted-foreground text-sm text-center leading-relaxed font-serif italic">
+              "{issue.slice(0, 80)}{issue.length > 80 ? "…" : ""}"
             </p>
+          </div>
+        )}
+      </div>
+
+      {/* Timer */}
+      {isRunning && (
+        <div className="text-center shrink-0 mb-2">
+          <p className="text-display text-3xl text-accent tabular-nums">{formatTime(remaining)}</p>
+          <p className="text-muted-foreground text-[10px] uppercase tracking-widest mt-1">
+            {duration.seconds > 0 ? "remaining" : "elapsed"}
+          </p>
+        </div>
+      )}
+
+      {/* Controls */}
+      <div className="px-6 pb-6 space-y-4 shrink-0">
+        <div className="flex gap-3 justify-center">
+          <button
+            onClick={() => { setSoundOn(!soundOn); if (isRunning) { if (soundOn) audioRef.current.stop(); else audioRef.current.start(); } }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans transition-colors ${soundOn ? "bg-card text-foreground" : "bg-card text-muted-foreground"}`}>
+            {soundOn ? <Volume2 className="w-4 h-4 text-accent" /> : <VolumeX className="w-4 h-4" />}
+            {soundOn ? "Sound on" : "Sound off"}
+          </button>
+          <button
+            onClick={() => setShowOrb(!showOrb)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans transition-colors ${showOrb ? "bg-card text-foreground" : "bg-card text-muted-foreground"}`}>
+            {showOrb ? <Eye className="w-4 h-4 text-accent" /> : <EyeOff className="w-4 h-4" />}
+            {showOrb ? "Visual" : "Eyes closed"}
+          </button>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={isRunning ? stop : startSession}
+            className={`flex-1 py-4 rounded-2xl font-sans font-medium text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2 ${isRunning ? "bg-card text-foreground border border-foreground/10" : "gold-gradient text-primary-foreground"}`}>
+            {isRunning ? <><Pause className="w-5 h-5" /> Stop</> : <><Play className="w-5 h-5 ml-0.5" /> Begin</>}
+          </button>
+          {isRunning && (
+            <button onClick={() => { stop(); setPhase("done"); }}
+              className="px-5 py-4 rounded-2xl bg-card text-foreground font-sans text-sm border border-foreground/10 active:scale-[0.98] transition-transform">
+              Finish
+            </button>
           )}
         </div>
+
+        {!isRunning && (
+          <p className="text-center text-muted-foreground text-[11px] leading-relaxed">
+            Use headphones. Follow the light with soft, relaxed eyes.
+          </p>
+        )}
       </div>
     </div>
   );

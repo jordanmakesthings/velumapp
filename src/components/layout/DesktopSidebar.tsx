@@ -1,11 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Library, Wind, BookOpen, User, Feather } from "lucide-react";
+import { Home, Library, Zap, BookOpen, User, Feather } from "lucide-react";
 import logoLotus from "@/assets/logo-lotus.jpg";
 
 const navItems = [
-  { path: "/", icon: Home, label: "Home" },
+  { path: "/home", icon: Home, label: "Home" },
   { path: "/library", icon: Library, label: "Library" },
-  { path: "/breathe", icon: Wind, label: "Breathe" },
+  { path: "/tools", icon: Zap, label: "Tools" },
   { path: "/courses", icon: BookOpen, label: "Courses" },
   { path: "/journal", icon: Feather, label: "Journal" },
   { path: "/profile", icon: User, label: "Profile" },

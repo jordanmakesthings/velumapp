@@ -1,12 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Library, Wind, BookOpen, User } from "lucide-react";
+import { Home, Library, Zap, BookOpen, User } from "lucide-react";
+
+const TOOLS_PATHS = ["/tools", "/breathe", "/bilateral", "/tapping"];
 
 const navItems = [
-  { path: "/", icon: Home, label: "Home" },
-  { path: "/library", icon: Library, label: "Library" },
-  { path: "/breathe", icon: Wind, label: "Breathe" },
-  { path: "/courses", icon: BookOpen, label: "Courses" },
-  { path: "/profile", icon: User, label: "Profile" },
+  { path: "/home", icon: Home, label: "Home", match: ["/home", "/"] },
+  { path: "/library", icon: Library, label: "Library", match: ["/library", "/subcategory"] },
+  { path: "/tools", icon: Zap, label: "Tools", match: TOOLS_PATHS },
+  { path: "/courses", icon: BookOpen, label: "Courses", match: ["/courses", "/course"] },
+  { path: "/profile", icon: User, label: "Profile", match: ["/profile"] },
 ];
 
 export function BottomNav() {
@@ -14,8 +16,8 @@ export function BottomNav() {
 
   return (
     <>
-      {navItems.map(({ path, icon: Icon, label }) => {
-        const isActive = location.pathname === path;
+      {navItems.map(({ path, icon: Icon, label, match }) => {
+        const isActive = match.some((m) => location.pathname.startsWith(m));
         return (
           <Link
             key={path}
