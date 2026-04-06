@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, Mail, Sparkles } from "lucide-react";
-import { lovable } from "@/integrations/lovable/index";
+import { signInWithOAuth } from "@/integrations/supabase/oauth";
 import logoLotus from "@/assets/logo-lotus.jpg";
 
 type Mode = "login" | "signup" | "magic-link" | "forgot-password";
@@ -156,9 +156,7 @@ export default function AuthPage() {
               <button
               type="button"
               onClick={async () => {
-                const { error } = await lovable.auth.signInWithOAuth("google", {
-                  redirect_uri: window.location.origin
-                });
+                const { error } = await signInWithOAuth("google");
                 if (error) setError(error.message || "Google sign-in failed");
               }}
               className="flex-1 flex items-center justify-center gap-2 bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans hover:ring-1 hover:ring-accent/30 transition-all">
@@ -170,9 +168,7 @@ export default function AuthPage() {
               <button
               type="button"
               onClick={async () => {
-                const { error } = await lovable.auth.signInWithOAuth("apple", {
-                  redirect_uri: window.location.origin
-                });
+                const { error } = await signInWithOAuth("apple");
                 if (error) setError(error.message || "Apple sign-in failed");
               }}
               className="flex-1 flex items-center justify-center gap-2 bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans hover:ring-1 hover:ring-accent/30 transition-all">
