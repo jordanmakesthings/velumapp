@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, Mail, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { signInWithOAuth } from "@/integrations/supabase/oauth";
 import logoLotus from "@/assets/logo-lotus.jpg";
 
@@ -39,7 +40,6 @@ export default function AuthPage() {
         if (error) throw error;
         setMessage("Check your email for a sign-in link.");
       } else if (mode === "forgot-password") {
-        const { default: supabase } = await import("@/integrations/supabase/client").then((m) => ({ default: m.supabase }));
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`
         });
