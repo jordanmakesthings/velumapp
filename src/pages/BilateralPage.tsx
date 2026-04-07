@@ -171,7 +171,7 @@ class BilateralAudio {
 // ---------------------------------------------------------------------------
 // Phases
 // ---------------------------------------------------------------------------
-type Phase = "intake-issue" | "intake-belief" | "intake-intensity" | "disclaimer" | "session" | "done";
+type Phase = "intake-issue" | "intake-belief" | "intake-intensity" | "disclaimer" | "session" | "belief-check" | "positive-cognition" | "done";
 
 const slide = {
   initial: { opacity: 0, x: 24 },
@@ -199,6 +199,8 @@ export default function BilateralPage() {
   const [speedIdx, setSpeedIdx] = useState(1);
   const [durationIdx, setDurationIdx] = useState(2);
   const [soundTypeIdx, setSoundTypeIdx] = useState(0);
+  const [beliefTruth, setBeliefTruth] = useState(7);
+  const [positiveCognition, setPositiveCognition] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [orbX, setOrbX] = useState(0);
@@ -227,7 +229,7 @@ export default function BilateralPage() {
     const id = setInterval(() => {
       setElapsed((e) => {
         const next = e + 1;
-        if (duration.seconds > 0 && next >= duration.seconds) stop();
+        if (duration.seconds > 0 && next >= duration.seconds) { stop(); setBeliefTruth(7); setPhase("belief-check"); }
         return next;
       });
     }, 1000);
@@ -481,6 +483,103 @@ export default function BilateralPage() {
   }
 
   // ---------------------------------------------------------------------------
+  // Belief check — how true does the negative belief feel now?
+  // ---------------------------------------------------------------------------
+  if (phase === "belief-check") {
+    const truthLabel = beliefTruth <= 3 ? "Barely true" : beliefTruth <= 5 ? "Somewhat true" : beliefTruth <= 7 ? "Still feels true" : "Very true";
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full">
+          <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-4 text-center">Check in</p>
+          <h2 className="text-display text-2xl mb-2 text-center">How true does this feel now?</h2>
+          <p className="text-muted-foreground text-sm mb-6 text-center leading-relaxed">
+            Rate how true this belief feels in your body right now.
+          </p>
+
+          <div className="velum-card p-5 mb-8 text-center">
+            <p className="text-foreground font-serif text-lg leading-relaxed italic">"{belief}"</p>
+          </div>
+
+          <p className="text-display text-7xl text-accent mb-1 text-center tabular-nums">{beliefTruth}</p>
+          <p className="text-muted-foreground text-xs uppercase tracking-widest mb-6 text-center">{truthLabel}</p>
+
+          <input
+            type="range" min={1} max={10} value={beliefTruth}
+            onChange={(e) => setBeliefTruth(Number(e.target.value))}
+            className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer mb-2 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:shadow-lg"
+          />
+          <div className="flex justify-between mb-8">
+            <span className="text-[10px] text-muted-foreground">1 · Not true</span>
+            <span className="text-[10px] text-muted-foreground">10 · Completely true</span>
+          </div>
+
+          <button
+            onClick={() => beliefTruth < 5 ? setPhase("positive-cognition") : setPhase("done")}
+            className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+          >
+            Continue
+          </button>
+
+          {beliefTruth >= 5 && (
+            <p className="text-muted-foreground text-[11px] text-center mt-3 leading-relaxed">
+              Still feels present — you may want to run another round before finishing.
+            </p>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Positive cognition — what would they rather feel?
+  // ---------------------------------------------------------------------------
+  if (phase === "positive-cognition") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex items-center px-4 pt-4 mb-6">
+          <button onClick={() => setPhase("belief-check")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div key="pos-cog" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+            <div className="mb-6">
+              <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-3">Something shifted</p>
+              <h1 className="text-display text-3xl mb-3">What would you rather feel?</h1>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Write a belief or feeling that feels more true, more aligned, or more like who you want to be.
+              </p>
+            </div>
+
+            <div className="velum-card p-4 mb-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Instead of</p>
+              <p className="text-foreground/60 font-serif text-sm italic">"{belief}"</p>
+            </div>
+
+            <textarea
+              value={positiveCognition}
+              onChange={(e) => setPositiveCognition(e.target.value)}
+              placeholder="e.g. I am capable of handling this. I trust myself."
+              rows={4}
+              autoFocus
+              className="flex-1 bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40 mb-6"
+            />
+
+            <button
+              onClick={() => setPhase("done")}
+              disabled={positiveCognition.trim().length < 3}
+              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-40 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+            >
+              Complete session <ArrowRight className="w-4 h-4" />
+            </button>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // Done
   // ---------------------------------------------------------------------------
   if (phase === "done") {
@@ -491,7 +590,13 @@ export default function BilateralPage() {
             <span className="text-2xl">✦</span>
           </div>
           <h2 className="text-display text-2xl mb-2">Session complete</h2>
-          <p className="text-muted-foreground text-sm mb-8">Take a breath. Notice what's different.</p>
+          <p className="text-muted-foreground text-sm mb-6">Take a breath. Notice what's different.</p>
+          {positiveCognition && (
+            <div className="velum-card p-4 mb-6 text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Your new belief</p>
+              <p className="text-foreground font-serif text-base leading-relaxed italic">"{positiveCognition}"</p>
+            </div>
+          )}
 
           <div className="velum-card p-5 mb-8 text-left">
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3">Your session</p>
@@ -569,8 +674,35 @@ export default function BilateralPage() {
         </div>
       )}
 
+      {/* Belief / issue display */}
+      <div className="px-6 pt-2 pb-4 shrink-0 max-w-2xl mx-auto w-full text-center">
+        {!isRunning ? (
+          <AnimatePresence mode="wait">
+            <motion.div key="pre" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+              <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Hold this in mind</p>
+              <p className="text-foreground font-serif text-2xl leading-relaxed">
+                "{belief}"
+              </p>
+              {issue && (
+                <p className="text-muted-foreground text-sm italic leading-relaxed">
+                  {issue.slice(0, 100)}{issue.length > 100 ? "…" : ""}
+                </p>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div key="running" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <p className="text-foreground/70 font-serif text-lg leading-relaxed">
+                "{belief.slice(0, 100)}{belief.length > 100 ? "…" : ""}"
+              </p>
+            </motion.div>
+          </AnimatePresence>
+        )}
+      </div>
+
       {/* Orb track */}
-      <div className="relative flex items-center justify-center flex-1" style={{ minHeight: "35vh" }}>
+      <div className="relative flex items-center justify-center flex-1" style={{ minHeight: "25vh" }}>
         <div className="absolute inset-x-[5%] top-1/2 -translate-y-1/2 h-px bg-foreground/8" />
         <div className="absolute left-[5%] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-foreground/15" />
         <div className="absolute right-[5%] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-foreground/15" />
@@ -592,14 +724,6 @@ export default function BilateralPage() {
           <p className="text-muted-foreground text-sm font-serif italic text-center px-8">
             Let the sound guide you.<br />Follow it with your mind's eye.
           </p>
-        )}
-
-        {!isRunning && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-8">
-            <p className="text-muted-foreground text-sm text-center leading-relaxed font-serif italic">
-              "{issue.slice(0, 80)}{issue.length > 80 ? "…" : ""}"
-            </p>
-          </div>
         )}
       </div>
 
@@ -637,7 +761,7 @@ export default function BilateralPage() {
             {isRunning ? <><Pause className="w-5 h-5" /> Stop</> : <><Play className="w-5 h-5 ml-0.5" /> Begin</>}
           </button>
           {isRunning && (
-            <button onClick={() => { stop(); setPhase("done"); }}
+            <button onClick={() => { stop(); setBeliefTruth(7); setPhase("belief-check"); }}
               className="px-5 py-4 rounded-2xl bg-card text-foreground font-sans text-sm border border-foreground/10 active:scale-[0.98] transition-transform">
               Finish
             </button>
