@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Wind, Zap, Hand } from "lucide-react";
+import { Wind, Zap, Hand, Fingerprint } from "lucide-react";
 
 const TOOLS = [
   {
@@ -28,6 +28,15 @@ const TOOLS = [
     detail: "3-round script · Specific to your situation · Guided step-by-step",
     icon: Hand,
     gradient: true,
+  },
+  {
+    path: "/somatic-touch",
+    label: "Somatic Touch",
+    tag: "Somatic",
+    description: "Guided touch sequences that signal safety to your nervous system and release held activation.",
+    detail: "4 sequences · Breathing guide · Before & after check-in",
+    icon: Fingerprint,
+    gradient: false,
   },
 ] as const;
 

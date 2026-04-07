@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Home, Library, Zap, BookOpen, User } from "lucide-react";
 
-const TOOLS_PATHS = ["/tools", "/breathe", "/bilateral", "/tapping"];
+const TOOLS_PATHS = ["/tools", "/breathe", "/bilateral", "/tapping", "/somatic-touch"];
 
 const navItems = [
   { path: "/home", icon: Home, label: "Home", match: ["/home", "/"] },
