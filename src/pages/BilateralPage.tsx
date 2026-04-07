@@ -169,6 +169,18 @@ class BilateralAudio {
 }
 
 // ---------------------------------------------------------------------------
+// Intake categories
+// ---------------------------------------------------------------------------
+const CATEGORIES = [
+  { label: "Feeling anxious",      placeholder: "e.g. I can't stop worrying about the meeting tomorrow. My chest is tight and my mind keeps racing through worst-case scenarios." },
+  { label: "Feeling scattered",    placeholder: "e.g. I can't focus on anything. I keep switching tasks, feel restless, and my thoughts won't settle." },
+  { label: "Experiencing cravings", placeholder: "e.g. I have a strong urge to [drink / use / eat / etc.] right now. I feel it in my chest and I'm restless." },
+  { label: "Stuck on a memory",   placeholder: "e.g. I keep replaying a conversation from last week. When I think about it, my stomach drops and I feel shame." },
+  { label: "Relationship stress",  placeholder: "e.g. I'm carrying tension from an argument with [person]. I feel it in my shoulders and I can't let it go." },
+  { label: "Feeling overwhelmed",  placeholder: "e.g. There's too much going on and I can't settle. I feel pressure in my chest and I don't know where to start." },
+] as const;
+
+// ---------------------------------------------------------------------------
 // Phases
 // ---------------------------------------------------------------------------
 type Phase = "intake-issue" | "intake-belief" | "intake-intensity" | "disclaimer" | "session" | "belief-check" | "positive-cognition" | "done";
@@ -263,7 +275,7 @@ export default function BilateralPage() {
   const orbPercent = ((orbX + 1) / 2) * 90 + 5;
 
   // ---------------------------------------------------------------------------
-  // Intake — Issue
+  // Intake — Category (what are you dealing with?)
   // ---------------------------------------------------------------------------
   if (phase === "intake-issue") {
     return (
@@ -275,31 +287,31 @@ export default function BilateralPage() {
         </div>
 
         <AnimatePresence mode="wait">
-          <motion.div key="issue" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
-            <div className="mb-8">
+          <motion.div key="category" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+            <div className="mb-10">
               <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-3">Step 1 of 3</p>
-              <h1 className="text-display text-3xl mb-3">What's bothering you?</h1>
+              <h1 className="text-display text-3xl mb-3">What are you dealing with right now?</h1>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Be as specific as you can. The more honest, the more effective the session.
+                Choose what resonates most. You'll get to be specific in the next step.
               </p>
             </div>
 
-            <textarea
-              value={issue}
-              onChange={(e) => setIssue(e.target.value)}
-              placeholder="e.g. I'm feeling anxious about a conversation with my manager tomorrow. My chest is tight and I can't stop replaying it."
-              rows={5}
-              autoFocus
-              className="flex-1 bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40 mb-6"
-            />
-
-            <button
-              onClick={() => setPhase("intake-belief")}
-              disabled={issue.trim().length < 5}
-              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-40 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
-            >
-              Continue <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="flex flex-col gap-3 flex-1">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.label}
+                  onClick={() => { setIssue(cat.label); setPhase("intake-belief"); }}
+                  className={`w-full py-4 px-5 rounded-2xl text-left font-sans text-base transition-all active:scale-[0.98] flex items-center justify-between group ${
+                    issue === cat.label
+                      ? "gold-gradient text-primary-foreground"
+                      : "bg-card text-foreground hover:bg-card/80"
+                  }`}
+                >
+                  <span>{cat.label}</span>
+                  <ArrowRight className={`w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity ${issue === cat.label ? "opacity-100" : ""}`} />
+                </button>
+              ))}
+            </div>
           </motion.div>
         </AnimatePresence>
       </div>
@@ -307,9 +319,11 @@ export default function BilateralPage() {
   }
 
   // ---------------------------------------------------------------------------
-  // Intake — Belief
+  // Intake — Get specific
   // ---------------------------------------------------------------------------
   if (phase === "intake-belief") {
+    const category = CATEGORIES.find((c) => c.label === issue);
+
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
@@ -319,27 +333,35 @@ export default function BilateralPage() {
         </div>
 
         <AnimatePresence mode="wait">
-          <motion.div key="belief" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
-            <div className="mb-8">
+          <motion.div key="specific" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+            <div className="mb-6">
               <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-3">Step 2 of 3</p>
-              <h1 className="text-display text-3xl mb-3">What do you believe to be true about this?</h1>
+              <h1 className="text-display text-3xl mb-3">Get specific</h1>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                What does this situation make you believe — about yourself, others, or the world?
+                A vague target leads to vague outcomes. The more precise you are, the faster this works.
               </p>
             </div>
+
+            {issue && (
+              <div className="mb-4 inline-flex">
+                <span className="px-3 py-1.5 rounded-full bg-surface-light text-accent text-xs font-sans font-medium">
+                  {issue}
+                </span>
+              </div>
+            )}
 
             <textarea
               value={belief}
               onChange={(e) => setBelief(e.target.value)}
-              placeholder="e.g. I believe I'm not good enough and that I'm going to say something wrong. I feel like people don't respect me."
-              rows={5}
+              placeholder={category?.placeholder ?? "Describe exactly what you're experiencing — what you feel, where you feel it, and any specific thoughts or images that come up."}
+              rows={6}
               autoFocus
               className="flex-1 bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40 mb-6"
             />
 
             <button
               onClick={() => setPhase("intake-intensity")}
-              disabled={belief.trim().length < 3}
+              disabled={belief.trim().length < 5}
               className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-40 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
             >
               Continue <ArrowRight className="w-4 h-4" />
