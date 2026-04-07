@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Play, Pause, Volume2, VolumeX, Eye, EyeOff, RotateCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, Play, Pause, Volume2, VolumeX, Eye, EyeOff, RotateCcw, Wind, Shuffle, Flame, Rewind, Users, Layers } from "lucide-react";
 import { motion, AnimatePresence, useAnimationFrame } from "framer-motion";
 
 // ---------------------------------------------------------------------------
@@ -172,13 +172,13 @@ class BilateralAudio {
 // Intake categories
 // ---------------------------------------------------------------------------
 const CATEGORIES = [
-  { label: "Feeling anxious",      placeholder: "e.g. I can't stop worrying about the meeting tomorrow. My chest is tight and my mind keeps racing through worst-case scenarios." },
-  { label: "Feeling scattered",    placeholder: "e.g. I can't focus on anything. I keep switching tasks, feel restless, and my thoughts won't settle." },
-  { label: "Experiencing cravings", placeholder: "e.g. I have a strong urge to [drink / use / eat / etc.] right now. I feel it in my chest and I'm restless." },
-  { label: "Stuck on a memory",   placeholder: "e.g. I keep replaying a conversation from last week. When I think about it, my stomach drops and I feel shame." },
-  { label: "Relationship stress",  placeholder: "e.g. I'm carrying tension from an argument with [person]. I feel it in my shoulders and I can't let it go." },
-  { label: "Feeling overwhelmed",  placeholder: "e.g. There's too much going on and I can't settle. I feel pressure in my chest and I don't know where to start." },
-] as const;
+  { label: "Anxiety",              icon: Wind,    placeholder: "e.g. I can't stop worrying about tomorrow. My chest is tight and my mind keeps racing through worst-case scenarios." },
+  { label: "Scattered focus",      icon: Shuffle, placeholder: "e.g. I can't settle on anything. I keep switching between tasks, feel restless, and my thoughts won't slow down." },
+  { label: "Cravings",             icon: Flame,   placeholder: "e.g. I have a strong urge right now. I feel it in my chest and stomach and I can't shake it." },
+  { label: "A difficult memory",   icon: Rewind,  placeholder: "e.g. I keep replaying a moment from [when]. When I think about it, my stomach drops and I feel [emotion]." },
+  { label: "Relationship tension", icon: Users,   placeholder: "e.g. I'm carrying tension from [person or situation]. I feel it in my shoulders and jaw and I can't let it go." },
+  { label: "Overwhelm",            icon: Layers,  placeholder: "e.g. There's too much happening and I can't settle. I feel pressure in my chest and I don't know where to start." },
+];
 
 // ---------------------------------------------------------------------------
 // Phases
@@ -296,21 +296,29 @@ export default function BilateralPage() {
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 flex-1">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat.label}
-                  onClick={() => { setIssue(cat.label); setPhase("intake-belief"); }}
-                  className={`w-full py-4 px-5 rounded-2xl text-left font-sans text-base transition-all active:scale-[0.98] flex items-center justify-between group ${
-                    issue === cat.label
-                      ? "gold-gradient text-primary-foreground"
-                      : "bg-card text-foreground hover:bg-card/80"
-                  }`}
-                >
-                  <span>{cat.label}</span>
-                  <ArrowRight className={`w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity ${issue === cat.label ? "opacity-100" : ""}`} />
-                </button>
-              ))}
+            <div className="grid grid-cols-2 gap-3">
+              {CATEGORIES.map((cat) => {
+                const Icon = cat.icon;
+                const selected = issue === cat.label;
+                return (
+                  <button
+                    key={cat.label}
+                    onClick={() => { setIssue(cat.label); setPhase("intake-belief"); }}
+                    className={`relative p-5 rounded-2xl text-left transition-all active:scale-[0.97] flex flex-col gap-3 border ${
+                      selected
+                        ? "gold-gradient text-primary-foreground border-transparent"
+                        : "bg-card text-foreground border-foreground/5 hover:border-accent/20"
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                      selected ? "bg-white/15" : "bg-surface-light"
+                    }`}>
+                      <Icon className={`w-4 h-4 ${selected ? "text-primary-foreground" : "text-accent"}`} strokeWidth={1.5} />
+                    </div>
+                    <span className="font-sans text-sm font-medium leading-snug">{cat.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </motion.div>
         </AnimatePresence>
