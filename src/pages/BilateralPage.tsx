@@ -33,29 +33,21 @@ const SOUND_TYPES = [
 // ---------------------------------------------------------------------------
 class BilateralAudio {
   private ctx: AudioContext | null = null;
-  private osc: OscillatorNode | null = null;
-  private gainNode: GainNode | null = null;
-  private panner: StereoPannerNode | null = null;
+  private bgAudio: HTMLAudioElement | null = null;
 
   start() {
+    // Background track — binaural audio, play straight (no panning)
+    this.bgAudio = new Audio("/audio/bilateral-bg.mp3");
+    this.bgAudio.loop = true;
+    this.bgAudio.volume = 0.75;
+    this.bgAudio.play().catch(() => {});
+
+    // AudioContext kept for tap sounds
     this.ctx = new AudioContext();
-    this.osc = this.ctx.createOscillator();
-    this.osc.type = "sine";
-    this.osc.frequency.setValueAtTime(220, this.ctx.currentTime);
-
-    this.panner = this.ctx.createStereoPanner();
-    this.gainNode = this.ctx.createGain();
-    this.gainNode.gain.setValueAtTime(0.18, this.ctx.currentTime);
-
-    this.osc.connect(this.gainNode);
-    this.gainNode.connect(this.panner);
-    this.panner.connect(this.ctx.destination);
-    this.osc.start();
   }
 
-  setPan(position: number) {
-    if (!this.panner || !this.ctx) return;
-    this.panner.pan.setTargetAtTime(position, this.ctx.currentTime, 0.02);
+  setPan(_position: number) {
+    // No-op — binaural stereo is encoded in the audio file
   }
 
   tap(side: "left" | "right", soundType: number = 0) {
@@ -118,16 +110,14 @@ class BilateralAudio {
   }
 
   stop() {
-    this.osc?.stop();
+    this.bgAudio?.pause();
+    this.bgAudio = null;
     this.ctx?.close();
     this.ctx = null;
-    this.osc = null;
-    this.panner = null;
-    this.gainNode = null;
   }
 
   isRunning() {
-    return this.ctx !== null && this.ctx.state !== "closed";
+    return this.bgAudio !== null && !this.bgAudio.paused;
   }
 }
 
