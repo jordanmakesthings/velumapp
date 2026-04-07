@@ -69,23 +69,6 @@ export default function ToolsPage() {
         ))}
       </div>
 
-      {/* Coming soon */}
-      <div className="mt-8">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">Coming Soon</p>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: "Sound Bath", desc: "432Hz · 528Hz · Binaural beats" },
-            { label: "Somatic Shake", desc: "Neurogenic tremor protocol" },
-            { label: "Havening", desc: "Touch-based calming technique" },
-            { label: "Cold Protocol", desc: "Breath + cold exposure timer" },
-          ].map(({ label, desc }) => (
-            <div key={label} className="velum-card p-4 opacity-50 cursor-not-allowed">
-              <p className="text-foreground text-sm font-sans font-medium mb-1">{label}</p>
-              <p className="text-muted-foreground text-[11px]">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
