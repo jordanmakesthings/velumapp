@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Sparkles, RotateCcw, ChevronLeft, ChevronRight, Hand, BookOpen, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
 import { FaceBodyDiagram, HandDiagram, FingerPointDiagram, TappingGuide } from "@/components/TappingPointDiagram";
 
 // ---------------------------------------------------------------------------
@@ -108,11 +107,14 @@ export default function TappingGeneratorPage() {
     setPhase("generating");
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("generate-tapping-script", {
-        body: { issue, intensity, emotion_type: emotionType || null },
+      const response = await fetch("/api/generate-tapping-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ issue, intensity, emotion_type: emotionType || null }),
       });
+      const data = await response.json();
 
-      if (fnError) throw fnError;
+      if (!response.ok) throw new Error(data.error ?? "Request failed");
       if (data?.error) throw new Error(data.error);
       if (!data?.script) throw new Error("No script returned");
 
