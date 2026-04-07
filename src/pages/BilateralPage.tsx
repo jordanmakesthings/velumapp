@@ -13,10 +13,19 @@ const SPEEDS = [
 ] as const;
 
 const DURATIONS = [
+  { label: "1 min", seconds: 60 },
+  { label: "2 min", seconds: 120 },
   { label: "3 min", seconds: 180 },
   { label: "5 min", seconds: 300 },
   { label: "10 min", seconds: 600 },
   { label: "Open", seconds: 0 },
+] as const;
+
+const SOUND_TYPES = [
+  { label: "Chime",  description: "Descending tone" },
+  { label: "Bell",   description: "Soft ring" },
+  { label: "Pulse",  description: "Gentle click" },
+  { label: "Drum",   description: "Deep tap" },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -49,24 +58,63 @@ class BilateralAudio {
     this.panner.pan.setTargetAtTime(position, this.ctx.currentTime, 0.02);
   }
 
-  tap(side: "left" | "right") {
+  tap(side: "left" | "right", soundType: number = 0) {
     if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const t = this.ctx.currentTime;
+    const panVal = side === "left" ? -0.9 : 0.9;
+
     const pan = this.ctx.createStereoPanner();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(528, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(264, this.ctx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.28, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.14);
-    pan.pan.setValueAtTime(side === "left" ? -0.9 : 0.9, this.ctx.currentTime);
-
-    osc.connect(gain);
-    gain.connect(pan);
+    pan.pan.setValueAtTime(panVal, t);
     pan.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.15);
+
+    if (soundType === 0) {
+      // Chime — descending sine 528→264
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(528, t);
+      osc.frequency.exponentialRampToValueAtTime(264, t + 0.12);
+      gain.gain.setValueAtTime(0.28, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      osc.connect(gain); gain.connect(pan);
+      osc.start(t); osc.stop(t + 0.16);
+
+    } else if (soundType === 1) {
+      // Bell — high sine, slow ring decay
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, t);
+      osc.frequency.exponentialRampToValueAtTime(840, t + 0.5);
+      gain.gain.setValueAtTime(0.22, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+      osc.connect(gain); gain.connect(pan);
+      osc.start(t); osc.stop(t + 0.58);
+
+    } else if (soundType === 2) {
+      // Pulse — short mid sine click, no pitch drop
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(400, t);
+      gain.gain.setValueAtTime(0.0, t);
+      gain.gain.linearRampToValueAtTime(0.25, t + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+      osc.connect(gain); gain.connect(pan);
+      osc.start(t); osc.stop(t + 0.08);
+
+    } else if (soundType === 3) {
+      // Drum — deep low thud
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(55, t + 0.08);
+      gain.gain.setValueAtTime(0.45, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      osc.connect(gain); gain.connect(pan);
+      osc.start(t); osc.stop(t + 0.12);
+    }
   }
 
   stop() {
@@ -112,7 +160,8 @@ export default function BilateralPage() {
   const [soundOn, setSoundOn] = useState(true);
   const [showOrb, setShowOrb] = useState(true);
   const [speedIdx, setSpeedIdx] = useState(1);
-  const [durationIdx, setDurationIdx] = useState(1);
+  const [durationIdx, setDurationIdx] = useState(2);
+  const [soundTypeIdx, setSoundTypeIdx] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [orbX, setOrbX] = useState(0);
@@ -160,10 +209,10 @@ export default function BilateralPage() {
       audioRef.current.setPan(pos);
       if (pos > 0.92 && lastEdgeRef.current !== "right") {
         lastEdgeRef.current = "right";
-        audioRef.current.tap("right");
+        audioRef.current.tap("right", soundTypeIdx);
       } else if (pos < -0.92 && lastEdgeRef.current !== "left") {
         lastEdgeRef.current = "left";
-        audioRef.current.tap("left");
+        audioRef.current.tap("left", soundTypeIdx);
       }
     }
   });
@@ -350,11 +399,23 @@ export default function BilateralPage() {
               </div>
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Duration</p>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {DURATIONS.map((d, i) => (
                     <button key={d.label} onClick={() => setDurationIdx(i)}
-                      className={`flex-1 py-2.5 rounded-xl text-xs font-sans transition-all ${durationIdx === i ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"}`}>
+                      className={`py-2.5 rounded-xl text-xs font-sans transition-all ${durationIdx === i ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"}`}>
                       {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Sound</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {SOUND_TYPES.map((s, i) => (
+                    <button key={s.label} onClick={() => setSoundTypeIdx(i)}
+                      className={`py-2.5 rounded-xl text-xs font-sans transition-all flex flex-col items-center gap-0.5 ${soundTypeIdx === i ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"}`}>
+                      <span>{s.label}</span>
+                      <span className={`text-[10px] ${soundTypeIdx === i ? "text-primary-foreground/70" : "text-muted-foreground/50"}`}>{s.description}</span>
                     </button>
                   ))}
                 </div>
