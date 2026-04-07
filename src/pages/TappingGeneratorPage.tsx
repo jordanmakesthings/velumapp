@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Sparkles, RotateCcw, ChevronLeft, ChevronRight, Hand, BookOpen, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaceBodyDiagram, HandDiagram, FingerPointDiagram, TappingGuide } from "@/components/TappingPointDiagram";
+import { TappingGuide } from "@/components/TappingPointDiagram";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -373,10 +373,13 @@ export default function TappingGeneratorPage() {
         <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full">
           <AnimatePresence mode="wait">
             <motion.div key={setupIdx} {...slide} className="w-full text-center">
-              {/* Hand diagram */}
+              {/* Karate chop indicator */}
               <div className="mb-6 flex justify-center">
-                <div className="relative">
-                  <HandDiagram activePoint="Karate Chop" size={120} />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-14 h-14 rounded-2xl bg-surface-light flex items-center justify-center">
+                    <Hand className="w-6 h-6 text-accent" strokeWidth={1.5} />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Side of hand · below pinky</p>
                 </div>
               </div>
 
@@ -425,7 +428,6 @@ export default function TappingGeneratorPage() {
   if (phase === "round") {
     const round = script.rounds[roundIdx];
     const point = round.points[pointIdx];
-    const isHeadPoint = ["Top of Head", "Eyebrow", "Side of Eye", "Under Eye", "Under Nose", "Chin"].includes(point.point);
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -454,21 +456,22 @@ export default function TappingGeneratorPage() {
         <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full">
           <AnimatePresence mode="wait">
             <motion.div key={`${roundIdx}-${pointIdx}`} {...slide} className="w-full flex flex-col items-center">
-              {/* Diagram showing current point */}
-              <div className="mb-4">
-                {isHeadPoint ? (
-                  <FaceBodyDiagram activePoint={point.point} size={130} />
-                ) : (
-                  <FaceBodyDiagram activePoint={point.point} size={130} />
-                )}
-              </div>
-
-              {/* Point name badge */}
-              <div className="mb-2 text-center">
-                <span className="inline-block px-4 py-1.5 rounded-full bg-surface-light text-accent text-xs font-sans font-medium tracking-wide">
+              {/* Point indicator */}
+              <div className="mb-6 flex flex-col items-center gap-2">
+                <motion.div
+                  key={`${roundIdx}-${pointIdx}-ring`}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="relative flex items-center justify-center"
+                >
+                  <div className="w-16 h-16 rounded-full bg-accent/10 border border-accent/25 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full bg-accent" />
+                  </div>
+                </motion.div>
+                <span className="text-foreground font-sans font-semibold text-base tracking-wide">
                   {point.point}
                 </span>
-                <p className="text-muted-foreground text-[11px] mt-1.5">
+                <p className="text-muted-foreground text-xs">
                   {POINT_DESCRIPTIONS[point.point] ?? ""}
                 </p>
               </div>
@@ -529,9 +532,11 @@ export default function TappingGeneratorPage() {
             </p>
           </div>
 
-          {/* Gamut hand diagram */}
-          <div className="mb-8 flex justify-center">
-            <HandDiagram activePoint="Gamut Point" size={140} />
+          <div className="mb-8 flex flex-col items-center gap-2">
+            <div className="w-14 h-14 rounded-2xl bg-surface-light flex items-center justify-center">
+              <Hand className="w-6 h-6 text-accent" strokeWidth={1.5} />
+            </div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Back of hand · between ring &amp; pinky knuckles</p>
           </div>
 
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">
@@ -603,8 +608,11 @@ export default function TappingGeneratorPage() {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full">
-          <div className="mb-6 flex justify-center">
-            <FingerPointDiagram activePoint={fp.point} size={130} />
+          <div className="mb-6 flex flex-col items-center gap-2">
+            <div className="w-14 h-14 rounded-2xl bg-surface-light flex items-center justify-center">
+              <Hand className="w-6 h-6 text-accent" strokeWidth={1.5} />
+            </div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{fp.point}</p>
           </div>
 
           <div className="text-center mb-6">
