@@ -29,6 +29,53 @@ const SOUND_TYPES = [
 ] as const;
 
 // ---------------------------------------------------------------------------
+// Sound preview — plays a single tap centred for audition on config screen
+// ---------------------------------------------------------------------------
+function previewSound(soundType: number) {
+  const ctx = new AudioContext();
+  const t = ctx.currentTime;
+  const pan = ctx.createStereoPanner();
+  pan.pan.setValueAtTime(0, t);
+  pan.connect(ctx.destination);
+
+  if (soundType === 0) {
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(528, t);
+    osc.frequency.exponentialRampToValueAtTime(264, t + 0.12);
+    gain.gain.setValueAtTime(0.32, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    osc.connect(gain); gain.connect(pan); osc.start(t); osc.stop(t + 0.16);
+  } else if (soundType === 1) {
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, t);
+    osc.frequency.exponentialRampToValueAtTime(840, t + 0.5);
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+    osc.connect(gain); gain.connect(pan); osc.start(t); osc.stop(t + 0.58);
+  } else if (soundType === 2) {
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(400, t);
+    gain.gain.setValueAtTime(0.0, t);
+    gain.gain.linearRampToValueAtTime(0.28, t + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    osc.connect(gain); gain.connect(pan); osc.start(t); osc.stop(t + 0.08);
+  } else if (soundType === 3) {
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(140, t);
+    osc.frequency.exponentialRampToValueAtTime(55, t + 0.08);
+    gain.gain.setValueAtTime(0.5, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+    osc.connect(gain); gain.connect(pan); osc.start(t); osc.stop(t + 0.12);
+  }
+
+  setTimeout(() => ctx.close(), 1000);
+}
+
+// ---------------------------------------------------------------------------
 // Web Audio engine
 // ---------------------------------------------------------------------------
 class BilateralAudio {
@@ -39,7 +86,7 @@ class BilateralAudio {
     // Background track — binaural audio, play straight (no panning)
     this.bgAudio = new Audio("/audio/bilateral-bg.mp3");
     this.bgAudio.loop = true;
-    this.bgAudio.volume = 0.75;
+    this.bgAudio.volume = 0.35;
     this.bgAudio.play().catch(() => {});
 
     // AudioContext kept for tap sounds
@@ -66,7 +113,7 @@ class BilateralAudio {
       osc.type = "sine";
       osc.frequency.setValueAtTime(528, t);
       osc.frequency.exponentialRampToValueAtTime(264, t + 0.12);
-      gain.gain.setValueAtTime(0.28, t);
+      gain.gain.setValueAtTime(0.55, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
       osc.connect(gain); gain.connect(pan);
       osc.start(t); osc.stop(t + 0.16);
@@ -78,7 +125,7 @@ class BilateralAudio {
       osc.type = "sine";
       osc.frequency.setValueAtTime(880, t);
       osc.frequency.exponentialRampToValueAtTime(840, t + 0.5);
-      gain.gain.setValueAtTime(0.22, t);
+      gain.gain.setValueAtTime(0.45, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
       osc.connect(gain); gain.connect(pan);
       osc.start(t); osc.stop(t + 0.58);
@@ -90,7 +137,7 @@ class BilateralAudio {
       osc.type = "sine";
       osc.frequency.setValueAtTime(400, t);
       gain.gain.setValueAtTime(0.0, t);
-      gain.gain.linearRampToValueAtTime(0.25, t + 0.008);
+      gain.gain.linearRampToValueAtTime(0.5, t + 0.008);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
       osc.connect(gain); gain.connect(pan);
       osc.start(t); osc.stop(t + 0.08);
@@ -102,7 +149,7 @@ class BilateralAudio {
       osc.type = "sine";
       osc.frequency.setValueAtTime(140, t);
       osc.frequency.exponentialRampToValueAtTime(55, t + 0.08);
-      gain.gain.setValueAtTime(0.45, t);
+      gain.gain.setValueAtTime(0.75, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
       osc.connect(gain); gain.connect(pan);
       osc.start(t); osc.stop(t + 0.12);
@@ -399,10 +446,19 @@ export default function BilateralPage() {
                 </div>
               </div>
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Sound</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Sound</p>
+                  <button
+                    onClick={() => setSoundOn(!soundOn)}
+                    className={`flex items-center gap-1.5 text-xs font-sans px-3 py-1 rounded-full transition-all ${soundOn ? "bg-accent/15 text-accent" : "bg-card text-muted-foreground"}`}
+                  >
+                    {soundOn ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
+                    {soundOn ? "On" : "Off"}
+                  </button>
+                </div>
+                <div className={`grid grid-cols-2 gap-2 transition-opacity ${!soundOn ? "opacity-40 pointer-events-none" : ""}`}>
                   {SOUND_TYPES.map((s, i) => (
-                    <button key={s.label} onClick={() => setSoundTypeIdx(i)}
+                    <button key={s.label} onClick={() => { setSoundTypeIdx(i); previewSound(i); }}
                       className={`py-2.5 rounded-xl text-xs font-sans transition-all flex flex-col items-center gap-0.5 ${soundTypeIdx === i ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"}`}>
                       <span>{s.label}</span>
                       <span className={`text-[10px] ${soundTypeIdx === i ? "text-primary-foreground/70" : "text-muted-foreground/50"}`}>{s.description}</span>
