@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function CourseDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, hasAccess } = useAuth();
 
   const { data: course, isLoading: courseLoading } = useQuery({
     queryKey: ["course", id],
@@ -41,8 +41,7 @@ export default function CourseDetailPage() {
 
   const completedTrackIds = new Set(progress.map((p: any) => p.track_id));
   const isPremium = course?.is_premium;
-  const hasPremium = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
-  const canAccess = !isPremium || hasPremium;
+  const canAccess = !isPremium || hasAccess;
 
   // Find earliest progress date for timed locks
   const sortedProgress = [...progress].sort((a: any, b: any) => (a.completed_date || a.created_at).localeCompare(b.completed_date || b.created_at));

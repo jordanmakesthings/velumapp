@@ -18,7 +18,7 @@ export default function MasteryPlayerPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id") || "";
-  const { user, profile } = useAuth();
+  const { user, hasAccess } = useAuth();
   const queryClient = useQueryClient();
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -111,7 +111,6 @@ export default function MasteryPlayerPage() {
     },
   });
 
-  const hasAccess = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
   const isGated = !hasAccess;
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 

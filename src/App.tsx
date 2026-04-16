@@ -21,6 +21,8 @@ import BilateralPage from "./pages/BilateralPage";
 import ToolsPage from "./pages/ToolsPage";
 import TappingGeneratorPage from "./pages/TappingGeneratorPage";
 import SomaticTouchPage from "./pages/SomaticTouchPage";
+import SOSPage from "./pages/SOSPage";
+import CheckinPage from "./pages/CheckinPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import CourseExperiencePage from "./pages/CourseExperiencePage";
 import HomeScreenSetupPage from "./pages/HomeScreenSetupPage";
@@ -69,6 +71,8 @@ const App = () => (
             <Route path="/bilateral" element={<ProtectedRoute><BilateralPage /></ProtectedRoute>} />
             <Route path="/tapping" element={<ProtectedRoute><TappingGeneratorPage /></ProtectedRoute>} />
             <Route path="/somatic-touch" element={<ProtectedRoute><SomaticTouchPage /></ProtectedRoute>} />
+            <Route path="/sos" element={<ProtectedRoute><SOSPage /></ProtectedRoute>} />
+            <Route path="/checkin" element={<ProtectedRoute><CheckinPage /></ProtectedRoute>} />
             <Route path="/mastery-player" element={<ProtectedRoute><MasteryPlayerPage /></ProtectedRoute>} />
             <Route path="/home-setup" element={<ProtectedRoute><HomeScreenSetupPage /></ProtectedRoute>} />
             <Route path="/paymentsuccess" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />

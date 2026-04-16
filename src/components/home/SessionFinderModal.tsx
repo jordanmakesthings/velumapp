@@ -1,62 +1,158 @@
-import { useState, useMemo, useEffect } from "react";
-import { ChevronLeft, X, RotateCcw, Play } from "lucide-react";
+import { useState } from "react";
+import { ChevronLeft, X, ArrowRight, Wind, Zap, Hand, Fingerprint, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
-interface FinderOption {
-  key: string;
-  label: string;
-  desc: string;
-  min?: number;
-  max?: number;
+// ---------------------------------------------------------------------------
+// Options
+// ---------------------------------------------------------------------------
+const GOING_ON = [
+  { key: "spiral",           label: "Stuck in a thought spiral",       sub: "Can't seem to get out of my head" },
+  { key: "anxious_specific", label: "Anxious about something specific", sub: "I know what it is" },
+  { key: "anxious_unknown",  label: "Anxious and I don't know why",     sub: "Something feels off" },
+  { key: "triggered",        label: "Triggered or activated",           sub: "Unsafe, reactive, on edge" },
+  { key: "tired_wired",      label: "Tired but wired",                  sub: "Exhausted but can't switch off" },
+  { key: "low_energy",       label: "Low energy or flat",               sub: "Disconnected, unmotivated" },
+  { key: "old_patterns",     label: "Defaulting to old patterns",       sub: "Autopilot, self-sabotage" },
+  { key: "blocked",          label: "Blocked or stuck",                 sub: "Know what I want, can't move toward it" },
+  { key: "cant_sleep",       label: "Can't sleep",                      sub: "Awake and mind won't stop" },
+  { key: "just_reset",       label: "Just need a reset",                sub: "No specific reason, something feels off" },
+];
+
+const WALK_AWAY = [
+  { key: "calm",         label: "Calm and regulated",        sub: "Nervous system back to baseline" },
+  { key: "confidence",   label: "Confidence and certainty",  sub: "Feel solid in myself again" },
+  { key: "trust",        label: "Trust and peace",           sub: "Let go before I have the answer" },
+  { key: "clarity",      label: "Clarity and direction",     sub: "Know what to do next" },
+  { key: "break_spiral", label: "Break the spiral",          sub: "Make it feel less heavy" },
+  { key: "empowered",    label: "Empowered and ready to move", sub: "Action energy" },
+  { key: "sleep",        label: "Ready for sleep",           sub: "Wind down and let go" },
+  { key: "uplift",       label: "A quick lift",              sub: "Positive emotion, shift the state fast" },
+];
+
+const TIME_OPTIONS = [
+  { key: "5",    label: "5 min",   sub: "Quick reset" },
+  { key: "10",   label: "10 min",  sub: "Short session" },
+  { key: "20",   label: "20 min",  sub: "Deep practice" },
+  { key: "open", label: "Open",    sub: "No rush" },
+];
+
+// ---------------------------------------------------------------------------
+// Recommendation logic
+// ---------------------------------------------------------------------------
+type ToolKey = "breathwork" | "bilateral" | "tapping" | "somatic" | "meditation" | "library";
+
+interface Recommendation {
+  tool: ToolKey;
+  path: string;
+  icon: typeof Wind;
+  headline: string;
+  reason: string;
+  ctaLabel: string;
+  secondaryPath?: string;
+  secondaryLabel?: string;
 }
 
-const FALLBACK_TYPES: FinderOption[] = [
-  { key: "guided", label: "Guided", desc: "Led by a facilitator" },
-  { key: "unguided", label: "Unguided", desc: "Self-directed practice" },
-  { key: "interactive", label: "Interactive", desc: "Active participation" },
-  { key: "walking", label: "Walking", desc: "Movement-based" },
-];
+function getRecommendation(
+  activation: number,
+  goingOn: string[],
+  walkAway: string,
+): Recommendation {
+  const has = (k: string) => goingOn.includes(k);
 
-const FALLBACK_GOALS: FinderOption[] = [
-  { key: "calm", label: "Calm", desc: "Settle the nervous system" },
-  { key: "focus", label: "Focus", desc: "Sharpen attention & clarity" },
-  { key: "energize", label: "Energize", desc: "Boost vitality & drive" },
-  { key: "process", label: "Process", desc: "Work through emotions" },
-  { key: "sleep", label: "Sleep", desc: "Wind down & rest deeply" },
-  { key: "confidence", label: "Confidence", desc: "Strengthen self-trust" },
-];
+  // Sleep / can't sleep
+  if (walkAway === "sleep" || has("cant_sleep")) {
+    return {
+      tool: "breathwork", path: "/breathe", icon: Wind,
+      headline: "Breathwork will shut your nervous system down gently.",
+      reason: "Sleep onset requires a long, slow exhale that activates the parasympathetic response. The 4-7-8 and NSDR patterns are built for exactly this — choose one and let it carry you.",
+      ctaLabel: "Open Breathwork",
+    };
+  }
 
-const FALLBACK_STATES: FinderOption[] = [
-  { key: "calm", label: "Calm", desc: "Already feeling settled" },
-  { key: "energized", label: "Energized", desc: "Feeling wired or restless" },
-  { key: "focused", label: "Focused", desc: "Mind is sharp" },
-  { key: "processing", label: "Processing", desc: "Something heavy to work through" },
-  { key: "grounded", label: "Grounded", desc: "Feeling steady" },
-  { key: "tired", label: "Tired", desc: "Ready to wind down" },
-];
+  // Thought spiral → bilateral
+  if (walkAway === "break_spiral" || has("spiral")) {
+    return {
+      tool: "bilateral", path: "/bilateral", icon: Zap,
+      headline: "Bilateral stimulation will break the loop without you thinking your way out.",
+      reason: "Thought spirals are processed through bilateral movement — your brain can't sustain the activation loop while doing this work. You don't need to know what's wrong. Just start.",
+      ctaLabel: "Start Bilateral",
+    };
+  }
 
-const FALLBACK_DURATIONS: FinderOption[] = [
-  { key: "0-5", label: "Under 5 minutes", desc: "Quick reset", min: 0, max: 5 },
-  { key: "5-10", label: "5–10 minutes", desc: "Short session", min: 5, max: 10 },
-  { key: "10-20", label: "10–20 minutes", desc: "Deep practice", min: 10, max: 20 },
-  { key: "20+", label: "20+ minutes", desc: "Extended session", min: 20, max: 999 },
-  { key: "extended", label: "Extended Journey", desc: "Full immersive experience", min: 30, max: 999 },
-];
+  // Specific anxiety / old patterns / blocked / confidence → tapping
+  if (has("anxious_specific") || has("old_patterns") || has("blocked") || walkAway === "confidence" || walkAway === "empowered") {
+    return {
+      tool: "tapping", path: "/tapping", icon: Hand,
+      headline: "Guided tapping is the fastest way to collapse a specific belief or fear.",
+      reason: "Tapping while focusing on what you're feeling sends a safety signal directly to the amygdala — the brain's fear center. Name what's going on and let the protocol do the rest.",
+      ctaLabel: "Start Guided Tapping",
+    };
+  }
 
-function useFinderSetting(key: string, fallback: FinderOption[]) {
-  return useQuery({
-    queryKey: ["appSettings", key],
-    queryFn: async () => {
-      const { data } = await supabase.from("app_settings").select("value").eq("key", key).single();
-      return (data?.value as unknown as FinderOption[]) || fallback;
-    },
-    initialData: fallback,
-  });
+  // Trust / peace / clarity → meditation
+  if (walkAway === "trust" || walkAway === "clarity") {
+    return {
+      tool: "meditation", path: "/library?category=meditation", icon: Sparkles,
+      headline: "A guided meditation will bring you back to what you already know.",
+      reason: "When you're searching for certainty that isn't available yet, the only path is inward. The answers you need aren't outside of you — they never were.",
+      ctaLabel: "Browse Meditations",
+    };
+  }
+
+  // High activation or needs to downregulate → breathwork
+  if (activation >= 7 || has("triggered") || has("tired_wired") || walkAway === "calm") {
+    return {
+      tool: "breathwork", path: "/breathe", icon: Wind,
+      headline: "Your nervous system is activated. Breathwork is the fastest way to regulate.",
+      reason: "At this level of activation, cognitive tools won't land. Your body needs to complete the stress response first. Breathwork does that in under 5 minutes — then everything else becomes possible.",
+      ctaLabel: "Open Breathwork",
+      secondaryPath: "/somatic-touch",
+      secondaryLabel: "Or try Somatic Touch",
+    };
+  }
+
+  // Low energy / need a lift → energizing breathwork
+  if (has("low_energy") || walkAway === "uplift") {
+    return {
+      tool: "breathwork", path: "/breathe", icon: Wind,
+      headline: "An energizing breath pattern will shift your state in minutes.",
+      reason: "Short, sharp inhales activate the sympathetic nervous system just enough to create a real energy shift. Pick the energizing pattern and go.",
+      ctaLabel: "Open Breathwork",
+    };
+  }
+
+  // Triggered / just need reset → somatic touch
+  if (has("triggered") || has("just_reset")) {
+    return {
+      tool: "somatic", path: "/somatic-touch", icon: Fingerprint,
+      headline: "Somatic touch will signal safety to your nervous system.",
+      reason: "When words aren't working and you can't name what's happening, your body responds to physical input. These sequences send a direct 'you are safe' signal.",
+      ctaLabel: "Start Somatic Touch",
+    };
+  }
+
+  // Default → bilateral
+  return {
+    tool: "bilateral", path: "/bilateral", icon: Zap,
+    headline: "Bilateral stimulation is your all-purpose reset.",
+    reason: "When you're not sure what's happening, bilateral work processes whatever is present — without needing to name it or think it through. Set the time, close your eyes, let it work.",
+    ctaLabel: "Start Bilateral",
+  };
 }
 
+// ---------------------------------------------------------------------------
+// Slide variants
+// ---------------------------------------------------------------------------
+const slide = {
+  enter: { opacity: 0, x: 32 },
+  center: { opacity: 1, x: 0, transition: { duration: 0.22 } },
+  exit: { opacity: 0, x: -32, transition: { duration: 0.16 } },
+};
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -65,171 +161,51 @@ interface Props {
 const TOTAL_STEPS = 4;
 
 export function SessionFinderModal({ open, onClose }: Props) {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
-  const [selectedStates, setSelectedStates] = useState<string[]>([]);
-  const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
-  const [showResults, setShowResults] = useState(false);
+  const [activation, setActivation] = useState(5);
+  const [goingOn, setGoingOn] = useState<string[]>([]);
+  const [walkAway, setWalkAway] = useState<string | null>(null);
+  const [time, setTime] = useState<string | null>(null);
 
-  const { data: sessionTypes } = useFinderSetting("session_finder_types", FALLBACK_TYPES);
-  const { data: goals } = useFinderSetting("session_finder_goals", FALLBACK_GOALS);
-  const { data: states } = useFinderSetting("session_finder_states", FALLBACK_STATES);
-  const { data: durations } = useFinderSetting("session_finder_durations", FALLBACK_DURATIONS);
-
-  const { data: tracks = [] } = useQuery({
-    queryKey: ["tracks"],
-    queryFn: async () => {
-      const { data } = await supabase.from("tracks").select("*").order("order_index");
-      return data || [];
-    },
-  });
-
-  const getTrackTags = (track: any): string[] => {
-    if (!track.tags || !Array.isArray(track.tags)) return [];
-    return track.tags.map((t: string) => t.toLowerCase());
-  };
-
-  const filteredTracks = useMemo(() => {
-    let results = (tracks as any[]).filter((t) => {
-      const tags = getTrackTags(t);
-
-      // session_type: exact match on "type:<key>"
-      if (selectedType && !tags.some((tag) => tag === `type:${selectedType}`)) return false;
-
-      // goal: tag includes "goal:<key>"
-      if (selectedGoal && !tags.some((tag) => tag === `goal:${selectedGoal}`)) return false;
-
-      // current_state: OR logic — at least one selected state matches
-      if (selectedStates.length > 0) {
-        const hasMatch = selectedStates.some((s) => tags.some((tag) => tag === `state:${s}`));
-        if (!hasMatch) return false;
-      }
-
-      // duration
-      if (selectedDuration) {
-        const range = durations.find((d: FinderOption) => d.key === selectedDuration);
-        if (range && range.min != null && range.max != null) {
-          if (t.duration_minutes < range.min || t.duration_minutes > range.max) return false;
-        }
-      }
-
-      return true;
-    });
-
-    // Fallback: relax current_state first, then goal
-    if (results.length === 0 && (selectedStates.length > 0 || selectedGoal)) {
-      results = (tracks as any[]).filter((t) => {
-        const tags = getTrackTags(t);
-        if (selectedType && !tags.some((tag) => tag === `type:${selectedType}`)) return false;
-        if (selectedGoal && !tags.some((tag) => tag === `goal:${selectedGoal}`)) return false;
-        if (selectedDuration) {
-          const range = durations.find((d: FinderOption) => d.key === selectedDuration);
-          if (range && range.min != null && range.max != null) {
-            if (t.duration_minutes < range.min || t.duration_minutes > range.max) return false;
-          }
-        }
-        return true;
-      });
-
-      if (results.length === 0) {
-        results = (tracks as any[]).filter((t) => {
-          const tags = getTrackTags(t);
-          if (selectedType && !tags.some((tag) => tag === `type:${selectedType}`)) return false;
-          if (selectedDuration) {
-            const range = durations.find((d: FinderOption) => d.key === selectedDuration);
-            if (range && range.min != null && range.max != null) {
-              if (t.duration_minutes < range.min || t.duration_minutes > range.max) return false;
-            }
-          }
-          return true;
-        });
-      }
-    }
-
-    return results;
-  }, [tracks, selectedType, selectedGoal, selectedStates, selectedDuration, durations]);
-
-  const clearAll = () => {
-    setSelectedType(null);
-    setSelectedGoal(null);
-    setSelectedStates([]);
-    setSelectedDuration(null);
+  const reset = () => {
     setStep(0);
-    setShowResults(false);
+    setActivation(5);
+    setGoingOn([]);
+    setWalkAway(null);
+    setTime(null);
   };
 
-  const handleClose = () => {
-    onClose();
-    setTimeout(clearAll, 300);
+  const handleClose = () => { reset(); onClose(); };
+
+  const toggleGoingOn = (key: string) => {
+    setGoingOn(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   };
 
-  const handleSingleSelect = (value: string, setter: (v: string | null) => void) => {
-    setter(value);
-    setTimeout(() => setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1)), 200);
+  const activationLabel = activation <= 2 ? "Barely noticeable"
+    : activation <= 4 ? "Mild"
+    : activation <= 6 ? "Moderate"
+    : activation <= 8 ? "High"
+    : "Overwhelming";
+
+  const rec = step === TOTAL_STEPS ? getRecommendation(activation, goingOn, walkAway ?? "") : null;
+
+  const canProceed = () => {
+    if (step === 1) return goingOn.length > 0;
+    if (step === 2) return walkAway !== null;
+    if (step === 3) return time !== null;
+    return true;
   };
 
-  const handleDurationSelect = (value: string) => {
-    setSelectedDuration(value);
-    setTimeout(() => setShowResults(true), 200);
+  const handleNext = () => {
+    if (step < TOTAL_STEPS) setStep(s => s + 1);
   };
 
-  const toggleState = (key: string) => {
-    setSelectedStates((prev) =>
-      prev.includes(key) ? prev.filter((s) => s !== key) : [...prev, key]
-    );
+  const handleLaunch = () => {
+    if (!rec) return;
+    handleClose();
+    navigate(rec.path);
   };
-
-  const getSessionTypeLabel = (track: any) => {
-    const tags = getTrackTags(track);
-    const typeTag = tags.find((t) => t.startsWith("type:"));
-    if (!typeTag) return null;
-    const key = typeTag.replace("type:", "");
-    const opt = sessionTypes.find((o: FinderOption) => o.key === key);
-    return opt?.label || key;
-  };
-
-  const slideVariants = {
-    enter: { opacity: 0, x: 40 },
-    center: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -40 },
-  };
-
-  const Chip = ({
-    label,
-    selected,
-    onSelect,
-  }: {
-    label: string;
-    selected: boolean;
-    onSelect: () => void;
-  }) => (
-    <button
-      onClick={onSelect}
-      className={`px-5 py-3 rounded-[12px] text-sm font-sans font-medium transition-all duration-150 ${
-        selected
-          ? "bg-accent text-accent-foreground"
-          : "bg-card border border-foreground/[0.08] text-foreground hover:border-foreground/20"
-      }`}
-    >
-      {label}
-    </button>
-  );
-
-  const stepTitles = [
-    "What are you looking for?",
-    "What do you want to walk away with?",
-    "How are you feeling right now?",
-    "How much time do you have?",
-  ];
-
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = ""; };
-    }
-  }, [open]);
 
   return (
     <AnimatePresence>
@@ -238,231 +214,200 @@ export function SessionFinderModal({ open, onClose }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-background flex flex-col"
+          className="fixed inset-0 z-[100] flex flex-col bg-background"
         >
-          {/* Top bar */}
-          <div className="flex items-center justify-between px-5 pt-5 pb-3">
-            <div>
-              {!showResults && step > 0 ? (
-                <button
-                  onClick={() => setStep((s) => s - 1)}
-                  className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-              ) : showResults ? (
-                <button
-                  onClick={() => { setShowResults(false); setStep(3); }}
-                  className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-              ) : (
-                <div className="w-9" />
-              )}
-            </div>
-            {!showResults && (
-              <span className="text-muted-foreground text-xs font-sans tracking-wider">
-                {step + 1} / {TOTAL_STEPS}
-              </span>
-            )}
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 pt-safe-top pt-4 pb-3 border-b border-accent/10 shrink-0">
             <button
-              onClick={handleClose}
-              className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={step > 0 && step < TOTAL_STEPS ? () => setStep(s => s - 1) : handleClose}
+              className="flex items-center gap-1 text-sm font-sans text-muted-foreground hover:text-foreground transition-colors min-h-10 px-1"
             >
-              <X className="w-5 h-5" />
+              {step > 0 && step < TOTAL_STEPS ? <><ChevronLeft className="w-4 h-4" /> Back</> : <X className="w-4 h-4" />}
+            </button>
+
+            <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">
+              Session Finder
+            </p>
+
+            <button onClick={handleClose} className="min-h-10 px-1">
+              {step > 0 && step < TOTAL_STEPS && <X className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />}
             </button>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 flex flex-col items-center justify-center px-6 overflow-y-auto">
-            <div className="w-full max-w-md">
+          {/* Progress bar */}
+          {step < TOTAL_STEPS && (
+            <div className="flex gap-1 px-4 pt-3 shrink-0">
+              {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+                <div key={i} className={`h-[2px] flex-1 rounded-full transition-colors duration-300 ${i <= step - 1 ? "bg-accent" : i === step ? "bg-accent/40" : "bg-accent/10"}`} />
+              ))}
+            </div>
+          )}
+
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="px-6 py-8 max-w-lg mx-auto w-full">
               <AnimatePresence mode="wait">
-                {!showResults && step === 0 && (
-                  <motion.div
-                    key="s0"
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ duration: 0.2 }}
-                    className="flex flex-col items-center"
-                  >
-                    <h1 className="text-display text-3xl text-center mb-8">
-                      {stepTitles[0]}
-                    </h1>
-                    <div className="flex flex-wrap gap-3 justify-center">
-                      {sessionTypes.map((opt: FinderOption) => (
-                        <Chip
-                          key={opt.key}
-                          label={opt.label}
-                          selected={selectedType === opt.key}
-                          onSelect={() => handleSingleSelect(opt.key, setSelectedType)}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
 
-                {!showResults && step === 1 && (
-                  <motion.div
-                    key="s1"
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ duration: 0.2 }}
-                    className="flex flex-col items-center"
-                  >
-                    <h1 className="text-display text-3xl text-center mb-8">
-                      {stepTitles[1]}
-                    </h1>
-                    <div className="flex flex-wrap gap-3 justify-center">
-                      {goals.map((opt: FinderOption) => (
-                        <Chip
-                          key={opt.key}
-                          label={opt.label}
-                          selected={selectedGoal === opt.key}
-                          onSelect={() => handleSingleSelect(opt.key, setSelectedGoal)}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-
-                {!showResults && step === 2 && (
-                  <motion.div
-                    key="s2"
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ duration: 0.2 }}
-                    className="flex flex-col items-center"
-                  >
-                    <h1 className="text-display text-3xl text-center mb-2">
-                      {stepTitles[2]}
-                    </h1>
-                    <p className="text-muted-foreground text-sm font-sans mb-8 text-center">
-                      Select all that apply.
+                {/* Step 0 — Activation */}
+                {step === 0 && (
+                  <motion.div key="s0" variants={slide} initial="enter" animate="center" exit="exit">
+                    <h2 className="text-display text-3xl mb-2">How activated is your nervous system right now?</h2>
+                    <p className="text-muted-foreground text-sm mb-10 leading-relaxed">
+                      Think about your body — not your thoughts. How much charge is running through you right now?
                     </p>
-                    <div className="flex flex-wrap gap-3 justify-center mb-8">
-                      {states.map((opt: FinderOption) => (
-                        <Chip
-                          key={opt.key}
-                          label={opt.label}
-                          selected={selectedStates.includes(opt.key)}
-                          onSelect={() => toggleState(opt.key)}
-                        />
-                      ))}
+                    <p className="text-display text-8xl text-accent text-center mb-1 tabular-nums">{activation}</p>
+                    <p className="text-muted-foreground text-xs uppercase tracking-widest text-center mb-10">{activationLabel}</p>
+                    <input
+                      type="range" min={1} max={10} value={activation}
+                      onChange={e => setActivation(Number(e.target.value))}
+                      className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer mb-2 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:shadow-lg"
+                    />
+                    <div className="flex justify-between mb-10">
+                      <span className="text-[10px] text-muted-foreground">1 · Completely calm</span>
+                      <span className="text-[10px] text-muted-foreground">10 · Overwhelming</span>
                     </div>
-                    <button
-                      onClick={() => setStep(3)}
-                      className="px-8 py-3 rounded-[12px] bg-accent text-accent-foreground text-sm font-sans font-medium transition-all active:scale-[0.97]"
-                    >
-                      {selectedStates.length > 0
-                        ? `Continue with ${selectedStates.length} selected`
-                        : "Continue"}
+                    <button onClick={handleNext} className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform">
+                      Continue
                     </button>
                   </motion.div>
                 )}
 
-                {!showResults && step === 3 && (
-                  <motion.div
-                    key="s3"
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ duration: 0.2 }}
-                    className="flex flex-col items-center"
-                  >
-                    <h1 className="text-display text-3xl text-center mb-8">
-                      {stepTitles[3]}
-                    </h1>
-                    <div className="flex flex-col gap-3 w-full">
-                      {durations.map((opt: FinderOption) => (
-                        <Chip
-                          key={opt.key}
-                          label={opt.label}
-                          selected={selectedDuration === opt.key}
-                          onSelect={() => handleDurationSelect(opt.key)}
-                        />
+                {/* Step 1 — What's going on */}
+                {step === 1 && (
+                  <motion.div key="s1" variants={slide} initial="enter" animate="center" exit="exit">
+                    <h2 className="text-display text-3xl mb-2">What's going on?</h2>
+                    <p className="text-muted-foreground text-sm mb-8 leading-relaxed">Select all that apply.</p>
+                    <div className="flex flex-col gap-2 mb-8">
+                      {GOING_ON.map(({ key, label, sub }) => (
+                        <button
+                          key={key}
+                          onClick={() => toggleGoingOn(key)}
+                          className={`w-full p-4 rounded-xl text-left transition-all border ${
+                            goingOn.includes(key)
+                              ? "border-accent/50 bg-accent/8"
+                              : "border-foreground/8 bg-card hover:border-foreground/15"
+                          }`}
+                        >
+                          <p className={`text-sm font-sans font-medium ${goingOn.includes(key) ? "text-foreground" : "text-foreground/80"}`}>{label}</p>
+                          <p className="text-muted-foreground text-xs mt-0.5">{sub}</p>
+                        </button>
                       ))}
                     </div>
+                    <button
+                      onClick={handleNext}
+                      disabled={!canProceed()}
+                      className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform disabled:opacity-40"
+                    >
+                      {goingOn.length > 0 ? `Continue` : "Continue"}
+                    </button>
                   </motion.div>
                 )}
 
-                {showResults && (
-                  <motion.div
-                    key="results"
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ duration: 0.2 }}
-                    className="w-full pb-8"
-                  >
-                    <h1 className="text-display text-3xl text-center mb-2">
-                      {filteredTracks.length}{" "}
-                      {filteredTracks.length === 1 ? "session" : "sessions"} found
-                    </h1>
-                    {filteredTracks.length === 0 && (
-                      <p className="text-muted-foreground text-sm text-center mb-6">
-                        No sessions match exactly — try adjusting your filters.
-                      </p>
-                    )}
-
-                    {filteredTracks.length > 0 && (
-                      <div className="flex flex-col gap-3 mt-6">
-                        {filteredTracks.slice(0, 25).map((track: any) => {
-                          const typeLabel = getSessionTypeLabel(track);
-                          return (
-                            <Link
-                              key={track.id}
-                              to={`/player?trackId=${track.id}`}
-                              onClick={handleClose}
-                              className="flex items-start gap-4 p-4 rounded-[12px] bg-card border border-foreground/[0.06] hover:border-foreground/15 transition-all active:scale-[0.98]"
-                            >
-                              <div className="w-10 h-10 rounded-[10px] bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
-                                <Play className="w-4 h-4 text-accent" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-foreground text-sm font-sans font-medium mb-1">
-                                  {track.title}
-                                </p>
-                                {track.description && (
-                                  <p className="text-muted-foreground text-xs font-sans leading-relaxed mb-2 line-clamp-2">
-                                    {track.description}
-                                  </p>
-                                )}
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  {typeLabel && (
-                                    <span className="text-[10px] font-sans font-medium uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-md">
-                                      {typeLabel}
-                                    </span>
-                                  )}
-                                  <span className="text-[10px] font-sans text-muted-foreground uppercase tracking-wider">
-                                    {track.duration_minutes} min
-                                  </span>
-                                </div>
-                              </div>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    <div className="flex justify-center mt-8">
-                      <button
-                        onClick={clearAll}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-foreground/10 text-muted-foreground text-sm font-sans hover:text-foreground hover:border-foreground/20 transition-colors"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" /> Start Over
-                      </button>
+                {/* Step 2 — Walk away with */}
+                {step === 2 && (
+                  <motion.div key="s2" variants={slide} initial="enter" animate="center" exit="exit">
+                    <h2 className="text-display text-3xl mb-2">What do you want to walk away with?</h2>
+                    <p className="text-muted-foreground text-sm mb-8 leading-relaxed">Pick the one that matters most right now.</p>
+                    <div className="flex flex-col gap-2 mb-8">
+                      {WALK_AWAY.map(({ key, label, sub }) => (
+                        <button
+                          key={key}
+                          onClick={() => { setWalkAway(key); }}
+                          className={`w-full p-4 rounded-xl text-left transition-all border ${
+                            walkAway === key
+                              ? "border-accent/50 bg-accent/8"
+                              : "border-foreground/8 bg-card hover:border-foreground/15"
+                          }`}
+                        >
+                          <p className={`text-sm font-sans font-medium ${walkAway === key ? "text-foreground" : "text-foreground/80"}`}>{label}</p>
+                          <p className="text-muted-foreground text-xs mt-0.5">{sub}</p>
+                        </button>
+                      ))}
                     </div>
+                    <button
+                      onClick={handleNext}
+                      disabled={!canProceed()}
+                      className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform disabled:opacity-40"
+                    >
+                      Continue
+                    </button>
                   </motion.div>
                 )}
+
+                {/* Step 3 — Time */}
+                {step === 3 && (
+                  <motion.div key="s3" variants={slide} initial="enter" animate="center" exit="exit">
+                    <h2 className="text-display text-3xl mb-2">How much time do you have right now?</h2>
+                    <p className="text-muted-foreground text-sm mb-8 leading-relaxed">Be honest — a 5-minute session that happens beats a 20-minute one that doesn't.</p>
+                    <div className="flex flex-col gap-3 mb-8">
+                      {TIME_OPTIONS.map(({ key, label, sub }) => (
+                        <button
+                          key={key}
+                          onClick={() => { setTime(key); }}
+                          className={`w-full p-4 rounded-xl text-left transition-all border flex items-center justify-between ${
+                            time === key
+                              ? "border-accent/50 bg-accent/8"
+                              : "border-foreground/8 bg-card hover:border-foreground/15"
+                          }`}
+                        >
+                          <div>
+                            <p className={`text-sm font-sans font-medium ${time === key ? "text-foreground" : "text-foreground/80"}`}>{label}</p>
+                            <p className="text-muted-foreground text-xs mt-0.5">{sub}</p>
+                          </div>
+                          {time === key && <div className="w-2 h-2 rounded-full bg-accent shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={handleNext}
+                      disabled={!canProceed()}
+                      className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform disabled:opacity-40"
+                    >
+                      Show me what to do
+                    </button>
+                  </motion.div>
+                )}
+
+                {/* Step 4 — Recommendation */}
+                {step === TOTAL_STEPS && rec && (
+                  <motion.div key="rec" variants={slide} initial="enter" animate="center" exit="exit">
+                    <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-6">Your recommendation</p>
+
+                    <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mb-6">
+                      <rec.icon className="w-6 h-6 text-accent" />
+                    </div>
+
+                    <h2 className="text-display text-2xl mb-5 leading-snug">{rec.headline}</h2>
+
+                    <div className="velum-card p-5 mb-8">
+                      <p className="text-foreground/80 text-sm font-sans leading-relaxed">{rec.reason}</p>
+                    </div>
+
+                    <button
+                      onClick={handleLaunch}
+                      className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2 mb-3"
+                    >
+                      {rec.ctaLabel} <ArrowRight className="w-4 h-4" />
+                    </button>
+
+                    {rec.secondaryPath && rec.secondaryLabel && (
+                      <button
+                        onClick={() => { handleClose(); navigate(rec.secondaryPath!); }}
+                        className="w-full py-3 text-muted-foreground text-sm font-sans text-center hover:text-foreground transition-colors"
+                      >
+                        {rec.secondaryLabel}
+                      </button>
+                    )}
+
+                    <button
+                      onClick={reset}
+                      className="w-full py-3 text-muted-foreground text-xs font-sans text-center hover:text-foreground transition-colors mt-2"
+                    >
+                      Start over
+                    </button>
+                  </motion.div>
+                )}
+
               </AnimatePresence>
             </div>
           </div>

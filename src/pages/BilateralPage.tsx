@@ -1,24 +1,27 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Play, Pause, Volume2, VolumeX, Eye, EyeOff, RotateCcw, Wind, Shuffle, Flame, Rewind, Users, Layers } from "lucide-react";
+import { ArrowLeft, ArrowRight, Play, Pause, Volume2, VolumeX, Eye, EyeOff, Wind, Shuffle, Flame, Rewind, Users, Layers, Brain, HeartCrack } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence, useAnimationFrame } from "framer-motion";
+import { logSession } from "@/lib/velumStorage";
 
 // ---------------------------------------------------------------------------
-// Speed presets — full left-to-right-to-left cycle in seconds
+// Speed presets
 // ---------------------------------------------------------------------------
 const SPEEDS = [
-  { label: "Slow", value: 3.0, description: "Deep processing" },
+  { label: "Slow",   value: 3.0, description: "Deep processing" },
   { label: "Medium", value: 1.8, description: "Balanced" },
-  { label: "Fast", value: 0.9, description: "Activation" },
+  { label: "Fast",   value: 0.9, description: "Activation" },
 ] as const;
 
 const DURATIONS = [
-  { label: "1 min", seconds: 60 },
-  { label: "2 min", seconds: 120 },
-  { label: "3 min", seconds: 180 },
-  { label: "5 min", seconds: 300 },
+  { label: "1 min",  seconds: 60 },
+  { label: "2 min",  seconds: 120 },
+  { label: "3 min",  seconds: 180 },
+  { label: "5 min",  seconds: 300 },
   { label: "10 min", seconds: 600 },
-  { label: "Open", seconds: 0 },
+  { label: "Open",   seconds: 0 },
 ] as const;
 
 const SOUND_TYPES = [
@@ -29,7 +32,7 @@ const SOUND_TYPES = [
 ] as const;
 
 // ---------------------------------------------------------------------------
-// Sound preview — plays a single tap centred for audition on config screen
+// Sound preview
 // ---------------------------------------------------------------------------
 function previewSound(soundType: number) {
   const ctx = new AudioContext();
@@ -83,76 +86,55 @@ class BilateralAudio {
   private bgAudio: HTMLAudioElement | null = null;
 
   start() {
-    // Background track — binaural audio, play straight (no panning)
     this.bgAudio = new Audio("/audio/bilateral-bg.mp3");
     this.bgAudio.loop = true;
     this.bgAudio.volume = 0.35;
     this.bgAudio.play().catch(() => {});
-
-    // AudioContext kept for tap sounds
     this.ctx = new AudioContext();
   }
 
-  setPan(_position: number) {
-    // No-op — binaural stereo is encoded in the audio file
-  }
+  setPan(_position: number) {}
 
   tap(side: "left" | "right", soundType: number = 0) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     const panVal = side === "left" ? -0.9 : 0.9;
-
     const pan = this.ctx.createStereoPanner();
     pan.pan.setValueAtTime(panVal, t);
     pan.connect(this.ctx.destination);
 
     if (soundType === 0) {
-      // Chime — descending sine 528→264
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
       osc.type = "sine";
       osc.frequency.setValueAtTime(528, t);
       osc.frequency.exponentialRampToValueAtTime(264, t + 0.12);
       gain.gain.setValueAtTime(0.55, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-      osc.connect(gain); gain.connect(pan);
-      osc.start(t); osc.stop(t + 0.16);
-
+      osc.connect(gain); gain.connect(pan); osc.start(t); osc.stop(t + 0.16);
     } else if (soundType === 1) {
-      // Bell — high sine, slow ring decay
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
       osc.type = "sine";
       osc.frequency.setValueAtTime(880, t);
       osc.frequency.exponentialRampToValueAtTime(840, t + 0.5);
       gain.gain.setValueAtTime(0.45, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
-      osc.connect(gain); gain.connect(pan);
-      osc.start(t); osc.stop(t + 0.58);
-
+      osc.connect(gain); gain.connect(pan); osc.start(t); osc.stop(t + 0.58);
     } else if (soundType === 2) {
-      // Pulse — short mid sine click, no pitch drop
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
       osc.type = "sine";
       osc.frequency.setValueAtTime(400, t);
       gain.gain.setValueAtTime(0.0, t);
       gain.gain.linearRampToValueAtTime(0.5, t + 0.008);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
-      osc.connect(gain); gain.connect(pan);
-      osc.start(t); osc.stop(t + 0.08);
-
+      osc.connect(gain); gain.connect(pan); osc.start(t); osc.stop(t + 0.08);
     } else if (soundType === 3) {
-      // Drum — deep low thud
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
       osc.type = "sine";
       osc.frequency.setValueAtTime(140, t);
       osc.frequency.exponentialRampToValueAtTime(55, t + 0.08);
       gain.gain.setValueAtTime(0.75, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-      osc.connect(gain); gain.connect(pan);
-      osc.start(t); osc.stop(t + 0.12);
+      osc.connect(gain); gain.connect(pan); osc.start(t); osc.stop(t + 0.12);
     }
   }
 
@@ -169,21 +151,63 @@ class BilateralAudio {
 }
 
 // ---------------------------------------------------------------------------
-// Intake categories
+// Categories
 // ---------------------------------------------------------------------------
 const CATEGORIES = [
-  { label: "Anxiety",              icon: Wind,    placeholder: "e.g. I can't stop worrying about tomorrow. My chest is tight and my mind keeps racing through worst-case scenarios." },
-  { label: "Scattered focus",      icon: Shuffle, placeholder: "e.g. I can't settle on anything. I keep switching between tasks, feel restless, and my thoughts won't slow down." },
-  { label: "Cravings",             icon: Flame,   placeholder: "e.g. I have a strong urge right now. I feel it in my chest and stomach and I can't shake it." },
-  { label: "A difficult memory",   icon: Rewind,  placeholder: "e.g. I keep replaying a moment from [when]. When I think about it, my stomach drops and I feel [emotion]." },
-  { label: "Relationship tension", icon: Users,   placeholder: "e.g. I'm carrying tension from [person or situation]. I feel it in my shoulders and jaw and I can't let it go." },
-  { label: "Overwhelm",            icon: Layers,  placeholder: "e.g. There's too much happening and I can't settle. I feel pressure in my chest and I don't know where to start." },
+  { label: "Anxiety",              icon: Wind,       placeholder: "e.g. I can't stop worrying about tomorrow. My chest is tight and my mind keeps racing through worst-case scenarios." },
+  { label: "Scattered focus",      icon: Shuffle,    placeholder: "e.g. I can't settle on anything. I keep switching between tasks, feel restless, and my thoughts won't slow down." },
+  { label: "Cravings",             icon: Flame,      placeholder: "e.g. I have a strong urge right now. I feel it in my chest and stomach and I can't shake it." },
+  { label: "A difficult memory",   icon: Rewind,     placeholder: "e.g. I keep replaying a moment from [when]. When I think about it, my stomach drops and I feel [emotion]." },
+  { label: "Relationship tension", icon: Users,      placeholder: "e.g. I'm carrying tension from [person or situation]. I feel it in my shoulders and jaw and I can't let it go." },
+  { label: "Overwhelm",            icon: Layers,     placeholder: "e.g. There's too much happening and I can't settle. I feel pressure in my chest and I don't know where to start." },
+  { label: "Limiting belief",      icon: Brain,      placeholder: "e.g. I keep running into this belief that I'm not good enough. I feel it as tightness in my chest." },
+  { label: "Grief / loss",         icon: HeartCrack, placeholder: "e.g. I'm carrying grief about [person/situation]. I feel heaviness in my chest and a sadness I can't shake." },
 ];
 
 // ---------------------------------------------------------------------------
-// Phases
+// NC / PC suggestions per category
 // ---------------------------------------------------------------------------
-type Phase = "intake-issue" | "intake-belief" | "intake-intensity" | "disclaimer" | "session" | "belief-check" | "positive-cognition" | "done";
+const NC_SUGGESTIONS: Record<string, string[]> = {
+  "Anxiety":              ["I am not safe.", "I am out of control.", "Something bad will happen.", "I cannot trust myself."],
+  "Scattered focus":      ["I am not enough.", "I am failing.", "I cannot focus.", "I cannot handle this."],
+  "Cravings":             ["I am weak.", "I have no control.", "I don't deserve better.", "I cannot stop."],
+  "A difficult memory":   ["It was my fault.", "I am powerless.", "I am not good enough.", "I should have known."],
+  "Relationship tension": ["I am not lovable.", "I am alone.", "I don't matter.", "I cannot trust."],
+  "Overwhelm":            ["I cannot cope.", "I am not enough.", "I am failing.", "It is too much."],
+  "Limiting belief":      ["I am not good enough.", "I don't deserve this.", "I always fail.", "I am not worthy."],
+  "Grief / loss":         ["I am alone.", "I am powerless.", "It is my fault.", "I cannot get through this."],
+};
+
+const PC_SUGGESTIONS: Record<string, string[]> = {
+  "Anxiety":              ["I am safe now.", "I can handle this.", "I trust myself.", "I am in control of what matters."],
+  "Scattered focus":      ["I am enough.", "I can settle and focus.", "I am capable.", "I can handle this."],
+  "Cravings":             ["I have strength within me.", "I can choose differently.", "I deserve better.", "I am in control."],
+  "A difficult memory":   ["I did the best I could.", "I have power now.", "I am enough.", "I can learn and grow."],
+  "Relationship tension": ["I am worthy of love.", "I am supported.", "I matter.", "I can trust again."],
+  "Overwhelm":            ["I can handle what's here.", "I am enough.", "I can take one step.", "I am capable."],
+  "Limiting belief":      ["I am enough.", "I deserve good things.", "I am capable.", "I am worthy."],
+  "Grief / loss":         ["I am not alone.", "I have strength within me.", "I can heal.", "I am supported."],
+};
+
+const BODY_CHIPS = ["Head / Neck", "Jaw / Throat", "Chest", "Heart", "Stomach", "Gut", "Shoulders / Back", "Arms / Hands", "Legs / Feet", "Whole body"];
+
+// ---------------------------------------------------------------------------
+// Phase type
+// ---------------------------------------------------------------------------
+type Phase =
+  | "what"       // category selection
+  | "describe"   // situation description
+  | "belief"     // negative cognition ("I am...")
+  | "pc"         // positive cognition
+  | "rate"       // SUDS 0–10 + body location
+  | "setup"      // config + begin
+  | "process"    // bilateral session (NC focus)
+  | "notice"     // blank-slate drop-in after process
+  | "charge"     // SUDS recheck
+  | "install"    // bilateral session (PC focus)
+  | "voc"        // validity of cognition 1–7
+  | "body-close" // post-session body scan + container
+  | "done";
 
 const slide = {
   initial: { opacity: 0, x: 24 },
@@ -197,30 +221,52 @@ const slide = {
 // ---------------------------------------------------------------------------
 export default function BilateralPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  // Intake
-  const [phase, setPhase] = useState<Phase>("intake-issue");
-  const [issue, setIssue] = useState("");
-  const [belief, setBelief] = useState("");
-  const [intensity, setIntensity] = useState(7);
-  const [startIntensity, setStartIntensity] = useState(7);
+  const [phase, setPhase] = useState<Phase>("what");
+
+  // Assessment
+  const [category, setCategory] = useState("");
+  const [target, setTarget]     = useState("");   // situation description
+  const [nc, setNc]             = useState("");   // negative cognition
+  const [pc, setPc]             = useState("");   // positive cognition
+
+  // Measurement
+  const [suds, setSuds]               = useState(5);
+  const [startSuds, setStartSuds]     = useState(5);
+  const [sudsHistory, setSudsHistory] = useState<number[]>([]);
+  const [voc, setVoc]                 = useState(4);   // 1–7
+  const [bodyLocations, setBodyLocations] = useState<string[]>([]);
+
+  // Session tracking
+  const [roundCount, setRoundCount] = useState(0);
+
+  // Notice
+  const [showNoticeNote, setShowNoticeNote] = useState(false);
+  const [noticeNote, setNoticeNote]         = useState("");
+
+  // Body close
+  const [bodyScanNote, setBodyScanNote]   = useState("");
+  const [showContainer, setShowContainer] = useState(false);
 
   // Session config
-  const [soundOn, setSoundOn] = useState(true);
-  const [showOrb, setShowOrb] = useState(true);
-  const [speedIdx, setSpeedIdx] = useState(1);
+  const [soundOn, setSoundOn]         = useState(true);
+  const [showOrb, setShowOrb]         = useState(true);
+  const [speedIdx, setSpeedIdx]       = useState(1);
   const [durationIdx, setDurationIdx] = useState(2);
   const [soundTypeIdx, setSoundTypeIdx] = useState(0);
-  const [beliefTruth, setBeliefTruth] = useState(7);
-  const [positiveCognition, setPositiveCognition] = useState("");
+  const [hapticOn, setHapticOn]       = useState(true);
+
+  const canHaptic = typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
   const [isRunning, setIsRunning] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [orbX, setOrbX] = useState(0);
+  const [elapsed, setElapsed]     = useState(0);
+  const [orbX, setOrbX]           = useState(0);
 
-  const audioRef = useRef<BilateralAudio>(new BilateralAudio());
-  const lastEdgeRef = useRef<"left" | "right" | null>(null);
+  const audioRef       = useRef<BilateralAudio>(new BilateralAudio());
+  const lastEdgeRef    = useRef<"left" | "right" | null>(null);
+  const sessionModeRef = useRef<"process" | "install">("process");
 
-  const speed = SPEEDS[speedIdx];
+  const speed    = SPEEDS[speedIdx];
   const duration = DURATIONS[durationIdx];
 
   const stop = useCallback(() => {
@@ -233,15 +279,19 @@ export default function BilateralPage() {
     lastEdgeRef.current = null;
     if (soundOn) audioRef.current.start();
     setIsRunning(true);
+    setRoundCount((c) => c + 1);
   }, [soundOn]);
 
-  // Timer
+  // Timer — routes to notice (process) or voc (install) on expiry
   useEffect(() => {
     if (!isRunning) return;
     const id = setInterval(() => {
       setElapsed((e) => {
         const next = e + 1;
-        if (duration.seconds > 0 && next >= duration.seconds) { stop(); setBeliefTruth(7); setPhase("belief-check"); }
+        if (duration.seconds > 0 && next >= duration.seconds) {
+          stop();
+          setPhase(sessionModeRef.current === "install" ? "voc" : "notice");
+        }
         return next;
       });
     }, 1000);
@@ -261,23 +311,42 @@ export default function BilateralPage() {
       if (pos > 0.92 && lastEdgeRef.current !== "right") {
         lastEdgeRef.current = "right";
         audioRef.current.tap("right", soundTypeIdx);
+        if (hapticOn && canHaptic) navigator.vibrate(45);
       } else if (pos < -0.92 && lastEdgeRef.current !== "left") {
         lastEdgeRef.current = "left";
         audioRef.current.tap("left", soundTypeIdx);
+        if (hapticOn && canHaptic) navigator.vibrate(45);
       }
     }
   });
 
   useEffect(() => () => audioRef.current.stop(), []);
 
+  // Save to Supabase on done
+  useEffect(() => {
+    if (phase !== "done" || !user) return;
+    supabase.from("bilateral_sessions").insert({
+      user_id: user.id,
+      issue: target,
+      belief: nc,
+      positive_cognition: pc || null,
+      body_locations: bodyLocations.length > 0 ? bodyLocations : null,
+      suds_start: startSuds,
+      suds_history: sudsHistory.length > 0 ? sudsHistory : null,
+      resistance_final: voc !== 4 ? voc : null,
+      rounds: roundCount,
+      future_scenario: null,
+    });
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
-  const remaining = duration.seconds > 0 ? Math.max(0, duration.seconds - elapsed) : elapsed;
+  const remaining  = duration.seconds > 0 ? Math.max(0, duration.seconds - elapsed) : elapsed;
   const orbPercent = ((orbX + 1) / 2) * 90 + 5;
 
-  // ---------------------------------------------------------------------------
-  // Intake — Category (what are you dealing with?)
-  // ---------------------------------------------------------------------------
-  if (phase === "intake-issue") {
+  // =========================================================================
+  // WHAT — category selection
+  // =========================================================================
+  if (phase === "what") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
@@ -287,32 +356,29 @@ export default function BilateralPage() {
         </div>
 
         <AnimatePresence mode="wait">
-          <motion.div key="category" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+          <motion.div key="what" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
             <div className="mb-10">
-              <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-3">Step 1 of 3</p>
-              <h1 className="text-display text-3xl mb-3">What are you dealing with right now?</h1>
+              <h1 className="text-display text-3xl mb-3">What are you bringing today?</h1>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Choose what resonates most. You'll get to be specific in the next step.
+                Choose what feels closest. You'll describe it specifically in the next step.
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               {CATEGORIES.map((cat) => {
                 const Icon = cat.icon;
-                const selected = issue === cat.label;
+                const selected = category === cat.label;
                 return (
                   <button
                     key={cat.label}
-                    onClick={() => { setIssue(cat.label); setPhase("intake-belief"); }}
+                    onClick={() => { setCategory(cat.label); setPhase("describe"); }}
                     className={`relative p-5 rounded-2xl text-left transition-all active:scale-[0.97] flex flex-col gap-3 border ${
                       selected
                         ? "gold-gradient text-primary-foreground border-transparent"
                         : "bg-card text-foreground border-foreground/5 hover:border-accent/20"
                     }`}
                   >
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                      selected ? "bg-white/15" : "bg-surface-light"
-                    }`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${selected ? "bg-white/15" : "bg-surface-light"}`}>
                       <Icon className={`w-4 h-4 ${selected ? "text-primary-foreground" : "text-accent"}`} strokeWidth={1.5} />
                     </div>
                     <span className="font-sans text-sm font-medium leading-snug">{cat.label}</span>
@@ -326,50 +392,43 @@ export default function BilateralPage() {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Intake — Get specific
-  // ---------------------------------------------------------------------------
-  if (phase === "intake-belief") {
-    const category = CATEGORIES.find((c) => c.label === issue);
-
+  // =========================================================================
+  // DESCRIBE — situation
+  // =========================================================================
+  if (phase === "describe") {
+    const cat = CATEGORIES.find((c) => c.label === category);
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
-          <button onClick={() => setPhase("intake-issue")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+          <button onClick={() => setPhase("what")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
         </div>
 
         <AnimatePresence mode="wait">
-          <motion.div key="specific" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+          <motion.div key="describe" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
             <div className="mb-6">
-              <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-3">Step 2 of 3</p>
-              <h1 className="text-display text-3xl mb-3">Get specific</h1>
+              <div className="inline-flex mb-4">
+                <span className="px-3 py-1.5 rounded-full bg-surface-light text-accent text-xs font-sans font-medium">{category}</span>
+              </div>
+              <h1 className="text-display text-3xl mb-3">Get specific.</h1>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                A vague target leads to vague outcomes. The more precise you are, the faster this works.
+                Describe exactly what you're bringing — what's happening, what you feel, where you feel it. The more precise, the faster this works.
               </p>
             </div>
 
-            {issue && (
-              <div className="mb-4 inline-flex">
-                <span className="px-3 py-1.5 rounded-full bg-surface-light text-accent text-xs font-sans font-medium">
-                  {issue}
-                </span>
-              </div>
-            )}
-
             <textarea
-              value={belief}
-              onChange={(e) => setBelief(e.target.value)}
-              placeholder={category?.placeholder ?? "Describe exactly what you're experiencing — what you feel, where you feel it, and any specific thoughts or images that come up."}
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+              placeholder={cat?.placeholder ?? "Describe the situation, the feeling, and where it lives in your body."}
               rows={6}
               autoFocus
-              className="flex-1 bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40 mb-6"
+              className="bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40 mb-6"
             />
 
             <button
-              onClick={() => setPhase("intake-intensity")}
-              disabled={belief.trim().length < 5}
+              onClick={() => setPhase("belief")}
+              disabled={target.trim().length < 5}
               className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-40 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
             >
               Continue <ArrowRight className="w-4 h-4" />
@@ -380,48 +439,64 @@ export default function BilateralPage() {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Intake — Intensity
-  // ---------------------------------------------------------------------------
-  if (phase === "intake-intensity") {
+  // =========================================================================
+  // BELIEF — negative cognition
+  // =========================================================================
+  if (phase === "belief") {
+    const suggestions = NC_SUGGESTIONS[category] ?? [];
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
-          <button onClick={() => setPhase("intake-belief")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+          <button onClick={() => setPhase("describe")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
         </div>
 
         <AnimatePresence mode="wait">
-          <motion.div key="intensity" {...slide} className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full pb-8">
-            <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-6">Step 3 of 3</p>
-            <h1 className="text-display text-3xl mb-3 text-center">Rate your intensity right now</h1>
-            <p className="text-muted-foreground text-sm mb-10 text-center">
-              How distressing does this feel in your body, from 1 (mild) to 10 (overwhelming)?
-            </p>
-
-            <p className="text-display text-7xl text-accent mb-2 tabular-nums">{intensity}</p>
-            <p className="text-muted-foreground text-xs uppercase tracking-widest mb-10">
-              {intensity <= 3 ? "Mild" : intensity <= 6 ? "Moderate" : intensity <= 8 ? "High" : "Overwhelming"}
-            </p>
-
-            <div className="w-full mb-10">
-              <input
-                type="range" min={1} max={10} value={intensity}
-                onChange={(e) => setIntensity(Number(e.target.value))}
-                className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:shadow-lg"
-              />
-              <div className="flex justify-between mt-2">
-                <span className="text-[10px] text-muted-foreground">1 · Mild</span>
-                <span className="text-[10px] text-muted-foreground">10 · Overwhelming</span>
-              </div>
+          <motion.div key="belief" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+            <div className="mb-6">
+              <h1 className="text-display text-3xl mb-3">What does this say about you?</h1>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                When you bring this to mind, what do you believe about yourself? Usually starts with "I am…" or "I…"
+              </p>
             </div>
 
+            {suggestions.length > 0 && (
+              <div className="mb-5">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Common patterns</p>
+                <div className="flex flex-wrap gap-2">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setNc(s)}
+                      className={`px-3.5 py-2 rounded-full text-sm font-sans transition-all border ${
+                        nc === s
+                          ? "bg-accent/15 text-accent border-accent/40"
+                          : "bg-card text-muted-foreground border-foreground/10 hover:border-accent/20"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <input
+              type="text"
+              value={nc}
+              onChange={(e) => setNc(e.target.value)}
+              placeholder="Or write your own — e.g. I am not enough."
+              autoFocus
+              className="bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40 mb-6"
+            />
+
             <button
-              onClick={() => { setStartIntensity(intensity); setPhase("disclaimer"); }}
-              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+              onClick={() => setPhase("pc")}
+              disabled={nc.trim().length < 3}
+              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-40 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
             >
-              Continue
+              Continue <ArrowRight className="w-4 h-4" />
             </button>
           </motion.div>
         </AnimatePresence>
@@ -429,32 +504,167 @@ export default function BilateralPage() {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Disclaimer
-  // ---------------------------------------------------------------------------
-  if (phase === "disclaimer") {
+  // =========================================================================
+  // PC — positive cognition
+  // =========================================================================
+  if (phase === "pc") {
+    const suggestions = PC_SUGGESTIONS[category] ?? [];
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex items-center px-4 pt-4 mb-6">
+          <button onClick={() => setPhase("belief")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+        </div>
+
         <AnimatePresence mode="wait">
-          <motion.div key="disclaimer" {...slide} className="max-w-sm w-full">
-            <div className="w-12 h-12 rounded-xl bg-surface-light flex items-center justify-center mb-6">
-              <span className="text-xl">⚠️</span>
-            </div>
-            <h2 className="text-display text-2xl mb-4">Before you begin</h2>
-            <div className="space-y-3 mb-8">
-              <p className="text-foreground/80 text-sm leading-relaxed">
-                Bilateral stimulation is a self-regulation tool. It can support emotional processing and help calm your nervous system.
-              </p>
-              <p className="text-foreground/80 text-sm leading-relaxed">
-                It is <strong>not</strong> a replacement for working with a licensed mental health professional, therapist, or trauma specialist.
-              </p>
-              <p className="text-foreground/80 text-sm leading-relaxed">
-                If you are working through trauma, significant distress, or a mental health condition, please do so with professional support.
+          <motion.div key="pc" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+            <div className="mb-5">
+              <h1 className="text-display text-3xl mb-3">What would you rather believe?</h1>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Instead of <span className="text-foreground italic">"{nc}"</span> — what would you prefer to know to be true about yourself?
               </p>
             </div>
 
-            {/* Config in disclaimer so they can set it before the session starts */}
-            <div className="space-y-4 mb-8">
+            {suggestions.length > 0 && (
+              <div className="mb-5">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Suggestions</p>
+                <div className="flex flex-wrap gap-2">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setPc(s)}
+                      className={`px-3.5 py-2 rounded-full text-sm font-sans transition-all border ${
+                        pc === s
+                          ? "bg-accent/15 text-accent border-accent/40"
+                          : "bg-card text-muted-foreground border-foreground/10 hover:border-accent/20"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <input
+              type="text"
+              value={pc}
+              onChange={(e) => setPc(e.target.value)}
+              placeholder="e.g. I am enough. I am safe. I can handle this."
+              autoFocus
+              className="bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40 mb-6"
+            />
+
+            <button
+              onClick={() => setPhase("rate")}
+              disabled={pc.trim().length < 3}
+              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-40 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+            >
+              Continue <ArrowRight className="w-4 h-4" />
+            </button>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // RATE — SUDS 0–10 + body location
+  // =========================================================================
+  if (phase === "rate") {
+    const sudLabel = suds === 0 ? "Clear" : suds <= 2 ? "Very low" : suds <= 4 ? "Mild" : suds <= 6 ? "Moderate" : suds <= 8 ? "High" : "Overwhelming";
+    const toggleBody = (loc: string) => setBodyLocations((prev) => prev.includes(loc) ? prev.filter((l) => l !== loc) : [...prev, loc]);
+
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex items-center px-4 pt-4 mb-6">
+          <button onClick={() => setPhase("pc")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div key="rate" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+            <div className="velum-card p-4 mb-6">
+              <p className="text-foreground font-serif text-sm italic leading-relaxed">"{nc}"</p>
+            </div>
+
+            <h1 className="text-display text-3xl mb-3">How charged does this feel?</h1>
+            <p className="text-muted-foreground text-sm mb-8">
+              Bring it to mind right now. Rate the distress from 0 (nothing) to 10 (overwhelming).
+            </p>
+
+            <div className="text-center mb-6">
+              <p className="text-display text-7xl text-accent mb-1 tabular-nums">{suds}</p>
+              <p className="text-muted-foreground text-xs uppercase tracking-widest">{sudLabel}</p>
+            </div>
+
+            <div className="mb-10">
+              <input
+                type="range" min={0} max={10} value={suds}
+                onChange={(e) => setSuds(Number(e.target.value))}
+                className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:shadow-lg"
+              />
+              <div className="flex justify-between mt-2">
+                <span className="text-[10px] text-muted-foreground">0 · Clear</span>
+                <span className="text-[10px] text-muted-foreground">10 · Overwhelming</span>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3">Where do you feel it?</p>
+              <div className="flex flex-wrap gap-2">
+                {BODY_CHIPS.map((loc) => (
+                  <button key={loc} onClick={() => toggleBody(loc)}
+                    className={`px-4 py-2.5 rounded-full text-sm font-sans transition-all ${bodyLocations.includes(loc) ? "bg-accent/20 text-accent border border-accent/40" : "bg-card text-muted-foreground border border-foreground/10"}`}>
+                    {loc}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => { setStartSuds(suds); setSudsHistory([]); setPhase("setup"); }}
+              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+            >
+              Continue →
+            </button>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // SETUP — config + begin
+  // =========================================================================
+  if (phase === "setup") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex items-center px-4 pt-4 mb-4">
+          <button onClick={() => setPhase("rate")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div key="setup" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+            {/* What you're working with */}
+            <div className="velum-card p-4 mb-6 space-y-3">
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Working on</p>
+                <p className="text-foreground font-serif text-sm italic leading-relaxed">"{nc}"</p>
+              </div>
+              <div className="h-px bg-foreground/8" />
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Moving toward</p>
+                <p className="text-accent font-serif text-sm italic leading-relaxed">"{pc}"</p>
+              </div>
+            </div>
+
+            {/* Config */}
+            <div className="space-y-4 mb-6">
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Speed</p>
                 <div className="flex gap-2">
@@ -500,11 +710,19 @@ export default function BilateralPage() {
               </div>
             </div>
 
+            <p className="text-muted-foreground/60 text-xs leading-relaxed mb-6 text-center">
+              This tool supports self-regulation. It is not a replacement for working with a licensed therapist. If you are processing trauma, do so with professional support.
+            </p>
+
             <button
-              onClick={() => setPhase("session")}
-              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+              onClick={() => {
+                sessionModeRef.current = "process";
+                setPhase("process");
+                startSession();
+              }}
+              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
             >
-              I understand — begin
+              <Play className="w-4 h-4 ml-0.5" /> Begin
             </button>
           </motion.div>
         </AnimatePresence>
@@ -512,191 +730,452 @@ export default function BilateralPage() {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Belief check — how true does the negative belief feel now?
-  // ---------------------------------------------------------------------------
-  if (phase === "belief-check") {
-    const truthLabel = beliefTruth <= 3 ? "Barely true" : beliefTruth <= 5 ? "Somewhat true" : beliefTruth <= 7 ? "Still feels true" : "Very true";
+  // =========================================================================
+  // NOTICE — blank-slate drop-in after processing
+  // =========================================================================
+  if (phase === "notice") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full">
+          <h2 className="text-display text-3xl mb-10 text-center">What do you notice?</h2>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setShowNoticeNote(false);
+                setNoticeNote("");
+                setPhase("process");
+                startSession();
+              }}
+              className="w-full py-4 rounded-2xl bg-card text-foreground font-sans text-sm border border-foreground/10 active:scale-[0.98] transition-transform"
+            >
+              Keep going
+            </button>
+
+            <button
+              onClick={() => setShowNoticeNote((v) => !v)}
+              className={`w-full py-4 rounded-2xl text-sm font-sans border transition-all active:scale-[0.98] ${showNoticeNote ? "bg-card text-foreground border-accent/30" : "bg-card text-muted-foreground border-foreground/10"}`}
+            >
+              Something new came up
+            </button>
+
+            {showNoticeNote && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="velum-card p-4 space-y-3">
+                <textarea
+                  value={noticeNote}
+                  onChange={(e) => setNoticeNote(e.target.value)}
+                  placeholder="Note it briefly — then go with that."
+                  rows={2}
+                  autoFocus
+                  className="w-full bg-background rounded-xl px-4 py-3 text-foreground text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40"
+                />
+                <button
+                  onClick={() => { setPhase("process"); startSession(); }}
+                  className="w-full py-3 rounded-xl bg-surface-light text-foreground font-sans text-sm active:scale-[0.98] transition-transform"
+                >
+                  Go with that →
+                </button>
+              </motion.div>
+            )}
+
+            <button
+              onClick={() => { setSuds(5); setPhase("charge"); }}
+              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+            >
+              Check in →
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // CHARGE — SUDS recheck
+  // =========================================================================
+  if (phase === "charge") {
+    const sudLabel = suds === 0 ? "Clear" : suds <= 1 ? "Essentially clear" : suds <= 3 ? "Very low" : suds <= 5 ? "Moderate" : suds <= 7 ? "High" : "Very high";
+    const isClear      = suds <= 1;
+    const isClose      = suds >= 2 && suds <= 3;
+    const stillActive  = suds >= 4;
+
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full">
           <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-4 text-center">Check in</p>
-          <h2 className="text-display text-2xl mb-2 text-center">How true does this feel now?</h2>
-          <p className="text-muted-foreground text-sm mb-6 text-center leading-relaxed">
-            Rate how true this belief feels in your body right now.
-          </p>
 
-          <div className="velum-card p-5 mb-8 text-center">
-            <p className="text-foreground font-serif text-lg leading-relaxed italic">"{belief}"</p>
+          <div className="velum-card p-4 mb-6 text-center">
+            <p className="text-foreground font-serif text-sm italic leading-relaxed">"{nc}"</p>
           </div>
 
-          <p className="text-display text-7xl text-accent mb-1 text-center tabular-nums">{beliefTruth}</p>
-          <p className="text-muted-foreground text-xs uppercase tracking-widest mb-6 text-center">{truthLabel}</p>
+          <h2 className="text-display text-2xl mb-2 text-center">When you bring this to mind now —</h2>
+          <h2 className="text-display text-2xl mb-6 text-center">how charged does it feel?</h2>
+
+          <p className="text-display text-7xl text-accent mb-1 text-center tabular-nums">{suds}</p>
+          <p className="text-muted-foreground text-xs uppercase tracking-widest mb-6 text-center">{sudLabel}</p>
 
           <input
-            type="range" min={1} max={10} value={beliefTruth}
-            onChange={(e) => setBeliefTruth(Number(e.target.value))}
+            type="range" min={0} max={10} value={suds}
+            onChange={(e) => setSuds(Number(e.target.value))}
             className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer mb-2 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:shadow-lg"
           />
           <div className="flex justify-between mb-8">
-            <span className="text-[10px] text-muted-foreground">1 · Not true</span>
-            <span className="text-[10px] text-muted-foreground">10 · Completely true</span>
+            <span className="text-[10px] text-muted-foreground">0 · Clear</span>
+            <span className="text-[10px] text-muted-foreground">10 · Overwhelming</span>
           </div>
 
-          <button
-            onClick={() => beliefTruth < 5 ? setPhase("positive-cognition") : setPhase("done")}
-            className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
-          >
-            Continue
-          </button>
+          {isClear && (
+            <div className="space-y-3">
+              <div className="velum-card p-4 text-center border border-accent/20">
+                <p className="text-foreground text-sm font-sans">
+                  {suds === 0 ? "Clear." : "Essentially clear."}{" "}
+                  <span className="text-accent">Ready to install the new belief.</span>
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSudsHistory((h) => [...h, suds]);
+                  sessionModeRef.current = "install";
+                  setPhase("install");
+                  startSession();
+                }}
+                className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+              >
+                Install new belief →
+              </button>
+            </div>
+          )}
 
-          {beliefTruth >= 5 && (
-            <p className="text-muted-foreground text-[11px] text-center mt-3 leading-relaxed">
-              Still feels present — you may want to run another round before finishing.
-            </p>
+          {isClose && (
+            <div className="space-y-3">
+              <div className="velum-card p-4 text-center border border-accent/20">
+                <p className="text-foreground text-sm font-sans">
+                  At {suds} — very close. One more round could bring it all the way down.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSudsHistory((h) => [...h, suds]);
+                  sessionModeRef.current = "install";
+                  setPhase("install");
+                  startSession();
+                }}
+                className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+              >
+                Move to installation →
+              </button>
+              <button
+                onClick={() => { setSudsHistory((h) => [...h, suds]); setPhase("process"); startSession(); }}
+                className="w-full py-4 rounded-2xl bg-card text-foreground font-sans font-medium text-sm border border-foreground/10 active:scale-[0.98] transition-transform"
+              >
+                One more round
+              </button>
+            </div>
+          )}
+
+          {stillActive && (
+            <div className="space-y-3">
+              <div className="velum-card p-4 text-center">
+                <p className="text-foreground text-sm font-sans">
+                  Still at {suds} — {suds >= 7 ? "there's significant charge here." : "still some activation."} Keep processing until this drops below 2.
+                </p>
+              </div>
+              <button
+                onClick={() => { setSudsHistory((h) => [...h, suds]); setPhase("process"); startSession(); }}
+                className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+              >
+                Continue processing →
+              </button>
+              <button
+                onClick={() => {
+                  setSudsHistory((h) => [...h, suds]);
+                  sessionModeRef.current = "install";
+                  setPhase("install");
+                  startSession();
+                }}
+                className="w-full py-4 rounded-2xl bg-card text-foreground font-sans font-medium text-sm border border-foreground/10 active:scale-[0.98] transition-transform"
+              >
+                Move to installation anyway
+              </button>
+            </div>
           )}
         </motion.div>
       </div>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Positive cognition — what would they rather feel?
-  // ---------------------------------------------------------------------------
-  if (phase === "positive-cognition") {
+  // =========================================================================
+  // VOC — validity of cognition (1–7)
+  // =========================================================================
+  if (phase === "voc") {
+    const vocLabel   = voc <= 1 ? "Feels completely false" : voc <= 2 ? "Mostly doesn't feel true" : voc <= 3 ? "Uncertain" : voc <= 4 ? "Starting to feel true" : voc <= 5 ? "Mostly true" : voc <= 6 ? "Very true" : "Completely true";
+    const isInstalled = voc >= 7;
+    const isClose     = voc >= 5 && voc < 7;
+    const needsWork   = voc < 5;
+
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full">
+          <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-4 text-center">VOC</p>
+
+          <div className="velum-card p-4 mb-6 text-center">
+            <p className="text-foreground font-serif text-base leading-relaxed italic">"{pc}"</p>
+          </div>
+
+          <h2 className="text-display text-2xl mb-6 text-center">How true does this feel right now?</h2>
+
+          <p className="text-display text-7xl text-accent mb-1 text-center tabular-nums">{voc}</p>
+          <p className="text-muted-foreground text-xs uppercase tracking-widest mb-6 text-center">{vocLabel}</p>
+
+          <input
+            type="range" min={1} max={7} value={voc}
+            onChange={(e) => setVoc(Number(e.target.value))}
+            className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer mb-2 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:shadow-lg"
+          />
+          <div className="flex justify-between mb-8">
+            <span className="text-[10px] text-muted-foreground">1 · Not at all true</span>
+            <span className="text-[10px] text-muted-foreground">7 · Completely true</span>
+          </div>
+
+          {isInstalled && (
+            <div className="space-y-3">
+              <div className="velum-card p-4 text-center border border-accent/20">
+                <p className="text-foreground text-sm font-sans">Fully installed. <span className="text-accent">Let's close with a body scan.</span></p>
+              </div>
+              <button onClick={() => setPhase("body-close")}
+                className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform">
+                Body scan →
+              </button>
+            </div>
+          )}
+
+          {isClose && (
+            <div className="space-y-3">
+              <div className="velum-card p-4 text-center border border-accent/20">
+                <p className="text-foreground text-sm font-sans">At {voc} — almost there. One more round could bring it all the way in.</p>
+              </div>
+              <button
+                onClick={() => { sessionModeRef.current = "install"; setPhase("install"); startSession(); }}
+                className="w-full py-4 rounded-2xl bg-card text-foreground font-sans font-medium text-sm border border-foreground/10 active:scale-[0.98] transition-transform">
+                One more round
+              </button>
+              <button onClick={() => setPhase("body-close")}
+                className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform">
+                Move on →
+              </button>
+            </div>
+          )}
+
+          {needsWork && (
+            <div className="space-y-3">
+              <div className="velum-card p-4 text-center">
+                <p className="text-foreground text-sm font-sans">At {voc} — still some resistance. Keep installing. Target is 7.</p>
+              </div>
+              <button
+                onClick={() => { sessionModeRef.current = "install"; setPhase("install"); startSession(); }}
+                className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform">
+                Keep installing →
+              </button>
+              <button onClick={() => setPhase("body-close")}
+                className="w-full py-4 rounded-2xl bg-card text-foreground font-sans font-medium text-sm border border-foreground/10 active:scale-[0.98] transition-transform">
+                Move on
+              </button>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // BODY-CLOSE — post-session body scan + container
+  // =========================================================================
+  if (phase === "body-close") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
-          <button onClick={() => setPhase("belief-check")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+          <button onClick={() => setPhase("voc")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
         </div>
 
         <AnimatePresence mode="wait">
-          <motion.div key="pos-cog" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
-            <div className="mb-6">
-              <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-3">Something shifted</p>
-              <h1 className="text-display text-3xl mb-3">What would you rather feel?</h1>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Write a belief or feeling that feels more true, more aligned, or more like who you want to be.
-              </p>
-            </div>
+          <motion.div key="body-close" {...slide} className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-8">
+            {!showContainer ? (
+              <>
+                <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-3">Body scan</p>
+                <h1 className="text-display text-3xl mb-4">Hold this in mind.</h1>
 
-            <div className="velum-card p-4 mb-4">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Instead of</p>
-              <p className="text-foreground/60 font-serif text-sm italic">"{belief}"</p>
-            </div>
+                <div className="velum-card p-4 mb-5">
+                  <p className="text-accent font-serif text-sm italic leading-relaxed">"{pc}"</p>
+                </div>
 
-            <textarea
-              value={positiveCognition}
-              onChange={(e) => setPositiveCognition(e.target.value)}
-              placeholder="e.g. I am capable of handling this. I trust myself."
-              rows={4}
-              autoFocus
-              className="flex-1 bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40 mb-6"
-            />
+                <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+                  Scan from the top of your head to the soles of your feet. Notice anything — tension, warmth, lightness, nothing at all. Whatever is there is fine.
+                </p>
 
-            <button
-              onClick={() => setPhase("done")}
-              disabled={positiveCognition.trim().length < 3}
-              className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base disabled:opacity-40 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
-            >
-              Complete session <ArrowRight className="w-4 h-4" />
-            </button>
+                <textarea
+                  value={bodyScanNote}
+                  onChange={(e) => setBodyScanNote(e.target.value)}
+                  placeholder="What do you notice?  (optional)"
+                  rows={3}
+                  className="bg-card rounded-xl px-4 py-3.5 text-foreground text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 placeholder:text-muted-foreground/40 mb-6"
+                />
+
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setPhase("done")}
+                    className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+                  >
+                    Body feels clear — complete
+                  </button>
+                  <button
+                    onClick={() => setShowContainer(true)}
+                    className="w-full py-4 rounded-2xl bg-card text-foreground font-sans font-medium text-sm border border-foreground/10 active:scale-[0.98] transition-transform"
+                  >
+                    Something still needs attention
+                  </button>
+                </div>
+              </>
+            ) : (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex-1 flex flex-col">
+                <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-3">Container</p>
+                <h1 className="text-display text-3xl mb-6">Put it away for now.</h1>
+
+                <div className="velum-card p-5 mb-6 space-y-4">
+                  <p className="text-foreground/80 text-sm leading-relaxed">
+                    Imagine a container — a vault, a chest, whatever feels right. Strong enough to hold anything.
+                  </p>
+                  <p className="text-foreground/80 text-sm leading-relaxed">
+                    Place anything unresolved inside it. You can return to it whenever you're ready.
+                  </p>
+                  <p className="text-foreground/80 text-sm leading-relaxed">
+                    Close it. Notice that it's held.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setPhase("done")}
+                  className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+                >
+                  Done
+                </button>
+              </motion.div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Done
-  // ---------------------------------------------------------------------------
+  // =========================================================================
+  // DONE
+  // =========================================================================
   if (phase === "done") {
+    const finalSuds = sudsHistory.length > 0 ? sudsHistory[sudsHistory.length - 1] : startSuds;
+    const shift     = startSuds - finalSuds;
+
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full text-center">
           <div className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6">
             <span className="text-2xl">✦</span>
           </div>
-          <h2 className="text-display text-2xl mb-2">Session complete</h2>
-          <p className="text-muted-foreground text-sm mb-6">Take a breath. Notice what's different.</p>
-          {positiveCognition && (
-            <div className="velum-card p-4 mb-6 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Your new belief</p>
-              <p className="text-foreground font-serif text-base leading-relaxed italic">"{positiveCognition}"</p>
+          <h2 className="text-display text-2xl mb-2">Session complete.</h2>
+          <p className="text-muted-foreground text-sm mb-8">Take a breath. Notice what's different.</p>
+
+          {pc && (
+            <div className="velum-card p-4 mb-5 text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">New belief</p>
+              <p className="text-foreground font-serif text-base leading-relaxed italic">"{pc}"</p>
             </div>
           )}
 
-          <div className="velum-card p-5 mb-8 text-left">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3">Your session</p>
-            <p className="text-foreground text-sm mb-1 font-sans font-medium">What you worked on:</p>
-            <p className="text-muted-foreground text-sm mb-4 italic">"{issue}"</p>
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <p className="text-display text-2xl text-accent">{startIntensity}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Before</p>
+          <div className="velum-card p-5 mb-6 text-left">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">Your session</p>
+
+            {sudsHistory.length > 0 ? (
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3">Charge over time</p>
+                <div className="flex items-end gap-1.5 mb-2">
+                  {[startSuds, ...sudsHistory].map((val, i, arr) => (
+                    <div key={i} className="flex flex-col items-center flex-1 gap-1">
+                      <span className="text-[10px] text-accent tabular-nums">{val}</span>
+                      <div
+                        className="w-full rounded-t-sm"
+                        style={{
+                          height: `${(val / 10) * 48}px`,
+                          background: i === arr.length - 1
+                            ? "hsl(var(--accent) / 0.8)"
+                            : `hsl(var(--accent) / ${0.2 + (i / arr.length) * 0.3})`
+                        }}
+                      />
+                      <span className="text-[9px] text-muted-foreground">{i === 0 ? "Start" : `R${i}`}</span>
+                    </div>
+                  ))}
+                </div>
+                {shift > 0 && (
+                  <p className="text-accent text-xs text-center mt-2">
+                    ↓ {shift} point{shift !== 1 ? "s" : ""} · {sudsHistory.length} round{sudsHistory.length !== 1 ? "s" : ""}
+                  </p>
+                )}
               </div>
-              <div className="flex-1 h-px bg-foreground/10 relative">
-                <div className="absolute inset-y-0 left-0 bg-accent/40 rounded-full transition-all" style={{ width: `${Math.max(0, (startIntensity - intensity) / startIntensity * 100)}%` }} />
+            ) : (
+              <div className="flex items-center gap-4 justify-center">
+                <div className="text-center">
+                  <p className="text-display text-2xl text-accent">{startSuds}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Before</p>
+                </div>
+                <div className="flex-1 h-px bg-foreground/10" />
+                <div className="text-center">
+                  <p className="text-display text-2xl text-accent">{finalSuds}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">After</p>
+                </div>
               </div>
-              <div className="text-center">
-                <p className="text-display text-2xl text-accent">{intensity}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">After</p>
-              </div>
-            </div>
-            {intensity < startIntensity && (
-              <p className="text-accent text-xs text-center mt-3">
-                ↓ {startIntensity - intensity} point{startIntensity - intensity !== 1 ? "s" : ""} shift
-              </p>
             )}
           </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="velum-card p-4">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">How does it feel now?</p>
-              <input
-                type="range" min={1} max={10} value={intensity}
-                onChange={(e) => setIntensity(Number(e.target.value))}
-                className="w-full accent-accent h-1.5 bg-surface-light rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-accent"
-              />
-              <div className="flex justify-between mt-1">
-                <span className="text-[10px] text-muted-foreground">1</span>
-                <span className="text-display text-lg text-accent">{intensity}</span>
-                <span className="text-[10px] text-muted-foreground">10</span>
-              </div>
-            </div>
-
-            <button onClick={() => { setPhase("session"); startSession(); }}
-              className="w-full py-3.5 rounded-2xl bg-card text-foreground font-sans text-sm flex items-center justify-center gap-2 border border-foreground/10 active:scale-[0.98] transition-transform">
-              <RotateCcw className="w-4 h-4" /> Another round
-            </button>
-            <button onClick={() => navigate("/tools")}
-              className="w-full py-3.5 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-sm active:scale-[0.98] transition-transform">
-              Done
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              logSession({ tool: "bilateral", suds_before: startSuds, suds_after: finalSuds, category, issue: target });
+              navigate("/tools");
+            }}
+            className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium text-base active:scale-[0.98] transition-transform"
+          >
+            Done
+          </button>
         </motion.div>
       </div>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Session
-  // ---------------------------------------------------------------------------
+  // =========================================================================
+  // SESSION — bilateral orb (process or install)
+  // =========================================================================
+  const isInstallMode  = sessionModeRef.current === "install";
+  const sessionTarget  = isInstallMode ? pc : nc;
+  const sessionLabel   = isInstallMode ? "Hold this belief" : "Bring this to mind";
+
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
-        <button onClick={() => { stop(); setPhase("disclaimer"); }}
-          className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
+        <button
+          onClick={() => { stop(); setPhase(isInstallMode ? "charge" : "setup"); }}
+          className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10"
+        >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
-        <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Bilateral</p>
-        <div className="w-16" />
+        <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">
+          {isInstallMode ? "Install" : "Process"}
+        </p>
+        {roundCount > 0
+          ? <p className="text-muted-foreground text-xs font-sans w-16 text-right">Round {roundCount}</p>
+          : <div className="w-16" />
+        }
       </div>
 
-      {/* Landscape hint on mobile — shown only before session starts */}
+      {/* Landscape hint */}
       {!isRunning && (
         <div className="lg:hidden mx-4 mb-2 px-3 py-2 rounded-xl bg-surface-light flex items-center gap-2">
           <span className="text-sm">📱</span>
@@ -704,31 +1183,24 @@ export default function BilateralPage() {
         </div>
       )}
 
-      {/* Belief / issue display */}
+      {/* Target display */}
       <div className="px-6 pt-2 pb-4 shrink-0 max-w-2xl mx-auto w-full text-center">
-        {!isRunning ? (
-          <AnimatePresence mode="wait">
-            <motion.div key="pre" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
-              <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Hold this in mind</p>
+        <AnimatePresence mode="wait">
+          {!isRunning ? (
+            <motion.div key="pre" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+              <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">{sessionLabel}</p>
               <p className="text-foreground font-serif text-2xl leading-relaxed">
-                "{belief}"
+                "{sessionTarget.slice(0, 120)}{sessionTarget.length > 120 ? "…" : ""}"
               </p>
-              {issue && (
-                <p className="text-muted-foreground text-sm italic leading-relaxed">
-                  {issue.slice(0, 100)}{issue.length > 100 ? "…" : ""}
-                </p>
-              )}
             </motion.div>
-          </AnimatePresence>
-        ) : (
-          <AnimatePresence mode="wait">
+          ) : (
             <motion.div key="running" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <p className="text-foreground/70 font-serif text-lg leading-relaxed">
-                "{belief.slice(0, 100)}{belief.length > 100 ? "…" : ""}"
+                "{sessionTarget.slice(0, 120)}{sessionTarget.length > 120 ? "…" : ""}"
               </p>
             </motion.div>
-          </AnimatePresence>
-        )}
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Orb track */}
@@ -782,16 +1254,25 @@ export default function BilateralPage() {
             {showOrb ? <Eye className="w-4 h-4 text-accent" /> : <EyeOff className="w-4 h-4" />}
             {showOrb ? "Visual" : "Eyes closed"}
           </button>
+          {canHaptic && (
+            <button
+              onClick={() => setHapticOn(!hapticOn)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans transition-colors ${hapticOn ? "bg-card text-foreground" : "bg-card text-muted-foreground"}`}>
+              <span className="text-sm">{hapticOn ? "📳" : "🔕"}</span>
+              {hapticOn ? "Haptic" : "No haptic"}
+            </button>
+          )}
         </div>
 
         <div className="flex gap-3">
           <button
             onClick={isRunning ? stop : startSession}
             className={`flex-1 py-4 rounded-2xl font-sans font-medium text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2 ${isRunning ? "bg-card text-foreground border border-foreground/10" : "gold-gradient text-primary-foreground"}`}>
-            {isRunning ? <><Pause className="w-5 h-5" /> Stop</> : <><Play className="w-5 h-5 ml-0.5" /> Begin</>}
+            {isRunning ? <><Pause className="w-5 h-5" /> Pause</> : <><Play className="w-5 h-5 ml-0.5" /> Begin</>}
           </button>
           {isRunning && (
-            <button onClick={() => { stop(); setBeliefTruth(7); setPhase("belief-check"); }}
+            <button
+              onClick={() => { stop(); setPhase(isInstallMode ? "voc" : "notice"); }}
               className="px-5 py-4 rounded-2xl bg-card text-foreground font-sans text-sm border border-foreground/10 active:scale-[0.98] transition-transform">
               Finish
             </button>
@@ -799,9 +1280,27 @@ export default function BilateralPage() {
         </div>
 
         {!isRunning && (
-          <p className="text-center text-muted-foreground text-[11px] leading-relaxed">
-            Use headphones. Follow the light with soft, relaxed eyes.
-          </p>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              {SPEEDS.map((s, i) => (
+                <button key={s.label} onClick={() => setSpeedIdx(i)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-sans transition-colors ${speedIdx === i ? "bg-card text-foreground border border-accent/30" : "bg-surface-light text-muted-foreground"}`}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              {DURATIONS.map((d, i) => (
+                <button key={d.label} onClick={() => setDurationIdx(i)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-sans transition-colors ${durationIdx === i ? "bg-card text-foreground border border-accent/30" : "bg-surface-light text-muted-foreground"}`}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-center text-muted-foreground text-[11px] leading-relaxed pt-1">
+              Use headphones. Follow the light with soft, relaxed eyes.
+            </p>
+          </div>
         )}
       </div>
     </div>

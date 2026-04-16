@@ -60,6 +60,19 @@ const techniques: Technique[] = [
       { label: "Inhale", duration: 4 }, { label: "Exhale", duration: 8 },
     ],
   },
+  {
+    id: "sleep_onset", name: "Sleep Onset", desc: "Slow your mind and body for sleep", color: "#3a4a6e",
+    phases: [
+      { label: "Inhale", duration: 4 }, { label: "Hold", duration: 2 },
+      { label: "Exhale", duration: 8 }, { label: "Hold", duration: 2 },
+    ],
+  },
+  {
+    id: "nsdr", name: "NSDR / Deep Rest", desc: "Non-sleep deep rest — restore alertness without caffeine", color: "#2a3a5e",
+    phases: [
+      { label: "Inhale", duration: 2 }, { label: "Exhale", duration: 10 },
+    ],
+  },
 ];
 
 type Stage = "setup" | "checkin_before" | "session" | "checkin_after" | "done";
@@ -106,9 +119,8 @@ function StressRating({ label, onSelect }: { label: string; onSelect: (n: number
 
 export default function BreathePage() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, hasAccess } = useAuth();
   const queryClient = useQueryClient();
-  const hasAccess = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
   const [showPaywall, setShowPaywall] = useState(false);
 
   const [selectedTech, setSelectedTech] = useState(techniques[0]);

@@ -18,16 +18,10 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/signup" replace />;
   }
 
-  // If user has active access, let them through to any page
-  const hasActiveAccess =
-    profile?.subscription_status === "active" ||
-    profile?.subscription_plan === "lifetime";
-
-  // If user hasn't completed onboarding and isn't already on onboarding or paymentsuccess, redirect
+  // Redirect to onboarding if not completed — no payment gate, trial starts at signup
   if (
     profile &&
     !profile.onboarding_completed &&
-    !hasActiveAccess &&
     location.pathname !== "/onboarding" &&
     location.pathname !== "/paymentsuccess"
   ) {

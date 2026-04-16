@@ -51,7 +51,7 @@ export default function CourseExperiencePage() {
   const [searchParams] = useSearchParams();
   const courseId = searchParams.get("courseId") || "";
   const qc = useQueryClient();
-  const { user, profile } = useAuth();
+  const { user, hasAccess } = useAuth();
   const [activeLessonId, setActiveLessonId] = useState<string | null>(searchParams.get("lessonId"));
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
@@ -99,7 +99,6 @@ export default function CourseExperiencePage() {
   });
 
   const completedIds = new Set(lessonProgress.filter((p: any) => p.completed).map((p: any) => p.lesson_id));
-  const hasAccess = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
 
   // Flatten lessons from modules
   const flatLessons: any[] = [];

@@ -22,12 +22,12 @@ const TOOLS = [
   },
   {
     path: "/tapping",
-    label: "AI Tapping",
+    label: "Guided Tapping",
     tag: "AI-Powered",
     description: "Describe what you're feeling. Get a personalised EFT tapping script generated in seconds.",
     detail: "3-round script · Specific to your situation · Guided step-by-step",
     icon: Hand,
-    gradient: true,
+    gradient: false,
   },
   {
     path: "/somatic-touch",

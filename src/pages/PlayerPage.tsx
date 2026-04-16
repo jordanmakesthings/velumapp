@@ -65,7 +65,7 @@ export default function PlayerPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const trackId = searchParams.get("trackId") || "";
-  const { user, profile } = useAuth();
+  const { user, hasAccess } = useAuth();
   const queryClient = useQueryClient();
 
   const [step, setStep] = useState<"before" | "playing" | "after" | "done">("before");
@@ -77,8 +77,6 @@ export default function PlayerPage() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-
-  const hasSubscription = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
 
   const { data: track, isLoading } = useQuery({
     queryKey: ["track", trackId],
@@ -103,12 +101,12 @@ export default function PlayerPage() {
     setIsFavorited(favorites.some((f: any) => f.track_id === trackId));
   }, [favorites, trackId]);
 
-  // Subscription gate: if no subscription, show paywall
+  // Subscription gate: if no access (subscription or trial), show paywall
   useEffect(() => {
-    if (track && !hasSubscription) {
+    if (track && !hasAccess) {
       setShowPaywall(true);
     }
-  }, [track, hasSubscription]);
+  }, [track, hasAccess]);
 
   const toggleFavMutation = useMutation({
     mutationFn: async () => {
@@ -245,8 +243,8 @@ export default function PlayerPage() {
     );
   }
 
-  // Subscription gate
-  if (!hasSubscription) {
+  // Access gate
+  if (!hasAccess) {
     return (
       <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background flex flex-col">
         <div className="safe-area-pt px-4 pt-4">

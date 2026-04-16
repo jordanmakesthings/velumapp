@@ -13,6 +13,8 @@ interface Profile {
   subscription_plan: string | null;
   subscription_expires_at: string | null;
   stripe_customer_id: string | null;
+  trial_started_at: string | null;
+  trial_ends_at: string | null;
 }
 
 interface AuthContextType {
@@ -21,6 +23,9 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   isAdmin: boolean;
+  hasAccess: boolean;
+  isInTrial: boolean;
+  trialDaysLeft: number;
   signUp: (email: string, password: string, fullName?: string, phone?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
@@ -36,6 +41,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const isInTrial = !!(
+    profile?.trial_ends_at && new Date(profile.trial_ends_at) > new Date()
+  );
+  const trialDaysLeft = profile?.trial_ends_at
+    ? Math.max(0, Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / 86_400_000))
+    : 0;
+  const hasAccess =
+    profile?.subscription_status === "active" ||
+    profile?.subscription_plan === "lifetime" ||
+    isInTrial;
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -104,10 +120,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     if (!error && data.user) {
-      // Save phone to profile
-      if (phone) {
-        supabase.from("profiles").update({ phone }).eq("id", data.user.id);
-      }
+      const trialEnd = new Date();
+      trialEnd.setDate(trialEnd.getDate() + 7);
+      // Start trial + save phone — slight delay for profile trigger
+      setTimeout(() => {
+        supabase.from("profiles").update({
+          ...(phone ? { phone } : {}),
+          trial_started_at: new Date().toISOString(),
+          trial_ends_at: trialEnd.toISOString(),
+        }).eq("id", data.user!.id);
+      }, 1500);
       // Fire-and-forget: add contact to Loops
       supabase.functions.invoke("loops-signup", {
         body: { email, firstName: fullName || "" },
@@ -138,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, isAdmin, signUp, signIn, signInWithMagicLink, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, isAdmin, hasAccess, isInTrial, trialDaysLeft, signUp, signIn, signInWithMagicLink, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

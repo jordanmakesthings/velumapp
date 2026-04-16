@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { X, Sparkles, Loader2, Check } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import logoLotus from "@/assets/logo-lotus.jpg";
@@ -13,32 +12,64 @@ interface PaywallModalProps {
 
 const FEATURES = [
   "Full meditation & breathwork library",
-  "Interactive breathwork tool",
-  "Courses & MasteryClasses",
+  "EFT tapping, bilateral & somatic tools",
+  "All courses & Mastery Classes",
   "Progress tracking & journal",
+];
+
+const PLANS = [
+  {
+    key: "annual" as const,
+    label: "Annual",
+    badge: "Best value",
+    price: "$149",
+    sub: "/year",
+    note: "~$12/mo · save 57%",
+    highlight: true,
+  },
+  {
+    key: "monthly" as const,
+    label: "Monthly",
+    badge: null,
+    price: "$29",
+    sub: "/month",
+    note: "Cancel anytime",
+    highlight: false,
+  },
+  {
+    key: "lifetime" as const,
+    label: "Lifetime",
+    badge: null,
+    price: "$299",
+    sub: "one-time",
+    note: "Every future update included",
+    highlight: false,
+  },
 ];
 
 export function PaywallModal({ open, onClose }: PaywallModalProps) {
   const navigate = useNavigate();
   const { session } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "lifetime" | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual" | "lifetime">("annual");
   const [loading, setLoading] = useState(false);
 
   if (!open) return null;
 
   const handleCheckout = async () => {
-    if (!selectedPlan) return;
-    if (!session) {
-      onClose();
-      navigate("/auth");
-      return;
-    }
+    if (!session) { onClose(); navigate("/signup"); return; }
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { plan: selectedPlan, returnUrl: window.location.origin },
+      const res = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: selectedPlan,
+          returnUrl: window.location.origin,
+          customerEmail: session.user.email,
+        }),
       });
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Checkout failed");
       if (data?.url) window.location.href = data.url;
       else throw new Error("No checkout URL");
     } catch (err: any) {
@@ -56,71 +87,60 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
           <X className="w-4 h-4" />
         </button>
 
-        {/* Logo + heading */}
         <div className="flex flex-col items-center mb-5">
           <img src={logoLotus} alt="Velum" className="w-10 h-10 rounded-xl object-cover mb-4" />
           <h3 className="text-foreground font-serif text-2xl text-center">Unlock Full Access</h3>
-          <p className="text-ui text-xs mt-1">Full access to everything in Velum</p>
+          <p className="text-muted-foreground text-xs mt-1 text-center">Your trial has ended — continue your practice.</p>
         </div>
 
-        {/* Plan cards */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <button
-            onClick={() => setSelectedPlan("monthly")}
-            className={`velum-card-flat p-4 text-left transition-all ${
-              selectedPlan === "monthly" ? "ring-1 ring-accent/50" : ""
-            }`}
-          >
-            <p className="text-foreground text-xs font-sans font-medium mb-0.5">Monthly</p>
-            <p className="text-display text-2xl text-accent">$29</p>
-            <p className="text-ui text-[10px]">/month</p>
-          </button>
-
-          <button
-            onClick={() => setSelectedPlan("lifetime")}
-            className={`velum-card-flat p-4 text-left transition-all ${
-              selectedPlan === "lifetime" ? "ring-1 ring-accent/50" : ""
-            }`}
-          >
-            <p className="text-foreground text-xs font-sans font-medium mb-0.5">Lifetime</p>
-            <p className="text-display text-2xl text-accent">$299</p>
-            <p className="text-ui text-[10px]">one-time</p>
-          </button>
+        {/* Plan selector */}
+        <div className="flex flex-col gap-2 mb-5">
+          {PLANS.map((plan) => (
+            <button
+              key={plan.key}
+              onClick={() => setSelectedPlan(plan.key)}
+              className={`relative p-4 rounded-xl text-left transition-all border ${
+                selectedPlan === plan.key
+                  ? "border-accent/60 bg-accent/5"
+                  : "border-foreground/10 bg-card hover:border-foreground/20"
+              }`}
+            >
+              {plan.badge && (
+                <span className="absolute -top-2 left-4 gold-gradient text-primary-foreground text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full tracking-wide">
+                  {plan.badge}
+                </span>
+              )}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-foreground text-sm font-sans font-medium">{plan.label}</p>
+                  <p className="text-muted-foreground text-[11px] mt-0.5">{plan.note}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-display text-xl text-accent">{plan.price}</span>
+                  <span className="text-muted-foreground text-xs"> {plan.sub}</span>
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
 
         {/* Features */}
         <div className="flex flex-col gap-2 mb-5">
           {FEATURES.map((f) => (
             <div key={f} className="flex items-center gap-2">
-              <Check className="w-3.5 h-3.5 text-accent" />
+              <Check className="w-3.5 h-3.5 text-accent shrink-0" />
               <span className="text-foreground text-sm font-sans">{f}</span>
             </div>
           ))}
         </div>
 
-        {/* CTA */}
-        {selectedPlan && (
-          <button
-            onClick={handleCheckout}
-            disabled={loading}
-            className="w-full py-3.5 rounded-xl gold-gradient text-primary-foreground font-sans font-medium text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2 disabled:opacity-70"
-          >
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                Begin My Journey
-              </>
-            )}
-          </button>
-        )}
-
-        <p className="text-center text-muted-foreground text-[10px] font-sans mt-3">
-          {selectedPlan === "lifetime"
-            ? "One time payment"
-            : "Cancel anytime"}
-        </p>
+        <button
+          onClick={handleCheckout}
+          disabled={loading}
+          className="w-full py-3.5 rounded-xl gold-gradient text-primary-foreground font-sans font-medium text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2 disabled:opacity-70"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-4 h-4" /> Continue with {PLANS.find(p => p.key === selectedPlan)?.label}</>}
+        </button>
 
         <button onClick={onClose} className="w-full text-center text-muted-foreground text-xs font-sans mt-3 hover:text-foreground transition-colors">
           Maybe later

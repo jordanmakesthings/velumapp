@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Flame, Sparkles, Wind, LogOut, CheckCircle2, AlertCircle, Bell, Camera, Edit2, X, Check } from "lucide-react";
+import { Flame, Sparkles, Wind, LogOut, CheckCircle2, AlertCircle, Bell, Camera, Edit2, X, Check, Zap } from "lucide-react";
+import { getSUDSStats, getCheckins } from "@/lib/velumStorage";
 import { useState, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import NervousSystemScore from "@/components/profile/NervousSystemScore";
@@ -18,7 +19,7 @@ const categoryLabels: Record<string, string> = {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, profile, signOut, loading, refreshProfile } = useAuth();
+  const { user, profile, session, hasAccess, signOut, loading, refreshProfile } = useAuth();
   const [canceling, setCanceling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelSuccess, setCancelSuccess] = useState(false);
@@ -27,7 +28,6 @@ export default function ProfilePage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  const hasAccess = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
   const isLifetime = profile?.subscription_plan === "lifetime";
   const isCanceling = profile?.subscription_status === "canceling";
 
@@ -63,6 +63,9 @@ export default function ProfilePage() {
 
   const currentStreak = useMemo(() => calculateStreak(progress), [progress]);
 
+  const sudsStats = useMemo(() => getSUDSStats(), []);
+  const checkinCount = useMemo(() => getCheckins().length, []);
+
   const avgReduction = useMemo(() => {
     const stressData = progress.filter((p) => p.stress_before != null && p.stress_after != null);
     if (stressData.length === 0) return null;
@@ -77,10 +80,15 @@ export default function ProfilePage() {
     setCanceling(true);
     setCancelError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("cancel-subscription", {
-        body: {},
+      const res = await fetch("/api/cancel-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+        },
       });
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Cancel failed");
       setCancelSuccess(true);
       await refreshProfile();
     } catch (err: any) {
@@ -301,6 +309,44 @@ export default function ProfilePage() {
           </div>
         ))}
       </div>
+
+      {/* Tool sessions stats */}
+      {(sudsStats || checkinCount > 0) && (
+        <div className="velum-card p-5 mb-6">
+          <p className="text-ui text-xs tracking-wide uppercase mb-4">Tool Session Stats</p>
+          <div className="grid grid-cols-2 gap-3">
+            {checkinCount > 0 && (
+              <div className="bg-surface-light rounded-xl p-3 text-center">
+                <Zap className="w-4 h-4 text-accent mx-auto mb-1" />
+                <p className="text-display text-2xl">{checkinCount}</p>
+                <p className="text-muted-foreground text-xs">Check-ins</p>
+              </div>
+            )}
+            {sudsStats && (
+              <>
+                <div className="bg-surface-light rounded-xl p-3 text-center">
+                  <span className="text-lg block mb-1">△</span>
+                  <p className="text-display text-2xl">{sudsStats.count}</p>
+                  <p className="text-muted-foreground text-xs">Tool sessions</p>
+                </div>
+                <div className="bg-surface-light rounded-xl p-3 text-center col-span-2">
+                  <p className="text-display text-3xl text-accent">−{sudsStats.avgReduction}</p>
+                  <p className="text-muted-foreground text-xs mt-1">Average SUDS reduction per session</p>
+                </div>
+                {sudsStats.bestTool && (
+                  <div className="bg-surface-light rounded-xl p-3 col-span-2 flex items-center gap-3">
+                    <span className="text-accent text-lg">✦</span>
+                    <div>
+                      <p className="text-foreground text-sm font-sans font-medium capitalize">{sudsStats.bestTool}</p>
+                      <p className="text-muted-foreground text-xs">Most used tool</p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Nervous System Score Dashboard */}
       <NervousSystemScore />

@@ -1,11 +1,36 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, Crown, Sparkles, Loader2, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Check, Crown, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import logoCircle from "@/assets/logo-circle.png";
+
+const PLANS = [
+  {
+    key: "annual" as const,
+    label: "Annual",
+    price: "$149",
+    sub: "/year",
+    note: "~$12/mo · save 57%",
+    badge: "Best value",
+  },
+  {
+    key: "monthly" as const,
+    label: "Monthly",
+    price: "$29",
+    sub: "/month",
+    note: "Cancel anytime",
+    badge: null,
+  },
+  {
+    key: "lifetime" as const,
+    label: "Lifetime",
+    price: "$299",
+    sub: "one-time",
+    note: "Every future update included",
+    badge: null,
+  },
+];
 
 const INCLUDED_FEATURES = [
   {
@@ -33,8 +58,7 @@ const INCLUDED_FEATURES = [
 export default function PremiumPage() {
   const navigate = useNavigate();
   const { session, profile, refreshProfile } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "lifetime">("monthly");
-  const [promoCode, setPromoCode] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual" | "lifetime">("annual");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [canceling, setCanceling] = useState(false);
@@ -44,27 +68,24 @@ export default function PremiumPage() {
   const isLifetime = profile?.subscription_plan === "lifetime";
   const isCanceling = profile?.subscription_status === "canceling";
 
-  const handleSubscribe = async () => {
-    if (!session) {
-      navigate("/signup");
-      return;
-    }
+  const handleSubscribe = async (plan: "monthly" | "annual" | "lifetime") => {
+    if (!session) { navigate("/signup"); return; }
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          plan: selectedPlan,
-          promoCode: promoCode || undefined,
+      const res = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan,
           returnUrl: window.location.origin,
-        },
+          customerEmail: session.user.email,
+        }),
       });
-      if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("No checkout URL returned");
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Checkout failed");
+      if (data?.url) window.location.href = data.url;
+      else throw new Error("No checkout URL returned");
     } catch (err: any) {
       console.error("Checkout error:", err);
       setError(err.message || "Failed to start checkout");
@@ -78,10 +99,15 @@ export default function PremiumPage() {
     setCanceling(true);
     setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("cancel-subscription", {
-        body: {},
+      const res = await fetch("/api/cancel-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+        },
       });
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Cancel failed");
       setCancelSuccess(true);
       await refreshProfile();
     } catch (err: any) {
@@ -153,53 +179,42 @@ export default function PremiumPage() {
             </p>
           </div>
 
-          {/* Monthly Plan */}
-          <div className="text-center mb-10">
-            <p className="text-display text-6xl text-foreground mb-1">$29 <span className="text-muted-foreground text-xl font-sans font-light">/ month</span></p>
-            <p className="text-muted-foreground text-sm font-sans font-light mb-5">Cancel anytime</p>
-            <button
-              onClick={() => { setSelectedPlan("monthly"); handleSubscribe(); }}
-              disabled={loading}
-              className="w-full velum-card p-5 flex items-center justify-between text-left border border-accent/30 mb-2"
-            >
-              <span className="text-foreground text-lg font-sans font-semibold">Begin My Journey</span>
-              <span className="text-accent text-xl">→</span>
-            </button>
-            <p className="text-muted-foreground/50 text-xs font-sans">Cancel anytime</p>
+          {/* Plans */}
+          <div className="flex flex-col gap-3 mb-8">
+            {PLANS.map((plan) => (
+              <div key={plan.key} className="relative">
+                {plan.badge && (
+                  <span className="absolute -top-2.5 left-4 gold-gradient text-primary-foreground text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full tracking-wide z-10">
+                    {plan.badge}
+                  </span>
+                )}
+                <button
+                  onClick={() => handleSubscribe(plan.key)}
+                  disabled={loading}
+                  className={`w-full p-5 rounded-xl text-left transition-all border flex items-center justify-between ${
+                    plan.key === "annual"
+                      ? "border-accent/50 bg-accent/5"
+                      : "border-foreground/10 bg-card hover:border-foreground/20"
+                  } disabled:opacity-70`}
+                >
+                  <div>
+                    <p className="text-foreground font-sans font-medium">{plan.label}</p>
+                    <p className="text-muted-foreground text-xs mt-0.5">{plan.note}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-accent text-2xl font-serif">{plan.price}</p>
+                    <p className="text-muted-foreground text-xs">{plan.sub}</p>
+                  </div>
+                </button>
+              </div>
+            ))}
           </div>
 
-          <div className="w-full h-px bg-accent/15 mb-10" />
-
-          {/* Lifetime Plan */}
-          <div className="text-center mb-10">
-            <p className="text-display text-6xl text-foreground mb-1">$299 <span className="text-muted-foreground text-xl font-sans font-light">· One time</span></p>
-            <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-5">
-              Every course. Every tool. Every future update.<br />
-              Pay once, never think about it again.
-            </p>
-            <button
-              onClick={() => { setSelectedPlan("lifetime"); handleSubscribe(); }}
-              disabled={loading}
-              className="w-full velum-card-flat p-5 flex items-center justify-between text-left border border-muted-foreground/20 mb-2"
-            >
-              <span className="text-foreground text-lg font-sans font-semibold">Begin My Journey</span>
-              <span className="text-accent text-xl">→</span>
-            </button>
-            <p className="text-muted-foreground/50 text-xs font-sans">One time payment</p>
-          </div>
-
-          {/* Promo code */}
-          <div className="text-center mb-10">
-            <button
-              onClick={() => {
-                const code = prompt("Enter your promo code:");
-                if (code) setPromoCode(code.toUpperCase());
-              }}
-              className="text-accent text-sm font-sans hover:underline underline-offset-2"
-            >
-              Have a code? Apply it here →
-            </button>
-          </div>
+          {loading && (
+            <div className="flex justify-center mb-6">
+              <Loader2 className="w-5 h-5 animate-spin text-accent" />
+            </div>
+          )}
 
           {error && (
             <div className="flex items-center gap-2 text-destructive text-sm mb-6 justify-center">

@@ -16,12 +16,12 @@ export function AppLayout() {
         </aside>
       )}
 
-      <main className={`min-w-0 w-full max-w-full flex-1 overflow-x-hidden ${!hideNav ? "lg:ml-[220px]" : ""} ${!hideNav ? "pb-[88px] lg:pb-0" : ""}`}>
+      <main className={`min-w-0 w-full max-w-full flex-1 overflow-x-hidden ${!hideNav ? "lg:ml-[220px]" : ""} ${!hideNav ? "pb-[96px] lg:pb-0" : ""}`}>
         <Outlet />
       </main>
 
       {!hideNav && (
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 h-[72px] max-w-full overflow-hidden backdrop-blur-xl bg-background/80 border-t border-accent/10 flex items-center justify-around px-4 safe-area-pb">
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 h-[80px] max-w-full overflow-hidden backdrop-blur-xl bg-background/80 border-t border-accent/10 flex items-center justify-around px-6 pb-2 safe-area-pb">
           <BottomNav />
         </nav>
       )}

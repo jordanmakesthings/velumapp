@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import logoCircle from "@/assets/logo-circle.png";
 
 const GOAL_OPTIONS = [
@@ -111,7 +110,7 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const { user, session, refreshProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -120,8 +119,6 @@ export default function OnboardingPage() {
   const [stress, setStress] = useState(5);
   const [emotional, setEmotional] = useState(50);
   const [vision, setVision] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "lifetime">("monthly");
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const totalSteps = 6;
 
@@ -162,30 +159,6 @@ export default function OnboardingPage() {
     navigate("/home-setup");
   };
 
-  const handleCheckout = async (plan: "monthly" | "lifetime") => {
-    if (!session) { navigate("/signup"); return; }
-    setSelectedPlan(plan);
-    setCheckoutLoading(true);
-    try {
-      await saveOnboardingData(false);
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { plan, returnUrl: window.location.origin },
-      });
-      if (error) throw error;
-      if (data?.url) window.location.href = data.url;
-      else throw new Error("No checkout URL returned");
-    } catch (err: any) {
-      console.error("Checkout error:", err);
-      toast.error(err.message || "Failed to start checkout");
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
-
-  const handleSkip = async () => {
-    await saveOnboardingData(true);
-    navigate("/home-setup");
-  };
 
   const slideVariants = {
     enter: { opacity: 0, x: 40 },
@@ -301,79 +274,31 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* Step 5: Paywall */}
+          {/* Step 5: Trial welcome */}
           {step === 5 && (
-            <motion.div key="paywall" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full">
-              <div className="text-center mb-8">
-                <h1 className="text-display text-4xl italic mb-2">Final Step.</h1>
-                <p className="text-muted-foreground text-[15px] font-sans font-light">
-                  Full access to everything in Velum. Free for 7 days.
-                </p>
+            <motion.div key="trial" variants={slideVariants} initial="enter" animate="center" exit="exit" className="w-full text-center">
+              <div className="w-16 h-16 rounded-2xl gold-gradient flex items-center justify-center mx-auto mb-6">
+                <Check className="w-8 h-8 text-primary-foreground" />
               </div>
-
-              {/* Monthly */}
-              <div className="text-center mb-8">
-                <p className="text-accent text-[10px] font-sans font-medium tracking-[2.5px] uppercase mb-3">Most Popular</p>
-                <p className="text-display text-5xl text-foreground mb-1">$29 <span className="text-muted-foreground text-lg font-sans font-light">/ month</span></p>
-                <p className="text-muted-foreground text-sm font-sans font-light mb-4">Start free for 7 days · Cancel anytime</p>
-                <button onClick={() => handleCheckout("monthly")} disabled={checkoutLoading}
-                  className="w-full border border-accent/30 rounded-xl p-5 flex items-center justify-between text-left mb-1">
-                  <span className="text-foreground text-lg font-sans font-semibold">Start Free Trial</span>
-                  {checkoutLoading && selectedPlan === "monthly" ? (
-                    <Loader2 className="w-5 h-5 text-accent animate-spin" />
-                  ) : (
-                    <span className="text-accent text-xl">→</span>
-                  )}
-                </button>
-                <p className="text-muted-foreground/40 text-xs font-sans">7 days free then $29/mo · Cancel anytime</p>
-              </div>
-
-              <div className="w-full h-px bg-accent/15 mb-8" />
-
-              {/* Lifetime */}
-              <div className="text-center mb-8">
-                <p className="text-accent text-sm font-sans font-medium mb-2">● Only 16 spots remaining</p>
-                <p className="text-display text-5xl text-foreground mb-1">$299 <span className="text-muted-foreground text-lg font-sans font-light">· One time</span></p>
-                <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed mb-4">
-                  Every course. Every tool. Every future update.
-                </p>
-                <button onClick={() => handleCheckout("lifetime")} disabled={checkoutLoading}
-                  className="w-full border border-muted-foreground/20 rounded-xl p-5 flex items-center justify-between text-left mb-1">
-                  <span className="text-foreground text-lg font-sans font-semibold">Claim Founding Member Access</span>
-                  {checkoutLoading && selectedPlan === "lifetime" ? (
-                    <Loader2 className="w-5 h-5 text-accent animate-spin" />
-                  ) : (
-                    <span className="text-accent text-xl">→</span>
-                  )}
-                </button>
-              </div>
-
-              <p className="text-accent text-sm font-sans text-center mb-6">Have a code? Apply it here →</p>
-
-              <div className="w-full h-px bg-accent/15 mb-6" />
-
-              {/* Everything Included */}
-              <p className="text-accent text-[10px] font-sans font-medium tracking-[2.5px] uppercase text-center mb-6">
-                Everything Included
+              <h1 className="text-display text-4xl italic mb-3">You're in.</h1>
+              <p className="text-muted-foreground text-[15px] font-sans font-light mb-8">
+                Your 7-day free trial starts now.<br />
+                No credit card required.
               </p>
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-3 mb-8 text-left">
                 {INCLUDED_FEATURES.map((f, i) => (
-                  <div key={i} className={`py-5 ${i < INCLUDED_FEATURES.length - 1 ? "border-b border-accent/10" : ""}`}>
-                    <div className="flex items-start gap-3 mb-1.5">
-                      <span className="text-accent text-lg mt-0.5">✓</span>
-                      <h3 className="text-foreground text-lg font-serif font-bold">{f.title}</h3>
-                    </div>
-                    <p className="text-muted-foreground text-sm font-sans font-light leading-relaxed pl-8">{f.desc}</p>
+                  <div key={i} className="flex items-start gap-3">
+                    <span className="text-accent text-base mt-0.5 shrink-0">✓</span>
+                    <p className="text-foreground text-sm font-sans font-medium">{f.title}</p>
                   </div>
                 ))}
               </div>
-
-              <div className="mt-8">
-                <button onClick={handleSkip}
-                  className="w-full text-center text-muted-foreground text-sm font-sans hover:text-foreground transition-colors">
-                  Continue for free
-                </button>
-              </div>
+              <button
+                onClick={handleComplete}
+                className="w-full py-5 rounded-xl gold-gradient text-primary-foreground font-sans font-bold text-base active:scale-[0.98] transition-transform"
+              >
+                Start Exploring →
+              </button>
             </motion.div>
           )}
         </AnimatePresence>

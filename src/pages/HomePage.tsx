@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo } from "react";
-import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen } from "lucide-react";
+import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Clock, Hand, Fingerprint } from "lucide-react";
 import { useState } from "react";
+import { getTodayCheckin } from "@/lib/velumStorage";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SessionFinderModal } from "@/components/home/SessionFinderModal";
@@ -113,7 +114,8 @@ export default function HomePage() {
   const [finderOpen, setFinderOpen] = useState(false);
   const [reflectionText, setReflectionText] = useState("");
   const [savingReflection, setSavingReflection] = useState(false);
-  const { user, profile } = useAuth();
+  const todayCheckin = getTodayCheckin();
+  const { user, profile, isInTrial, trialDaysLeft, hasAccess } = useAuth();
   const firstName = profile?.full_name?.split(" ")[0];
   // carousel refs removed
 
@@ -255,6 +257,35 @@ export default function HomePage() {
         </p>
       </div>
 
+      {/* Trial countdown banner */}
+      {isInTrial && (
+        <Link to="/premium" className={`velum-card mb-4 w-full p-4 flex items-center gap-4 ${trialDaysLeft <= 2 ? "border border-accent/40" : ""}`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${trialDaysLeft <= 2 ? "gold-gradient" : "bg-surface-light"}`}>
+            <Clock className={`w-4 h-4 ${trialDaysLeft <= 2 ? "text-primary-foreground" : "text-accent"}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-foreground text-sm font-sans font-medium">
+              {trialDaysLeft <= 0 ? "Your trial ends today" : `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left in your trial`}
+            </p>
+            <p className="text-muted-foreground text-[11px]">Annual plan · $149/yr · save 57% →</p>
+          </div>
+        </Link>
+      )}
+
+{/* Daily check-in card (only if not done today) */}
+      {!todayCheckin && (
+        <Link to="/checkin" className="velum-card mb-4 w-full p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-surface-light flex items-center justify-center shrink-0">
+            <ClipboardCheck className="w-4.5 h-4.5 text-accent" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-foreground text-sm font-sans font-medium">Daily Check-in</p>
+            <p className="text-muted-foreground text-[11px]">Rate your nervous system · get a tool recommendation</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+        </Link>
+      )}
+
       {/* Stats pills */}
       <div className="mb-8 flex w-full min-w-0 flex-wrap gap-3">
         {[
@@ -271,79 +302,76 @@ export default function HomePage() {
           )}
       </div>
 
-      {/* Session Finder */}
-      <button onClick={() => setFinderOpen(true)} className="velum-card group mb-8 w-full max-w-full min-w-0 p-5 text-left">
-        <p className="text-ui mb-1 text-xs tracking-wide uppercase">Quick Start</p>
-        <div className="flex min-w-0 items-center justify-between gap-4">
-          <p className="text-foreground min-w-0 flex-1 break-words font-serif text-lg">Not sure where to start? Use Session Finder</p>
-          <ArrowRight className="h-5 w-5 shrink-0 text-accent group-hover:translate-x-1 transition-transform duration-200" />
-        </div>
+      {/* Session Finder — hero card */}
+      <button onClick={() => setFinderOpen(true)} className="velum-card group mb-8 w-full min-w-0 p-6 text-left border border-accent/20 bg-accent/5 hover:bg-accent/8 transition-colors">
+        <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-2">Session Finder</p>
+        <p className="text-foreground font-serif text-xl leading-snug mb-1">Not sure where to start?</p>
+        <p className="text-muted-foreground text-sm font-sans mb-4">Answer 4 questions. Get one specific recommendation.</p>
+        <span className="inline-flex items-center gap-2 rounded-xl gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-sans font-medium">
+          Find my session <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+        </span>
       </button>
 
-      {/* Explore - Category Grid */}
-      <div className="mb-8 min-w-0 w-full max-w-full">
-        <p className="text-ui mb-4 text-[11px] tracking-[2.5px] uppercase">Explore</p>
-        <div className="grid w-full max-w-full grid-cols-2 gap-3 [grid-template-columns:repeat(2,minmax(0,1fr))]">
-          {categories.map(({ key, label, icon: Icon, count, description }) =>
-            <Link
-              key={key}
-              to={getCategoryLink(key)}
-              className="velum-card group flex min-w-0 max-w-full flex-col justify-between bg-secondary p-5 min-h-[130px]">
-              <div className="mb-3 flex min-w-0 items-start justify-between gap-2">
-                <Icon className="w-5 h-5 shrink-0 text-accent" />
-                <span className="max-w-full rounded-full bg-surface px-2.5 py-0.5 text-[10px] font-sans text-accent">{count} sessions</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-foreground mb-1 break-words text-sm font-sans font-medium">{label}</p>
-                <p className="text-ui break-words text-[11px] leading-snug">{description}</p>
-              </div>
-            </Link>
-            )}
+      {/* Tools grid — 2×2 */}
+      <div className="mb-8 min-w-0 w-full">
+        <p className="text-ui mb-4 text-[11px] tracking-[2.5px] uppercase">Tools</p>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Breathwork */}
+          <Link to="/breathe" className="velum-card p-5 flex flex-col gap-3 min-h-[130px] border border-accent/20">
+            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Wind className="w-4 h-4 text-accent" />
+            </div>
+            <div>
+              <p className="text-foreground text-sm font-sans font-medium">Breathwork</p>
+              <p className="text-ui text-[11px] mt-0.5">6 techniques · Interactive</p>
+            </div>
+          </Link>
+
+          {/* Bilateral */}
+          <Link to="/bilateral" className="velum-card p-5 flex flex-col gap-3 min-h-[130px]">
+            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Zap className="w-4 h-4 text-accent" />
+            </div>
+            <div>
+              <p className="text-foreground text-sm font-sans font-medium">Bilateral</p>
+              <p className="text-ui text-[11px] mt-0.5">Visual + stereo audio</p>
+            </div>
+          </Link>
+
+          {/* Guided Tapping — hidden until model is trained */}
+
+          {/* Somatic Touch */}
+          <Link to="/somatic-touch" className="velum-card p-5 flex flex-col gap-3 min-h-[130px]">
+            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Fingerprint className="w-4 h-4 text-accent" />
+            </div>
+            <div>
+              <p className="text-foreground text-sm font-sans font-medium">Somatic Touch</p>
+              <p className="text-ui text-[11px] mt-0.5">4 sequences · Grounding</p>
+            </div>
+          </Link>
         </div>
       </div>
 
-      {/* Breathwork CTA - matches user screenshot */}
-      {/* Interactive tools — 2-up row */}
-      <div className="mb-8 grid grid-cols-1 gap-3 min-w-0 w-full sm:grid-cols-2">
-        {/* Breathwork */}
-        <Link to="/breathe" className="block w-full min-w-0">
-          <div className="velum-card relative w-full min-w-0 overflow-hidden border border-accent/25 p-5 h-full">
-            <div className="absolute top-4 right-4">
-              <div className="relative w-12 h-12">
-                <div className="absolute inset-0 rounded-full border border-accent/30" />
-                <div className="absolute inset-1.5 rounded-full border border-accent/20" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-accent/80 animate-pulse" />
-                </div>
+      {/* Library quick links */}
+      <div className="mb-8 min-w-0 w-full">
+        <p className="text-ui mb-4 text-[11px] tracking-[2.5px] uppercase">Library</p>
+        <div className="flex flex-col gap-2">
+          {[
+            { label: "Meditation", count: categoryCounts["meditation"] || 0, to: "/library?category=meditation" },
+            { label: "Rapid Resets", count: categoryCounts["rapid_resets"] || 0, to: "/library?category=rapid_resets" },
+            { label: "Mastery Classes", count: masteryCount, to: "/library?tab=mastery" },
+            { label: "Courses", count: courses.length, to: "/courses" },
+          ].map(({ label, count, to }) => (
+            <Link key={to} to={to} className="velum-card-flat flex items-center justify-between px-4 py-3.5">
+              <p className="text-foreground text-sm font-sans">{label}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground text-xs">{count}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
               </div>
-            </div>
-            <p className="text-accent mb-1 text-[10px] font-sans font-bold tracking-wide uppercase">Breathwork</p>
-            <p className="text-foreground pr-14 font-serif text-lg leading-snug">Real-Time Breath Regulation</p>
-            <p className="text-ui mt-1 pr-14 text-[11px]">6 techniques</p>
-            <span className="inline-flex items-center gap-1.5 mt-4 rounded-lg bg-accent px-4 py-2 text-xs font-sans font-medium text-background">
-              Start <ArrowRight className="w-3 h-3" />
-            </span>
-          </div>
-        </Link>
-
-        {/* Bilateral */}
-        <Link to="/bilateral" className="block w-full min-w-0">
-          <div className="velum-card relative w-full min-w-0 overflow-hidden border border-accent/10 p-5 h-full">
-            {/* Travelling dot preview */}
-            <div className="absolute top-4 right-4 w-12 h-12 flex items-center justify-center">
-              <div className="w-full h-px bg-foreground/10 relative">
-                <div className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full gold-gradient animate-[ping_1.4s_ease-in-out_infinite] opacity-60" style={{ left: "30%" }} />
-                <div className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full gold-gradient" style={{ left: "30%" }} />
-              </div>
-            </div>
-            <p className="text-accent mb-1 text-[10px] font-sans font-bold tracking-wide uppercase">Bilateral</p>
-            <p className="text-foreground pr-14 font-serif text-lg leading-snug">Bilateral Stimulation</p>
-            <p className="text-ui mt-1 pr-14 text-[11px]">Visual + stereo audio</p>
-            <span className="inline-flex items-center gap-1.5 mt-4 rounded-lg bg-card px-4 py-2 text-xs font-sans font-medium text-foreground border border-foreground/10">
-              Start <ArrowRight className="w-3 h-3" />
-            </span>
-          </div>
-        </Link>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Today's Reflection */}
