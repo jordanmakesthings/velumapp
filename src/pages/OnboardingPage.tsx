@@ -119,6 +119,7 @@ export default function OnboardingPage() {
   const [stress, setStress] = useState(5);
   const [emotional, setEmotional] = useState(50);
   const [vision, setVision] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const totalSteps = 6;
 
@@ -132,7 +133,7 @@ export default function OnboardingPage() {
 
   const canProceed = () => {
     switch (step) {
-      case 0: return name.trim().length > 0;
+      case 0: return name.trim().length > 0 && termsAccepted;
       case 1: return goals.length > 0;
       case 2: return experience !== "";
       default: return true;
@@ -144,7 +145,10 @@ export default function OnboardingPage() {
     const onboardingAnswers = { goals, experience, stress, emotional, vision };
     const updates: Record<string, unknown> = { onboarding_answers: onboardingAnswers };
     if (name.trim()) updates.full_name = name.trim();
-    if (markComplete) updates.onboarding_completed = true;
+    if (markComplete) {
+      updates.onboarding_completed = true;
+      updates.terms_accepted_at = new Date().toISOString();
+    }
     await supabase.from("profiles").update(updates).eq("id", user.id);
     await refreshProfile();
   };
@@ -194,7 +198,28 @@ export default function OnboardingPage() {
                   placeholder="you@example.com"
                   className="w-full bg-transparent border border-muted-foreground/25 rounded-xl px-5 py-4 text-foreground/50 text-base font-sans placeholder:text-muted-foreground/40 focus:outline-none" />
               </div>
-              <p className="text-accent text-sm font-sans text-center">
+              {/* Terms & Conditions */}
+              <div className="mt-6 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setTermsAccepted(!termsAccepted)}
+                  className="flex items-start gap-3 text-left w-full group"
+                >
+                  <div className={`mt-0.5 w-5 h-5 rounded flex-shrink-0 border-2 flex items-center justify-center transition-all ${
+                    termsAccepted ? "border-accent bg-accent" : "border-muted-foreground/30"
+                  }`}>
+                    {termsAccepted && <Check className="w-3 h-3 text-primary-foreground" strokeWidth={3} />}
+                  </div>
+                  <p className="text-muted-foreground text-xs font-sans leading-relaxed">
+                    I understand that Velum is for educational and personal wellness purposes only and is not a substitute for professional mental health treatment, therapy, or medical advice. I accept the{" "}
+                    <a href="https://app.govelum.com/terms" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2" onClick={e => e.stopPropagation()}>Terms of Use</a>
+                    {" "}and{" "}
+                    <a href="https://app.govelum.com/privacy" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2" onClick={e => e.stopPropagation()}>Privacy Policy</a>.
+                  </p>
+                </button>
+              </div>
+
+              <p className="text-accent text-sm font-sans text-center mt-5">
                 <button onClick={() => navigate("/signup")} className="hover:underline underline-offset-2">
                   Have an account? Log in here →
                 </button>
