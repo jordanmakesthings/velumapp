@@ -406,7 +406,7 @@ export default function TappingGeneratorPage() {
   // ─── Shared UI pieces ─────────────────────────────────────────────────────
 
   const BackBar = ({ onBack, label = "Back" }: { onBack: () => void; label?: string }) => (
-    <div className="flex items-center px-4 pt-4 mb-6 flex-shrink-0">
+    <div className="flex items-center px-4 mb-6 flex-shrink-0" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
       <button onClick={onBack} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
         <ArrowLeft className="w-4 h-4" /> {label}
       </button>
