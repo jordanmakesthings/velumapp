@@ -107,7 +107,7 @@ For finger_point (only if emotion strongly maps), replace null with:
 Return ONLY valid JSON. No markdown. No explanation. No code fences.`;
 
 const FREE_DAILY_LIMIT = 1;
-const PAID_DAILY_LIMIT = 20;
+const PAID_DAILY_LIMIT = 3;
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
