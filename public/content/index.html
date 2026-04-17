@@ -302,6 +302,7 @@ select option{background:#1e1e1e}
   <div class="logo">V<span>E</span>LUM</div>
   <div class="htag">Content Studio</div>
   <div style="display:flex;gap:6px;align-items:center">
+    <button onclick="openImgStudio()" style="font-size:9px;letter-spacing:.15em;color:#C9A84C;text-transform:uppercase;background:none;border:1px solid #C9A84C;border-radius:2px;padding:5px 10px;cursor:pointer;transition:all .2s">✦ Image Studio</button>
     <button id="lib-btn" onclick="openLibrary()" style="font-size:9px;letter-spacing:.15em;color:var(--sg);text-transform:uppercase;background:none;border:1px solid var(--br);border-radius:2px;padding:5px 10px;cursor:pointer;transition:all .2s">☰ Library</button>
     <button id="tt-btn" onclick="toggleTTMode()" style="font-size:9px;letter-spacing:.15em;color:var(--sg);text-transform:uppercase;background:none;border:1px solid var(--br);border-radius:2px;padding:5px 10px;cursor:pointer;transition:all .2s">TikTok Mode</button>
   </div>
@@ -325,6 +326,47 @@ select option{background:#1e1e1e}
     <div id="lib-empty" style="display:none;text-align:center;padding:80px 20px;color:var(--sg);font-family:Inter,sans-serif;font-size:13px">
       <p style="margin-bottom:8px;color:var(--mt)">No saved decks yet.</p>
       <p>Name your current deck above and hit Save to start your library.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── IMAGE STUDIO MODAL ── -->
+<div id="imgstudio-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;overflow-y:auto">
+  <div style="max-width:1200px;margin:40px auto;padding:0 24px 60px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-family:Inter,sans-serif;font-size:11px;letter-spacing:.3em;color:#C9A84C;text-transform:uppercase;margin-bottom:4px">Image Studio</div>
+        <h1 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:36px;color:#F0EAD8;margin:0">Batch-generate your image bank</h1>
+        <p style="color:#888;font-family:Inter,sans-serif;font-size:13px;margin-top:6px">Pick a preset or write a prompt. Generate up to 8 at a time. All go to your bank for reuse across any carousel.</p>
+      </div>
+      <button onclick="closeImgStudio()" style="background:none;border:none;color:#888;font-size:22px;cursor:pointer;padding:4px 10px;line-height:1">×</button>
+    </div>
+
+    <div style="background:#0f0f0f;border:1px solid #222;border-radius:8px;padding:18px;margin-bottom:24px">
+      <label style="display:block;font-family:Inter,sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#888;margin-bottom:8px">Prompt</label>
+      <textarea id="imgstudio-prompt" placeholder="Describe the image… or tap a preset below to fill" rows="3" style="width:100%;background:#0a0a0a;border:1px solid #2a2a2a;color:#F0EAD8;font-family:Inter,sans-serif;font-size:13px;padding:10px 12px;border-radius:4px;resize:vertical"></textarea>
+
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px" id="imgstudio-presets"></div>
+
+      <div style="display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap">
+        <label style="font-family:Inter,sans-serif;font-size:11px;color:#888">Count: <select id="imgstudio-count" style="background:#0a0a0a;border:1px solid #2a2a2a;color:#F0EAD8;font-family:Inter,sans-serif;font-size:12px;padding:5px 8px;border-radius:3px;margin-left:4px"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>6</option><option>8</option></select></label>
+        <label style="font-family:Inter,sans-serif;font-size:11px;color:#888;display:flex;align-items:center;gap:4px"><input type="checkbox" id="imgstudio-hires"> Hi-Res (Flux Pro, $0.05/img)</label>
+        <div id="imgstudio-cost" style="font-family:Inter,sans-serif;font-size:11px;color:#C9A84C;font-weight:500">Cost: ~$0.10</div>
+        <button class="rbtn" id="imgstudio-gen" onclick="batchGenImages()" style="margin-left:auto;padding:9px 18px;font-size:12px;background:#C9A84C;color:#000;border-color:#C9A84C;font-weight:600">✦ Generate Batch</button>
+      </div>
+      <div id="imgstudio-progress" style="font-family:Inter,sans-serif;font-size:11px;color:#C9A84C;margin-top:8px;display:none"></div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-family:Inter,sans-serif;font-size:11px;letter-spacing:.22em;color:#888;text-transform:uppercase" id="imgstudio-bank-count">My Bank · 0 images</div>
+      <div style="display:flex;gap:8px">
+        <button class="rbtn" onclick="clearAllBank()" style="padding:5px 11px;font-size:10px;color:#c97c5c;border-color:#3a1f1a">Clear all</button>
+      </div>
+    </div>
+    <div id="imgstudio-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px"></div>
+    <div id="imgstudio-empty" style="display:none;text-align:center;padding:60px 20px;color:#666;font-family:Inter,sans-serif;font-size:13px">
+      <p style="color:#888;margin-bottom:4px">Your bank is empty.</p>
+      <p>Generate some images above to start stockpiling.</p>
     </div>
   </div>
 </div>
@@ -1094,6 +1136,7 @@ function togCard(i){
 // ── SLIDE OPERATIONS ──
 function deleteSlide(idx){
   if(slides.length<=1)return;
+  pushUndo();
   slides.splice(idx,1);
   cur=Math.min(cur,slides.length-1);
   saveSlides();render();renderEds();goTo(cur);
@@ -1120,6 +1163,7 @@ function moveSlide(idx,dir){
 }
 
 function changeType(idx,newType){
+  pushUndo();
   const s=slides[idx];
   const defs={
     hook:{type:'hook',eyebrow:s.eyebrow||'breathwork',headline:s.headline||'Your headline',subtext:s.subtext||'Supporting text'},
@@ -1134,7 +1178,8 @@ function changeType(idx,newType){
     mockup:{type:'mockup',eyebrow:s.eyebrow||'inside velum',headline:s.headline||'',caption:s.caption||'',screenshot:s.screenshot||null},
     cta:{type:'cta',eyebrow:s.eyebrow||'go deeper',headline:s.headline||'Ready to begin?',body:s.body||'Start your practice today.',nudge:'↑ link in bio'},
   };
-  slides[idx]={...defs[newType],bg:s.bg};
+  // Preserve image + layout + treatment + formatting across type changes
+  slides[idx]={...defs[newType],bg:s.bg,bgImage:s.bgImage,imgLayout:s.imgLayout,imgTreatment:s.imgTreatment,imgDim:s.imgDim,footNudge:s.footNudge,footPos:s.footPos,suggestedImg:s.suggestedImg,suggestedImgLabel:s.suggestedImgLabel,suggestedImgPrompt:s.suggestedImgPrompt};
   saveSlides();render();renderEds();goTo(idx);
   // re-open the card
   setTimeout(()=>{const card=document.getElementById('card'+idx);if(card)card.classList.add('open');},50);
@@ -1464,6 +1509,49 @@ function setImgDim(idx,val){
 }
 
 // ── FAL.AI IMAGE GENERATION ──
+// Generates one image via Fal. Returns URL. Throws on error. Used by both single + batch flows.
+async function _falGenerate(prompt,hiRes=false,numImages=1,onStatus){
+  const key=(document.getElementById('falkey')?.value.trim())||localStorage.getItem('velum_fal_key')||'';
+  if(!key)throw new Error('Add your Fal.ai API key first.');
+  if(!prompt)throw new Error('Prompt is empty.');
+  const endpoint=hiRes?'fal-ai/flux-pro/v1.1':'fal-ai/flux/dev';
+  const body=hiRes
+    ?{prompt,image_size:'portrait_4_3',num_images:numImages,enable_safety_checker:true}
+    :{prompt,image_size:'portrait_4_3',num_inference_steps:28,num_images:numImages};
+  const sub=await fetch(`https://queue.fal.run/${endpoint}`,{method:'POST',headers:{'Authorization':'Key '+key,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const subTxt=await sub.text();
+  if(!sub.ok)throw new Error('Fal submit '+sub.status+(subTxt?': '+subTxt.slice(0,100):' (empty — check API key)'));
+  if(!subTxt)throw new Error('Empty response from Fal');
+  let subJson;try{subJson=JSON.parse(subTxt);}catch(e){throw new Error('Bad submit JSON');}
+  const request_id=subJson.request_id;
+  if(!request_id)throw new Error('No request_id from Fal');
+  const statusUrl=subJson.status_url||`https://queue.fal.run/${endpoint}/requests/${request_id}/status`;
+  const responseUrl=subJson.response_url||`https://queue.fal.run/${endpoint}/requests/${request_id}`;
+  const maxPolls=hiRes?90:45;
+  let completed=false;let lastStatus='';
+  for(let i=0;i<maxPolls;i++){
+    await new Promise(r=>setTimeout(r,2000));
+    try{
+      const statusRes=await fetch(statusUrl,{headers:{'Authorization':'Key '+key}});
+      if(!statusRes.ok)continue;
+      const statusTxt=await statusRes.text();if(!statusTxt)continue;
+      let statusData;try{statusData=JSON.parse(statusTxt);}catch(e){continue;}
+      lastStatus=statusData.status||'';
+      if(lastStatus==='COMPLETED'){completed=true;break;}
+      if(lastStatus==='FAILED')throw new Error('Fal returned FAILED');
+      if(onStatus && i%3===0)onStatus(lastStatus||'queued',i*2);
+    }catch(inner){if(inner.message?.includes('FAILED'))throw inner;}
+  }
+  if(!completed)throw new Error('Timed out (last: '+(lastStatus||'unknown')+')');
+  const resultRes=await fetch(responseUrl,{headers:{'Authorization':'Key '+key}});
+  if(!resultRes.ok)throw new Error('Result fetch '+resultRes.status);
+  const resultTxt=await resultRes.text();
+  if(!resultTxt)throw new Error('Empty result from Fal');
+  let result;try{result=JSON.parse(resultTxt);}catch(e){throw new Error('Bad result JSON');}
+  if(!result?.images?.length)throw new Error('No images in response');
+  return result.images.map(im=>im.url);
+}
+
 async function genImage(idx,hiRes=false){
   const key=document.getElementById('falkey').value.trim();
   if(key)localStorage.setItem('velum_fal_key',key);
@@ -1528,6 +1616,8 @@ async function genImage(idx,hiRes=false){
     slides[idx].bgImage=url;
     if(!slides[idx].imgLayout)slides[idx].imgLayout='full';
     if(!slides[idx].imgTreatment)slides[idx].imgTreatment='dark30';
+    // Auto-save every generated image to bank so it can never be lost
+    try{const bank=getImageBank();if(!bank.find(b=>b.url===url)){bank.unshift({url,ts:Date.now(),prompt:prompt.slice(0,200)});saveImageBank(bank);}}catch(e){}
     saveSlides();
     const e=document.getElementById('sl'+idx);
     if(e){const n=bslide(slides[idx],idx);n.id='sl'+idx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
@@ -1564,6 +1654,119 @@ function setDims(d){
     b.style.color=k===d?'#C9A84C':'#c8c4bb';
   });
 }
+
+// ── IMAGE STUDIO (batch generate + bank) ──
+function openImgStudio(){
+  document.getElementById('imgstudio-modal').style.display='block';
+  // Render preset pills
+  const row=document.getElementById('imgstudio-presets');
+  row.innerHTML=IMG_PRESETS.map(p=>`<button class="rbtn" style="padding:5px 10px;font-size:10.5px" onclick="document.getElementById('imgstudio-prompt').value=${JSON.stringify(p.prompt).replace(/"/g,'&quot;')};updateImgStudioCost();">${p.label}</button>`).join('');
+  // Wire cost updater
+  const countEl=document.getElementById('imgstudio-count');
+  const hiResEl=document.getElementById('imgstudio-hires');
+  countEl.onchange=updateImgStudioCost;
+  hiResEl.onchange=updateImgStudioCost;
+  updateImgStudioCost();
+  renderImgStudioBank();
+}
+function closeImgStudio(){document.getElementById('imgstudio-modal').style.display='none';}
+function updateImgStudioCost(){
+  const n=parseInt(document.getElementById('imgstudio-count').value)||1;
+  const pro=document.getElementById('imgstudio-hires').checked;
+  const unit=pro?0.05:0.025;
+  document.getElementById('imgstudio-cost').textContent=`Cost: ~$${(n*unit).toFixed(2)}`;
+}
+function renderImgStudioBank(){
+  const bank=getImageBank();
+  document.getElementById('imgstudio-bank-count').textContent=`My Bank · ${bank.length} image${bank.length===1?'':'s'}`;
+  const grid=document.getElementById('imgstudio-grid');
+  const empty=document.getElementById('imgstudio-empty');
+  if(bank.length===0){grid.style.display='none';empty.style.display='block';return;}
+  grid.style.display='grid';empty.style.display='none';
+  grid.innerHTML=bank.map((b,i)=>`
+    <div style="position:relative;aspect-ratio:3/4;background:#0a0a0a;border:1px solid #222;border-radius:6px;overflow:hidden;group">
+      <img src="${b.url}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,transparent 50%);opacity:0;transition:opacity .15s;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;gap:5px" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+        <button class="rbtn" onclick="applyBankToCurrent('${b.url}')" style="padding:5px;font-size:10px;background:#C9A84C;color:#000;border-color:#C9A84C;font-weight:600">Apply to current slide</button>
+        <div style="display:flex;gap:4px">
+          <a href="${b.url}" target="_blank" class="rbtn" style="flex:1;text-align:center;padding:4px;font-size:10px;text-decoration:none">Open</a>
+          <button class="rbtn" onclick="removeFromBank(${i});renderImgStudioBank();" style="flex:1;padding:4px;font-size:10px;color:#c97c5c;border-color:#3a1f1a">Delete</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+function applyBankToCurrent(url){
+  if(!slides.length){st('Generate a carousel first');return;}
+  pushUndo();
+  slides[cur].bgImage=url;
+  if(!slides[cur].imgLayout)slides[cur].imgLayout='full';
+  if(!slides[cur].imgTreatment)slides[cur].imgTreatment='dark30';
+  saveSlides();render();renderEds();goTo(cur);
+  closeImgStudio();
+  st('Image applied to current slide (slide '+(cur+1)+')',false);
+}
+function clearAllBank(){
+  if(!confirm('Delete all saved images? This cannot be undone.'))return;
+  saveImageBank([]);renderImgStudioBank();
+  st('Bank cleared',false);
+}
+async function batchGenImages(){
+  const prompt=document.getElementById('imgstudio-prompt').value.trim();
+  if(!prompt){alert('Enter or pick a prompt first');return;}
+  const count=parseInt(document.getElementById('imgstudio-count').value)||1;
+  const hiRes=document.getElementById('imgstudio-hires').checked;
+  const btn=document.getElementById('imgstudio-gen');
+  const progress=document.getElementById('imgstudio-progress');
+  btn.disabled=true;btn.textContent='Generating…';
+  progress.style.display='block';
+  // Split count into chunks of 4 (Flux dev max per request)
+  const chunks=[];let rem=count;while(rem>0){const n=Math.min(4,rem);chunks.push(n);rem-=n;}
+  let done=0;let failed=0;
+  const bank=getImageBank();
+  for(let ci=0;ci<chunks.length;ci++){
+    const chunkSize=chunks[ci];
+    progress.textContent=`Generating ${done+1}-${done+chunkSize} of ${count}… (Fal.ai ${hiRes?'Flux Pro':'Flux Dev'})`;
+    try{
+      const urls=await _falGenerate(prompt,hiRes,chunkSize,(st,s)=>{progress.textContent=`Generating ${done+1}-${done+chunkSize} of ${count}… ${st} ${s}s`;});
+      urls.forEach(u=>{if(!bank.find(b=>b.url===u))bank.unshift({url:u,ts:Date.now(),prompt:prompt.slice(0,200)});});
+      saveImageBank(bank);
+      done+=urls.length;
+      renderImgStudioBank();
+    }catch(e){
+      failed+=chunkSize;
+      progress.textContent=`Error on chunk ${ci+1}: ${e.message}`;
+      await new Promise(r=>setTimeout(r,1500));
+    }
+  }
+  btn.disabled=false;btn.textContent='✦ Generate Batch';
+  progress.textContent=`Done — ${done} saved to bank${failed?`, ${failed} failed`:''}`;
+  setTimeout(()=>{progress.style.display='none';},4000);
+  st(`${done} images added to bank`,false);
+}
+
+// ── UNDO (slide-state snapshots) ──
+let _undoStack=[];
+function pushUndo(){
+  try{_undoStack.push({slides:JSON.parse(JSON.stringify(slides)),cur});}
+  catch(e){}
+  if(_undoStack.length>30)_undoStack.shift();
+}
+function doUndo(){
+  if(_undoStack.length===0){st('Nothing to undo',false);return;}
+  const prev=_undoStack.pop();
+  slides=prev.slides;cur=prev.cur;saveSlides();
+  render();renderEds();goTo(cur);
+  st('Undone',false);
+}
+document.addEventListener('keydown',function(e){
+  if((e.metaKey||e.ctrlKey)&&e.key==='z'&&!e.shiftKey){
+    // Only when not inside an input/textarea
+    const t=document.activeElement;
+    if(t && (t.tagName==='TEXTAREA'||t.tagName==='INPUT'||t.isContentEditable))return;
+    e.preventDefault();doUndo();
+  }
+});
 
 // ── TOPIC BANK ──
 const TOPIC_BANK=[
