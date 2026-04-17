@@ -1026,7 +1026,7 @@ function renderEds(){
           ${s.suggestedImg && !s.bgImage?`
             <div style="margin-bottom:6px;padding:7px 9px;background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border:1px solid #C9A84C;border-radius:4px;display:flex;align-items:center;gap:8px">
               <span style="font-size:10px;color:#C9A84C;font-weight:500">✦ AI suggests: ${s.suggestedImgLabel}</span>
-              <button class="rbtn" onclick="usePreset(${i},'${s.suggestedImg}')" style="margin-left:auto;padding:3px 9px;font-size:10px;background:#C9A84C;color:#000;border-color:#C9A84C">Use it →</button>
+              <button class="rbtn" onclick="usePresetAndGen(${i},'${s.suggestedImg}')" style="margin-left:auto;padding:3px 9px;font-size:10px;background:#C9A84C;color:#000;border-color:#C9A84C">Gen it →</button>
             </div>
           `:''}
           <div style="display:flex;gap:5px">
@@ -1037,6 +1037,7 @@ function renderEds(){
           <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">
             ${IMG_PRESETS.map(p=>`<button class="rbtn" style="padding:4px 7px;font-size:9.5px;letter-spacing:.03em;${s.suggestedImg===p.id?'border-color:#C9A84C;color:#C9A84C':''}" onclick="usePreset(${i},'${p.id}')" title="${p.prompt.slice(0,80)}…">${p.label}</button>`).join('')}
           </div>
+          <div style="font-size:9px;color:var(--sg);margin-top:4px;font-style:italic">Tap a preset to fill the prompt (free) — then hit Gen.</div>
           <div style="display:flex;gap:5px;margin-top:6px">
             <input type="text" id="img-url-${i}" placeholder="Or paste image URL…" style="flex:1;font-size:10.5px" oninput="applyImageUrl(${i},this.value)">
           </div>
@@ -1408,6 +1409,14 @@ const IMG_PRESETS=[
 ];
 
 function usePreset(idx,presetId){
+  // Only fills the prompt — free. User hits GEN when they've picked.
+  const preset=IMG_PRESETS.find(p=>p.id===presetId);if(!preset)return;
+  const inp=document.getElementById('img-prompt-'+idx);
+  if(inp){inp.value=preset.prompt;inp.focus();}
+  st(`Prompt set: ${preset.label} — hit Gen to generate ($0.025) or Hi-Res ($0.05)`,false);
+}
+function usePresetAndGen(idx,presetId){
+  // Fills + immediately generates (for the AI-suggested badge).
   const preset=IMG_PRESETS.find(p=>p.id===presetId);if(!preset)return;
   const inp=document.getElementById('img-prompt-'+idx);
   if(inp)inp.value=preset.prompt;
