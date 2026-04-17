@@ -338,6 +338,11 @@ select option{background:#1e1e1e}
     <button class="dload-btn" onclick="dlAll()">↓ Download all slides</button>
     <button class="dload-btn" onclick="genCaption()">✦ Generate Caption</button>
     <textarea id="caption-out" rows="4" placeholder="Caption will appear here…" readonly></textarea>
+    <hr class="div" style="margin:4px 0">
+    <div>
+      <label>CTA Templates <span style="normal-case;color:var(--sg);letter-spacing:0;text-transform:none;font-size:9px">— click to apply to last slide</span></label>
+      <div id="cta-templates" style="display:flex;flex-direction:column;gap:5px"></div>
+    </div>
   </div>
 </aside>
 
@@ -433,6 +438,7 @@ function init(){
   if(k)document.getElementById('akey').value=k;
   if(loadSlides()){render();renderEds();goTo(cur);}
   loadSessionList();
+  renderCTATemplates();
 }
 if(localStorage.getItem('velum_auth')===PASS_HASH){document.addEventListener('DOMContentLoaded',init);}
 
@@ -1012,6 +1018,95 @@ async function genCaption(){
     document.getElementById('caption-out').value=cap;
     st('Caption ready',false);
   }catch(e){st('Caption error: '+e.message,false);}
+}
+
+// ── CTA TEMPLATES ──
+const CTA_TEMPLATES=[
+  {
+    label:'DM bait — free resource',
+    eyebrow:'go deeper',
+    headline:'Want the full guide?',
+    body:'DM me "[WORD]" and I\'ll send you my free [RESOURCE] — takes 10 seconds.',
+    nudge:'DM me [WORD] ↓',
+  },
+  {
+    label:'Follow for series',
+    eyebrow:'don\'t miss part 2',
+    headline:'This is a series.',
+    body:'Follow @velumapp so you don\'t miss the next one. New nervous system tools every week.',
+    nudge:'follow for part 2 →',
+  },
+  {
+    label:'Save this post',
+    eyebrow:'bookmark this',
+    headline:'Save this for when you need it.',
+    body:'You\'re not going to need this right now. But one day you will. Save it.',
+    nudge:'↑ hit save now',
+  },
+  {
+    label:'DM for access',
+    eyebrow:'limited access',
+    headline:'DM me "[WORD]"',
+    body:'DM me "[WORD]" and I\'ll send you direct access to the [RESOURCE] we use inside Velum.',
+    nudge:'DM me [WORD] →',
+  },
+  {
+    label:'Link in bio — app',
+    eyebrow:'try it free',
+    headline:'7 days free. No card needed.',
+    body:'Everything in this carousel is a practice inside Velum. Try it free for 7 days. Link in bio.',
+    nudge:'↑ link in bio · velumapp',
+  },
+  {
+    label:'Controversy / debate hook',
+    eyebrow:'unpopular opinion',
+    headline:'Most wellness advice makes anxiety worse.',
+    body:'Follow if you want the version that actually works on your nervous system — not just your mindset.',
+    nudge:'follow · prove me wrong',
+  },
+  {
+    label:'Transformation promise',
+    eyebrow:'21 days',
+    headline:'Do this for 21 days.',
+    body:'Follow and I\'ll post the full protocol. One tool per week. Your nervous system will not be the same.',
+    nudge:'follow to get the protocol',
+  },
+  {
+    label:'Tag a friend',
+    eyebrow:'send this',
+    headline:'Someone needs to see this.',
+    body:'Tag someone whose nervous system needs this right now. They\'ll thank you.',
+    nudge:'↓ tag them below',
+  },
+];
+
+function renderCTATemplates(){
+  const el=document.getElementById('cta-templates');if(!el)return;
+  el.innerHTML=CTA_TEMPLATES.map((t,i)=>`
+    <button onclick="applyCTATemplate(${i})" style="text-align:left;background:var(--s2);border:1px solid var(--br);border-radius:3px;padding:7px 10px;cursor:pointer;transition:border-color .15s;width:100%" onmouseover="this.style.borderColor='var(--gd)'" onmouseout="this.style.borderColor='var(--br)'">
+      <div style="font-size:9px;color:var(--gd);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">${t.label}</div>
+      <div style="font-size:10px;color:var(--dm);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.nudge}</div>
+    </button>`).join('');
+}
+
+function applyCTATemplate(idx){
+  const t=CTA_TEMPLATES[idx];
+  // find last CTA slide or last slide
+  let target=slides.length-1;
+  if(slides.length&&slides[slides.length-1].type!=='cta'){
+    // add a CTA slide at the end
+    slides.push({type:'cta',eyebrow:t.eyebrow,headline:t.headline,body:t.body,nudge:t.nudge});
+    saveSlides();render();renderEds();goTo(slides.length-1);
+    st(`CTA template applied — edit the [PLACEHOLDERS] in the slide`,false);
+    return;
+  }
+  // update existing last CTA
+  slides[target]={...slides[target],eyebrow:t.eyebrow,headline:t.headline,body:t.body,nudge:t.nudge};
+  saveSlides();
+  const e=document.getElementById('sl'+target);
+  if(e){const n=bslide(slides[target],target);n.id='sl'+target;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
+  renderEds();goTo(target);
+  st(`CTA template applied — edit the [PLACEHOLDERS] in the slide`,false);
 }
 
 // ── SESSIONS ──
