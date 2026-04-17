@@ -252,10 +252,14 @@ select option{background:#1e1e1e}
 <aside class="sidebar">
   <div class="si">
 
-    <!-- API Key -->
+    <!-- API Keys -->
     <div>
       <label>Anthropic API Key</label>
       <input type="password" id="akey" placeholder="sk-ant-…" autocomplete="off">
+    </div>
+    <div>
+      <label>Fal.ai API Key <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— for AI image backgrounds</span></label>
+      <input type="password" id="falkey" placeholder="fal-…" autocomplete="off">
       <div class="hint">Saved locally only.</div>
     </div>
     <hr class="div">
@@ -456,6 +460,8 @@ function loadSlides(){try{const d=JSON.parse(localStorage.getItem('velum_slides'
 function init(){
   const k=localStorage.getItem('velum_key')||'';
   if(k)document.getElementById('akey').value=k;
+  const fk=localStorage.getItem('velum_fal_key')||'';
+  if(fk)document.getElementById('falkey').value=fk;
   if(loadSlides()){render();renderEds();goTo(cur);}
   loadSessionList();
   renderCTATemplates();
@@ -559,6 +565,11 @@ function bslide(s,i){
   el.className='slide';el.id='sl'+i;
   const bg=s.bg||'#111111';
   el.style.background=bg;
+  if(s.bgImage){
+    el.style.backgroundImage=`url(${s.bgImage})`;
+    el.style.backgroundSize='cover';
+    el.style.backgroundPosition='center';
+  }
   if(LIGHT_BGS.includes(bg))el.classList.add('light');
   const cm=`<div class="cm">${String(i+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}</div>`;
   const wm=`<div class="wm">V E L U M</div>`;
@@ -760,8 +771,20 @@ function renderEds(){
         ${fields}
         ${screenshotPicker}
         ${gfxPicker}
+        <div class="fg">
+          <label>AI Background Image <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— Fal.ai / Flux</span></label>
+          <div style="display:flex;gap:5px">
+            <input type="text" id="img-prompt-${i}" placeholder="e.g. misty forest at golden hour, cinematic" style="flex:1;font-size:11px">
+            <button class="rbtn" onclick="genImage(${i})" id="img-btn-${i}" style="flex-shrink:0;white-space:nowrap">✦ Gen</button>
+          </div>
+          <div style="display:flex;gap:5px;margin-top:4px">
+            <input type="text" id="img-url-${i}" placeholder="Or paste image URL…" style="flex:1;font-size:11px" oninput="applyImageUrl(${i},this.value)">
+          </div>
+          ${s.bgImage?`<div style="font-size:9px;color:var(--gd);margin-top:3px">✓ Image applied — <button onclick="clearBgImage(${i})" style="background:none;border:none;color:var(--sg);cursor:pointer;font-size:9px;padding:0">remove</button></div>`:''}
+        </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">
           <button class="rbtn" onclick="regen(${i})">↻ Regenerate</button>
+          <button class="rbtn" onclick="duplicateSlide(${i})">⊕ Duplicate</button>
           <button class="rbtn" onclick="addArrow(${i})">+ Arrow</button>
           <button class="rbtn" onclick="addTextBox(${i})">+ Text</button>
         </div>
@@ -1027,6 +1050,60 @@ async function dlAll(){
     if(wasHidden)slide.classList.remove('active');
   }
   goTo(cur);st(`${allSlides.length} slides downloaded`,false);
+}
+
+// ── FAL.AI IMAGE GENERATION ──
+async function genImage(idx){
+  const key=document.getElementById('falkey').value.trim();
+  if(key)localStorage.setItem('velum_fal_key',key);
+  if(!key){st('Add your Fal.ai API key first.');return;}
+  const prompt=document.getElementById('img-prompt-'+idx)?.value.trim();
+  if(!prompt){st('Enter an image prompt first.');return;}
+  const btn=document.getElementById('img-btn-'+idx);
+  if(btn){btn.textContent='…';btn.disabled=true;}
+  st('Generating image…',true);
+  try{
+    // Submit job
+    const sub=await fetch('https://queue.fal.run/fal-ai/flux/dev',{
+      method:'POST',
+      headers:{'Authorization':'Key '+key,'Content-Type':'application/json'},
+      body:JSON.stringify({prompt,image_size:'portrait_4_3',num_inference_steps:28,num_images:1})
+    });
+    if(!sub.ok)throw new Error('Fal submit failed: '+sub.status);
+    const {request_id}=await sub.json();
+    // Poll for result
+    let result=null;
+    for(let i=0;i<30;i++){
+      await new Promise(r=>setTimeout(r,2000));
+      const poll=await fetch(`https://queue.fal.run/fal-ai/flux/dev/requests/${request_id}`,{headers:{'Authorization':'Key '+key}});
+      const data=await poll.json();
+      if(data.status==='COMPLETED'){result=data;break;}
+      if(data.status==='FAILED')throw new Error('Image generation failed');
+    }
+    if(!result?.images?.[0]?.url)throw new Error('No image returned');
+    const url=result.images[0].url;
+    slides[idx].bgImage=url;
+    saveSlides();
+    const e=document.getElementById('sl'+idx);
+    if(e){const n=bslide(slides[idx],idx);n.id='sl'+idx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
+    renderEds();setTimeout(()=>{const card=document.getElementById('card'+idx);if(card)card.classList.add('open');goTo(idx);},10);
+    st('Image applied — add a dark overlay in Background if needed',false);
+  }catch(err){st('Image error: '+err.message,false);}
+  if(btn){btn.textContent='✦ Gen';btn.disabled=false;}
+}
+
+function applyImageUrl(idx,url){
+  if(!url.trim())return;
+  slides[idx].bgImage=url.trim();saveSlides();
+  const e=document.getElementById('sl'+idx);
+  if(e){const n=bslide(slides[idx],idx);n.id='sl'+idx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
+}
+
+function clearBgImage(idx){
+  delete slides[idx].bgImage;saveSlides();
+  const e=document.getElementById('sl'+idx);
+  if(e){const n=bslide(slides[idx],idx);n.id='sl'+idx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
+  renderEds();setTimeout(()=>{const card=document.getElementById('card'+idx);if(card)card.classList.add('open');goTo(idx);},10);
 }
 
 // ── DIMENSIONS ──
