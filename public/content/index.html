@@ -1117,6 +1117,30 @@ function mv(dir){const n=cur+dir;if(n>=0&&n<slides.length)goTo(n);}
 // ── FORMAT BAR ──
 let savedRange=null;
 function saveSelection(){const sel=window.getSelection();if(sel&&sel.rangeCount>0)savedRange=sel.getRangeAt(0).cloneRange();}
+
+// After any format change, persist the contenteditable's current innerHTML to slides[]
+function persistFormattedEdit(ceOrRange){
+  let ce=ceOrRange;
+  if(ce&&!(ce instanceof HTMLElement)){
+    // passed a range — find the contenteditable ancestor
+    const node=ce.commonAncestorContainer;
+    ce=(node.nodeType===3?node.parentElement:node)?.closest?.('[data-field]');
+  }
+  if(!ce||!ce.dataset?.field)return;
+  const slide=ce.closest('.slide');if(!slide)return;
+  const idx=parseInt(slide.id.replace('sl',''));if(isNaN(idx)||!slides[idx])return;
+  const field=ce.dataset.field;
+  const itemMatch=field.match(/^item(\d+)$/);
+  if(itemMatch){
+    const items=Array.isArray(slides[idx].items)?[...slides[idx].items]:[];
+    items[parseInt(itemMatch[1])]=ce.innerHTML;
+    slides[idx].items=items;
+  }else{
+    slides[idx][field]=ce.innerHTML;
+  }
+  saveSlides();
+}
+
 function restoreAndApply(cmd,val){
   if(!savedRange)return;
   const sel=window.getSelection();sel.removeAllRanges();sel.addRange(savedRange);
@@ -1124,6 +1148,7 @@ function restoreAndApply(cmd,val){
   if(cmd==='removeFormat'){
     const text=document.createTextNode(range.toString());
     range.deleteContents();range.insertNode(text);
+    persistFormattedEdit(range);
     savedRange=null;return;
   }
   const span=document.createElement('span');
@@ -1133,6 +1158,7 @@ function restoreAndApply(cmd,val){
   else if(cmd==='foreColor')span.style.color=val;
   else if(cmd==='fontSize')span.style.fontSize=val;
   try{range.surroundContents(span);}catch(e){const x=range.extractContents();span.appendChild(x);range.insertNode(span);}
+  persistFormattedEdit(range);
   // keep savedRange so color can be reapplied immediately without re-selecting
   try{savedRange=sel.getRangeAt(0).cloneRange();}catch(e){savedRange=null;}
 }
@@ -1144,17 +1170,17 @@ function fmt(cmd,val){
 function setAlign(align){
   const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
   const ce=sel.anchorNode?.parentElement?.closest('[contenteditable]');
-  if(ce)ce.style.textAlign=align;
+  if(ce){ce.style.textAlign=align;persistFormattedEdit(ce);}
 }
 function setLineHeight(lh){
   const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
   const ce=sel.anchorNode?.parentElement?.closest('[contenteditable]');
-  if(ce)ce.style.lineHeight=lh;
+  if(ce){ce.style.lineHeight=lh;persistFormattedEdit(ce);}
 }
 function setLetterSpacing(ls){
   const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
   const ce=sel.anchorNode?.parentElement?.closest('[contenteditable]');
-  if(ce)ce.style.letterSpacing=ls;
+  if(ce){ce.style.letterSpacing=ls;persistFormattedEdit(ce);}
 }
 function setFont(font){
   const sel=window.getSelection();
@@ -1163,6 +1189,7 @@ function setFont(font){
     const span=document.createElement('span');
     span.style.fontFamily=font+','+(font==='Cormorant Garamond'?'serif':'sans-serif');
     try{savedRange.surroundContents(span);}catch(e){const x=savedRange.extractContents();span.appendChild(x);savedRange.insertNode(span);}
+    persistFormattedEdit(savedRange);
   }
 }
 
