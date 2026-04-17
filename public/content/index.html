@@ -191,6 +191,10 @@ select option{background:#1e1e1e}
 .sarrowitem .aitxt{flex:1}
 .slide.light .sarrowitem{color:#333!important}
 .sarrowsub{font-family:'Inter',sans-serif;font-weight:600;font-size:11px;letter-spacing:.22em;color:var(--gd);text-transform:uppercase;margin-bottom:10px;text-align:left;max-width:360px;width:100%}
+/* Footer nudge — "swipe for the truth", "(here's why) →" at bottom of slide */
+.sfn{position:absolute;left:0;right:0;bottom:calc(var(--wm-offset,28px) + 14px);text-align:center;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;font-style:italic;color:var(--gd);letter-spacing:.05em;padding:0 24px;pointer-events:auto;z-index:3}
+.slide.light .sfn{color:#8B6B20!important}
+.sc.story .sfn{font-size:11px;bottom:calc(var(--wm-offset,22px) + 10px)}
 
 /* Phone mockup */
 .phone-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;width:100%}
@@ -679,27 +683,38 @@ function bslide(s,i){
   if(LIGHT_BGS.includes(bg))el.classList.add('light');
   const cm=`<div class="cm">${String(i+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}</div>`;
   const wm=`<div class="wm">V E L U M</div>`;
+  // Footer nudge — small italic hint at bottom of slide (e.g. "swipe for the truth", "(here's why) →")
+  const nudgeText=s.footerNudge||'';
+  const fn=nudgeText?dw(`<div class="sfn" contenteditable="true" data-field="footerNudge">${nudgeText}</div>`):'';
   const gr=s.graphic&&s.graphic!=='none'?dw(gfx(s.graphic)):'';
   const t=s.type;
   let inner='';
   const gradientBgr=s.bgImage?'':'<div class="bgr"></div>';
   const gradientBgl=s.bgImage?'':'<div class="bgl"></div>';
-  if(t==='hook')inner=`${gradientBgr}${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||'breathwork'}</div>`)}${dw(`<div class="shl" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="srl"></div>`)}${dw(`<div class="sst" contenteditable="true" data-field="subtext">${s.subtext||''}</div>`)}${gr}${wm}`;
-  else if(t==='bigtype')inner=`${cm}${dw(`<div class="sbig" contenteditable="true" data-field="headline">${s.headline||'Your massive statement here.'}</div>`)}${s.subtext!==undefined?dw(`<div class="sbigsub" contenteditable="true" data-field="subtext">${s.subtext}</div>`):''}${gr}${wm}`;
-  else if(t==='signs')inner=`${cm}${dw(`<div class="ssignnum" contenteditable="true" data-field="num">${s.num||'3 SIGNS'}</div>`)}${dw(`<div class="ssignhead" contenteditable="true" data-field="headline">${s.headline||'your nervous system needs a reset'}</div>`)}${s.subtext!==undefined?dw(`<div class="ssignsub" contenteditable="true" data-field="subtext">${s.subtext}</div>`):''}${gr}${wm}`;
+  if(t==='hook')inner=`${gradientBgr}${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||'breathwork'}</div>`)}${dw(`<div class="shl" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="srl"></div>`)}${dw(`<div class="sst" contenteditable="true" data-field="subtext">${s.subtext||''}</div>`)}${gr}${fn}${wm}`;
+  else if(t==='bigtype')inner=`${cm}${dw(`<div class="sbig" contenteditable="true" data-field="headline">${s.headline||'Your massive statement here.'}</div>`)}${s.subtext!==undefined?dw(`<div class="sbigsub" contenteditable="true" data-field="subtext">${s.subtext}</div>`):''}${gr}${fn}${wm}`;
+  else if(t==='signs')inner=`${cm}${dw(`<div class="ssignnum" contenteditable="true" data-field="num">${s.num||'3 SIGNS'}</div>`)}${dw(`<div class="ssignhead" contenteditable="true" data-field="headline">${s.headline||'your nervous system needs a reset'}</div>`)}${s.subtext!==undefined?dw(`<div class="ssignsub" contenteditable="true" data-field="subtext">${s.subtext}</div>`):''}${gr}${fn}${wm}`;
   else if(t==='arrows'){
     const aitems=(s.items||['First pattern','Second pattern','Third pattern']);
-    const arrowHtml=`<div class="sarrowwrap">`+(s.eyebrow?`<div class="sarrowsub" contenteditable="true" data-field="eyebrow">${s.eyebrow}</div>`:'')+`<div class="sarrowhead" contenteditable="true" data-field="headline">${s.headline||'Headline here'}</div>`+aitems.map((it,ii)=>`<div class="sarrowitem"><span class="aitxt" contenteditable="true" data-field="item${ii}">${it}</span></div>`).join('')+`</div>`;
-    inner=`${cm}${dw(arrowHtml)}${gr}${wm}`;
+    const arrowHtml=`<div class="sarrowwrap">`+(s.eyebrow?`<div class="sarrowsub" contenteditable="true" data-field="eyebrow">${s.eyebrow}</div>`:'')+`<div class="sarrowhead" contenteditable="true" data-field="headline">${s.headline||'Headline here'}</div>`+aitems.map((it,ii)=>{
+      const plain=(it||'').replace(/<[^>]+>/g,'').trim();
+      if(!plain)return '';
+      return `<div class="sarrowitem"><span class="aitxt" contenteditable="true" data-field="item${ii}">${it}</span></div>`;
+    }).join('')+`</div>`;
+    inner=`${cm}${dw(arrowHtml)}${gr}${fn}${wm}`;
   }
-  else if(t==='why')inner=`${cm}${s.eyebrow?dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow}</div>`):''}${s.headline?dw(`<div class="shl" style="font-size:26px;margin-bottom:14px" contenteditable="true" data-field="headline">${s.headline}</div>`):''}${dw(`<div class="sbd" contenteditable="true" style="margin-bottom:20px" data-field="body">${s.body||''}</div>`)}${wm}`;
-  else if(t==='exercise')inner=`${cm}${dw(`<div class="set" contenteditable="true" data-field="num">Exercise ${s.num||String(i).padStart(2,'0')}</div>`)}${dw(`<div class="sen" contenteditable="true" data-field="name">${s.name||''}</div>`)}${dw(`<div class="ses" contenteditable="true" data-field="subtitle">${s.subtitle||''}</div>`)}${wm}`;
-  else if(t==='concept')inner=`${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||''}</div>`)}${dw(`<div class="shl" style="font-size:24px" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="srl"></div>`)}${dw(`<div class="sbd" style="margin-top:14px;font-size:12px" contenteditable="true" data-field="body">${s.body||''}</div>`)}${gr}${wm}`;
-  else if(t==='quote')inner=`${gradientBgr}${cm}<div class="sqm">"</div>${dw(`<div class="sqt" contenteditable="true" data-field="quote">${s.quote||''}</div>`)}${dw(`<div class="sqa" contenteditable="true" data-field="attribution">${s.attribution||''}</div>`)}${wm}`;
+  else if(t==='why')inner=`${cm}${s.eyebrow?dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow}</div>`):''}${s.headline?dw(`<div class="shl" style="font-size:26px;margin-bottom:14px" contenteditable="true" data-field="headline">${s.headline}</div>`):''}${dw(`<div class="sbd" contenteditable="true" style="margin-bottom:20px" data-field="body">${s.body||''}</div>`)}${fn}${wm}`;
+  else if(t==='exercise')inner=`${cm}${dw(`<div class="set" contenteditable="true" data-field="num">Exercise ${s.num||String(i).padStart(2,'0')}</div>`)}${dw(`<div class="sen" contenteditable="true" data-field="name">${s.name||''}</div>`)}${dw(`<div class="ses" contenteditable="true" data-field="subtitle">${s.subtitle||''}</div>`)}${fn}${wm}`;
+  else if(t==='concept')inner=`${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||''}</div>`)}${dw(`<div class="shl" style="font-size:24px" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="srl"></div>`)}${dw(`<div class="sbd" style="margin-top:14px;font-size:12px" contenteditable="true" data-field="body">${s.body||''}</div>`)}${gr}${fn}${wm}`;
+  else if(t==='quote')inner=`${gradientBgr}${cm}<div class="sqm">"</div>${dw(`<div class="sqt" contenteditable="true" data-field="quote">${s.quote||''}</div>`)}${dw(`<div class="sqa" contenteditable="true" data-field="attribution">${s.attribution||''}</div>`)}${fn}${wm}`;
   else if(t==='list'){
     const items=(s.items||['Item one','Item two','Item three']);
-    const listHtml=`<div class="sli-wrap">`+items.map((it,ii)=>`<div class="sli"><div class="sli-dot"></div><div class="sli-text" contenteditable="true" data-field="item${ii}">${it}</div></div>`).join('')+`</div>`;
-    inner=`${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||''}</div>`)}${dw(listHtml)}${wm}`;
+    const listHtml=`<div class="sli-wrap">`+items.map((it,ii)=>{
+      const plain=(it||'').replace(/<[^>]+>/g,'').trim();
+      if(!plain)return '';
+      return `<div class="sli"><div class="sli-dot"></div><div class="sli-text" contenteditable="true" data-field="item${ii}">${it}</div></div>`;
+    }).join('')+`</div>`;
+    inner=`${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||''}</div>`)}${dw(listHtml)}${fn}${wm}`;
   }
   else if(t==='mockup'){
     const screenContent=s.screenshot
@@ -716,10 +731,10 @@ function bslide(s,i){
           <div class="phone-screen">${screenContent}</div>
         </div>
         ${s.caption?dw(`<div class="sst" contenteditable="true" data-field="caption">${s.caption}</div>`):''}
-      </div>${wm}`;
+      </div>${fn}${wm}`;
   }
-  else if(t==='cta')inner=`${gradientBgl}${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||'go deeper'}</div>`)}${dw(`<div class="sch" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="scb" contenteditable="true" data-field="body">${s.body||''}</div>`)}${dw(`<div class="sln" contenteditable="true" data-field="nudge">${s.nudge||'↑ link in bio'}</div>`)}${gr}${wm}`;
-  else inner=`${cm}${dw(`<div class="sbd" contenteditable="true" data-field="body">${s.headline||s.body||''}</div>`)}${gr}${wm}`;
+  else if(t==='cta')inner=`${gradientBgl}${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||'go deeper'}</div>`)}${dw(`<div class="sch" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="scb" contenteditable="true" data-field="body">${s.body||''}</div>`)}${dw(`<div class="sln" contenteditable="true" data-field="nudge">${s.nudge||'↑ link in bio'}</div>`)}${gr}${fn}${wm}`;
+  else inner=`${cm}${dw(`<div class="sbd" contenteditable="true" data-field="body">${s.headline||s.body||''}</div>`)}${gr}${fn}${wm}`;
   el.innerHTML=imgLayer+inner;
   return el;
 }
@@ -895,6 +910,14 @@ function renderEds(){
         </div>
         ${fields}
         ${itemsEditor}
+        <div class="fg">
+          <label>Footer Nudge <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— tiny italic text at slide bottom</span></label>
+          <input type="text" value="${(s.footerNudge||'').replace(/"/g,'&quot;')}" oninput="upd(${i},'footerNudge',this.value)" placeholder="e.g. swipe for the truth" style="font-size:11px">
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px">
+            ${['swipe for the truth','(here\'s why) →','keep reading ↓','the 5-day fix →','save this one','wait for it…'].map(n=>`<button class="rbtn" style="padding:3px 7px;font-size:9.5px" onclick="upd(${i},'footerNudge','${n.replace(/'/g,"\\'")}')">${n}</button>`).join('')}
+            <button class="rbtn" style="padding:3px 7px;font-size:9.5px;color:var(--red);border-color:rgba(201,124,92,.3)" onclick="upd(${i},'footerNudge','')">clear</button>
+          </div>
+        </div>
         ${screenshotPicker}
         ${gfxPicker}
         <div class="fg">
