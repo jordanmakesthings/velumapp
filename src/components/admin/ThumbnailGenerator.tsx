@@ -181,6 +181,9 @@ function drawPlayer(canvas: HTMLCanvasElement, title: string, category: string, 
   }
 }
 
+export { drawLibrary, drawPlayer, loadLogo, ensureFonts };
+export async function uploadBlob_(blob: Blob, folder: string, suffix: string): Promise<string | null> { return uploadBlob(blob, folder, suffix); }
+
 async function uploadBlob(blob: Blob, folder: string, suffix: string): Promise<string | null> {
   const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}_${suffix}.png`;
   const { error } = await supabase.storage.from("track-media").upload(path, blob, { contentType: "image/png" });

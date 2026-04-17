@@ -5,12 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, Plus, Upload, Trash2, Edit2, X, Check, Music, BookOpen,
-  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown, Users, Tag, SlidersHorizontal, Bell
+  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown, Users, Tag, SlidersHorizontal, Bell, Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
 import TrackTagInput from "@/components/admin/TrackTagInput";
 import CourseBuilder from "@/components/admin/CourseBuilder";
+import BulkThumbnails from "@/components/admin/BulkThumbnails";
 
 const STEP_TYPES = ["intro", "breathe", "write", "reflect", "close"] as const;
 
@@ -161,7 +162,7 @@ function MasteryPromptBuilder({ value, onChange }: { value: string; onChange: (v
   );
 }
 
-type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "taxonomy" | "finder" | "settings" | "users" | "notifications";
+type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "thumbnails" | "taxonomy" | "finder" | "settings" | "users" | "notifications";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
@@ -169,6 +170,7 @@ const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "courses", label: "Courses", icon: BookOpen },
   { key: "mastery", label: "Mastery", icon: GraduationCap },
   { key: "prompts", label: "Prompts", icon: Feather },
+  { key: "thumbnails", label: "Bulk Thumbnails", icon: Sparkles },
   { key: "taxonomy", label: "Taxonomy", icon: Tag },
   { key: "finder", label: "Session Finder", icon: SlidersHorizontal },
   { key: "notifications", label: "Notifications", icon: Bell },
@@ -1763,6 +1765,9 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* ============ BULK THUMBNAILS TAB ============ */}
+        {activeTab === "thumbnails" && <BulkThumbnails />}
 
         {/* ============ TAXONOMY TAB ============ */}
         {activeTab === "taxonomy" && <TaxonomyTab />}

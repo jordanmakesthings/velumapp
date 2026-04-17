@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velum · Content Studio</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--forest:#0F2F26;--fl:#1a4a3a;--ch:#111111;--cr:#F2EFE7;--sg:#6F8A7E;--gd:#C9A84C;--mt:#c8c4bb;--dm:#9aaea3;--br:#2a2a2a;--sf:#181818;--s2:#1e1e1e;--red:#c97c5c}
@@ -154,6 +154,27 @@ select option{background:#1e1e1e}
 .sli{display:flex;align-items:flex-start;gap:10px}
 .sli-dot{width:5px;height:5px;border-radius:50%;background:var(--gd);flex-shrink:0;margin-top:6px;opacity:.8}
 .sli-text{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;line-height:1.65;color:var(--mt)}
+/* Bigtype — massive bold statement slide (9D-style) */
+.sbig{font-family:'Inter',system-ui,-apple-system,sans-serif;font-weight:900;font-size:42px;line-height:1.08;letter-spacing:-.025em;color:var(--cr);text-align:left;max-width:360px;position:relative}
+.sbig em{font-style:normal;color:var(--gd)}
+.sbig u{text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:4px}
+.slide.light .sbig{color:#111!important}
+.sbigsub{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:15px;color:var(--sg);margin-top:18px;max-width:340px;text-align:left;position:relative;line-height:1.45}
+/* Signs — "3 signs your X needs Y" 9D-style */
+.ssignhead{font-family:'Inter',system-ui,sans-serif;font-weight:800;font-size:40px;line-height:1.05;letter-spacing:-.02em;color:var(--cr);text-align:left;max-width:360px;position:relative}
+.ssignhead em{font-style:italic;font-weight:800;color:var(--gd)}
+.slide.light .ssignhead{color:#111!important}
+.ssignsub{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;font-size:15px;color:var(--sg);margin-top:14px;max-width:340px;text-align:left;position:relative;line-height:1.5}
+.ssignnum{font-family:'Inter',sans-serif;font-weight:700;font-size:11px;letter-spacing:.3em;color:var(--gd);text-transform:uppercase;margin-bottom:18px;text-align:left;position:relative;width:100%;max-width:360px}
+/* Arrows — headline + arrow-bulleted list (9D-style) */
+.sarrowwrap{display:flex;flex-direction:column;gap:8px;max-width:360px;width:100%;position:relative;text-align:left}
+.sarrowhead{font-family:'Inter',system-ui,sans-serif;font-weight:700;font-size:20px;line-height:1.25;color:var(--cr);margin-bottom:18px;letter-spacing:-.015em}
+.slide.light .sarrowhead{color:#111!important}
+.sarrowitem{display:flex;gap:10px;align-items:flex-start;font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:400;line-height:1.55;color:var(--mt)}
+.sarrowitem::before{content:"→";color:var(--gd);flex-shrink:0;font-weight:500}
+.sarrowitem .aitxt{flex:1}
+.slide.light .sarrowitem{color:#333!important}
+.sarrowsub{font-family:'Inter',sans-serif;font-weight:600;font-size:11px;letter-spacing:.22em;color:var(--gd);text-transform:uppercase;margin-bottom:10px;text-align:left;max-width:360px;width:100%}
 
 /* Phone mockup */
 .phone-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;width:100%}
@@ -519,14 +540,18 @@ const BRAND=`You write Instagram carousel copy for Velum, a wellness app for ner
 const SCH=`Respond with ONLY a valid JSON array. No preamble, no backticks, no markdown.
 Slide types:
 - "hook": {type:"hook", eyebrow, headline, subtext}
+- "bigtype": {type:"bigtype", headline, subtext} — massive bold text-only statement slide, wrap a key word in <em>…</em> to highlight in gold, or <u>…</u> to underline
+- "signs": {type:"signs", num, headline, subtext} — "3 SIGNS your X needs Y" card with italic subtitle
+- "arrows": {type:"arrows", eyebrow, headline, items:[]} — headline + 3-6 arrow-bulleted points
 - "why": {type:"why", eyebrow, headline, body, graphic:"wave"|"window"|"ladder"|"states"|"neural"|"mindbody"}
 - "exercise": {type:"exercise", num, name, subtitle, graphic:"box"|"wave478"|"circle"|"wave"|"eft"|"bodyscan"}
 - "concept": {type:"concept", eyebrow, headline, body, graphic:"iceberg"|"habitloop"|"beliefs"|"spiral"|"none"}
 - "quote": {type:"quote", quote, attribution}
+- "list": {type:"list", eyebrow, items:[]}
 - "cta": {type:"cta", headline, body, nudge:"link in bio"}
-Rules: first=hook, last=cta. Short copy. App has breathwork, meditation, EFT tapping, somatic practices, self-hypnosis only.`;
+Rules: first=hook OR bigtype OR signs (pick what stops the scroll), last=cta. Short copy. Use "bigtype" for punchy standalone statements (e.g. "Your adult body still carries the story of your childhood nervous system."). Use "signs" for countdown-style hooks ("3 signs you're…"). Use "arrows" for lists of symptoms/patterns/steps. App has breathwork, meditation, EFT tapping, somatic practices, self-hypnosis only.`;
 const SCH1=`Respond with ONLY a valid JSON object for one slide. No preamble, no backticks.
-Types: hook={eyebrow,headline,subtext}, why={body,graphic}, exercise={num,name,subtitle,graphic}, concept={eyebrow,headline,body,graphic}, quote={quote,attribution}, cta={headline,body,nudge}`;
+Types: hook={eyebrow,headline,subtext}, bigtype={headline,subtext}, signs={num,headline,subtext}, arrows={eyebrow,headline,items}, why={body,graphic}, exercise={num,name,subtitle,graphic}, concept={eyebrow,headline,body,graphic}, quote={quote,attribution}, list={eyebrow,items}, cta={headline,body,nudge}`;
 
 // ── GENERATE ──
 async function go(){
@@ -601,6 +626,13 @@ function bslide(s,i){
   const t=s.type;
   let inner='';
   if(t==='hook')inner=`<div class="bgr"></div>${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||'breathwork'}</div>`)}${dw(`<div class="shl" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="srl"></div>`)}${dw(`<div class="sst" contenteditable="true" data-field="subtext">${s.subtext||''}</div>`)}${gr}${wm}`;
+  else if(t==='bigtype')inner=`${cm}${dw(`<div class="sbig" contenteditable="true" data-field="headline">${s.headline||'Your massive statement here.'}</div>`)}${s.subtext!==undefined?dw(`<div class="sbigsub" contenteditable="true" data-field="subtext">${s.subtext}</div>`):''}${gr}${wm}`;
+  else if(t==='signs')inner=`${cm}${dw(`<div class="ssignnum" contenteditable="true" data-field="num">${s.num||'3 SIGNS'}</div>`)}${dw(`<div class="ssignhead" contenteditable="true" data-field="headline">${s.headline||'your nervous system needs a reset'}</div>`)}${s.subtext!==undefined?dw(`<div class="ssignsub" contenteditable="true" data-field="subtext">${s.subtext}</div>`):''}${gr}${wm}`;
+  else if(t==='arrows'){
+    const aitems=(s.items||['First pattern','Second pattern','Third pattern']);
+    const arrowHtml=`<div class="sarrowwrap">`+(s.eyebrow?`<div class="sarrowsub" contenteditable="true" data-field="eyebrow">${s.eyebrow}</div>`:'')+`<div class="sarrowhead" contenteditable="true" data-field="headline">${s.headline||'Headline here'}</div>`+aitems.map((it,ii)=>`<div class="sarrowitem"><span class="aitxt" contenteditable="true" data-field="item${ii}">${it}</span></div>`).join('')+`</div>`;
+    inner=`${cm}${dw(arrowHtml)}${gr}${wm}`;
+  }
   else if(t==='why')inner=`${cm}${s.eyebrow?dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow}</div>`):''}${s.headline?dw(`<div class="shl" style="font-size:26px;margin-bottom:14px" contenteditable="true" data-field="headline">${s.headline}</div>`):''}${dw(`<div class="sbd" contenteditable="true" style="margin-bottom:20px" data-field="body">${s.body||''}</div>`)}${dw(gfx(s.graphic||'wave'))}${wm}`;
   else if(t==='exercise')inner=`${cm}${dw(`<div class="set" contenteditable="true" data-field="num">Exercise ${s.num||String(i).padStart(2,'0')}</div>`)}${dw(`<div class="sen" contenteditable="true" data-field="name">${s.name||''}</div>`)}${dw(`<div class="ses" contenteditable="true" data-field="subtitle">${s.subtitle||''}</div>`)}${dw(gfx(s.graphic||'box'))}${wm}`;
   else if(t==='concept')inner=`${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||''}</div>`)}${dw(`<div class="shl" style="font-size:24px" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="srl"></div>`)}${dw(`<div class="sbd" style="margin-top:14px;font-size:12px" contenteditable="true" data-field="body">${s.body||''}</div>`)}${gr}${wm}`;
@@ -741,10 +773,13 @@ const GFX_OPTIONS=[
 ];
 
 // ── RENDER EDITORS ──
-const SLIDE_TYPES=['hook','why','exercise','concept','quote','list','mockup','cta'];
-const TYPE_LABELS={hook:'Hook',why:'Why It Works',exercise:'Exercise',concept:'Concept',quote:'Quote',list:'List',mockup:'App Mockup',cta:'Call to Action'};
+const SLIDE_TYPES=['hook','bigtype','signs','arrows','why','exercise','concept','quote','list','mockup','cta'];
+const TYPE_LABELS={hook:'Hook',bigtype:'Big Type',signs:'Signs / Numbered',arrows:'Arrow List',why:'Why It Works',exercise:'Exercise',concept:'Concept',quote:'Quote',list:'List',mockup:'App Mockup',cta:'Call to Action'};
 const FIELD_DEFS={
   hook:[['eyebrow','Eyebrow'],['headline','Headline'],['subtext','Subtext']],
+  bigtype:[['headline','Headline (massive bold)'],['subtext','Subtitle (italic, optional)']],
+  signs:[['num','Number label (e.g. "3 SIGNS")'],['headline','Headline'],['subtext','Subtitle (italic, optional)']],
+  arrows:[['eyebrow','Eyebrow (optional)'],['headline','Headline']],
   why:[['eyebrow','Eyebrow (optional)'],['headline','Headline (optional)'],['body','Body copy']],
   exercise:[['num','Number'],['name','Name'],['subtitle','Subtitle']],
   concept:[['eyebrow','Eyebrow'],['headline','Headline'],['body','Body copy']],
@@ -769,8 +804,15 @@ function renderEds(){
       return`<div class="fg"><label>${l}</label>${long?`<textarea rows="3" oninput="upd(${i},'${k}',this.value)">${s[k]||''}</textarea>`:`<input type="text" value="${v}" oninput="upd(${i},'${k}',this.value)">`}</div>`;
     }).join('');
 
+    // Items editor for list/arrows types
+    let itemsEditor='';
+    if(s.type==='list'||s.type==='arrows'){
+      const items=Array.isArray(s.items)?s.items:[];
+      itemsEditor=`<div class="fg"><label>Items</label>`+items.map((it,ii)=>`<div style="display:flex;gap:4px;margin-bottom:4px"><input type="text" value="${(it||'').replace(/"/g,'&quot;')}" oninput="updItem(${i},${ii},this.value)" style="flex:1;font-size:11px"><button class="rbtn" onclick="removeItem(${i},${ii})" style="padding:4px 8px;flex-shrink:0" title="Remove">×</button></div>`).join('')+`<button class="rbtn" onclick="addItem(${i})" style="margin-top:4px;width:100%">+ Add item</button></div>`;
+    }
+
     // Gfx picker (for types that support it)
-    const showGfx=!['hook','cta','mockup'].includes(s.type);
+    const showGfx=!['hook','cta','mockup','bigtype','signs','arrows'].includes(s.type);
     const screenshotPicker=s.type==='mockup'?`<div class="fg"><label>Screenshot</label><button class="phone-upload-btn" onclick="document.getElementById('ss-upload-${i}').click()">${s.screenshot?'✓ Screenshot uploaded — click to replace':'+ Upload screenshot'}</button><input type="file" id="ss-upload-${i}" accept="image/*" style="display:none" onchange="loadScreenshot(this,${i})"></div>`:'';
     const curGfxLbl=(GFX_OPTIONS.find(o=>o.v===(s.graphic||'none'))||GFX_OPTIONS[0]).l;
     const gfxPicker=showGfx?`<div class="fg"><label>Graphic <span style="color:var(--gd);font-size:9px;letter-spacing:.05em;text-transform:none">${curGfxLbl}</span></label><div class="gfx-grid" onclick="gfxClick(event,${i})">${GFX_OPTIONS.map(o=>`<div class="gfx-thumb${(s.graphic||'none')===o.v?' sel':''}" data-gfx="${o.v}" title="${o.l}">${gfx(o.v)||`<div style="height:44px;display:flex;align-items:center;justify-content:center;color:#444;font-size:18px">∅</div>`}<span class="gfx-lbl">${o.l.split(' — ')[1]||o.l}</span></div>`).join('')}</div></div>`:'';
@@ -793,6 +835,7 @@ function renderEds(){
           <div class="sw"><select onchange="changeType(${i},this.value)">${SLIDE_TYPES.map(t=>`<option value="${t}"${t===s.type?' selected':''}>${TYPE_LABELS[t]}</option>`).join('')}</select></div>
         </div>
         ${fields}
+        ${itemsEditor}
         ${screenshotPicker}
         ${gfxPicker}
         <div class="fg">
@@ -864,6 +907,9 @@ function changeType(idx,newType){
   const s=slides[idx];
   const defs={
     hook:{type:'hook',eyebrow:s.eyebrow||'breathwork',headline:s.headline||'Your headline',subtext:s.subtext||'Supporting text'},
+    bigtype:{type:'bigtype',headline:s.headline||s.body||s.quote||'Your massive statement here.',subtext:s.subtext||''},
+    signs:{type:'signs',num:s.num||'3 SIGNS',headline:s.headline||'your nervous system needs a reset',subtext:s.subtext||'(and the 5-day fix that actually works)'},
+    arrows:{type:'arrows',eyebrow:s.eyebrow||'',headline:s.headline||'What you\'ll notice',items:s.items||['First pattern','Second pattern','Third pattern']},
     why:{type:'why',eyebrow:s.eyebrow||'',headline:s.headline||'',body:s.body||'Body copy here.',graphic:s.graphic||'wave'},
     exercise:{type:'exercise',num:s.num||'01',name:s.name||'Exercise Name',subtitle:s.subtitle||'Brief description',graphic:s.graphic||'box'},
     concept:{type:'concept',eyebrow:s.eyebrow||'concept',headline:s.headline||'Headline',body:s.body||'Body copy here.',graphic:s.graphic||'none'},
@@ -913,6 +959,30 @@ function upd(idx,key,val){
   slides[idx][key]=val;saveSlides();
   const e=document.getElementById('sl'+idx);
   if(e){const n=bslide(slides[idx],idx);n.id='sl'+idx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
+}
+
+function updItem(slideIdx,itemIdx,val){
+  const s=slides[slideIdx];if(!s)return;
+  const items=Array.isArray(s.items)?[...s.items]:[];
+  items[itemIdx]=val;s.items=items;saveSlides();
+  const e=document.getElementById('sl'+slideIdx);
+  if(e){const n=bslide(s,slideIdx);n.id='sl'+slideIdx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
+}
+
+function addItem(slideIdx){
+  const s=slides[slideIdx];if(!s)return;
+  const items=Array.isArray(s.items)?[...s.items]:[];
+  items.push('New item');s.items=items;saveSlides();renderEds();
+  const e=document.getElementById('sl'+slideIdx);
+  if(e){const n=bslide(s,slideIdx);n.id='sl'+slideIdx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
+}
+
+function removeItem(slideIdx,itemIdx){
+  const s=slides[slideIdx];if(!s)return;
+  const items=Array.isArray(s.items)?[...s.items]:[];
+  items.splice(itemIdx,1);s.items=items;saveSlides();renderEds();
+  const e=document.getElementById('sl'+slideIdx);
+  if(e){const n=bslide(s,slideIdx);n.id='sl'+slideIdx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
 }
 
 function addArrow(idx){
@@ -1148,12 +1218,16 @@ function setDims(d){
 let ttMode=false;
 const TT_BRAND=`You write TikTok carousel content for Velum, a nervous system regulation and wellness app. Voice: direct, punchy, scroll-stopping. First line of hook must stop the scroll. Use second-person ("you"). Focus on pain points, transformation, and clear value. TikTok audience: 18-35, stressed, curious about mental health and wellness. Goal: follows, saves, and comments to drive the algorithm.`;
 const TT_SCH=`Respond with ONLY a valid JSON array. No preamble, no backticks.
-Slide types:
-- "hook": {eyebrow, headline, subtext} — headline must be scroll-stopping, 5-8 words, bold claim or question
+Slide types (pick whichever best stops the scroll for each position):
+- "hook": {eyebrow, headline, subtext} — small eyebrow + serif headline. Use when the headline is short/poetic.
+- "bigtype": {headline, subtext} — MASSIVE bold sans-serif text-only statement. Use this for the #1 scroll-stopper slide whenever you have a punchy standalone claim. Wrap a word in <em>…</em> to colour it gold, <u>…</u> to underline. e.g. "Your adult body still <em>remembers</em> your childhood." (9D-style)
+- "signs": {num:"3 SIGNS", headline, subtext} — "3 signs your X needs Y" format with italic subtitle. Great opener for listicle carousels.
+- "arrows": {eyebrow, headline, items:[3-5 short points]} — headline + arrow-bulleted quick-read list. Perfect for symptoms/patterns/steps.
 - "why": {eyebrow, headline, body, graphic:"wave"|"window"|"ladder"|"neural"} — eyebrow="why it works", add headline
 - "concept": {eyebrow, headline, body, graphic:"none"} — short punchy body, max 2 sentences
-- "cta": {eyebrow:"follow for more", headline, body, nudge} — nudge must be "comment [WORD] for [FREEBIE]" or "follow @velumapp"
-Rules: first=hook, last=cta. 5-7 slides. Hook must be a big bold claim. CTA must drive follow + comment.`;
+- "list": {eyebrow, items:[]} — simple dot-bulleted list (less bold than arrows)
+- "cta": {eyebrow:"follow for more", headline, body, nudge} — nudge must be "DM me [WORD]" or "follow @govelum" — NOT comment keywords (TikTok doesn't support IG-style comment auto-DM).
+Rules: first slide = hook OR bigtype OR signs (pick what stops the scroll). Last = cta. 5-7 slides. Mix types — don't use same type twice in a row. Reference: accounts like @9dbreathwork use bigtype + arrows heavily for 100k+ likes.`;
 
 function toggleTTMode(){
   ttMode=!ttMode;
@@ -1357,7 +1431,15 @@ document.addEventListener('input',e=>{
   const ce=e.target.closest('[data-field]');if(!ce)return;
   const slide=ce.closest('.slide');if(!slide)return;
   const idx=parseInt(slide.id.replace('sl',''));if(isNaN(idx)||!slides[idx])return;
-  slides[idx][ce.dataset.field]=ce.innerHTML;
+  const field=ce.dataset.field;
+  const itemMatch=field.match(/^item(\d+)$/);
+  if(itemMatch){
+    const items=Array.isArray(slides[idx].items)?[...slides[idx].items]:[];
+    items[parseInt(itemMatch[1])]=ce.innerHTML;
+    slides[idx].items=items;
+  }else{
+    slides[idx][field]=ce.innerHTML;
+  }
   clearTimeout(_saveTimer);_saveTimer=setTimeout(saveSlides,400);
 },true);
 
