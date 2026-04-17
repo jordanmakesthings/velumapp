@@ -366,14 +366,17 @@ select option{background:#1e1e1e}
     <button onmousedown="event.preventDefault();fmt('underline')"><u>U</u></button>
     <div class="fsep"></div>
     <div class="fcolor" title="Custom colour"><input type="color" class="fcolor-swatch" id="ftcolor" value="#C9A84C" onmousedown="saveSelection()" onchange="restoreAndApply('foreColor',this.value)"></div>
+    <button onmousedown="event.preventDefault();fmt('foreColor','#111111')" style="color:#111;background:#F2EFE7;font-size:9px;border-color:#ccc">Black</button>
     <button onmousedown="event.preventDefault();fmt('foreColor','#C9A84C')" style="color:#C9A84C;border-color:#C9A84C;font-size:9px">Gold</button>
     <button onmousedown="event.preventDefault();fmt('foreColor','#F2EFE7')" style="font-size:9px">Cream</button>
     <button onmousedown="event.preventDefault();fmt('foreColor','#6F8A7E')" style="color:#6F8A7E;font-size:9px">Sage</button>
+    <button onmousedown="event.preventDefault();fmt('foreColor','#c97c5c')" style="color:#c97c5c;font-size:9px">Rust</button>
     <div class="fsep"></div>
     <button onmousedown="event.preventDefault();fmt('fontSize','10px')" style="font-size:8px">S</button>
     <button onmousedown="event.preventDefault();fmt('fontSize','13px')" style="font-size:9px">M</button>
     <button onmousedown="event.preventDefault();fmt('fontSize','17px')" style="font-size:10px">L</button>
     <button onmousedown="event.preventDefault();fmt('fontSize','22px')" style="font-size:11px">XL</button>
+    <button onmousedown="event.preventDefault();fmt('fontSize','30px')" style="font-size:12px">XXL</button>
     <div class="fsep"></div>
     <button onmousedown="event.preventDefault();setAlign('left')" style="font-size:9px">◁</button>
     <button onmousedown="event.preventDefault();setAlign('center')" style="font-size:9px">▷◁</button>
@@ -381,6 +384,13 @@ select option{background:#1e1e1e}
     <div class="fsep"></div>
     <button onmousedown="event.preventDefault();setFont('DM Sans')" style="font-size:9px;font-family:'DM Sans',sans-serif">DM</button>
     <button onmousedown="event.preventDefault();setFont('Cormorant Garamond')" style="font-size:9px;font-family:'Cormorant Garamond',serif;font-style:italic">CG</button>
+    <div class="fsep"></div>
+    <button onmousedown="event.preventDefault();setLineHeight('1.2')" style="font-size:9px" title="Tight line height">T↕</button>
+    <button onmousedown="event.preventDefault();setLineHeight('1.6')" style="font-size:9px" title="Normal line height">N↕</button>
+    <button onmousedown="event.preventDefault();setLineHeight('2')" style="font-size:9px" title="Loose line height">L↕</button>
+    <div class="fsep"></div>
+    <button onmousedown="event.preventDefault();setLetterSpacing('-.02em')" style="font-size:9px" title="Tight tracking">T⟷</button>
+    <button onmousedown="event.preventDefault();setLetterSpacing('.15em')" style="font-size:9px" title="Wide tracking">W⟷</button>
     <div class="fsep"></div>
     <button onmousedown="event.preventDefault();fmt('removeFormat')" style="font-size:9px">Clear</button>
     <div class="fsep"></div>
@@ -909,7 +919,11 @@ function restoreAndApply(cmd,val){
   if(!savedRange)return;
   const sel=window.getSelection();sel.removeAllRanges();sel.addRange(savedRange);
   const range=sel.getRangeAt(0);
-  if(cmd==='removeFormat'){const text=document.createTextNode(range.toString());range.deleteContents();range.insertNode(text);savedRange=null;return;}
+  if(cmd==='removeFormat'){
+    const text=document.createTextNode(range.toString());
+    range.deleteContents();range.insertNode(text);
+    savedRange=null;return;
+  }
   const span=document.createElement('span');
   if(cmd==='bold')span.style.fontWeight='600';
   else if(cmd==='italic')span.style.fontStyle='italic';
@@ -917,7 +931,8 @@ function restoreAndApply(cmd,val){
   else if(cmd==='foreColor')span.style.color=val;
   else if(cmd==='fontSize')span.style.fontSize=val;
   try{range.surroundContents(span);}catch(e){const x=range.extractContents();span.appendChild(x);range.insertNode(span);}
-  savedRange=null;
+  // keep savedRange so color can be reapplied immediately without re-selecting
+  try{savedRange=sel.getRangeAt(0).cloneRange();}catch(e){savedRange=null;}
 }
 function fmt(cmd,val){
   const sel=window.getSelection();
@@ -928,6 +943,16 @@ function setAlign(align){
   const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
   const ce=sel.anchorNode?.parentElement?.closest('[contenteditable]');
   if(ce)ce.style.textAlign=align;
+}
+function setLineHeight(lh){
+  const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
+  const ce=sel.anchorNode?.parentElement?.closest('[contenteditable]');
+  if(ce)ce.style.lineHeight=lh;
+}
+function setLetterSpacing(ls){
+  const sel=window.getSelection();if(!sel||!sel.rangeCount)return;
+  const ce=sel.anchorNode?.parentElement?.closest('[contenteditable]');
+  if(ce)ce.style.letterSpacing=ls;
 }
 function setFont(font){
   const sel=window.getSelection();
