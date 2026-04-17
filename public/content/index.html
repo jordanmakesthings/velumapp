@@ -685,7 +685,8 @@ function bslide(s,i){
   const wm=`<div class="wm">V E L U M</div>`;
   // Footer nudge — small italic hint at bottom of slide (e.g. "swipe for the truth", "(here's why) →")
   const nudgeText=s.footerNudge||'';
-  const fn=nudgeText?`<div class="sfn" contenteditable="true" data-field="footerNudge">${nudgeText}</div>`:'';
+  const nudgeY=s.nudgeY!==undefined?s.nudgeY:90; // 0-100% from top, default near bottom
+  const fn=nudgeText?`<div class="sfn" contenteditable="true" data-field="footerNudge" style="top:${nudgeY}%;transform:translateY(-50%);bottom:auto">${nudgeText}</div>`:'';
   const gr=s.graphic&&s.graphic!=='none'?dw(gfx(s.graphic)):'';
   const t=s.type;
   let inner='';
@@ -911,12 +912,23 @@ function renderEds(){
         ${fields}
         ${itemsEditor}
         <div class="fg">
-          <label>Footer Nudge <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— tiny italic text at slide bottom</span></label>
+          <label>Footer Nudge <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— tiny italic text, position below</span></label>
           <input type="text" value="${(s.footerNudge||'').replace(/"/g,'&quot;')}" oninput="upd(${i},'footerNudge',this.value)" placeholder="e.g. swipe for the truth" style="font-size:11px">
           <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px">
             ${['swipe for the truth','(here\'s why) →','keep reading ↓','the 5-day fix →','save this one','wait for it…'].map(n=>`<button class="rbtn" style="padding:3px 7px;font-size:9.5px" onclick="upd(${i},'footerNudge','${n.replace(/'/g,"\\'")}')">${n}</button>`).join('')}
             <button class="rbtn" style="padding:3px 7px;font-size:9.5px;color:var(--red);border-color:rgba(201,124,92,.3)" onclick="upd(${i},'footerNudge','')">clear</button>
           </div>
+          ${s.footerNudge?`
+            <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;align-items:center">
+              <span style="font-size:8.5px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;margin-right:2px">POSITION</span>
+              ${[['top','8'],['upper','25'],['mid','50'],['lower','75'],['bottom','90']].map(([lbl,val])=>`<button class="rbtn" style="padding:3px 7px;font-size:9px;${(s.nudgeY!==undefined?s.nudgeY:90)==parseInt(val)?'border-color:#C9A84C;color:#C9A84C':''}" onclick="upd(${i},'nudgeY',${val})">${lbl}</button>`).join('')}
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;margin-top:5px">
+              <span style="font-size:8.5px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap">FINE</span>
+              <input type="range" min="2" max="97" step="1" value="${s.nudgeY!==undefined?s.nudgeY:90}" oninput="upd(${i},'nudgeY',parseInt(this.value))" style="flex:1;accent-color:#C9A84C">
+              <span style="font-size:9px;color:var(--gd);min-width:30px;text-align:right">${s.nudgeY!==undefined?s.nudgeY:90}%</span>
+            </div>
+          `:''}
         </div>
         ${screenshotPicker}
         ${gfxPicker}
