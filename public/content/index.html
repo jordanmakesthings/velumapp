@@ -133,18 +133,19 @@ select option{background:#1e1e1e}
 /* Slide text styles */
 .cm{position:absolute;top:16px;right:18px;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:300;color:var(--sg);letter-spacing:.08em;opacity:.6}
 .wm{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-family:'Cormorant Garamond',serif;font-size:9px;font-weight:300;letter-spacing:.32em;color:var(--sg);opacity:.5;white-space:nowrap}
-.sey{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:400;letter-spacing:.25em;text-transform:uppercase;color:var(--gd);margin-bottom:14px;position:relative;text-align:center}
-.shl{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:300;line-height:1.15;color:var(--cr);text-align:center;position:relative;max-width:360px}
-.shl em{font-style:italic;color:var(--gd)}
+.sey{font-family:'Inter',system-ui,sans-serif;font-size:10px;font-weight:600;letter-spacing:.25em;text-transform:uppercase;color:var(--gd);margin-bottom:14px;position:relative;text-align:center}
+.shl{font-family:'Inter',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.018em;line-height:1.1;color:var(--cr);text-align:center;position:relative;max-width:360px}
+.shl em{font-style:normal;color:var(--gd);font-weight:800}
+.shl u{text-decoration:underline;text-decoration-thickness:2.5px;text-underline-offset:3px}
 .srl{width:28px;height:1px;background:var(--gd);margin:18px auto 0;opacity:.6;position:relative}
-.sst{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:300;letter-spacing:.12em;color:var(--sg);text-align:center;margin-top:10px;position:relative}
-.sbd{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:300;line-height:1.8;color:var(--mt);text-align:center;max-width:340px;position:relative}
-.set{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:400;letter-spacing:.25em;color:var(--gd);text-transform:uppercase;margin-bottom:6px;position:relative}
-.sen{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--cr);margin-bottom:4px;position:relative}
-.ses{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:300;letter-spacing:.1em;color:var(--sg);margin-bottom:18px;position:relative}
-.sch{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;font-style:italic;line-height:1.3;color:var(--cr);text-align:center;max-width:320px;margin-bottom:16px;position:relative}
-.scb{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;line-height:1.75;color:var(--dm);text-align:center;max-width:290px;margin-bottom:22px;position:relative}
-.sln{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:400;letter-spacing:.18em;color:var(--gd);text-transform:uppercase;position:relative}
+.sst{font-family:'Inter',sans-serif;font-size:11px;font-weight:500;letter-spacing:.12em;color:var(--sg);text-align:center;margin-top:10px;position:relative}
+.sbd{font-family:'Inter',sans-serif;font-size:13px;font-weight:400;line-height:1.7;color:var(--mt);text-align:center;max-width:340px;position:relative}
+.set{font-family:'Inter',sans-serif;font-size:10px;font-weight:600;letter-spacing:.25em;color:var(--gd);text-transform:uppercase;margin-bottom:6px;position:relative}
+.sen{font-family:'Inter',system-ui,sans-serif;font-size:28px;font-weight:800;letter-spacing:-.015em;color:var(--cr);margin-bottom:4px;position:relative}
+.ses{font-family:'Inter',sans-serif;font-size:11px;font-weight:500;letter-spacing:.1em;color:var(--sg);margin-bottom:18px;position:relative}
+.sch{font-family:'Inter',system-ui,sans-serif;font-size:28px;font-weight:800;letter-spacing:-.015em;line-height:1.2;color:var(--cr);text-align:center;max-width:320px;margin-bottom:16px;position:relative}
+.scb{font-family:'Inter',sans-serif;font-size:12px;font-weight:400;line-height:1.7;color:var(--dm);text-align:center;max-width:290px;margin-bottom:22px;position:relative}
+.sln{font-family:'Inter',sans-serif;font-size:10px;font-weight:600;letter-spacing:.18em;color:var(--gd);text-transform:uppercase;position:relative}
 /* Quote type */
 .sqm{font-family:'Cormorant Garamond',serif;font-size:60px;font-weight:300;line-height:.5;color:var(--gd);opacity:.4;margin-bottom:8px}
 .sqt{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;font-style:italic;line-height:1.4;color:var(--cr);text-align:center;max-width:340px;position:relative}
@@ -614,10 +615,22 @@ function bslide(s,i){
   el.className='slide';el.id='sl'+i;
   const bg=s.bg||'#111111';
   el.style.background=bg;
+  // Image layout — supports full, bottom, top, right, left, center modes
+  let imgLayer='';
   if(s.bgImage){
-    el.style.backgroundImage=`url(${s.bgImage})`;
-    el.style.backgroundSize='cover';
-    el.style.backgroundPosition='center';
+    const layout=s.imgLayout||'full';
+    const treatment=s.imgTreatment||'none';
+    const filter=treatment==='blur'?'filter:blur(12px) brightness(.55);':treatment==='grayscale'?'filter:grayscale(1) brightness(.8);':'';
+    const overlay=treatment==='dark30'?'<div class="img-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.3);pointer-events:none"></div>':treatment==='dark60'?'<div class="img-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.75));pointer-events:none"></div>':'';
+    const styles={
+      full:'position:absolute;inset:0;background-image:url('+s.bgImage+');background-size:cover;background-position:center;'+filter,
+      bottom:'position:absolute;left:0;right:0;bottom:0;height:45%;background-image:url('+s.bgImage+');background-size:cover;background-position:center;'+filter,
+      top:'position:absolute;left:0;right:0;top:0;height:45%;background-image:url('+s.bgImage+');background-size:cover;background-position:center;'+filter,
+      right:'position:absolute;right:0;top:0;bottom:0;width:50%;background-image:url('+s.bgImage+');background-size:cover;background-position:center;'+filter,
+      left:'position:absolute;left:0;top:0;bottom:0;width:50%;background-image:url('+s.bgImage+');background-size:cover;background-position:center;'+filter,
+      center:'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:70%;height:70%;background-image:url('+s.bgImage+');background-size:contain;background-position:center;background-repeat:no-repeat;'+filter,
+    };
+    imgLayer=`<div style="${styles[layout]||styles.full}"></div>${overlay}`;
   }
   if(LIGHT_BGS.includes(bg))el.classList.add('light');
   const cm=`<div class="cm">${String(i+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}</div>`;
@@ -625,7 +638,9 @@ function bslide(s,i){
   const gr=s.graphic&&s.graphic!=='none'?dw(gfx(s.graphic)):'';
   const t=s.type;
   let inner='';
-  if(t==='hook')inner=`<div class="bgr"></div>${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||'breathwork'}</div>`)}${dw(`<div class="shl" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="srl"></div>`)}${dw(`<div class="sst" contenteditable="true" data-field="subtext">${s.subtext||''}</div>`)}${gr}${wm}`;
+  const gradientBgr=s.bgImage?'':'<div class="bgr"></div>';
+  const gradientBgl=s.bgImage?'':'<div class="bgl"></div>';
+  if(t==='hook')inner=`${gradientBgr}${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||'breathwork'}</div>`)}${dw(`<div class="shl" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="srl"></div>`)}${dw(`<div class="sst" contenteditable="true" data-field="subtext">${s.subtext||''}</div>`)}${gr}${wm}`;
   else if(t==='bigtype')inner=`${cm}${dw(`<div class="sbig" contenteditable="true" data-field="headline">${s.headline||'Your massive statement here.'}</div>`)}${s.subtext!==undefined?dw(`<div class="sbigsub" contenteditable="true" data-field="subtext">${s.subtext}</div>`):''}${gr}${wm}`;
   else if(t==='signs')inner=`${cm}${dw(`<div class="ssignnum" contenteditable="true" data-field="num">${s.num||'3 SIGNS'}</div>`)}${dw(`<div class="ssignhead" contenteditable="true" data-field="headline">${s.headline||'your nervous system needs a reset'}</div>`)}${s.subtext!==undefined?dw(`<div class="ssignsub" contenteditable="true" data-field="subtext">${s.subtext}</div>`):''}${gr}${wm}`;
   else if(t==='arrows'){
@@ -633,10 +648,10 @@ function bslide(s,i){
     const arrowHtml=`<div class="sarrowwrap">`+(s.eyebrow?`<div class="sarrowsub" contenteditable="true" data-field="eyebrow">${s.eyebrow}</div>`:'')+`<div class="sarrowhead" contenteditable="true" data-field="headline">${s.headline||'Headline here'}</div>`+aitems.map((it,ii)=>`<div class="sarrowitem"><span class="aitxt" contenteditable="true" data-field="item${ii}">${it}</span></div>`).join('')+`</div>`;
     inner=`${cm}${dw(arrowHtml)}${gr}${wm}`;
   }
-  else if(t==='why')inner=`${cm}${s.eyebrow?dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow}</div>`):''}${s.headline?dw(`<div class="shl" style="font-size:26px;margin-bottom:14px" contenteditable="true" data-field="headline">${s.headline}</div>`):''}${dw(`<div class="sbd" contenteditable="true" style="margin-bottom:20px" data-field="body">${s.body||''}</div>`)}${dw(gfx(s.graphic||'wave'))}${wm}`;
-  else if(t==='exercise')inner=`${cm}${dw(`<div class="set" contenteditable="true" data-field="num">Exercise ${s.num||String(i).padStart(2,'0')}</div>`)}${dw(`<div class="sen" contenteditable="true" data-field="name">${s.name||''}</div>`)}${dw(`<div class="ses" contenteditable="true" data-field="subtitle">${s.subtitle||''}</div>`)}${dw(gfx(s.graphic||'box'))}${wm}`;
+  else if(t==='why')inner=`${cm}${s.eyebrow?dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow}</div>`):''}${s.headline?dw(`<div class="shl" style="font-size:26px;margin-bottom:14px" contenteditable="true" data-field="headline">${s.headline}</div>`):''}${dw(`<div class="sbd" contenteditable="true" style="margin-bottom:20px" data-field="body">${s.body||''}</div>`)}${wm}`;
+  else if(t==='exercise')inner=`${cm}${dw(`<div class="set" contenteditable="true" data-field="num">Exercise ${s.num||String(i).padStart(2,'0')}</div>`)}${dw(`<div class="sen" contenteditable="true" data-field="name">${s.name||''}</div>`)}${dw(`<div class="ses" contenteditable="true" data-field="subtitle">${s.subtitle||''}</div>`)}${wm}`;
   else if(t==='concept')inner=`${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||''}</div>`)}${dw(`<div class="shl" style="font-size:24px" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="srl"></div>`)}${dw(`<div class="sbd" style="margin-top:14px;font-size:12px" contenteditable="true" data-field="body">${s.body||''}</div>`)}${gr}${wm}`;
-  else if(t==='quote')inner=`<div class="bgr"></div>${cm}<div class="sqm">"</div>${dw(`<div class="sqt" contenteditable="true" data-field="quote">${s.quote||''}</div>`)}${dw(`<div class="sqa" contenteditable="true" data-field="attribution">${s.attribution||''}</div>`)}${wm}`;
+  else if(t==='quote')inner=`${gradientBgr}${cm}<div class="sqm">"</div>${dw(`<div class="sqt" contenteditable="true" data-field="quote">${s.quote||''}</div>`)}${dw(`<div class="sqa" contenteditable="true" data-field="attribution">${s.attribution||''}</div>`)}${wm}`;
   else if(t==='list'){
     const items=(s.items||['Item one','Item two','Item three']);
     const listHtml=`<div class="sli-wrap">`+items.map((it,ii)=>`<div class="sli"><div class="sli-dot"></div><div class="sli-text" contenteditable="true" data-field="item${ii}">${it}</div></div>`).join('')+`</div>`;
@@ -659,9 +674,9 @@ function bslide(s,i){
         ${s.caption?dw(`<div class="sst" contenteditable="true" data-field="caption">${s.caption}</div>`):''}
       </div>${wm}`;
   }
-  else if(t==='cta')inner=`<div class="bgl"></div>${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||'go deeper'}</div>`)}${dw(`<div class="sch" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="scb" contenteditable="true" data-field="body">${s.body||''}</div>`)}${dw(`<div class="sln" contenteditable="true" data-field="nudge">${s.nudge||'↑ link in bio'}</div>`)}${gr}${wm}`;
+  else if(t==='cta')inner=`${gradientBgl}${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||'go deeper'}</div>`)}${dw(`<div class="sch" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="scb" contenteditable="true" data-field="body">${s.body||''}</div>`)}${dw(`<div class="sln" contenteditable="true" data-field="nudge">${s.nudge||'↑ link in bio'}</div>`)}${gr}${wm}`;
   else inner=`${cm}${dw(`<div class="sbd" contenteditable="true" data-field="body">${s.headline||s.body||''}</div>`)}${gr}${wm}`;
-  el.innerHTML=inner;
+  el.innerHTML=imgLayer+inner;
   return el;
 }
 
@@ -811,8 +826,8 @@ function renderEds(){
       itemsEditor=`<div class="fg"><label>Items</label>`+items.map((it,ii)=>`<div style="display:flex;gap:4px;margin-bottom:4px"><input type="text" value="${(it||'').replace(/"/g,'&quot;')}" oninput="updItem(${i},${ii},this.value)" style="flex:1;font-size:11px"><button class="rbtn" onclick="removeItem(${i},${ii})" style="padding:4px 8px;flex-shrink:0" title="Remove">×</button></div>`).join('')+`<button class="rbtn" onclick="addItem(${i})" style="margin-top:4px;width:100%">+ Add item</button></div>`;
     }
 
-    // Gfx picker (for types that support it)
-    const showGfx=!['hook','cta','mockup','bigtype','signs','arrows'].includes(s.type);
+    // Gfx picker disabled — SVG graphics removed in favour of AI imagery
+    const showGfx=false;
     const screenshotPicker=s.type==='mockup'?`<div class="fg"><label>Screenshot</label><button class="phone-upload-btn" onclick="document.getElementById('ss-upload-${i}').click()">${s.screenshot?'✓ Screenshot uploaded — click to replace':'+ Upload screenshot'}</button><input type="file" id="ss-upload-${i}" accept="image/*" style="display:none" onchange="loadScreenshot(this,${i})"></div>`:'';
     const curGfxLbl=(GFX_OPTIONS.find(o=>o.v===(s.graphic||'none'))||GFX_OPTIONS[0]).l;
     const gfxPicker=showGfx?`<div class="fg"><label>Graphic <span style="color:var(--gd);font-size:9px;letter-spacing:.05em;text-transform:none">${curGfxLbl}</span></label><div class="gfx-grid" onclick="gfxClick(event,${i})">${GFX_OPTIONS.map(o=>`<div class="gfx-thumb${(s.graphic||'none')===o.v?' sel':''}" data-gfx="${o.v}" title="${o.l}">${gfx(o.v)||`<div style="height:44px;display:flex;align-items:center;justify-content:center;color:#444;font-size:18px">∅</div>`}<span class="gfx-lbl">${o.l.split(' — ')[1]||o.l}</span></div>`).join('')}</div></div>`:'';
@@ -839,15 +854,36 @@ function renderEds(){
         ${screenshotPicker}
         ${gfxPicker}
         <div class="fg">
-          <label>AI Background Image <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— Fal.ai / Flux</span></label>
+          <label>AI Image <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— Fal.ai Flux · ~$0.025/img (Pro ~$0.05)</span></label>
           <div style="display:flex;gap:5px">
-            <input type="text" id="img-prompt-${i}" placeholder="e.g. misty forest at golden hour, cinematic" style="flex:1;font-size:11px">
-            <button class="rbtn" onclick="genImage(${i})" id="img-btn-${i}" style="flex-shrink:0;white-space:nowrap">✦ Gen</button>
+            <input type="text" id="img-prompt-${i}" placeholder="Custom prompt, or tap a preset below…" style="flex:1;font-size:11px">
+            <button class="rbtn" onclick="genImage(${i},false)" id="img-btn-${i}" style="flex-shrink:0;white-space:nowrap">✦ Gen</button>
+            <button class="rbtn" onclick="genImage(${i},true)" id="img-btn-hires-${i}" style="flex-shrink:0;white-space:nowrap;border-color:#C9A84C;color:#C9A84C" title="Flux Pro — sharper, costs ~$0.05">✦ Hi-Res</button>
           </div>
-          <div style="display:flex;gap:5px;margin-top:4px">
-            <input type="text" id="img-url-${i}" placeholder="Or paste image URL…" style="flex:1;font-size:11px" oninput="applyImageUrl(${i},this.value)">
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">
+            ${IMG_PRESETS.map(p=>`<button class="rbtn" style="padding:4px 7px;font-size:9.5px;letter-spacing:.03em" onclick="usePreset(${i},'${p.id}')" title="${p.prompt.slice(0,80)}…">${p.label}</button>`).join('')}
           </div>
-          ${s.bgImage?`<div style="font-size:9px;color:var(--gd);margin-top:3px">✓ Image applied — <button onclick="clearBgImage(${i})" style="background:none;border:none;color:var(--sg);cursor:pointer;font-size:9px;padding:0">remove</button></div>`:''}
+          <div style="display:flex;gap:5px;margin-top:6px">
+            <input type="text" id="img-url-${i}" placeholder="Or paste image URL…" style="flex:1;font-size:10.5px" oninput="applyImageUrl(${i},this.value)">
+          </div>
+          ${s.bgImage?`
+            <div style="margin-top:8px;padding:7px 8px;background:#0a0a0a;border:1px solid #222;border-radius:4px">
+              <div style="font-size:9px;color:var(--gd);margin-bottom:5px">✓ Image applied</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px">
+                <span style="font-size:8.5px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;margin-right:2px;align-self:center">LAYOUT</span>
+                ${['full','bottom','top','right','left','center'].map(mode=>`<button class="rbtn" style="padding:3px 6px;font-size:9px;${(s.imgLayout||'full')===mode?'border-color:#C9A84C;color:#C9A84C':''}" onclick="setImgLayout(${i},'${mode}')">${mode}</button>`).join('')}
+              </div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px">
+                <span style="font-size:8.5px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;margin-right:2px;align-self:center">TREATMENT</span>
+                ${[['none','none'],['dark30','darken'],['dark60','darker'],['blur','blur'],['grayscale','b&w']].map(([val,lbl])=>`<button class="rbtn" style="padding:3px 6px;font-size:9px;${(s.imgTreatment||'none')===val?'border-color:#C9A84C;color:#C9A84C':''}" onclick="setImgTreatment(${i},'${val}')">${lbl}</button>`).join('')}
+              </div>
+              <div style="display:flex;gap:5px;align-items:center">
+                <button class="rbtn" onclick="saveToBank(${i})" style="padding:3px 7px;font-size:9px" title="Save to your reusable image bank">★ Bank it</button>
+                <button onclick="clearBgImage(${i})" style="background:none;border:none;color:var(--sg);cursor:pointer;font-size:9px;padding:0">remove</button>
+              </div>
+            </div>
+          `:''}
+          ${(function(){const bank=getImageBank();if(bank.length===0)return '';return `<details style="margin-top:6px"><summary style="font-size:9.5px;color:var(--sg);cursor:pointer;letter-spacing:.08em;text-transform:uppercase">My Image Bank (${bank.length}) — reuse saved images</summary><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:5px">${bank.slice(0,12).map((b,bi)=>`<div style="position:relative;aspect-ratio:1;background:#0a0a0a;border:1px solid #222;border-radius:3px;overflow:hidden;cursor:pointer" onclick="applyImageUrl(${i},'${b.url}')"><img src="${b.url}" style="width:100%;height:100%;object-fit:cover" alt=""><button onclick="event.stopPropagation();removeFromBank(${bi})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:#888;width:14px;height:14px;border-radius:50%;cursor:pointer;font-size:9px;line-height:1">×</button></div>`).join('')}</div></details>`;})()}
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">
           <button class="rbtn" onclick="regen(${i})">↻ Regenerate</button>
@@ -1146,30 +1182,89 @@ async function dlAll(){
   goTo(cur);st(`${allSlides.length} slides downloaded`,false);
 }
 
+// ── IMAGE PRESETS (9D-inspired library) ──
+const IMG_PRESETS=[
+  {id:'nervous',label:'Nervous System',prompt:'detailed anatomical illustration of the human nervous system inside a silhouetted body, glowing neural pathways in electric blue and white, dark black background, medical scientific textbook aesthetic, cinematic moody lighting, highly detailed, photorealistic anatomical render, 9dbreathwork style'},
+  {id:'brain',label:'Brain',prompt:'detailed anatomical cross-section of the human brain, glowing neural activity, electric blue and gold highlights, dark black background, medical scientific illustration, premium wellness app aesthetic, cinematic lighting, photorealistic render'},
+  {id:'spine',label:'Spine',prompt:'anatomical illustration of the human spine and vagus nerve, glowing neural pathways, blue and gold bioluminescent highlights on dark black background, scientific medical render, moody cinematic lighting, highly detailed'},
+  {id:'child',label:'Child',prompt:'child silhouette anatomical cross-section with glowing nervous system highlighted in blue-white electric light, dark moody background, editorial wellness photography mood, medical textbook aesthetic, cinematic and haunting'},
+  {id:'heart',label:'Heart',prompt:'anatomical illustration of the human heart with pulsing light, glowing red and gold inner light, dark black background, scientific medical render, cinematic dramatic lighting, photorealistic render, premium wellness aesthetic'},
+  {id:'meditation',label:'Meditation',prompt:'silhouette of a person meditating in lotus position, soft golden light emanating from body, dark moody cinematic background, editorial wellness photography, warm glow, premium app aesthetic'},
+  {id:'breathwork',label:'Breathwork',prompt:'close-up of a face with eyes closed, serene expression, soft ethereal light on skin, visible breath mist or vapour, dark moody cinematic background, editorial wellness photography, premium aesthetic'},
+  {id:'energy',label:'Energy Field',prompt:'human silhouette surrounded by an aura of electric blue and gold light particles, chakra energy field visualisation, dark cosmic black background, ethereal scientific render, premium wellness aesthetic'},
+  {id:'water',label:'Water Calm',prompt:'serene dark water surface with ripples of light, moody reflective, minimalist, cinematic, deep blue and black, premium wellness aesthetic, high contrast atmospheric'},
+  {id:'mist',label:'Forest Mist',prompt:'misty forest at dawn, deep dark greens, golden light filtering through trees, cinematic atmospheric, ethereal, premium wellness aesthetic, moody editorial'},
+  {id:'cosmic',label:'Cosmic',prompt:'cosmic nebula in deep black space with electric blue, purple, and gold glowing particles, minimalist, premium wellness aesthetic, abstract and ethereal'},
+  {id:'abstract',label:'Abstract Flow',prompt:'abstract flowing energy waves in electric blue and gold on deep black background, minimalist scientific render, cinematic and premium, wellness app aesthetic'},
+  {id:'somatic',label:'Somatic',prompt:'close-up of a hand gently resting on chest, soft warm light on skin, dark moody background, editorial wellness photography, premium aesthetic, cinematic lighting'},
+  {id:'body',label:'Body Outline',prompt:'stylised anatomical human body outline with glowing energy points marked in gold, medical-scientific wellness illustration, dark black background, premium app aesthetic'},
+];
+
+function usePreset(idx,presetId){
+  const preset=IMG_PRESETS.find(p=>p.id===presetId);if(!preset)return;
+  const inp=document.getElementById('img-prompt-'+idx);
+  if(inp)inp.value=preset.prompt;
+  genImage(idx,false);
+}
+
+// ── IMAGE BANK (localStorage) ──
+function getImageBank(){try{return JSON.parse(localStorage.getItem('velum_img_bank')||'[]');}catch(e){return [];}}
+function saveImageBank(bank){localStorage.setItem('velum_img_bank',JSON.stringify(bank.slice(0,50)));}
+function saveToBank(idx){
+  const url=slides[idx].bgImage;if(!url)return;
+  const bank=getImageBank();
+  if(bank.find(b=>b.url===url)){st('Already in bank',false);return;}
+  bank.unshift({url,ts:Date.now()});
+  saveImageBank(bank);
+  renderEds();setTimeout(()=>{const card=document.getElementById('card'+idx);if(card)card.classList.add('open');},10);
+  st('★ Saved to image bank',false);
+}
+function removeFromBank(bankIdx){
+  const bank=getImageBank();bank.splice(bankIdx,1);saveImageBank(bank);renderEds();
+}
+
+// ── IMAGE LAYOUT + TREATMENT ──
+function setImgLayout(idx,mode){
+  slides[idx].imgLayout=mode;saveSlides();
+  const e=document.getElementById('sl'+idx);
+  if(e){const n=bslide(slides[idx],idx);n.id='sl'+idx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
+  renderEds();setTimeout(()=>{const card=document.getElementById('card'+idx);if(card)card.classList.add('open');goTo(idx);},10);
+}
+function setImgTreatment(idx,mode){
+  slides[idx].imgTreatment=mode;saveSlides();
+  const e=document.getElementById('sl'+idx);
+  if(e){const n=bslide(slides[idx],idx);n.id='sl'+idx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
+  renderEds();setTimeout(()=>{const card=document.getElementById('card'+idx);if(card)card.classList.add('open');goTo(idx);},10);
+}
+
 // ── FAL.AI IMAGE GENERATION ──
-async function genImage(idx){
+async function genImage(idx,hiRes=false){
   const key=document.getElementById('falkey').value.trim();
   if(key)localStorage.setItem('velum_fal_key',key);
   if(!key){st('Add your Fal.ai API key first.');return;}
   const prompt=document.getElementById('img-prompt-'+idx)?.value.trim();
-  if(!prompt){st('Enter an image prompt first.');return;}
-  const btn=document.getElementById('img-btn-'+idx);
+  if(!prompt){st('Enter or pick a preset prompt first.');return;}
+  const btnId=hiRes?'img-btn-hires-'+idx:'img-btn-'+idx;
+  const btn=document.getElementById(btnId);
+  const originalText=btn?.textContent;
   if(btn){btn.textContent='…';btn.disabled=true;}
-  st('Generating image…',true);
+  st(hiRes?'Generating Hi-Res image (Flux Pro)…':'Generating image (Flux Dev)…',true);
   try{
-    // Submit job
-    const sub=await fetch('https://queue.fal.run/fal-ai/flux/dev',{
+    const endpoint=hiRes?'fal-ai/flux-pro/v1.1':'fal-ai/flux/dev';
+    const body=hiRes
+      ?{prompt,image_size:'portrait_4_3',num_images:1,enable_safety_checker:true}
+      :{prompt,image_size:'portrait_4_3',num_inference_steps:28,num_images:1};
+    const sub=await fetch(`https://queue.fal.run/${endpoint}`,{
       method:'POST',
       headers:{'Authorization':'Key '+key,'Content-Type':'application/json'},
-      body:JSON.stringify({prompt,image_size:'portrait_4_3',num_inference_steps:28,num_images:1})
+      body:JSON.stringify(body)
     });
     if(!sub.ok)throw new Error('Fal submit failed: '+sub.status);
     const {request_id}=await sub.json();
-    // Poll for result
     let result=null;
     for(let i=0;i<30;i++){
       await new Promise(r=>setTimeout(r,2000));
-      const poll=await fetch(`https://queue.fal.run/fal-ai/flux/dev/requests/${request_id}`,{headers:{'Authorization':'Key '+key}});
+      const poll=await fetch(`https://queue.fal.run/${endpoint}/requests/${request_id}`,{headers:{'Authorization':'Key '+key}});
       const data=await poll.json();
       if(data.status==='COMPLETED'){result=data;break;}
       if(data.status==='FAILED')throw new Error('Image generation failed');
@@ -1177,13 +1272,15 @@ async function genImage(idx){
     if(!result?.images?.[0]?.url)throw new Error('No image returned');
     const url=result.images[0].url;
     slides[idx].bgImage=url;
+    if(!slides[idx].imgLayout)slides[idx].imgLayout='full';
+    if(!slides[idx].imgTreatment)slides[idx].imgTreatment='dark30';
     saveSlides();
     const e=document.getElementById('sl'+idx);
     if(e){const n=bslide(slides[idx],idx);n.id='sl'+idx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
     renderEds();setTimeout(()=>{const card=document.getElementById('card'+idx);if(card)card.classList.add('open');goTo(idx);},10);
-    st('Image applied — add a dark overlay in Background if needed',false);
+    st('✦ Image applied — tweak layout + treatment below',false);
   }catch(err){st('Image error: '+err.message,false);}
-  if(btn){btn.textContent='✦ Gen';btn.disabled=false;}
+  if(btn){btn.textContent=originalText||(hiRes?'✦ Hi-Res':'✦ Gen');btn.disabled=false;}
 }
 
 function applyImageUrl(idx,url){
