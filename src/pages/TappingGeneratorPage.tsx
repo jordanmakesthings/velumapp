@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Sparkles, RotateCcw, ChevronLeft, ChevronRight, Hand, BookOpen, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, RotateCcw, ChevronLeft, ChevronRight, Hand } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { TappingGuide } from "@/components/TappingPointDiagram";
+import { logSession } from "@/lib/velumStorage";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -95,8 +95,6 @@ export default function TappingGeneratorPage() {
   const [gamutStep, setGamutStep] = useState(0);
   const [fingerIdx, setFingerIdx] = useState(0);
 
-  // UI state
-  const [showGuide, setShowGuide] = useState(false);
 
   // ---------------------------------------------------------------------------
   // Generate
@@ -201,58 +199,14 @@ export default function TappingGeneratorPage() {
   const slide = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -12 } };
 
   // ---------------------------------------------------------------------------
-  // Tapping points guide drawer
-  // ---------------------------------------------------------------------------
-  const GuideDrawer = () => (
-    <AnimatePresence>
-      {showGuide && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 z-40"
-            onClick={() => setShowGuide(false)}
-          />
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-3xl max-h-[88vh] overflow-y-auto"
-          >
-            <div className="sticky top-0 bg-background pt-4 pb-2 px-6 flex items-center justify-between border-b border-foreground/5">
-              <p className="text-xs font-sans font-medium tracking-widest uppercase text-accent">Tapping Points Guide</p>
-              <button onClick={() => setShowGuide(false)} className="p-2 -mr-2">
-                <X className="w-4 h-4 text-muted-foreground" />
-              </button>
-            </div>
-            <div className="px-6 pt-4">
-              <TappingGuide />
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-
-  // ---------------------------------------------------------------------------
   // Input screen
   // ---------------------------------------------------------------------------
   if (phase === "input") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <GuideDrawer />
-        <div className="flex items-center justify-between px-4 pt-4 mb-6">
+        <div className="flex items-center px-4 pt-4 mb-6">
           <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
-          </button>
-          <button
-            onClick={() => setShowGuide(true)}
-            className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors min-h-10"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            Points guide
           </button>
         </div>
 
@@ -261,10 +215,18 @@ export default function TappingGeneratorPage() {
             <div className="w-12 h-12 rounded-2xl gold-gradient flex items-center justify-center mb-4">
               <Hand className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h1 className="text-display text-3xl mb-2">AI Tapping</h1>
-            <p className="text-muted-foreground text-sm leading-relaxed">
+            <h1 className="text-display text-3xl mb-2">Guided Tapping</h1>
+            <p className="text-muted-foreground text-sm leading-relaxed mb-3">
               Describe what you're feeling right now and get a personalised EFT session.
             </p>
+            <a
+              href="/velum-tapping-guide.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent text-xs font-sans underline underline-offset-2 hover:opacity-80 transition-opacity"
+            >
+              New to tapping? Download the Intro to EFT Guide
+            </a>
           </div>
 
           <div className="mb-6">
@@ -359,15 +321,12 @@ export default function TappingGeneratorPage() {
   if (phase === "setup") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <GuideDrawer />
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <button onClick={restart} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> New script
           </button>
           <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Setup</p>
-          <button onClick={() => setShowGuide(true)} className="p-2 -mr-2">
-            <BookOpen className="w-4 h-4 text-muted-foreground" />
-          </button>
+          <div className="w-10" />
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full">
@@ -431,19 +390,13 @@ export default function TappingGeneratorPage() {
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <GuideDrawer />
         <div className="px-4 pt-4 pb-2">
           <div className="flex items-center justify-between mb-3">
             <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
               <ArrowLeft className="w-4 h-4" />
             </button>
             <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">{round.label}</p>
-            <div className="flex items-center gap-2">
-              <p className="text-muted-foreground text-xs font-sans">{pointIdx + 1}/8</p>
-              <button onClick={() => setShowGuide(true)} className="p-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-muted-foreground" />
-              </button>
-            </div>
+            <p className="text-muted-foreground text-xs font-sans">{pointIdx + 1}/8</p>
           </div>
           <div className="h-1 bg-surface-light rounded-full overflow-hidden">
             <div
@@ -672,7 +625,10 @@ export default function TappingGeneratorPage() {
             {script.closing}
           </p>
           <button
-            onClick={() => setPhase("done")}
+            onClick={() => {
+              logSession({ tool: "tapping", suds_before: intensity, issue });
+              setPhase("done");
+            }}
             className="w-full py-4 rounded-2xl gold-gradient text-primary-foreground font-sans font-medium active:scale-[0.98] transition-transform"
           >
             Complete session

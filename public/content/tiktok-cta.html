@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velum · TikTok CTA</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0d;--sf:#141414;--s2:#1a1a1a;--br:#2a2a2a;
+  --cr:#F2EFE7;--sg:#6F8A7E;--gd:#C9A84C;--dm:#c8c4bb;--mt:#9aaea3;
+  --fl:#0F2F26;--red:#c97c5c;--ch:#111111;
+}
+html,body{height:100%;background:var(--bg);color:var(--cr);font-family:'DM Sans',sans-serif;font-weight:300;-webkit-font-smoothing:antialiased}
+
+/* ── AUTH ── */
+#auth{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999}
+.auth-box{text-align:center;width:260px}
+.auth-logo{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:300;letter-spacing:.4em;color:var(--cr);opacity:.8;margin-bottom:4px}
+.auth-logo span{color:var(--gd)}
+.auth-sub{font-size:9px;letter-spacing:.2em;color:var(--sg);text-transform:uppercase;margin-bottom:28px}
+.auth-box input{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:4px;color:var(--cr);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:300;padding:11px 14px;outline:none;text-align:center;letter-spacing:.3em;margin-bottom:10px;transition:border-color .2s}
+.auth-box input:focus{border-color:var(--gd)}
+.auth-box button{width:100%;background:var(--gd);color:var(--ch);border:none;border-radius:3px;padding:11px;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;cursor:pointer}
+.auth-err{font-size:11px;color:var(--red);margin-top:8px;min-height:16px}
+
+/* ── LAYOUT ── */
+.app{display:none;grid-template-columns:300px 1fr;grid-template-rows:52px 1fr;height:100vh;overflow:hidden}
+.app.on{display:grid}
+header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--br);background:var(--bg)}
+.logo{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:300;letter-spacing:.35em;color:var(--cr);opacity:.8;display:flex;align-items:center;gap:12px}
+.logo span{color:var(--gd)}
+.back-link{font-size:9px;letter-spacing:.15em;color:var(--sg);text-transform:uppercase;text-decoration:none;border:1px solid var(--br);border-radius:2px;padding:5px 10px;transition:all .2s}
+.back-link:hover{border-color:var(--gd);color:var(--gd)}
+.htag{font-size:9px;font-weight:400;letter-spacing:.2em;color:var(--sg);text-transform:uppercase}
+
+/* ── SIDEBAR ── */
+.sidebar{border-right:1px solid var(--br);display:flex;flex-direction:column;overflow:hidden;background:var(--sf)}
+.si{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.si::-webkit-scrollbar{width:3px}
+.si::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px}
+label{display:block;font-size:9px;font-weight:400;letter-spacing:.2em;color:var(--sg);text-transform:uppercase;margin-bottom:5px}
+textarea,input[type=text]{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:4px;color:var(--cr);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;padding:8px 11px;outline:none;resize:none;transition:border-color .2s;line-height:1.6}
+textarea:focus,input[type=text]:focus{border-color:var(--gd)}
+.fg{display:flex;flex-direction:column;gap:4px}
+.div{border:none;border-top:1px solid var(--br)}
+.hint{font-size:10px;color:var(--sg);margin-top:4px;line-height:1.6;opacity:.8}
+
+/* mode toggle */
+.mt{display:flex;border:1px solid var(--br);border-radius:4px;overflow:hidden}
+.mb{flex:1;padding:7px 0;font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.15em;text-transform:uppercase;border:none;cursor:pointer;transition:all .2s}
+.mb.on{background:var(--gd);color:var(--ch);font-weight:500}
+.mb.off{background:var(--s2);color:var(--sg)}
+
+/* color swatches */
+.swatches{display:flex;flex-wrap:wrap;gap:5px}
+.swatch{width:28px;height:28px;border-radius:4px;border:1.5px solid transparent;cursor:pointer;transition:border-color .15s}
+.swatch:hover{border-color:var(--sg)}
+.swatch.sel{border-color:var(--gd)!important;box-shadow:0 0 0 1px var(--gd)}
+
+/* sidebar footer */
+.sidebar-foot{padding:14px 16px;border-top:1px solid var(--br);display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.gbtn{width:100%;background:var(--gd);color:var(--ch);border:none;border-radius:3px;padding:11px;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;transition:opacity .2s}
+.gbtn:hover{opacity:.88}
+.dload-btn{background:transparent;border:1px solid var(--br);border-radius:3px;color:var(--sg);font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.15em;text-transform:uppercase;padding:7px 12px;cursor:pointer;transition:all .2s;width:100%;text-align:center}
+.dload-btn:hover{border-color:var(--gd);color:var(--gd)}
+
+/* ── CANVAS AREA ── */
+main{display:flex;align-items:center;justify-content:center;background:#0a0a0a;overflow:auto;padding:32px}
+
+/* ── SLIDE (9:16 preview) ── */
+/* preview at 270×480 → downloads at 1080×1920 (scale 4) */
+#slide{
+  position:relative;
+  width:270px;height:480px;
+  flex-shrink:0;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 0 0 1px rgba(255,255,255,.06),0 24px 80px rgba(0,0,0,.9);
+  font-family:'DM Sans',sans-serif;
+  user-select:none;
+}
+
+/* ── SLIDE INTERNALS ── */
+.sl-bg{position:absolute;inset:0;transition:background .3s}
+.sl-noise{position:absolute;inset:0;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.sl-glow{position:absolute;top:-10%;left:20%;right:20%;height:50%;border-radius:50%;pointer-events:none;opacity:.22;filter:blur(40px);transition:background .3s}
+
+/* Top section */
+.sl-top{position:absolute;top:0;left:0;right:0;padding:20px 20px 0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.sl-logo{font-family:'Cormorant Garamond',serif;font-size:11px;font-weight:300;letter-spacing:.5em;color:rgba(201,168,76,.7);text-transform:uppercase}
+.sl-eyebrow{font-size:7px;letter-spacing:.22em;color:rgba(111,138,126,.8);text-transform:uppercase}
+
+/* Headline */
+.sl-headline{position:absolute;top:52px;left:18px;right:18px;text-align:center;font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;font-style:italic;line-height:1.25;color:#F2EFE7;transition:font-size .2s}
+.sl-subtext{position:absolute;top:148px;left:20px;right:20px;text-align:center;font-size:9px;font-weight:300;letter-spacing:.08em;color:rgba(200,196,187,.6);line-height:1.6}
+
+/* Phone mockup */
+.sl-phone{position:absolute;top:185px;left:50%;transform:translateX(-50%)}
+
+/* Link in bio badge */
+.sl-cta{
+  position:absolute;bottom:22px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:6px;
+  background:rgba(201,168,76,.12);
+  border:1px solid rgba(201,168,76,.3);
+  border-radius:40px;
+  padding:8px 16px;
+  white-space:nowrap;
+}
+.sl-cta-icon{font-size:11px}
+.sl-cta-text{font-size:8px;font-weight:500;letter-spacing:.2em;color:#C9A84C;text-transform:uppercase}
+
+/* Decorative lines */
+.sl-line{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.18),transparent)}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="auth-box">
+    <div class="auth-logo">VELUM <span>·</span> STUDIO</div>
+    <div class="auth-sub">TikTok CTA Generator</div>
+    <input type="password" id="pw" placeholder="••••••••" autocomplete="off" onkeydown="if(event.key==='Enter')checkPw()">
+    <button onclick="checkPw()">Enter</button>
+    <div class="auth-err" id="ae"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+  <header>
+    <div class="logo">VELUM <span>·</span> STUDIO
+      <a href="index.html" class="back-link">← Carousel</a>
+    </div>
+    <div class="htag">TikTok CTA Generator</div>
+    <div style="width:80px"></div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="si">
+
+      <!-- Mode -->
+      <div class="fg">
+        <label>Tool focus</label>
+        <div class="mt">
+          <button class="mb on" id="m-bilateral" onclick="setMode('bilateral')">Bilateral</button>
+          <button class="mb off" id="m-breathe" onclick="setMode('breathe')">Breathwork</button>
+          <button class="mb off" id="m-custom" onclick="setMode('custom')">Custom</button>
+        </div>
+      </div>
+
+      <hr class="div">
+
+      <!-- Eyebrow -->
+      <div class="fg">
+        <label>Eyebrow</label>
+        <input type="text" id="f-eyebrow" value="nervous system regulation" oninput="update()">
+      </div>
+
+      <!-- Headline -->
+      <div class="fg">
+        <label>Headline</label>
+        <textarea id="f-headline" rows="3" oninput="update()">Process what you can't think your way out of.</textarea>
+        <div class="hint">Use short, punchy copy. 6–10 words lands best.</div>
+      </div>
+
+      <!-- Subtext -->
+      <div class="fg">
+        <label>Subtext  <span style="color:var(--sg);font-size:9px;letter-spacing:.05em">(optional)</span></label>
+        <input type="text" id="f-subtext" value="Bilateral stimulation. Real-time." oninput="update()">
+      </div>
+
+      <!-- CTA nudge -->
+      <div class="fg">
+        <label>CTA nudge</label>
+        <input type="text" id="f-cta" value="Link in bio" oninput="update()">
+      </div>
+
+      <hr class="div">
+
+      <!-- Background -->
+      <div class="fg">
+        <label>Background</label>
+        <div class="swatches" id="bg-swatches">
+          <div class="swatch sel" data-bg="radial-gradient(ellipse at 50% 35%, #1a4a3a 0%, #0d0d0d 75%)" style="background:radial-gradient(ellipse at 50% 35%, #1a4a3a 0%, #0d0d0d 75%)" onclick="setBg(this)"></div>
+          <div class="swatch" data-bg="radial-gradient(ellipse at 50% 35%, #0F2F26 0%, #050d09 75%)" style="background:radial-gradient(ellipse at 50% 35%, #0F2F26 0%, #050d09 75%)" onclick="setBg(this)"></div>
+          <div class="swatch" data-bg="linear-gradient(160deg, #0F2F26 0%, #0d0d0d 60%)" style="background:linear-gradient(160deg, #0F2F26 0%, #0d0d0d 60%)" onclick="setBg(this)"></div>
+          <div class="swatch" data-bg="radial-gradient(ellipse at 50% 35%, #2a1a08 0%, #0d0d0d 75%)" style="background:radial-gradient(ellipse at 50% 35%, #2a1a08 0%, #0d0d0d 75%)" onclick="setBg(this)"></div>
+          <div class="swatch" data-bg="radial-gradient(ellipse at 50% 35%, #1a1a2e 0%, #0d0d0d 75%)" style="background:radial-gradient(ellipse at 50% 35%, #1a1a2e 0%, #0d0d0d 75%)" onclick="setBg(this)"></div>
+          <div class="swatch" data-bg="linear-gradient(180deg, #111111 0%, #1a4a3a 100%)" style="background:linear-gradient(180deg, #111111 0%, #1a4a3a 100%)" onclick="setBg(this)"></div>
+          <div class="swatch" data-bg="#111111" style="background:#111111" onclick="setBg(this)"></div>
+          <div class="swatch" data-bg="#0d0d0d" style="background:#0d0d0d" onclick="setBg(this)"></div>
+        </div>
+      </div>
+
+      <!-- Glow color -->
+      <div class="fg">
+        <label>Glow</label>
+        <div class="swatches" id="glow-swatches">
+          <div class="swatch sel" data-glow="#1a4a3a" style="background:#1a4a3a" onclick="setGlow(this)"></div>
+          <div class="swatch" data-glow="#C9A84C" style="background:#C9A84C" onclick="setGlow(this)"></div>
+          <div class="swatch" data-glow="#c97c5c" style="background:#c97c5c" onclick="setGlow(this)"></div>
+          <div class="swatch" data-glow="#6F8A7E" style="background:#6F8A7E" onclick="setGlow(this)"></div>
+          <div class="swatch" data-glow="transparent" style="background:#111;border-color:var(--br)!important" onclick="setGlow(this)"></div>
+        </div>
+      </div>
+
+      <hr class="div">
+
+      <!-- Headline size -->
+      <div class="fg">
+        <label>Headline size</label>
+        <div class="mt">
+          <button class="mb off" id="hs-sm" onclick="setHSize('sm')">Small</button>
+          <button class="mb on" id="hs-md" onclick="setHSize('md')">Medium</button>
+          <button class="mb off" id="hs-lg" onclick="setHSize('lg')">Large</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="sidebar-foot">
+      <div style="font-size:9px;color:var(--sg);letter-spacing:.1em;text-align:center">1080 × 1920  ·  9:16  ·  TikTok / Reels</div>
+      <button class="gbtn" id="dl-btn" onclick="download()">↓ Download PNG</button>
+    </div>
+  </aside>
+
+  <!-- CANVAS -->
+  <main>
+    <div id="slide">
+      <!-- Background -->
+      <div class="sl-bg" id="sl-bg"></div>
+      <div class="sl-noise"></div>
+      <div class="sl-glow" id="sl-glow"></div>
+
+      <!-- Decorative lines -->
+      <div class="sl-line" style="top:44px;"></div>
+
+      <!-- Top -->
+      <div class="sl-top">
+        <div class="sl-logo">Velum</div>
+        <div class="sl-eyebrow" id="sl-eyebrow">nervous system regulation</div>
+      </div>
+
+      <!-- Headline -->
+      <div class="sl-headline" id="sl-headline">Process what you can't think your way out of.</div>
+
+      <!-- Subtext -->
+      <div class="sl-subtext" id="sl-subtext">Bilateral stimulation. Real-time.</div>
+
+      <!-- Phone mockup -->
+      <div class="sl-phone" id="sl-phone">
+        <!-- injected by JS -->
+      </div>
+
+      <!-- CTA -->
+      <div class="sl-cta">
+        <span class="sl-cta-icon">🤝</span>
+        <span class="sl-cta-text" id="sl-cta-text">Link in bio</span>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+// ── AUTH ──
+const PW = 'velum2026';
+function checkPw(){
+  const v=document.getElementById('pw').value.trim();
+  if(v===PW){document.getElementById('auth').style.display='none';document.getElementById('app').classList.add('on');}
+  else{document.getElementById('ae').textContent='Incorrect password';}
+}
+
+// ── PHONE MOCKUPS ──
+// Each returns an SVG string for a phone showing the relevant Velum screen
+function phoneBilateral(){
+  return `<svg width="120" height="210" viewBox="0 0 120 210" xmlns="http://www.w3.org/2000/svg">
+    <!-- Frame -->
+    <rect x="4" y="2" width="112" height="206" rx="18" fill="#0a1510" stroke="rgba(255,255,255,.12)" stroke-width="1.2"/>
+    <rect x="8" y="6" width="104" height="198" rx="15" fill="#080f0c"/>
+    <!-- Notch -->
+    <rect x="42" y="9" width="36" height="5" rx="2.5" fill="#0a1510"/>
+    <!-- Screen bg subtle glow -->
+    <ellipse cx="60" cy="90" rx="40" ry="50" fill="#1a4a3a" opacity=".25" filter="url(#blur1)"/>
+    <defs><filter id="blur1"><feGaussianBlur stdDeviation="8"/></filter></defs>
+    <!-- Orb track line -->
+    <line x1="18" y1="105" x2="102" y2="105" stroke="rgba(255,255,255,.06)" stroke-width=".8"/>
+    <circle cx="18" cy="105" r="1.8" fill="rgba(255,255,255,.12)"/>
+    <circle cx="102" cy="105" r="1.8" fill="rgba(255,255,255,.12)"/>
+    <!-- Orb glow -->
+    <circle cx="60" cy="105" r="12" fill="#1a4a3a" opacity=".5" filter="url(#blur1)"/>
+    <!-- Orb -->
+    <defs>
+      <radialGradient id="orb-g" cx="40%" cy="35%" r="65%">
+        <stop offset="0%" stop-color="#d4aa58"/>
+        <stop offset="100%" stop-color="#8a6520"/>
+      </radialGradient>
+    </defs>
+    <circle cx="60" cy="105" r="9" fill="url(#orb-g)" opacity=".92"/>
+    <!-- Label -->
+    <text x="60" y="76" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="5.5" fill="rgba(201,168,76,.6)" letter-spacing="1.2">PROCESS</text>
+    <!-- Timer -->
+    <text x="60" y="88" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="11" fill="rgba(201,168,76,.8)" font-weight="300">2:00</text>
+    <!-- Controls -->
+    <rect x="20" y="130" width="80" height="14" rx="7" fill="rgba(201,168,76,.9)"/>
+    <text x="60" y="140" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="5.5" fill="#111" letter-spacing=".8" font-weight="500">BEGIN</text>
+    <!-- Bottom bar -->
+    <rect x="44" y="196" width="32" height="2.5" rx="1.25" fill="rgba(255,255,255,.2)"/>
+  </svg>`;
+}
+
+function phoneBreathe(){
+  return `<svg width="120" height="210" viewBox="0 0 120 210" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="2" width="112" height="206" rx="18" fill="#0a1015" stroke="rgba(255,255,255,.12)" stroke-width="1.2"/>
+    <rect x="8" y="6" width="104" height="198" rx="15" fill="#08090e"/>
+    <rect x="42" y="9" width="36" height="5" rx="2.5" fill="#0a1015"/>
+    <defs>
+      <filter id="blur2"><feGaussianBlur stdDeviation="8"/></filter>
+      <radialGradient id="breath-g" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#6F8A7E" stop-opacity=".5"/>
+        <stop offset="100%" stop-color="#6F8A7E" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <!-- Breathing circle outer -->
+    <circle cx="60" cy="100" r="36" fill="none" stroke="rgba(111,138,126,.2)" stroke-width=".8"/>
+    <!-- Breathing circle inner animated glow -->
+    <circle cx="60" cy="100" r="22" fill="url(#breath-g)" opacity=".7"/>
+    <circle cx="60" cy="100" r="18" fill="rgba(111,138,126,.12)" stroke="rgba(111,138,126,.5)" stroke-width=".8"/>
+    <!-- Phase label -->
+    <text x="60" y="97" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="6" fill="rgba(111,138,126,.7)" letter-spacing="1.2">INHALE</text>
+    <text x="60" y="107" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="9" fill="rgba(242,239,231,.8)" font-style="italic">4 s</text>
+    <!-- Title -->
+    <text x="60" y="72" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="5.5" fill="rgba(201,168,76,.6)" letter-spacing="1.2">BOX BREATH</text>
+    <!-- Counter -->
+    <text x="60" y="154" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="18" fill="rgba(201,168,76,.85)" font-weight="300">4</text>
+    <rect x="44" y="196" width="32" height="2.5" rx="1.25" fill="rgba(255,255,255,.2)"/>
+  </svg>`;
+}
+
+function phoneCustom(){
+  return `<svg width="120" height="210" viewBox="0 0 120 210" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="2" width="112" height="206" rx="18" fill="#0a0a10" stroke="rgba(255,255,255,.12)" stroke-width="1.2"/>
+    <rect x="8" y="6" width="104" height="198" rx="15" fill="#090910"/>
+    <rect x="42" y="9" width="36" height="5" rx="2.5" fill="#0a0a10"/>
+    <defs><filter id="blur3"><feGaussianBlur stdDeviation="6"/></filter></defs>
+    <!-- Velum wordmark -->
+    <text x="60" y="50" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="14" fill="rgba(201,168,76,.7)" font-weight="300" letter-spacing="4">Velum</text>
+    <!-- Tagline -->
+    <text x="60" y="62" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="5" fill="rgba(111,138,126,.6)" letter-spacing=".8">nervous system regulation</text>
+    <!-- Divider -->
+    <line x1="30" y1="70" x2="90" y2="70" stroke="rgba(201,168,76,.15)" stroke-width=".8"/>
+    <!-- Tools list -->
+    <text x="26" y="88" font-family="DM Sans,sans-serif" font-size="6.5" fill="rgba(242,239,231,.7)" letter-spacing=".5">○  Bilateral Stimulation</text>
+    <text x="26" y="104" font-family="DM Sans,sans-serif" font-size="6.5" fill="rgba(242,239,231,.7)" letter-spacing=".5">○  Breathwork</text>
+    <text x="26" y="120" font-family="DM Sans,sans-serif" font-size="6.5" fill="rgba(242,239,231,.7)" letter-spacing=".5">○  Somatic Touch</text>
+    <text x="26" y="136" font-family="DM Sans,sans-serif" font-size="6.5" fill="rgba(242,239,231,.7)" letter-spacing=".5">○  Guided Journaling</text>
+    <text x="26" y="152" font-family="DM Sans,sans-serif" font-size="6.5" fill="rgba(242,239,231,.7)" letter-spacing=".5">○  Courses</text>
+    <!-- CTA bar -->
+    <rect x="18" y="168" width="84" height="14" rx="7" fill="rgba(201,168,76,.9)"/>
+    <text x="60" y="177.5" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="5.5" fill="#111" letter-spacing=".8" font-weight="500">START FREE</text>
+    <rect x="44" y="196" width="32" height="2.5" rx="1.25" fill="rgba(255,255,255,.2)"/>
+  </svg>`;
+}
+
+// ── STATE ──
+let mode = 'bilateral';
+let bgVal = 'radial-gradient(ellipse at 50% 35%, #1a4a3a 0%, #0d0d0d 75%)';
+let glowVal = '#1a4a3a';
+let hSize = 'md';
+
+const HSIZES = {sm:'20px', md:'24px', lg:'30px'};
+
+function setMode(m){
+  mode = m;
+  ['bilateral','breathe','custom'].forEach(x=>{
+    document.getElementById('m-'+x).className='mb '+(x===m?'on':'off');
+  });
+  document.getElementById('sl-phone').innerHTML = m==='bilateral'?phoneBilateral():m==='breathe'?phoneBreathe():phoneCustom();
+}
+
+function setBg(el){
+  document.querySelectorAll('#bg-swatches .swatch').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+  bgVal = el.dataset.bg;
+  document.getElementById('sl-bg').style.background = bgVal;
+}
+
+function setGlow(el){
+  document.querySelectorAll('#glow-swatches .swatch').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+  glowVal = el.dataset.glow;
+  document.getElementById('sl-glow').style.background = glowVal;
+}
+
+function setHSize(s){
+  hSize = s;
+  ['sm','md','lg'].forEach(x=>{
+    document.getElementById('hs-'+x).className='mb '+(x===s?'on':'off');
+  });
+  document.getElementById('sl-headline').style.fontSize = HSIZES[s];
+}
+
+function update(){
+  document.getElementById('sl-eyebrow').textContent  = document.getElementById('f-eyebrow').value;
+  document.getElementById('sl-headline').textContent = document.getElementById('f-headline').value;
+  const sub = document.getElementById('f-subtext').value.trim();
+  document.getElementById('sl-subtext').textContent  = sub;
+  document.getElementById('sl-subtext').style.display = sub ? '' : 'none';
+  document.getElementById('sl-cta-text').textContent  = document.getElementById('f-cta').value;
+}
+
+// ── DOWNLOAD ──
+async function download(){
+  const btn = document.getElementById('dl-btn');
+  btn.disabled = true;
+  btn.textContent = 'Rendering…';
+
+  // Load html2canvas
+  if(!window.html2canvas){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const slide = document.getElementById('slide');
+  // scale 4 → 270×4=1080, 480×4=1920
+  const canvas = await html2canvas(slide, {
+    scale: 4,
+    useCORS: true,
+    backgroundColor: null,
+    width: 270,
+    height: 480,
+    logging: false,
+  });
+
+  const a = document.createElement('a');
+  const h = (document.getElementById('f-headline').value || 'slide').slice(0,30).replace(/\s+/g,'-').toLowerCase();
+  a.download = `velum-tiktok-cta-${h}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+
+  btn.disabled = false;
+  btn.textContent = '↓ Download PNG';
+}
+
+// ── INIT ──
+document.getElementById('sl-bg').style.background = bgVal;
+document.getElementById('sl-glow').style.background = glowVal;
+setMode('bilateral');
+update();
+</script>
+</body>
+</html>
