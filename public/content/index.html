@@ -329,6 +329,22 @@ select option{background:#1e1e1e}
   </div>
 </div>
 
+<!-- ── TOPIC BANK MODAL ── -->
+<div id="topic-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:500;overflow-y:auto">
+  <div style="max-width:1100px;margin:40px auto;padding:0 24px 60px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-family:Inter,sans-serif;font-size:11px;letter-spacing:.3em;color:var(--gd);text-transform:uppercase;margin-bottom:4px">Topic Bank</div>
+        <h1 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:36px;color:var(--cr);margin:0">Pick a topic → auto-generate</h1>
+        <p style="color:var(--sg);font-family:Inter,sans-serif;font-size:13px;margin-top:6px">Click any card to fill the topic + instantly generate a 5-slide carousel.</p>
+      </div>
+      <button onclick="closeTopicBank()" style="background:none;border:none;color:var(--sg);font-size:22px;cursor:pointer;padding:4px 10px;line-height:1">×</button>
+    </div>
+    <div id="topic-cats" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px"></div>
+    <div id="topic-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px"></div>
+  </div>
+</div>
+
 <!-- ── SIDEBAR ── -->
 <aside class="sidebar">
 
@@ -347,8 +363,11 @@ select option{background:#1e1e1e}
     </div>
     <div id="gf">
       <div style="margin-bottom:10px">
-        <label>Topic</label>
-        <textarea id="topic" placeholder="e.g. 3 signs your nervous system is dysregulated" rows="3"></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <label style="margin:0">Topic</label>
+          <button class="rbtn" onclick="openTopicBank()" style="padding:3px 9px;font-size:10px;border-color:#C9A84C;color:#C9A84C">✦ Topic Bank</button>
+        </div>
+        <textarea id="topic" placeholder="e.g. 3 signs your nervous system is dysregulated — or tap Topic Bank" rows="3"></textarea>
       </div>
       <div style="margin-bottom:10px">
         <label>Angle</label>
@@ -587,20 +606,69 @@ async function api(sys,usr){
   const d=await r.json();return d.content[0].text;
 }
 
-const BRAND=`You write Instagram carousel copy for Velum, a wellness app for nervous system regulation, breathwork, meditation, EFT tapping, somatic practices, and self-hypnosis. Voice: quiet, introspective, slightly philosophical. Serious and effective. No fluff, no generic warmth, no motivational clichés.`;
+const BRAND=`You write Instagram carousel copy for Velum, a nervous system regulation app (breathwork, EFT tapping, bilateral stimulation, somatic tools, meditation, self-hypnosis). Audience: 20-40, high-functioning, burnt out, skeptical of "woo" wellness. They've tried Calm/Headspace and felt nothing.
+
+VOICE RULES — non-negotiable:
+- Specific, not abstract ("your vagus nerve" not "your body")
+- Mechanism-first (explain the WHY, not just what)
+- Short, punchy sentences (7 words beats 20)
+- Second-person ("you", "your"), never "we" or "one"
+- Zero wellness clichés
+
+BANNED WORDS: heal, healing, journey, mindful, mindfulness, present moment, self-care, honor yourself, beautiful soul, vibrations, manifest, abundance, blessed, divine feminine, high vibes, aligned, sacred, tribe
+
+BANNED PHRASES: "listen to your body", "hold space", "do the work", "inner child work" (say "childhood nervous system" instead), "trust the process"
+
+HOOK FORMULAS (pick one for slide 1):
+1. CONTRADICTION: "Your anxiety isn't from [obvious]. It's from [non-obvious]."
+2. MECHANISM: "Here's what actually happens in your brain when [situation]."
+3. DIAGNOSIS: "If you [specific behavior], your [body system] is [state]."
+4. REFRAME: "It's not [what you think]. It's [what it actually is]."
+5. PATTERN: "Your adult [X] is still running on childhood [Y]."
+6. PERMISSION: "You're not [label]. Your [system] is [state]."
+7. COUNTDOWN: "3 signs your [system] is stuck in [state]."
+
+STRUCTURE (5-slide):
+1. HOOK — bigtype or signs, scroll-stopping
+2. AGITATE — make them feel this is about them (arrows or bigtype)
+3. MECHANISM — the science/reason (why or concept)
+4. SOLUTION — what works, bridge to Velum tools (exercise, arrows, or list)
+5. CTA — soft, specific, not salesy`;
 const SCH=`Respond with ONLY a valid JSON array. No preamble, no backticks, no markdown.
+
+EVERY slide object must include img + imgTreat fields (image art direction).
+
 Slide types:
-- "hook": {type:"hook", eyebrow, headline, subtext}
-- "bigtype": {type:"bigtype", headline, subtext} — massive bold text-only statement slide, wrap a key word in <em>…</em> to highlight in gold, or <u>…</u> to underline
-- "signs": {type:"signs", num, headline, subtext} — "3 SIGNS your X needs Y" card with italic subtitle
-- "arrows": {type:"arrows", eyebrow, headline, items:[]} — headline + 3-6 arrow-bulleted points
-- "why": {type:"why", eyebrow, headline, body, graphic:"wave"|"window"|"ladder"|"states"|"neural"|"mindbody"}
-- "exercise": {type:"exercise", num, name, subtitle, graphic:"box"|"wave478"|"circle"|"wave"|"eft"|"bodyscan"}
-- "concept": {type:"concept", eyebrow, headline, body, graphic:"iceberg"|"habitloop"|"beliefs"|"spiral"|"none"}
-- "quote": {type:"quote", quote, attribution}
-- "list": {type:"list", eyebrow, items:[]}
-- "cta": {type:"cta", headline, body, nudge:"link in bio"}
-Rules: first=hook OR bigtype OR signs (pick what stops the scroll), last=cta. Short copy. Use "bigtype" for punchy standalone statements (e.g. "Your adult body still carries the story of your childhood nervous system."). Use "signs" for countdown-style hooks ("3 signs you're…"). Use "arrows" for lists of symptoms/patterns/steps. App has breathwork, meditation, EFT tapping, somatic practices, self-hypnosis only.`;
+- "hook": {type, eyebrow, headline, subtext, img, imgTreat}
+- "bigtype": {type, headline, subtext, img, imgTreat} — massive bold text-only statement. Wrap key word in <em>…</em> for gold highlight, or <u>…</u> to underline.
+- "signs": {type, num, headline, subtext, img, imgTreat} — countdown hook ("3 SIGNS your X…")
+- "arrows": {type, eyebrow, headline, items:[], img, imgTreat} — headline + 3-6 arrow bullets
+- "why": {type, eyebrow, headline, body, graphic:"wave"|"window"|"ladder"|"states"|"neural"|"mindbody", img, imgTreat}
+- "exercise": {type, num, name, subtitle, graphic:"box"|"wave478"|"circle"|"wave"|"eft"|"bodyscan", img, imgTreat}
+- "concept": {type, eyebrow, headline, body, graphic:"iceberg"|"habitloop"|"beliefs"|"spiral"|"none", img, imgTreat}
+- "quote": {type, quote, attribution, img, imgTreat}
+- "list": {type, eyebrow, items:[], img, imgTreat}
+- "cta": {type, headline, body, nudge:"link in bio", img, imgTreat}
+
+img MUST be exactly one of: nervous, brain, spine, child, heart, meditation, breathwork, energy, water, mist, cosmic, abstract, somatic, body, none
+  - childhood/inner-child/triggers → child
+  - anxiety/stress/nervous system → nervous or brain
+  - breathing/breath → breathwork
+  - emotion/heart/grief → heart
+  - meditation/stillness → meditation
+  - practice/somatic/touch → somatic
+  - vagus/polyvagal → spine
+  - transformation/shift → cosmic or abstract
+  - calm/grounding → water or mist
+  - text-only punch slide → none (no background image)
+
+imgTreat MUST be exactly one of: darken, darker, deep, veil, none
+  - Use "darken" as default for readability
+  - "darker" when text is long
+  - "veil" for heavy text slides (near-flat black overlay)
+  - "none" only when img is "none"
+
+Rules: slide 1 = hook/bigtype/signs, last slide = cta. Short copy. App has breathwork, meditation, EFT tapping, somatic practices, bilateral stimulation, self-hypnosis.`;
 const SCH1=`Respond with ONLY a valid JSON object for one slide. No preamble, no backticks.
 Types: hook={eyebrow,headline,subtext}, bigtype={headline,subtext}, signs={num,headline,subtext}, arrows={eyebrow,headline,items}, why={body,graphic}, exercise={num,name,subtitle,graphic}, concept={eyebrow,headline,body,graphic}, quote={quote,attribution}, list={eyebrow,items}, cta={headline,body,nudge}`;
 
@@ -632,10 +700,22 @@ async function go(){
       if(ttMode)setDims('story');
     }
     const clean=raw.replace(/```json|```/g,'').trim();
-    slides=JSON.parse(clean);cur=0;saveSlides();
+    slides=JSON.parse(clean);
+    // Apply AI image suggestions (img + imgTreat) per slide — pre-fill preset prompt so Jordan just hits GEN
+    const treatMap={darken:'dark30',darker:'dark60',deep:'dark80',veil:'veil',none:'none'};
+    slides.forEach(s=>{
+      if(s.img && s.img!=='none'){
+        const preset=IMG_PRESETS.find(p=>p.id===s.img);
+        if(preset){s.suggestedImg=s.img;s.suggestedImgLabel=preset.label;s.suggestedImgPrompt=preset.prompt;}
+      }
+      if(s.imgTreat && treatMap[s.imgTreat])s.imgTreatment=treatMap[s.imgTreat];
+      if(!s.imgLayout)s.imgLayout='full';
+    });
+    cur=0;saveSlides();
     render();renderEds();goTo(0);
     switchTab('edit');
-    st(`${slides.length} slides ready — edit in the sidebar`,false);
+    const suggested=slides.filter(s=>s.suggestedImg).length;
+    st(`${slides.length} slides ready${suggested?` · ${suggested} images pre-suggested`:''} — edit in sidebar`,false);
   }catch(e){st('Error: '+e.message,false);console.error(e);}
   btn.disabled=false;
 }
@@ -943,13 +1023,19 @@ function renderEds(){
         ${gfxPicker}
         <div class="fg">
           <label>AI Image <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— Fal.ai Flux · ~$0.025/img (Pro ~$0.05)</span></label>
+          ${s.suggestedImg && !s.bgImage?`
+            <div style="margin-bottom:6px;padding:7px 9px;background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border:1px solid #C9A84C;border-radius:4px;display:flex;align-items:center;gap:8px">
+              <span style="font-size:10px;color:#C9A84C;font-weight:500">✦ AI suggests: ${s.suggestedImgLabel}</span>
+              <button class="rbtn" onclick="usePreset(${i},'${s.suggestedImg}')" style="margin-left:auto;padding:3px 9px;font-size:10px;background:#C9A84C;color:#000;border-color:#C9A84C">Use it →</button>
+            </div>
+          `:''}
           <div style="display:flex;gap:5px">
-            <input type="text" id="img-prompt-${i}" placeholder="Custom prompt, or tap a preset below…" style="flex:1;font-size:11px">
+            <input type="text" id="img-prompt-${i}" placeholder="Custom prompt, or tap a preset below…" style="flex:1;font-size:11px"${s.suggestedImg && !s.bgImage?` value="${(s.suggestedImgPrompt||'').replace(/"/g,'&quot;')}"`:''}>
             <button class="rbtn" onclick="genImage(${i},false)" id="img-btn-${i}" style="flex-shrink:0;white-space:nowrap">✦ Gen</button>
             <button class="rbtn" onclick="genImage(${i},true)" id="img-btn-hires-${i}" style="flex-shrink:0;white-space:nowrap;border-color:#C9A84C;color:#C9A84C" title="Flux Pro — sharper, costs ~$0.05">✦ Hi-Res</button>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">
-            ${IMG_PRESETS.map(p=>`<button class="rbtn" style="padding:4px 7px;font-size:9.5px;letter-spacing:.03em" onclick="usePreset(${i},'${p.id}')" title="${p.prompt.slice(0,80)}…">${p.label}</button>`).join('')}
+            ${IMG_PRESETS.map(p=>`<button class="rbtn" style="padding:4px 7px;font-size:9.5px;letter-spacing:.03em;${s.suggestedImg===p.id?'border-color:#C9A84C;color:#C9A84C':''}" onclick="usePreset(${i},'${p.id}')" title="${p.prompt.slice(0,80)}…">${p.label}</button>`).join('')}
           </div>
           <div style="display:flex;gap:5px;margin-top:6px">
             <input type="text" id="img-url-${i}" placeholder="Or paste image URL…" style="flex:1;font-size:10.5px" oninput="applyImageUrl(${i},this.value)">
@@ -1470,20 +1556,150 @@ function setDims(d){
   });
 }
 
+// ── TOPIC BANK ──
+const TOPIC_BANK=[
+  // NERVOUS SYSTEM BASICS
+  {cat:'NS basics',angle:'signs',t:'3 signs your nervous system is stuck in freeze',hint:'numb, foggy, can\'t get motivated'},
+  {cat:'NS basics',angle:'signs',t:'3 signs your nervous system is stuck in fight-or-flight',hint:'4am wake-ups, jaw tension, irritable'},
+  {cat:'NS basics',angle:'educational',t:'The difference between stress and nervous system dysregulation',hint:'stress passes, dysregulation lives in the body'},
+  {cat:'NS basics',angle:'myth',t:'Why "just calm down" never works for your nervous system',hint:'conscious mind can\'t override autonomic'},
+  {cat:'NS basics',angle:'educational',t:'Your vagus nerve explained in plain English',hint:'the off-switch for panic'},
+  {cat:'NS basics',angle:'signs',t:'3 signs your nervous system never learned to feel safe',hint:'always-on, can\'t rest, overthink everything'},
+  // CHILDHOOD + PATTERNS
+  {cat:'Childhood',angle:'story',t:'How your childhood coping strategies became your adult anxiety',hint:'survival became personality'},
+  {cat:'Childhood',angle:'educational',t:'Your adult body still runs on your childhood nervous system',hint:'6-year-old patterns, 36-year-old life'},
+  {cat:'Childhood',angle:'signs',t:'3 signs you were parentified as a kid',hint:'hyper-responsible, can\'t rest, guilt when others struggle'},
+  {cat:'Childhood',angle:'educational',t:'Why people-pleasers have dysregulated nervous systems',hint:'fawn response, never felt safe disappointing'},
+  {cat:'Childhood',angle:'myth',t:'It\'s not inner-child work — it\'s childhood nervous system repatterning',hint:'bodies need it more than words'},
+  // SYMPTOMS
+  {cat:'Symptoms',angle:'educational',t:'Why you wake up at 4am — the cortisol-dysregulation loop',hint:'blood sugar drops, amygdala fires'},
+  {cat:'Symptoms',angle:'educational',t:'Why your shoulders live up at your ears',hint:'chronic bracing, protective posture'},
+  {cat:'Symptoms',angle:'educational',t:'Why you feel exhausted but wired at the same time',hint:'sympathetic fatigue + unresolved activation'},
+  {cat:'Symptoms',angle:'signs',t:'3 signs your anxiety is actually stored trauma',hint:'somatic, not just cognitive'},
+  {cat:'Symptoms',angle:'educational',t:'Why scrolling your phone feels calming but isn\'t',hint:'dissociation ≠ regulation'},
+  {cat:'Symptoms',angle:'educational',t:'Why you get irrationally angry at small things',hint:'accumulated dysregulation, not the thing itself'},
+  // TOOLS
+  {cat:'Tools',angle:'howto',t:'The physiological sigh — fastest way to drop your heart rate',hint:'Stanford Huberman research, 30 seconds'},
+  {cat:'Tools',angle:'howto',t:'EFT tapping for when you can\'t think your way out of a spiral',hint:'meridian points, setup statement'},
+  {cat:'Tools',angle:'howto',t:'Bilateral stimulation for emotional overwhelm',hint:'EMDR-adjacent, self-administered'},
+  {cat:'Tools',angle:'howto',t:'Box breathing when you\'re about to lose it',hint:'4-4-4-4, works anywhere'},
+  {cat:'Tools',angle:'benefits',t:'Why 60 seconds of somatic touch beats 20 minutes of meditation',hint:'signals safety faster than thought'},
+  {cat:'Tools',angle:'howto',t:'The 4-7-8 breath for falling asleep in under 2 minutes',hint:'extends exhale = parasympathetic'},
+  // MYTHS
+  {cat:'Myths',angle:'myth',t:'Why meditation can make anxiety worse (and what to do instead)',hint:'high-arousal NS needs movement first'},
+  {cat:'Myths',angle:'myth',t:'You don\'t have trauma — you have an unresolved nervous system',hint:'reframe without the clinical weight'},
+  {cat:'Myths',angle:'myth',t:'Why positive thinking doesn\'t work on your nervous system',hint:'bottom-up not top-down'},
+  {cat:'Myths',angle:'myth',t:'Mindfulness is the fourth step, not the first',hint:'regulate before you observe'},
+  {cat:'Myths',angle:'myth',t:'You\'re not lazy — you\'re in functional freeze',hint:'NS state, not character flaw'},
+  // IDENTITY
+  {cat:'Identity',angle:'story',t:'Why high-performers have the most dysregulated nervous systems',hint:'productivity as trauma response'},
+  {cat:'Identity',angle:'story',t:'The hidden cost of being "the strong one"',hint:'can\'t rest, can\'t receive, chronically activated'},
+  {cat:'Identity',angle:'educational',t:'Why "self-improvement" keeps you stuck',hint:'improving a dysregulated system reinforces it'},
+  {cat:'Identity',angle:'signs',t:'3 signs your productivity is actually a stress response',hint:'can\'t stop, guilt when resting'},
+  // RELATIONSHIPS
+  {cat:'Relationships',angle:'educational',t:'Why you self-sabotage good relationships',hint:'NS doesn\'t recognize safety as safe'},
+  {cat:'Relationships',angle:'signs',t:'3 signs you have a dysregulated attachment system',hint:'anxious texting, can\'t receive love'},
+  {cat:'Relationships',angle:'educational',t:'Why you pick unavailable partners — NS pattern',hint:'familiar = safe, even when painful'},
+  // TRANSFORMATION
+  {cat:'Transformation',angle:'story',t:'What actually changes when your nervous system regulates',hint:'less reactive, more present, desires shift'},
+  {cat:'Transformation',angle:'story',t:'Why you can\'t manifest from a dysregulated nervous system',hint:'survival state = scarcity state'},
+  {cat:'Transformation',angle:'educational',t:'How long it really takes to regulate your nervous system',hint:'weeks for state, months for trait'},
+  {cat:'Transformation',angle:'benefits',t:'Your life gets boring when your nervous system heals (good)',hint:'stability feels flat before it feels good'},
+  {cat:'Transformation',angle:'story',t:'The three stages of nervous system regulation',hint:'awareness → capacity → integration'},
+];
+function openTopicBank(){
+  const modal=document.getElementById('topic-modal');
+  const cats=['All',...new Set(TOPIC_BANK.map(t=>t.cat))];
+  document.getElementById('topic-cats').innerHTML=cats.map((c,i)=>`<button class="rbtn tcat ${i===0?'on':''}" data-cat="${c}" onclick="filterTopics('${c}')" style="padding:5px 11px;font-size:10px;${i===0?'border-color:#C9A84C;color:#C9A84C':''}">${c}</button>`).join('');
+  filterTopics('All');
+  modal.style.display='block';
+}
+function closeTopicBank(){document.getElementById('topic-modal').style.display='none';}
+function filterTopics(cat){
+  document.querySelectorAll('.tcat').forEach(b=>{
+    const m=b.dataset.cat===cat;
+    b.style.borderColor=m?'#C9A84C':'';
+    b.style.color=m?'#C9A84C':'';
+  });
+  const list=cat==='All'?TOPIC_BANK:TOPIC_BANK.filter(t=>t.cat===cat);
+  document.getElementById('topic-grid').innerHTML=list.map((t,i)=>`
+    <div onclick="pickTopic(${TOPIC_BANK.indexOf(t)})" style="background:#0f0f0f;border:1px solid #222;border-radius:6px;padding:14px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#C9A84C';this.style.background='#151515'" onmouseout="this.style.borderColor='#222';this.style.background='#0f0f0f'">
+      <div style="font-family:Inter,sans-serif;font-size:9px;letter-spacing:.22em;color:#C9A84C;text-transform:uppercase;margin-bottom:8px">${t.cat} · ${t.angle}</div>
+      <div style="font-family:Inter,sans-serif;font-size:13px;line-height:1.4;color:var(--cr);margin-bottom:6px;font-weight:500">${t.t}</div>
+      <div style="font-family:Inter,sans-serif;font-size:11px;color:var(--sg);line-height:1.45;font-style:italic">${t.hint}</div>
+    </div>
+  `).join('');
+}
+function pickTopic(idx){
+  const t=TOPIC_BANK[idx];
+  document.getElementById('topic').value=t.t;
+  const a=document.getElementById('angle');if(a)a.value=t.angle;
+  closeTopicBank();
+  // Auto-fire generate
+  go();
+}
+
 // ── TIKTOK MODE ──
 let ttMode=false;
-const TT_BRAND=`You write TikTok carousel content for Velum, a nervous system regulation and wellness app. Voice: direct, punchy, scroll-stopping. First line of hook must stop the scroll. Use second-person ("you"). Focus on pain points, transformation, and clear value. TikTok audience: 18-35, stressed, curious about mental health and wellness. Goal: follows, saves, and comments to drive the algorithm.`;
+const TT_BRAND=`You write TikTok carousel copy for Velum, a nervous system regulation app (breathwork, EFT tapping, bilateral stimulation, somatic tools, meditation). Audience: 20-40, high-functioning, burnt out, skeptical. They scroll fast. You have 2 seconds to stop them on slide 1.
+
+VOICE — non-negotiable:
+- SPECIFIC (name the body part, the age, the exact pattern — "your vagus nerve", "your 6-year-old self", "the 4am wake-up")
+- MECHANISM-FIRST (explain the WHY — "because your amygdala can't tell the difference between…")
+- SHORT (7-word sentences beat 20; one idea per slide)
+- SECOND-PERSON ("you", never "we" or "one")
+- DIRECT (no poetic filler, no "gentle reminder", no emojis)
+
+BANNED: heal, healing, journey, mindful, present moment, self-care, honor yourself, beautiful soul, vibrations, manifest, divine feminine, sacred, blessed, abundance, high vibes, aligned, tribe, do the work, trust the process, hold space, listen to your body
+
+HOOK FORMULAS — slide 1 MUST match one:
+1. CONTRADICTION: "Your [X] isn't from [obvious]. It's from [non-obvious]."
+2. MECHANISM: "What actually happens in your [body part] when [situation]."
+3. DIAGNOSIS: "If you [specific behavior], your [system] is [state]."
+4. REFRAME: "It's not [what you think]. It's [what it is]."
+5. PATTERN: "Your adult [X] is still running on your childhood [Y]."
+6. PERMISSION: "You're not [negative label]. Your [system] is [state]."
+7. COUNTDOWN: "3 signs your [system] is stuck in [state]."
+8. BODY-FIRST: "Your [body part] is trying to tell you [something]."
+
+STRUCTURE (5 slides default):
+1. HOOK — bigtype or signs, matching one hook formula above
+2. AGITATE — name the specific experience ("you get the 4am thoughts", "your shoulders live at your ears") (arrows or bigtype)
+3. MECHANISM — 1-2 sentence science/reason (why or concept)
+4. SOLUTION — what actually works, bridge to Velum (exercise, arrows, or list)
+5. CTA — soft, specific
+
+Reference: @9dbreathwork. Their hooks land because they're SPECIFIC and MECHANISM-driven, not abstract.`;
 const TT_SCH=`Respond with ONLY a valid JSON array. No preamble, no backticks.
-Slide types (pick whichever best stops the scroll for each position):
-- "hook": {eyebrow, headline, subtext} — small eyebrow + serif headline. Use when the headline is short/poetic.
-- "bigtype": {headline, subtext} — MASSIVE bold sans-serif text-only statement. Use this for the #1 scroll-stopper slide whenever you have a punchy standalone claim. Wrap a word in <em>…</em> to colour it gold, <u>…</u> to underline. e.g. "Your adult body still <em>remembers</em> your childhood." (9D-style)
-- "signs": {num:"3 SIGNS", headline, subtext} — "3 signs your X needs Y" format with italic subtitle. Great opener for listicle carousels.
-- "arrows": {eyebrow, headline, items:[3-5 short points]} — headline + arrow-bulleted quick-read list. Perfect for symptoms/patterns/steps.
-- "why": {eyebrow, headline, body, graphic:"wave"|"window"|"ladder"|"neural"} — eyebrow="why it works", add headline
-- "concept": {eyebrow, headline, body, graphic:"none"} — short punchy body, max 2 sentences
-- "list": {eyebrow, items:[]} — simple dot-bulleted list (less bold than arrows)
-- "cta": {eyebrow:"follow for more", headline, body, nudge} — nudge must be "DM me [WORD]" or "follow @govelum" — NOT comment keywords (TikTok doesn't support IG-style comment auto-DM).
-Rules: first slide = hook OR bigtype OR signs (pick what stops the scroll). Last = cta. 5-7 slides. Mix types — don't use same type twice in a row. Reference: accounts like @9dbreathwork use bigtype + arrows heavily for 100k+ likes.`;
+
+EVERY slide object MUST include img + imgTreat fields.
+
+Slide types:
+- "bigtype": {type, headline, subtext, img, imgTreat} — MASSIVE bold text-only. Wrap key word in <em>…</em> for gold, <u>…</u> to underline. THE default for scroll-stopper slides.
+- "signs": {type, num:"3 SIGNS", headline, subtext, img, imgTreat} — countdown opener ("3 signs your X…")
+- "hook": {type, eyebrow, headline, subtext, img, imgTreat} — softer opener when headline is short/poetic
+- "arrows": {type, eyebrow, headline, items:[3-5 short], img, imgTreat} — list of symptoms/patterns/steps
+- "why": {type, eyebrow, headline, body, graphic:"wave"|"window"|"ladder"|"neural", img, imgTreat}
+- "concept": {type, eyebrow, headline, body, graphic:"none", img, imgTreat} — 1-2 sentences max
+- "list": {type, eyebrow, items:[], img, imgTreat} — plain dot list
+- "cta": {type, eyebrow:"follow for more", headline, body, nudge, img, imgTreat} — nudge="DM me [WORD]" or "follow @govelum" (NO comment keywords — TikTok doesn't auto-DM)
+
+img MUST be exactly one of: nervous, brain, spine, child, heart, meditation, breathwork, energy, water, mist, cosmic, abstract, somatic, body, none
+  - childhood/inner-child/triggers/early experiences → child
+  - anxiety/stress/nervous system/overwhelm → nervous
+  - brain/amygdala/prefrontal/thinking mind → brain
+  - vagus/polyvagal/spine/parasympathetic → spine
+  - emotion/grief/heartbreak/love → heart
+  - meditation/stillness/awareness → meditation
+  - breath/breathing/sigh → breathwork
+  - somatic/touch/body practice → somatic
+  - transformation/shift/expansion → cosmic or abstract
+  - calm/grounding/reset → water or mist
+  - text-only punch slide (no background) → none
+
+imgTreat: darken (default), darker (long text), deep (emotional heavy), veil (near-black for heavy text), none (only when img=none)
+
+Rules: slide 1 = hook/bigtype/signs matching a hook formula. Last = cta. 5-7 slides. Never same type twice in a row.`;
 
 function toggleTTMode(){
   ttMode=!ttMode;
