@@ -1,111 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 
-const SYSTEM_PROMPT = `You are a Level 2 certified EFT (Emotional Freedom Techniques) practitioner.
-Generate a complete, personalised EFT tapping script using proper clinical protocol.
-
-=== CORE PROTOCOL RULES ===
-
-REMINDER PHRASES (most important rule):
-- MUST be 3–7 words maximum. These are SHORT anchor phrases, not sentences.
-- First person, present tense.
-- WRONG: "I feel so anxious about this conversation I need to have tomorrow"
-- CORRECT: "This anxiety in my chest" / "I can't shake this fear" / "All this dread"
-- Round 1 phrases: raw, honest, name the sensation and emotion. No softening.
-- Round 2 phrases: mixed — some negative acknowledgment, some opening to possibility. Half and half.
-- Round 3 phrases: genuinely positive and integrating. Not toxic positivity — real possibility.
-
-SETUP STATEMENTS:
-- Formula: "Even though I have this [specific sensation] in my [body location] about [specific situation], I deeply and completely accept myself."
-- Variation 2: "Even though I still feel this [variation of sensation/emotion], I choose to accept how I feel."
-- Variation 3: "Even though [core belief or fear driving this], I am open to releasing this now."
-- Must reference the physical sensation AND where in the body it is felt.
-
-SUBMODALITY GROUNDING:
-- Identify where in the body they feel this issue (chest, stomach, throat, shoulders, jaw, etc.)
-- Identify the quality of the sensation (tight, heavy, sharp, burning, knotted, hollow, etc.)
-- Weave this into setup statements and Round 1 reminder phrases specifically.
-
-FINGER POINTS (include when emotion type strongly maps to one):
-- Index Finger (inside edge, base of nail): Anger, frustration, self-criticism, resentment
-- Middle Finger: Shame, regret, embarrassment, self-judgment
-- Ring Finger: Grief, sadness, loss, longing
-- Pinky Finger: Pretending, performing, trying too hard, people-pleasing
-- Thumb: Worry, excessive thinking, anticipatory anxiety
-- Only include finger_point if the emotion strongly maps — not for every script.
-
-GAMUT PROCEDURE (include when intensity is 8+ or issue is trauma-adjacent):
-- Continuous tapping on gamut point (back of hand, between ring and pinky knuckle)
-- Eyes closed → open → hard down right → hard down left → roll clockwise → counterclockwise → hum 2 sec → count 1–5 → hum 2 sec
-- Include as an optional interstitial after Round 1 if intensity is high.
-
-ASPECTS:
-- Note in closing if there may be secondary aspects worth addressing in a follow-up session.
-
-=== JSON SCHEMA (return ONLY this, no markdown) ===
-
-{
-  "title": "short descriptive title (max 8 words)",
-  "body_location": "where they feel it, e.g. 'tightness in chest' or 'knot in stomach'",
-  "setup_statements": [
-    "Even though I have this [sensation + location + specific situation], I deeply and completely accept myself.",
-    "Even though I still feel this [variation], I choose to accept how I feel.",
-    "Even though [core belief/fear], I am open to releasing this now."
-  ],
-  "rounds": [
-    {
-      "label": "Round 1 – Acknowledging",
-      "points": [
-        { "point": "Eyebrow", "phrase": "3-7 word reminder phrase — raw and honest" },
-        { "point": "Side of Eye", "phrase": "..." },
-        { "point": "Under Eye", "phrase": "..." },
-        { "point": "Under Nose", "phrase": "..." },
-        { "point": "Chin", "phrase": "..." },
-        { "point": "Collarbone", "phrase": "..." },
-        { "point": "Under Arm", "phrase": "..." },
-        { "point": "Top of Head", "phrase": "..." }
-      ]
-    },
-    {
-      "label": "Round 2 – Shifting",
-      "points": [
-        { "point": "Eyebrow", "phrase": "transitional — still here but opening" },
-        { "point": "Side of Eye", "phrase": "..." },
-        { "point": "Under Eye", "phrase": "..." },
-        { "point": "Under Nose", "phrase": "..." },
-        { "point": "Chin", "phrase": "..." },
-        { "point": "Collarbone", "phrase": "..." },
-        { "point": "Under Arm", "phrase": "..." },
-        { "point": "Top of Head", "phrase": "..." }
-      ]
-    },
-    {
-      "label": "Round 3 – Integration",
-      "points": [
-        { "point": "Eyebrow", "phrase": "positive, empowering, genuinely felt" },
-        { "point": "Side of Eye", "phrase": "..." },
-        { "point": "Under Eye", "phrase": "..." },
-        { "point": "Under Nose", "phrase": "..." },
-        { "point": "Chin", "phrase": "..." },
-        { "point": "Collarbone", "phrase": "..." },
-        { "point": "Under Arm", "phrase": "..." },
-        { "point": "Top of Head", "phrase": "..." }
-      ]
-    }
-  ],
-  "gamut": null,
-  "finger_point": null,
-  "closing": "2–3 sentences. Integration affirmation. Acknowledge any shift. Note if secondary aspects may need attention."
-}
-
-For gamut (only if intensity ≥ 8 or trauma-adjacent), replace null with:
-{ "when": "After Round 1, before Round 2", "note": "brief explanation of why for this specific issue" }
-
-For finger_point (only if emotion strongly maps), replace null with:
-{ "point": "e.g. Index Finger", "location": "inside edge at base of nail", "reason": "why this finger point for this specific emotion", "phrases": ["short phrase 1", "short phrase 2", "short phrase 3", "short phrase 4", "short phrase 5"] }
-
-Return ONLY valid JSON. No markdown. No explanation. No code fences.`;
-
 const FREE_DAILY_LIMIT = 1;
 const PAID_DAILY_LIMIT = 3;
 
@@ -114,27 +9,63 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const TAPPING_POINTS = [
+  "Eyebrow", "Side of Eye", "Under Eye", "Under Nose",
+  "Chin", "Collarbone", "Under Arm", "Top of Head",
+];
+
+const BRAND = `You are a Level 2 certified EFT (Emotional Freedom Techniques) practitioner generating personalised tapping phrases.
+Voice: warm, direct, grounded. Speak in first person as the client.
+Phrases must be 4–8 words maximum — SHORT anchor phrases, not sentences.
+Round 1 phrases: raw, honest acknowledgment of the feeling.
+Round 2 phrases: mixed — some acknowledgment, some opening to possibility.
+Round 3+ phrases: more openness, gentle shift.
+Never toxic positivity. Stay real.`;
+
+async function callClaude(system: string, user: string, apiKey: string): Promise<string> {
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1200,
+      system,
+      messages: [{ role: "user", content: user }],
+    }),
+  });
+  if (!r.ok) throw new Error(`Anthropic API error: ${r.status}`);
+  const d = await r.json();
+  return d.content?.[0]?.text ?? "";
+}
+
+function parseJSON(raw: string) {
+  const clean = raw.replace(/```json|```/g, "").trim();
+  const match = clean.match(/[\[{][\s\S]*[\]}]/);
+  if (match) return JSON.parse(match[0]);
+  return JSON.parse(clean);
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
 
-  // ── Rate limiting via Supabase ──
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.replace("Bearer ", "");
+  // ── Auth + rate limiting ──
+  const token = req.headers.authorization?.replace("Bearer ", "");
   if (!token) return res.status(401).json({ error: "Authentication required" });
 
-  // Validate the JWT and get user
   const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
   if (authErr || !user) return res.status(401).json({ error: "Invalid session" });
 
-  // Fetch profile
   const { data: profile } = await supabase
     .from("profiles")
     .select("subscription_status, subscription_plan, tapping_daily_count, tapping_daily_date")
@@ -157,58 +88,91 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       error: isPaid
         ? `You've had ${limit} sessions today. Your limit resets ${resetMsg}.`
         : `You've used your free session for today. It resets ${resetMsg} — or upgrade for ${PAID_DAILY_LIMIT} sessions a day.`,
-      limit,
-      used: count,
-      isPaid,
-      resetsIn: hoursLeft,
+      limit, used: count, isPaid, resetsIn: hoursLeft,
     });
   }
 
-  const { issue, intensity, emotion_type } = req.body ?? {};
-  if (!issue || String(issue).trim().length < 3) {
-    return res.status(400).json({ error: "Please describe your issue" });
-  }
-
-  const userPrompt = [
-    `Issue: ${String(issue).trim()}`,
-    intensity ? `Intensity (SUDS): ${intensity}/10` : null,
-    emotion_type ? `Primary emotion: ${emotion_type}` : null,
-  ].filter(Boolean).join("\n");
+  const { action, path, issue, body_location, suds, aspects, round_number,
+          positive_belief, resistance } = req.body ?? {};
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2400,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userPrompt }],
-      }),
-    });
+    let result: object;
 
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Anthropic API error: ${err}`);
-    }
+    // ── SETUP STATEMENTS ──
+    if (action === "setup") {
+      const bodyPart = body_location ? `, and I feel it in my ${body_location}` : "";
+      const sudsStr = suds !== undefined ? `, and it's a ${suds} out of 10` : "";
+      const aspectsStr = aspects ? ` Specific aspects: ${aspects}.` : "";
 
-    const data = await response.json();
-    const raw: string = data.content?.[0]?.text ?? "";
+      const prompt = `Generate exactly 3 EFT karate chop setup statements for this person.
+Issue: "${issue}"${bodyPart}${sudsStr}.${aspectsStr}
 
-    let script;
-    try {
-      script = JSON.parse(raw);
-    } catch {
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (match) {
-        script = JSON.parse(match[0]);
-      } else {
-        throw new Error("Model returned invalid JSON");
-      }
+Statement 1 (full): "Even though I [feel/am experiencing] ${issue}${bodyPart}${sudsStr}, I deeply and completely love and accept myself."
+Statement 2 (condensed): A shorter variation acknowledging the feeling.
+Statement 3 (condensed variation): Use specific aspects if provided, or another angle.
+
+Return ONLY valid JSON array of 3 strings. No preamble.
+Example: ["Even though I feel...", "Even though...", "Even though..."]`;
+
+      const raw = await callClaude(BRAND, prompt, apiKey);
+      const statements = parseJSON(raw) as string[];
+
+      result = { statements };
+
+    // ── TAPPING ROUND ──
+    } else if (action === "round") {
+      const roundNum = round_number ?? 1;
+      const bodyPart = body_location ? ` in my ${body_location}` : "";
+      const sudsStr = suds !== undefined ? ` (currently ${suds}/10)` : "";
+      const aspectsStr = aspects ? `\nAdditional aspects: ${aspects}` : "";
+      const pathNote = path === "positive"
+        ? "This is a positive intention session — the person wants to feel more of this but has resistance."
+        : "";
+
+      const prompt = `Generate EFT reminder phrases for round ${roundNum} of an 8-point tapping sequence.
+${pathNote}
+Issue: "${issue}"${bodyPart}${sudsStr}.${aspectsStr}
+
+Round guidance:
+- Round 1: Raw, honest acknowledgment. Name the feeling directly.
+- Round 2: Mixed — some acknowledgment, some openness ("even though... I'm open to...")
+- Round 3+: More openness, gentle positive reframe.
+
+Generate exactly 8 phrases, one for each point in order: ${TAPPING_POINTS.join(", ")}.
+Each phrase: 4–8 words MAX. First person. No quotes needed.
+
+Return ONLY a valid JSON array of 8 strings. No preamble.`;
+
+      const raw = await callClaude(BRAND, prompt, apiKey);
+      const phrases = parseJSON(raw) as string[];
+      result = { phrases };
+
+    // ── POSITIVE SHIFT ROUND ──
+    } else if (action === "positive_round") {
+      const roundNum = round_number ?? 1;
+      const res_level = resistance ?? 5;
+
+      const prompt = `Generate EFT tapping phrases for a positive belief installation round.
+Desired belief/feeling: "${positive_belief}"
+Resistance level: ${res_level}/10 (10 = can't believe it at all, 0 = fully believe it).
+Round: ${roundNum}
+
+Round 1: Acknowledge the resistance while opening to the possibility.
+  e.g. "Even though this feels hard to believe...", "Opening to this possibility..."
+Round 2+: Lean more into the positive — installing the belief.
+  e.g. "I am open to feeling this...", "Choosing ${positive_belief}..."
+
+Generate exactly 8 phrases for: ${TAPPING_POINTS.join(", ")}.
+Each phrase: 4–8 words MAX. First person.
+
+Return ONLY a valid JSON array of 8 strings. No preamble.`;
+
+      const raw = await callClaude(BRAND, prompt, apiKey);
+      const phrases = parseJSON(raw) as string[];
+      result = { phrases };
+
+    } else {
+      return res.status(400).json({ error: "Invalid action" });
     }
 
     // Increment daily counter
@@ -217,7 +181,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       tapping_daily_date: today,
     }).eq("id", user.id);
 
-    return res.status(200).json({ script });
+    return res.status(200).json(result);
+
   } catch (err: any) {
     return res.status(500).json({ error: err.message ?? "Unknown error" });
   }
