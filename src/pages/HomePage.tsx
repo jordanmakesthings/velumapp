@@ -338,7 +338,16 @@ export default function HomePage() {
             </div>
           </Link>
 
-          {/* Guided Tapping — hidden until model is trained */}
+          {/* Guided Tapping */}
+          <Link to="/tapping" className="velum-card p-5 flex flex-col gap-3 min-h-[130px]">
+            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Heart className="w-4 h-4 text-accent" />
+            </div>
+            <div>
+              <p className="text-foreground text-sm font-sans font-medium">Tapping</p>
+              <p className="text-ui text-[11px] mt-0.5">EFT sequences · Stress + beliefs</p>
+            </div>
+          </Link>
 
           {/* Somatic Touch */}
           <Link to="/somatic-touch" className="velum-card p-5 flex flex-col gap-3 min-h-[130px]">
