@@ -273,8 +273,33 @@ select option{background:#1e1e1e}
 <header>
   <div class="logo">V<span>E</span>LUM</div>
   <div class="htag">Content Studio</div>
-  <button id="tt-btn" onclick="toggleTTMode()" style="font-size:9px;letter-spacing:.15em;color:var(--sg);text-transform:uppercase;background:none;border:1px solid var(--br);border-radius:2px;padding:5px 10px;cursor:pointer;transition:all .2s">TikTok Mode</button>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button id="lib-btn" onclick="openLibrary()" style="font-size:9px;letter-spacing:.15em;color:var(--sg);text-transform:uppercase;background:none;border:1px solid var(--br);border-radius:2px;padding:5px 10px;cursor:pointer;transition:all .2s">☰ Library</button>
+    <button id="tt-btn" onclick="toggleTTMode()" style="font-size:9px;letter-spacing:.15em;color:var(--sg);text-transform:uppercase;background:none;border:1px solid var(--br);border-radius:2px;padding:5px 10px;cursor:pointer;transition:all .2s">TikTok Mode</button>
+  </div>
 </header>
+
+<!-- ── LIBRARY MODAL ── -->
+<div id="lib-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;overflow-y:auto">
+  <div style="max-width:1100px;margin:40px auto;padding:0 24px 60px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+      <div>
+        <div style="font-family:'Inter',sans-serif;font-size:11px;letter-spacing:.3em;color:var(--gd);text-transform:uppercase;margin-bottom:4px">Deck Library</div>
+        <h1 style="font-family:'Cormorant Garamond',serif;font-weight:300;font-size:36px;color:var(--cr);margin:0">Your carousels</h1>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="lib-new-name" placeholder="Name this deck…" style="background:#0a0a0a;border:1px solid #2a2a2a;color:var(--cr);font-family:Inter,sans-serif;font-size:12px;padding:9px 12px;border-radius:4px;width:200px">
+        <button class="rbtn" onclick="saveCurrentDeck()" style="padding:9px 14px;font-size:11px">★ Save current deck</button>
+        <button onclick="closeLibrary()" style="background:none;border:none;color:var(--sg);font-size:22px;cursor:pointer;padding:4px 10px;line-height:1">×</button>
+      </div>
+    </div>
+    <div id="lib-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px"></div>
+    <div id="lib-empty" style="display:none;text-align:center;padding:80px 20px;color:var(--sg);font-family:Inter,sans-serif;font-size:13px">
+      <p style="margin-bottom:8px;color:var(--mt)">No saved decks yet.</p>
+      <p>Name your current deck above and hit Save to start your library.</p>
+    </div>
+  </div>
+</div>
 
 <!-- ── SIDEBAR ── -->
 <aside class="sidebar">
@@ -336,16 +361,13 @@ select option{background:#1e1e1e}
     <button class="gbtn" id="gbtn" onclick="go()">Generate Carousel</button>
     <hr class="div">
     <div>
-      <label>Sessions</label>
-      <div class="sess-row" style="margin-bottom:5px">
-        <input type="text" id="sess-name" placeholder="Session name">
-        <button class="rbtn" onclick="saveSession()">Save</button>
+      <label>Deck Library</label>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+        <input type="text" id="quick-save-name" placeholder="Name current deck…" style="flex:1;font-size:11px">
+        <button class="rbtn" onclick="quickSave()" style="white-space:nowrap">★ Save</button>
       </div>
-      <div class="sess-row">
-        <div class="sw" style="flex:1"><select id="sess-load"><option value="">Load…</option></select></div>
-        <button class="rbtn" onclick="loadSession()">Load</button>
-        <button class="rbtn" onclick="deleteSession()" style="color:var(--red);border-color:rgba(201,124,92,.3)">Del</button>
-      </div>
+      <button class="rbtn" onclick="openLibrary()" style="width:100%;margin-top:4px">☰ Open Library</button>
+      <div id="auto-save-status" style="font-size:9px;color:var(--sg);margin-top:5px;letter-spacing:.05em">Auto-save on</div>
     </div>
     <hr class="div">
     <div>
@@ -500,7 +522,7 @@ function init(){
   const fk=localStorage.getItem('velum_fal_key')||'';
   if(fk)document.getElementById('falkey').value=fk;
   if(loadSlides()){render();renderEds();goTo(cur);switchTab('edit');}
-  loadSessionList();
+  updateAutoSaveStatus();
   renderCTATemplates();
 }
 if(localStorage.getItem('velum_auth')===PASS_HASH){document.addEventListener('DOMContentLoaded',init);}
@@ -1453,32 +1475,161 @@ function applyCTATemplate(idx){
   st(`CTA template applied — edit the [PLACEHOLDERS] in the slide`,false);
 }
 
-// ── SESSIONS ──
-function saveSession(){
-  const name=document.getElementById('sess-name').value.trim();
-  if(!name||!slides.length)return;
-  const all=JSON.parse(localStorage.getItem('velum_sessions')||'{}');
-  all[name]={slides,cur,saved:new Date().toLocaleDateString()};
-  localStorage.setItem('velum_sessions',JSON.stringify(all));
-  loadSessionList();st(`"${name}" saved`,false);
+// ── DECK LIBRARY ──
+let currentDeckName='';
+
+function getDecks(){try{return JSON.parse(localStorage.getItem('velum_sessions')||'{}');}catch(e){return {};}}
+function setDecks(all){localStorage.setItem('velum_sessions',JSON.stringify(all));}
+
+function openLibrary(){document.getElementById('lib-modal').style.display='block';renderLibrary();}
+function closeLibrary(){document.getElementById('lib-modal').style.display='none';}
+
+function firstHeadline(deck){
+  if(!deck.slides?.length)return 'Untitled';
+  const s=deck.slides[0];
+  const stripped=(s.headline||s.quote||s.body||s.name||'Untitled').replace(/<[^>]+>/g,'');
+  return stripped.length>60?stripped.slice(0,60)+'…':stripped;
 }
-function loadSession(){
-  const name=document.getElementById('sess-load').value;if(!name)return;
-  const all=JSON.parse(localStorage.getItem('velum_sessions')||'{}');
-  if(!all[name])return;
-  slides=all[name].slides;cur=all[name].cur||0;
-  saveSlides();render();renderEds();goTo(cur);switchTab('edit');st(`Loaded "${name}"`,false);
+
+function deckPreview(deck){
+  const s=deck.slides?.[0];if(!s)return '';
+  const bg=s.bg||'#111111';
+  const img=s.bgImage?`<div style="position:absolute;inset:0;background:url(${s.bgImage}) center/cover;opacity:.65"></div>`:'';
+  const headline=firstHeadline(deck).slice(0,55);
+  return `<div style="position:relative;width:100%;aspect-ratio:${deck.ratio==='portrait'?'4/5':deck.ratio==='story'?'9/16':'1/1'};background:${bg};overflow:hidden;border-radius:6px 6px 0 0">${img}<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:12px"><div style="font-family:Inter,sans-serif;font-weight:700;font-size:11px;line-height:1.2;color:#F2EFE7;text-align:center;max-width:95%">${headline}</div></div></div>`;
 }
-function deleteSession(){
-  const name=document.getElementById('sess-load').value;if(!name)return;
-  const all=JSON.parse(localStorage.getItem('velum_sessions')||'{}');
-  delete all[name];localStorage.setItem('velum_sessions',JSON.stringify(all));loadSessionList();
+
+function renderLibrary(){
+  const all=getDecks();
+  const names=Object.keys(all).sort((a,b)=>(all[b].ts||0)-(all[a].ts||0));
+  const grid=document.getElementById('lib-grid');
+  const empty=document.getElementById('lib-empty');
+  if(!grid)return;
+  if(names.length===0){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  grid.innerHTML=names.map(name=>{
+    const deck=all[name];
+    const date=deck.ts?new Date(deck.ts).toLocaleDateString():(deck.saved||'');
+    const count=deck.slides?.length||0;
+    const ratio=deck.ratio||'square';
+    const ratioLabel=ratio==='portrait'?'4:5':ratio==='story'?'9:16':'1:1';
+    const isCurrent=name===currentDeckName;
+    return `<div style="background:#0a0a0a;border:1px solid ${isCurrent?'#C9A84C':'#222'};border-radius:7px;overflow:hidden;display:flex;flex-direction:column">
+      ${deckPreview(deck)}
+      <div style="padding:10px 12px">
+        <div style="font-family:Inter,sans-serif;font-size:12px;font-weight:600;color:var(--cr);margin-bottom:2px;line-height:1.3">${name.replace(/"/g,'&quot;')}</div>
+        <div style="font-family:Inter,sans-serif;font-size:10px;color:var(--sg);margin-bottom:8px">${count} slide${count===1?'':'s'} · ${ratioLabel} · ${date}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="rbtn" onclick="openDeck('${name.replace(/'/g,"\\'")}')" style="padding:4px 9px;font-size:10px;border-color:#C9A84C;color:#C9A84C">Open</button>
+          <button class="rbtn" onclick="duplicateDeck('${name.replace(/'/g,"\\'")}')" style="padding:4px 9px;font-size:10px">Duplicate</button>
+          <button class="rbtn" onclick="renameDeck('${name.replace(/'/g,"\\'")}')" style="padding:4px 9px;font-size:10px">Rename</button>
+          <button class="rbtn" onclick="deleteDeck('${name.replace(/'/g,"\\'")}')" style="padding:4px 9px;font-size:10px;color:var(--red);border-color:rgba(201,124,92,.3)">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
-function loadSessionList(){
-  const sel=document.getElementById('sess-load');if(!sel)return;
-  const all=JSON.parse(localStorage.getItem('velum_sessions')||'{}');
-  sel.innerHTML='<option value="">Load…</option>'+Object.keys(all).map(k=>`<option value="${k}">${k} (${all[k].saved||''})</option>`).join('');
+
+function quickSave(){
+  const name=document.getElementById('quick-save-name').value.trim()||currentDeckName;
+  if(!name){st('Enter a name first.');return;}
+  _saveDeckAs(name);
 }
+
+function saveCurrentDeck(){
+  const name=document.getElementById('lib-new-name').value.trim()||currentDeckName;
+  if(!name){st('Enter a name first.');return;}
+  _saveDeckAs(name);
+  document.getElementById('lib-new-name').value='';
+}
+
+function _saveDeckAs(name){
+  if(!slides.length){st('No slides to save.');return;}
+  const all=getDecks();
+  all[name]={slides:JSON.parse(JSON.stringify(slides)),cur,ratio:curDim,ts:Date.now(),saved:new Date().toLocaleDateString()};
+  setDecks(all);
+  currentDeckName=name;
+  const qi=document.getElementById('quick-save-name');if(qi)qi.value=name;
+  renderLibrary();
+  st(`★ "${name}" saved`,false);
+  updateAutoSaveStatus();
+}
+
+function openDeck(name){
+  const all=getDecks();const deck=all[name];if(!deck)return;
+  slides=JSON.parse(JSON.stringify(deck.slides));
+  cur=deck.cur||0;
+  if(deck.ratio&&deck.ratio!==curDim)setDims(deck.ratio);
+  currentDeckName=name;
+  const qi=document.getElementById('quick-save-name');if(qi)qi.value=name;
+  saveSlides();render();renderEds();goTo(cur);switchTab('edit');closeLibrary();
+  st(`Loaded "${name}"`,false);
+}
+
+function duplicateDeck(name){
+  const all=getDecks();const deck=all[name];if(!deck)return;
+  let newName=name+' (copy)';let n=2;
+  while(all[newName]){newName=name+' (copy '+n+')';n++;}
+  all[newName]={...deck,ts:Date.now(),saved:new Date().toLocaleDateString()};
+  setDecks(all);renderLibrary();st(`Duplicated to "${newName}"`,false);
+}
+
+function renameDeck(name){
+  const newName=prompt('Rename deck:',name);
+  if(!newName||newName===name)return;
+  const all=getDecks();if(all[newName]){st('Name already exists.');return;}
+  all[newName]=all[name];delete all[name];setDecks(all);
+  if(currentDeckName===name)currentDeckName=newName;
+  renderLibrary();
+}
+
+function deleteDeck(name){
+  if(!confirm(`Delete "${name}"? This can't be undone.`))return;
+  const all=getDecks();delete all[name];setDecks(all);
+  if(currentDeckName===name)currentDeckName='';
+  renderLibrary();
+}
+
+// Back-compat: old code may still reference these
+function saveSession(){quickSave();}
+function loadSession(){openLibrary();}
+function deleteSession(){}
+function loadSessionList(){}
+
+// ── AUTO-SAVE ──
+let _autoSaveTimer=null;
+function triggerAutoSave(){
+  if(!currentDeckName||!slides.length)return;
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer=setTimeout(()=>{
+    const all=getDecks();
+    if(all[currentDeckName]){
+      all[currentDeckName]={slides:JSON.parse(JSON.stringify(slides)),cur,ratio:curDim,ts:Date.now(),saved:new Date().toLocaleDateString()};
+      setDecks(all);
+      updateAutoSaveStatus();
+    }
+  },1500);
+}
+
+function updateAutoSaveStatus(){
+  const el=document.getElementById('auto-save-status');if(!el)return;
+  if(currentDeckName){
+    el.textContent='✓ Auto-saving "'+currentDeckName+'"';
+    el.style.color='var(--gd)';
+  }else{
+    el.textContent='Auto-save on — name your deck to enable library sync';
+    el.style.color='var(--sg)';
+  }
+}
+
+// Hook into saveSlides to trigger auto-save
+const _origSaveSlides=saveSlides;
+saveSlides=function(){_origSaveSlides();triggerAutoSave();};
+
+// Close library when clicking outside content
+document.addEventListener('click',e=>{
+  if(e.target.id==='lib-modal')closeLibrary();
+});
 
 // ── DRAG TO REPOSITION ──
 const _drag={el:null,slide:null,ox:0,oy:0,guides:null};
