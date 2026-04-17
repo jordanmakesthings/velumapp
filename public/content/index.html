@@ -33,6 +33,12 @@ header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-be
 .si{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
 .si::-webkit-scrollbar{width:3px}
 .si::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px}
+
+/* Sidebar tabs */
+.stabs{display:flex;border-bottom:1px solid var(--br);flex-shrink:0}
+.stab{flex:1;padding:10px 0;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:400;letter-spacing:.2em;text-transform:uppercase;border:none;background:none;cursor:pointer;color:var(--sg);transition:all .2s;border-bottom:2px solid transparent;margin-bottom:-1px}
+.stab.active{color:var(--gd);border-bottom-color:var(--gd)}
+.stab:hover:not(.active){color:var(--cr)}
 label{display:block;font-size:9px;font-weight:400;letter-spacing:.2em;color:var(--sg);text-transform:uppercase;margin-bottom:6px}
 textarea,select,input[type=text],input[type=password]{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:4px;color:var(--cr);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;padding:9px 11px;outline:none;resize:none;transition:border-color .2s}
 textarea:focus,select:focus,input:focus{border-color:var(--gd)}
@@ -250,36 +256,16 @@ select option{background:#1e1e1e}
 
 <!-- ── SIDEBAR ── -->
 <aside class="sidebar">
-  <div class="si">
 
-    <!-- API Keys -->
-    <div>
-      <label>Anthropic API Key</label>
-      <input type="password" id="akey" placeholder="sk-ant-…" autocomplete="off">
-    </div>
-    <div>
-      <label>Fal.ai API Key <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— for AI image backgrounds</span></label>
-      <input type="password" id="falkey" placeholder="fal-…" autocomplete="off">
-      <div class="hint">Saved locally only.</div>
-    </div>
-    <hr class="div">
+  <!-- Tab bar -->
+  <div class="stabs">
+    <button class="stab active" id="tab-gen" onclick="switchTab('gen')">Generate</button>
+    <button class="stab" id="tab-edit" onclick="switchTab('edit')">Edit Slides</button>
+    <button class="stab" id="tab-export" onclick="switchTab('export')">Export</button>
+  </div>
 
-    <!-- Sessions -->
-    <div>
-      <label>Sessions</label>
-      <div class="sess-row" style="margin-bottom:5px">
-        <input type="text" id="sess-name" placeholder="Session name">
-        <button class="rbtn" onclick="saveSession()">Save</button>
-      </div>
-      <div class="sess-row">
-        <div class="sw" style="flex:1"><select id="sess-load"><option value="">Load…</option></select></div>
-        <button class="rbtn" onclick="loadSession()">Load</button>
-        <button class="rbtn" onclick="deleteSession()" style="color:var(--red);border-color:rgba(201,124,92,.3)">Del</button>
-      </div>
-    </div>
-    <hr class="div">
-
-    <!-- Mode + inputs -->
+  <!-- GENERATE TAB -->
+  <div class="si" id="panel-gen">
     <div class="mt">
       <button class="mb on" id="mg" onclick="setMode('gen')">Generate</button>
       <button class="mb off" id="ms" onclick="setMode('script')">My Script</button>
@@ -327,20 +313,40 @@ select option{background:#1e1e1e}
     </div>
     <button class="gbtn" id="gbtn" onclick="go()">Generate Carousel</button>
     <hr class="div">
-
-    <!-- Slide editors -->
-    <div id="editors" class="slist" style="display:none"></div>
-
-  </div><!-- /si -->
-
-  <!-- Status bar -->
-  <div class="sbar">
-    <div class="sdot" id="sdot"></div>
-    <span id="stxt">Ready — enter a topic or paste your script</span>
+    <div>
+      <label>Sessions</label>
+      <div class="sess-row" style="margin-bottom:5px">
+        <input type="text" id="sess-name" placeholder="Session name">
+        <button class="rbtn" onclick="saveSession()">Save</button>
+      </div>
+      <div class="sess-row">
+        <div class="sw" style="flex:1"><select id="sess-load"><option value="">Load…</option></select></div>
+        <button class="rbtn" onclick="loadSession()">Load</button>
+        <button class="rbtn" onclick="deleteSession()" style="color:var(--red);border-color:rgba(201,124,92,.3)">Del</button>
+      </div>
+    </div>
+    <hr class="div">
+    <div>
+      <label>API Keys</label>
+      <div style="margin-bottom:8px">
+        <label style="margin-bottom:4px">Anthropic</label>
+        <input type="password" id="akey" placeholder="sk-ant-…" autocomplete="off">
+      </div>
+      <div>
+        <label style="margin-bottom:4px">Fal.ai <span style="text-transform:none;letter-spacing:0;font-size:9px">— AI image backgrounds</span></label>
+        <input type="password" id="falkey" placeholder="fal-…" autocomplete="off">
+      </div>
+      <div class="hint">Saved in browser only.</div>
+    </div>
   </div>
 
-  <!-- Logo + downloads -->
-  <div class="sidebar-foot">
+  <!-- EDIT TAB -->
+  <div class="si" id="panel-edit" style="display:none">
+    <div id="editors" class="slist"></div>
+  </div>
+
+  <!-- EXPORT TAB -->
+  <div class="si" id="panel-export" style="display:none">
     <div>
       <label>Logo</label>
       <div class="logo-preview" id="logo-preview" onclick="document.getElementById('logo-file').click()">
@@ -349,15 +355,24 @@ select option{background:#1e1e1e}
       </div>
       <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="loadLogo(this)">
     </div>
-    <button class="dload-btn" onclick="dlAll()">↓ Download all slides</button>
+    <button class="gbtn" onclick="dlAll()">↓ Download All Slides</button>
+    <button class="dload-btn" onclick="exportCurrentSlide()">↓ Current Slide Only</button>
+    <hr class="div">
     <button class="dload-btn" onclick="genCaption()">✦ Generate Caption</button>
-    <textarea id="caption-out" rows="4" placeholder="Caption will appear here…" readonly></textarea>
-    <hr class="div" style="margin:4px 0">
+    <textarea id="caption-out" rows="5" placeholder="Caption will appear here…" readonly></textarea>
+    <hr class="div">
     <div>
-      <label>CTA Templates <span style="normal-case;color:var(--sg);letter-spacing:0;text-transform:none;font-size:9px">— click to apply to last slide</span></label>
+      <label>CTA Templates <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— click to apply to last slide</span></label>
       <div id="cta-templates" style="display:flex;flex-direction:column;gap:5px"></div>
     </div>
   </div>
+
+  <!-- Status bar -->
+  <div class="sbar">
+    <div class="sdot" id="sdot"></div>
+    <span id="stxt">Ready — enter a topic or paste your script</span>
+  </div>
+
 </aside>
 
 <!-- ── MAIN CANVAS ── -->
@@ -462,13 +477,21 @@ function init(){
   if(k)document.getElementById('akey').value=k;
   const fk=localStorage.getItem('velum_fal_key')||'';
   if(fk)document.getElementById('falkey').value=fk;
-  if(loadSlides()){render();renderEds();goTo(cur);}
+  if(loadSlides()){render();renderEds();goTo(cur);switchTab('edit');}
   loadSessionList();
   renderCTATemplates();
 }
 if(localStorage.getItem('velum_auth')===PASS_HASH){document.addEventListener('DOMContentLoaded',init);}
 
 // ── MODE ──
+// ── TABS ──
+function switchTab(tab){
+  ['gen','edit','export'].forEach(t=>{
+    document.getElementById('panel-'+t).style.display=t===tab?'flex':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+}
+
 function setMode(m){
   mode=m;
   document.getElementById('gf').style.display=m==='gen'?'block':'none';
@@ -535,7 +558,8 @@ async function go(){
     const clean=raw.replace(/```json|```/g,'').trim();
     slides=JSON.parse(clean);cur=0;saveSlides();
     render();renderEds();goTo(0);
-    st(`${slides.length} slides ready — click text on slide to edit directly`,false);
+    switchTab('edit');
+    st(`${slides.length} slides ready — edit in the sidebar`,false);
   }catch(e){st('Error: '+e.message,false);console.error(e);}
   btn.disabled=false;
 }
@@ -1272,7 +1296,7 @@ function loadSession(){
   const all=JSON.parse(localStorage.getItem('velum_sessions')||'{}');
   if(!all[name])return;
   slides=all[name].slides;cur=all[name].cur||0;
-  saveSlides();render();renderEds();goTo(cur);st(`Loaded "${name}"`,false);
+  saveSlides();render();renderEds();goTo(cur);switchTab('edit');st(`Loaded "${name}"`,false);
 }
 function deleteSession(){
   const name=document.getElementById('sess-load').value;if(!name)return;
