@@ -658,7 +658,14 @@ function bslide(s,i){
     const layout=s.imgLayout||'full';
     const treatment=s.imgTreatment||'none';
     const filter=treatment==='blur'?'filter:blur(12px) brightness(.55);':treatment==='grayscale'?'filter:grayscale(1) brightness(.8);':'';
-    const overlay=treatment==='dark30'?'<div class="img-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.3);pointer-events:none"></div>':treatment==='dark60'?'<div class="img-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.75));pointer-events:none"></div>':'';
+    const dim=parseInt(s.imgDim||0);
+    let overlay='';
+    if(treatment==='dark30')overlay='<div class="img-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.3);pointer-events:none"></div>';
+    else if(treatment==='dark60')overlay='<div class="img-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.75));pointer-events:none"></div>';
+    else if(treatment==='dark80')overlay='<div class="img-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.9));pointer-events:none"></div>';
+    else if(treatment==='veil')overlay='<div class="img-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.85);pointer-events:none"></div>';
+    // Custom dim stacks on top of any treatment
+    if(dim>0)overlay+='<div class="img-dim" style="position:absolute;inset:0;background:rgba(0,0,0,'+(dim/100)+');pointer-events:none"></div>';
     const styles={
       full:'position:absolute;inset:0;background-image:url('+s.bgImage+');background-size:cover;background-position:center;'+filter,
       bottom:'position:absolute;left:0;right:0;bottom:0;height:45%;background-image:url('+s.bgImage+');background-size:cover;background-position:center;'+filter,
@@ -912,7 +919,12 @@ function renderEds(){
               </div>
               <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px">
                 <span style="font-size:8.5px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;margin-right:2px;align-self:center">TREATMENT</span>
-                ${[['none','none'],['dark30','darken'],['dark60','darker'],['blur','blur'],['grayscale','b&w']].map(([val,lbl])=>`<button class="rbtn" style="padding:3px 6px;font-size:9px;${(s.imgTreatment||'none')===val?'border-color:#C9A84C;color:#C9A84C':''}" onclick="setImgTreatment(${i},'${val}')">${lbl}</button>`).join('')}
+                ${[['none','none'],['dark30','darken'],['dark60','darker'],['dark80','deep'],['veil','veil'],['blur','blur'],['grayscale','b&w']].map(([val,lbl])=>`<button class="rbtn" style="padding:3px 6px;font-size:9px;${(s.imgTreatment||'none')===val?'border-color:#C9A84C;color:#C9A84C':''}" onclick="setImgTreatment(${i},'${val}')">${lbl}</button>`).join('')}
+              </div>
+              <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
+                <span style="font-size:8.5px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap">CUSTOM DIM</span>
+                <input type="range" min="0" max="95" step="5" value="${s.imgDim||0}" oninput="setImgDim(${i},this.value)" style="flex:1;accent-color:#C9A84C">
+                <span style="font-size:9px;color:var(--gd);min-width:30px;text-align:right">${s.imgDim||0}%</span>
               </div>
               <div style="display:flex;gap:5px;align-items:center">
                 <button class="rbtn" onclick="saveToBank(${i})" style="padding:3px 7px;font-size:9px" title="Save to your reusable image bank">★ Bank it</button>
@@ -1272,6 +1284,16 @@ function setImgTreatment(idx,mode){
   const e=document.getElementById('sl'+idx);
   if(e){const n=bslide(slides[idx],idx);n.id='sl'+idx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
   renderEds();setTimeout(()=>{const card=document.getElementById('card'+idx);if(card)card.classList.add('open');goTo(idx);},10);
+}
+
+let _imgDimTimer=null;
+function setImgDim(idx,val){
+  slides[idx].imgDim=parseInt(val);saveSlides();
+  const e=document.getElementById('sl'+idx);
+  if(e){const n=bslide(slides[idx],idx);n.id='sl'+idx;if(e.classList.contains('active'))n.classList.add('active');e.replaceWith(n);}
+  // Only update the readout — don't re-render the whole sidebar while slider is dragged
+  clearTimeout(_imgDimTimer);
+  _imgDimTimer=setTimeout(()=>renderEds(),250);
 }
 
 // ── FAL.AI IMAGE GENERATION ──
