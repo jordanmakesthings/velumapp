@@ -156,7 +156,22 @@ select option{background:#1e1e1e}
 .sli-dot{width:5px;height:5px;border-radius:50%;background:var(--gd);flex-shrink:0;margin-top:6px;opacity:.8}
 .sli-text{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;line-height:1.65;color:var(--mt)}
 /* Bigtype — massive bold statement slide (9D-style) */
-.sbig{font-family:'Inter',system-ui,-apple-system,sans-serif;font-weight:900;font-size:42px;line-height:1.08;letter-spacing:-.025em;color:var(--cr);text-align:left;max-width:360px;position:relative}
+.sbig{font-family:'Inter',system-ui,-apple-system,sans-serif;font-weight:900;font-size:42px;line-height:1.08;letter-spacing:-.025em;color:var(--cr);text-align:left;max-width:360px;width:100%;position:relative;word-wrap:break-word;overflow-wrap:break-word}
+.sc.portrait .sbig,.sc.portrait .ssignhead,.sc.portrait .sarrowhead{max-width:300px}
+.sc.portrait .sbig{font-size:36px}
+.sc.portrait .ssignhead{font-size:34px}
+.sc.story .sbig,.sc.story .ssignhead,.sc.story .sarrowhead,.sc.story .shl,.sc.story .sch{max-width:210px}
+.sc.story .sbig{font-size:28px}
+.sc.story .ssignhead{font-size:27px}
+.sc.story .shl{font-size:24px}
+.sc.story .sch{font-size:21px}
+.sc.story .sen{font-size:22px}
+.sc.story .sbd,.sc.story .scb{font-size:11px;max-width:220px}
+.sc.story .sarrowhead{font-size:16px}
+.sc.story .sarrowitem{font-size:12.5px;max-width:220px}
+.sc.story .sqt{font-size:20px;max-width:220px}
+.sc.story .slide{padding:32px 26px}
+.sc.portrait .slide{padding:40px 32px}
 .sbig em{font-style:normal;color:var(--gd)}
 .sbig u{text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:4px}
 .slide.light .sbig{color:#111!important}
@@ -1281,17 +1296,36 @@ async function genImage(idx,hiRes=false){
       headers:{'Authorization':'Key '+key,'Content-Type':'application/json'},
       body:JSON.stringify(body)
     });
-    if(!sub.ok)throw new Error('Fal submit failed: '+sub.status);
-    const {request_id}=await sub.json();
-    let result=null;
-    for(let i=0;i<30;i++){
-      await new Promise(r=>setTimeout(r,2000));
-      const poll=await fetch(`https://queue.fal.run/${endpoint}/requests/${request_id}`,{headers:{'Authorization':'Key '+key}});
-      const data=await poll.json();
-      if(data.status==='COMPLETED'){result=data;break;}
-      if(data.status==='FAILED')throw new Error('Image generation failed');
+    if(!sub.ok){
+      const txt=await sub.text().catch(()=>'');
+      throw new Error('Fal submit '+sub.status+(txt?': '+txt.slice(0,100):''));
     }
-    if(!result?.images?.[0]?.url)throw new Error('No image returned');
+    const subJson=await sub.json();
+    const request_id=subJson.request_id;
+    if(!request_id)throw new Error('No request_id from Fal');
+    // Poll status
+    let completed=false;
+    for(let i=0;i<45;i++){
+      await new Promise(r=>setTimeout(r,2000));
+      const statusRes=await fetch(`https://queue.fal.run/${endpoint}/requests/${request_id}/status`,{headers:{'Authorization':'Key '+key}});
+      if(!statusRes.ok){if(statusRes.status===404)continue;continue;}
+      const statusTxt=await statusRes.text();
+      if(!statusTxt)continue;
+      let statusData;try{statusData=JSON.parse(statusTxt);}catch(e){continue;}
+      if(statusData.status==='COMPLETED'){completed=true;break;}
+      if(statusData.status==='FAILED')throw new Error('Fal returned FAILED: '+(statusData.logs?.[0]?.message||'unknown'));
+    }
+    if(!completed)throw new Error('Timed out waiting for image (90s)');
+    // Fetch result
+    const resultRes=await fetch(`https://queue.fal.run/${endpoint}/requests/${request_id}`,{headers:{'Authorization':'Key '+key}});
+    if(!resultRes.ok){
+      const txt=await resultRes.text().catch(()=>'');
+      throw new Error('Result fetch '+resultRes.status+(txt?': '+txt.slice(0,80):''));
+    }
+    const resultTxt=await resultRes.text();
+    if(!resultTxt)throw new Error('Empty response from Fal');
+    let result;try{result=JSON.parse(resultTxt);}catch(e){throw new Error('Bad JSON from Fal: '+resultTxt.slice(0,80));}
+    if(!result?.images?.[0]?.url)throw new Error('No image URL in response');
     const url=result.images[0].url;
     slides[idx].bgImage=url;
     if(!slides[idx].imgLayout)slides[idx].imgLayout='full';
@@ -1673,6 +1707,51 @@ document.addEventListener('mouseup',()=>{
   _drag.el=null;_drag.slide=null;_drag.guides=null;
 });
 
+// ── AUTO-FIT: shrink headline text if it overflows the slide width ──
+function autoFitSlide(slideEl){
+  if(!slideEl)return;
+  const fitSelectors=['.sbig','.ssignhead','.shl','.sch','.sen','.sarrowhead','.sqt'];
+  fitSelectors.forEach(sel=>{
+    slideEl.querySelectorAll(sel).forEach(el=>{
+      // Reset any prior scaling
+      el.style.fontSize='';
+      const computed=parseFloat(getComputedStyle(el).fontSize);
+      const minPct=0.55; // don't shrink below 55% of original
+      let currentSize=computed;
+      // Measure after paint
+      let guard=0;
+      while(guard<18 && currentSize>computed*minPct){
+        const overflowW=el.scrollWidth>el.clientWidth+1;
+        const overflowH=el.scrollHeight>el.clientHeight+2;
+        if(!overflowW && !overflowH)break;
+        currentSize-=Math.max(0.8,currentSize*0.05);
+        el.style.fontSize=currentSize+'px';
+        guard++;
+      }
+    });
+  });
+}
+
+// Debounced auto-fit after any render
+let _autoFitTimer=null;
+function scheduleAutoFit(idx){
+  clearTimeout(_autoFitTimer);
+  _autoFitTimer=setTimeout(()=>{
+    const target=idx!==undefined?document.getElementById('sl'+idx):document.querySelector('.slide.active');
+    if(target)autoFitSlide(target);
+    // Also fit all slides so exports are correct
+    document.querySelectorAll('.slide').forEach(s=>autoFitSlide(s));
+  },60);
+}
+
+// Patch render + goTo to trigger auto-fit
+const _origRender=render;
+render=function(){_origRender();scheduleAutoFit();};
+const _origGoTo=goTo;
+goTo=function(n){_origGoTo(n);scheduleAutoFit(n);};
+const _origSetDims=setDims;
+setDims=function(d){_origSetDims(d);scheduleAutoFit();};
+
 // Save contenteditable edits to slides[]
 let _saveTimer=null;
 document.addEventListener('input',e=>{
@@ -1688,6 +1767,7 @@ document.addEventListener('input',e=>{
   }else{
     slides[idx][field]=ce.innerHTML;
   }
+  scheduleAutoFit(idx);
   clearTimeout(_saveTimer);_saveTimer=setTimeout(saveSlides,400);
 },true);
 
