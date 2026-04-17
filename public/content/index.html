@@ -1296,13 +1296,12 @@ async function genImage(idx,hiRes=false){
       headers:{'Authorization':'Key '+key,'Content-Type':'application/json'},
       body:JSON.stringify(body)
     });
-    if(!sub.ok){
-      const txt=await sub.text().catch(()=>'');
-      throw new Error('Fal submit '+sub.status+(txt?': '+txt.slice(0,100):''));
-    }
-    const subJson=await sub.json();
+    const subTxt=await sub.text();
+    if(!sub.ok)throw new Error('Fal submit '+sub.status+(subTxt?': '+subTxt.slice(0,100):' (empty response — check your API key)'));
+    if(!subTxt)throw new Error('Empty response from Fal — check your API key or try again');
+    let subJson;try{subJson=JSON.parse(subTxt);}catch(e){throw new Error('Bad submit JSON: '+subTxt.slice(0,80));}
     const request_id=subJson.request_id;
-    if(!request_id)throw new Error('No request_id from Fal');
+    if(!request_id)throw new Error('No request_id from Fal: '+JSON.stringify(subJson).slice(0,120));
     // Poll status
     let completed=false;
     for(let i=0;i<45;i++){
