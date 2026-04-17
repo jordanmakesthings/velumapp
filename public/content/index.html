@@ -685,7 +685,7 @@ function bslide(s,i){
   const wm=`<div class="wm">V E L U M</div>`;
   // Footer nudge — small italic hint at bottom of slide (e.g. "swipe for the truth", "(here's why) →")
   const nudgeText=s.footerNudge||'';
-  const fn=nudgeText?dw(`<div class="sfn" contenteditable="true" data-field="footerNudge">${nudgeText}</div>`):'';
+  const fn=nudgeText?`<div class="sfn" contenteditable="true" data-field="footerNudge">${nudgeText}</div>`:'';
   const gr=s.graphic&&s.graphic!=='none'?dw(gfx(s.graphic)):'';
   const t=s.type;
   let inner='';
