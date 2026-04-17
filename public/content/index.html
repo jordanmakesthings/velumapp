@@ -438,9 +438,9 @@ select option{background:#1e1e1e}
     <button onmousedown="event.preventDefault();exportCurrentSlide()" style="font-size:9px">↓ Slide</button>
     <div class="fsep"></div>
     <span class="fbar-label">Size</span>
-    <button onclick="setDims('square')" id="dim-square" style="font-size:9px;border-color:#C9A84C;color:#C9A84C">1:1</button>
+    <button onclick="setDims('square')" id="dim-square" style="font-size:9px">1:1</button>
     <button onclick="setDims('portrait')" id="dim-portrait" style="font-size:9px">4:5</button>
-    <button onclick="setDims('story')" id="dim-story" style="font-size:9px">9:16</button>
+    <button onclick="setDims('story')" id="dim-story" style="font-size:9px;border-color:#C9A84C;color:#C9A84C">9:16</button>
     <span class="hint-text">Select text on slide first</span>
   </div>
 
@@ -579,7 +579,7 @@ async function go(){
       const amap={educational:'teach clearly',howto:'step-by-step guide',myth:'myth-busting',signs:'signs and symptoms',benefits:'why it matters',story:'story arc from struggle to insight'};
       st(ttMode?'Generating TikTok carousel…':'Generating carousel…',true);
       raw=await api(activeBrand+'\n'+(ttMode?'':toneMap[tone]+'\n')+'\n'+activeSCH,`Topic: "${topic}"\nAngle: ${amap[ang]}\nSlides: ${ttMode?Math.min(count,7):count}\n\nGenerate exactly ${ttMode?Math.min(count,7):count} slides.`);
-      if(ttMode)setDims('portrait');
+      if(ttMode)setDims('story');
     }
     const clean=raw.replace(/```json|```/g,'').trim();
     slides=JSON.parse(clean);cur=0;saveSlides();
@@ -1298,8 +1298,8 @@ function clearBgImage(idx){
 }
 
 // ── DIMENSIONS ──
-const DIMS={square:{w:480,h:480,cls:'',export:{w:480,h:480}},portrait:{w:384,h:480,cls:'portrait',export:{w:384,h:480}},story:{w:270,h:480,cls:'story',export:{w:270,h:480}}};
-let curDim='square';
+const DIMS={square:{w:480,h:480,cls:'',export:{w:1080,h:1080}},portrait:{w:384,h:480,cls:'portrait',export:{w:1080,h:1350}},story:{w:270,h:480,cls:'story',export:{w:1080,h:1920}}};
+let curDim='story';
 function setDims(d){
   curDim=d;
   const sc=document.querySelector('#canvas .sc');if(!sc)return;
@@ -1333,8 +1333,8 @@ function toggleTTMode(){
     btn.style.borderColor='#C9A84C';btn.style.color='#C9A84C';
     btn.textContent='TikTok Mode ✓';
     st('TikTok Mode on — carousels optimised for follows + saves',false);
-    // auto-switch to portrait
-    setDims('portrait');
+    // auto-switch to 9:16 (native TikTok ratio)
+    setDims('story');
   }else{
     btn.style.borderColor='var(--br)';btn.style.color='var(--sg)';
     btn.textContent='TikTok Mode';
