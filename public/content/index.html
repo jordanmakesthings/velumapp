@@ -1294,7 +1294,8 @@ async function dlAll(){
     const wasHidden=!slide.classList.contains('active');
     slide.classList.add('active');
     await new Promise(r=>setTimeout(r,80));
-    const canvas=await html2canvas(slide,{scale:2,useCORS:true,backgroundColor:'#111111',width:DIMS[curDim].export.w,height:DIMS[curDim].export.h});
+    const exportScale=DIMS[curDim].export.w/DIMS[curDim].w;
+    const canvas=await html2canvas(slide,{scale:exportScale,useCORS:true,backgroundColor:'#111111'});
     const a=document.createElement('a');a.download=`velum-slide-${String(i+1).padStart(2,'0')}.png`;a.href=canvas.toDataURL('image/png');a.click();
     await new Promise(r=>setTimeout(r,280));
     if(wasHidden)slide.classList.remove('active');
@@ -1505,7 +1506,8 @@ async function exportCurrentSlide(){
   const sc=document.querySelector('#canvas .sc');if(!sc)return;
   await loadHtml2Canvas();
   const slide=sc.querySelectorAll('.slide')[cur];if(!slide)return;
-  const canvas=await html2canvas(slide,{scale:2,useCORS:true,backgroundColor:'#111111',width:DIMS[curDim].export.w,height:DIMS[curDim].export.h});
+  const exportScale=DIMS[curDim].export.w/DIMS[curDim].w;
+  const canvas=await html2canvas(slide,{scale:exportScale,useCORS:true,backgroundColor:'#111111'});
   const a=document.createElement('a');a.download=`velum-slide-${String(cur+1).padStart(2,'0')}.png`;a.href=canvas.toDataURL('image/png');a.click();
 }
 
