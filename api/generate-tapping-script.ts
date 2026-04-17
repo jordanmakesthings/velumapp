@@ -148,13 +148,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const count = lastDate === today ? (profile?.tapping_daily_count ?? 0) : 0;
 
   if (count >= limit) {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setUTCHours(24, 0, 0, 0);
+    const hoursLeft = Math.ceil((midnight.getTime() - now.getTime()) / 3_600_000);
+    const resetMsg = hoursLeft <= 1 ? "in less than an hour" : `in ${hoursLeft} hours`;
     return res.status(429).json({
       error: isPaid
-        ? `Daily limit reached (${limit} sessions). Resets at midnight.`
-        : "You've used your free session for today. Upgrade for unlimited access.",
+        ? `You've had ${limit} sessions today. Your limit resets ${resetMsg}.`
+        : `You've used your free session for today. It resets ${resetMsg} — or upgrade for ${PAID_DAILY_LIMIT} sessions a day.`,
       limit,
       used: count,
       isPaid,
+      resetsIn: hoursLeft,
     });
   }
 

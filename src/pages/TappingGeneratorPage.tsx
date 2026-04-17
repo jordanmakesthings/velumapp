@@ -120,10 +120,7 @@ export default function TappingGeneratorPage() {
       const data = await response.json();
 
       if (response.status === 429) {
-        const msg = data.isPaid
-          ? data.error
-          : "You've used your free session for today. Upgrade to unlock unlimited tapping sessions.";
-        throw new Error(msg);
+        throw new Error(data.error ?? "Daily limit reached. Check back tomorrow.");
       }
       if (!response.ok) throw new Error(data.error ?? "Request failed");
       if (data?.error) throw new Error(data.error);
