@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { createClient } from "@supabase/supabase-js";
 
 const SYSTEM_PROMPT = `You are a Level 2 certified EFT (Emotional Freedom Techniques) practitioner.
 Generate a complete, personalised EFT tapping script using proper clinical protocol.
@@ -105,6 +106,14 @@ For finger_point (only if emotion strongly maps), replace null with:
 
 Return ONLY valid JSON. No markdown. No explanation. No code fences.`;
 
+const FREE_DAILY_LIMIT = 1;
+const PAID_DAILY_LIMIT = 20;
+
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -115,6 +124,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
+
+  // ── Rate limiting via Supabase ──
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.replace("Bearer ", "");
+  if (!token) return res.status(401).json({ error: "Authentication required" });
+
+  // Validate the JWT and get user
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+  if (authErr || !user) return res.status(401).json({ error: "Invalid session" });
+
+  // Fetch profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("subscription_status, subscription_plan, tapping_daily_count, tapping_daily_date")
+    .eq("id", user.id)
+    .single();
+
+  const isPaid = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
+  const limit = isPaid ? PAID_DAILY_LIMIT : FREE_DAILY_LIMIT;
+  const today = new Date().toISOString().slice(0, 10);
+  const lastDate = profile?.tapping_daily_date?.slice(0, 10);
+  const count = lastDate === today ? (profile?.tapping_daily_count ?? 0) : 0;
+
+  if (count >= limit) {
+    return res.status(429).json({
+      error: isPaid
+        ? `Daily limit reached (${limit} sessions). Resets at midnight.`
+        : "You've used your free session for today. Upgrade for unlimited access.",
+      limit,
+      used: count,
+      isPaid,
+    });
+  }
 
   const { issue, intensity, emotion_type } = req.body ?? {};
   if (!issue || String(issue).trim().length < 3) {
@@ -162,6 +204,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         throw new Error("Model returned invalid JSON");
       }
     }
+
+    // Increment daily counter
+    await supabase.from("profiles").update({
+      tapping_daily_count: count + 1,
+      tapping_daily_date: today,
+    }).eq("id", user.id);
 
     return res.status(200).json({ script });
   } catch (err: any) {

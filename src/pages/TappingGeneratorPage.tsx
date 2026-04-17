@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Sparkles, RotateCcw, ChevronLeft, ChevronRight, Hand } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { logSession } from "@/lib/velumStorage";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,6 +79,7 @@ type Phase = "input" | "generating" | "setup" | "round" | "gamut" | "finger" | "
 
 export default function TappingGeneratorPage() {
   const navigate = useNavigate();
+  const { session, hasAccess } = useAuth();
 
   // Input state
   const [issue, setIssue] = useState("");
@@ -105,13 +108,23 @@ export default function TappingGeneratorPage() {
     setPhase("generating");
 
     try {
+      const token = session?.access_token;
       const response = await fetch("/api/generate-tapping-script", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ issue, intensity, emotion_type: emotionType || null }),
       });
       const data = await response.json();
 
+      if (response.status === 429) {
+        const msg = data.isPaid
+          ? data.error
+          : "You've used your free session for today. Upgrade to unlock unlimited tapping sessions.";
+        throw new Error(msg);
+      }
       if (!response.ok) throw new Error(data.error ?? "Request failed");
       if (data?.error) throw new Error(data.error);
       if (!data?.script) throw new Error("No script returned");
