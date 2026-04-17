@@ -70,10 +70,10 @@ select option{background:#1e1e1e}
 .fg label{margin-bottom:0}
 
 /* Quick bg strip in card header */
-.card-bgstrip{display:flex;gap:3px;padding:7px 12px;background:rgba(0,0,0,.2);flex-wrap:wrap;border-top:1px solid var(--br)}
-.bgsw{width:18px;height:18px;border-radius:3px;border:1.5px solid transparent;cursor:pointer;flex-shrink:0;transition:border-color .15s}
-.bgsw:hover{border-color:var(--sg)}
-.bgsw.sel{border-color:var(--gd)!important;box-shadow:0 0 0 1px var(--gd)}
+.card-bgstrip{display:flex;gap:5px;padding:10px 12px;background:rgba(0,0,0,.2);flex-wrap:wrap;border-top:1px solid var(--br)}
+.bgsw{width:28px;height:28px;border-radius:5px;border:2px solid transparent;cursor:pointer;flex-shrink:0;transition:all .15s}
+.bgsw:hover{border-color:var(--sg);transform:scale(1.1)}
+.bgsw.sel{border-color:var(--gd)!important;box-shadow:0 0 0 1px var(--gd);transform:scale(1.08)}
 
 /* Delete button */
 .del-btn{width:100%;padding:7px;background:none;border:1px solid rgba(201,124,92,.25);border-radius:3px;color:var(--red);font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;transition:all .2s}
@@ -148,6 +148,16 @@ select option{background:#1e1e1e}
 .sli{display:flex;align-items:flex-start;gap:10px}
 .sli-dot{width:5px;height:5px;border-radius:50%;background:var(--gd);flex-shrink:0;margin-top:6px;opacity:.8}
 .sli-text{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;line-height:1.65;color:var(--mt)}
+
+/* Phone mockup */
+.phone-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;width:100%}
+.phone-frame{width:164px;height:330px;background:#0a0a0a;border:1.5px solid #333;border-radius:36px;position:relative;flex-shrink:0;box-shadow:0 0 0 1px #1a1a1a,0 24px 60px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.04)}
+.phone-island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:52px;height:9px;background:#000;border-radius:8px;z-index:3}
+.phone-screen{position:absolute;inset:3px;border-radius:33px;overflow:hidden;background:#111}
+.phone-screen img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.phone-screen-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#333;font-size:10px;letter-spacing:.08em;text-align:center;padding:12px;line-height:1.5}
+.phone-upload-btn{background:none;border:1px dashed #333;border-radius:4px;color:var(--sg);font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:7px 12px;cursor:pointer;transition:all .2s;width:100%;text-align:center}
+.phone-upload-btn:hover{border-color:var(--gd);color:var(--gd)}
 
 /* Draggable elements */
 .dw{position:relative;display:block}
@@ -555,6 +565,23 @@ function bslide(s,i){
     const listHtml=`<div class="sli-wrap">`+items.map((it,ii)=>`<div class="sli"><div class="sli-dot"></div><div class="sli-text" contenteditable="true" data-field="item${ii}">${it}</div></div>`).join('')+`</div>`;
     inner=`${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||''}</div>`)}${dw(listHtml)}${wm}`;
   }
+  else if(t==='mockup'){
+    const screenContent=s.screenshot
+      ?`<img src="${s.screenshot}" alt="App screenshot">`
+      :`<div class="phone-screen-empty">Upload your<br>screenshot<br>in the sidebar</div>`;
+    inner=`<div class="bgr"></div>${cm}
+      <div class="phone-wrap">
+        ${s.eyebrow||s.headline?`<div style="text-align:center;padding:0 20px">
+          ${s.eyebrow?dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow}</div>`):''}
+          ${s.headline?dw(`<div class="shl" style="font-size:24px;margin-bottom:0" contenteditable="true" data-field="headline">${s.headline}</div>`):''}
+        </div>`:''}
+        <div class="phone-frame">
+          <div class="phone-island"></div>
+          <div class="phone-screen">${screenContent}</div>
+        </div>
+        ${s.caption?dw(`<div class="sst" contenteditable="true" data-field="caption">${s.caption}</div>`):''}
+      </div>${wm}`;
+  }
   else if(t==='cta')inner=`<div class="bgl"></div>${cm}${dw(`<div class="sey" contenteditable="true" data-field="eyebrow">${s.eyebrow||'go deeper'}</div>`)}${dw(`<div class="sch" contenteditable="true" data-field="headline">${s.headline||''}</div>`)}${dw(`<div class="scb" contenteditable="true" data-field="body">${s.body||''}</div>`)}${dw(`<div class="sln" contenteditable="true" data-field="nudge">${s.nudge||'↑ link in bio'}</div>`)}${gr}${wm}`;
   else inner=`${cm}${dw(`<div class="sbd" contenteditable="true" data-field="body">${s.headline||s.body||''}</div>`)}${gr}${wm}`;
   el.innerHTML=inner;
@@ -669,8 +696,8 @@ const GFX_OPTIONS=[
 ];
 
 // ── RENDER EDITORS ──
-const SLIDE_TYPES=['hook','why','exercise','concept','quote','list','cta'];
-const TYPE_LABELS={hook:'Hook',why:'Why It Works',exercise:'Exercise',concept:'Concept',quote:'Quote',list:'List',cta:'Call to Action'};
+const SLIDE_TYPES=['hook','why','exercise','concept','quote','list','mockup','cta'];
+const TYPE_LABELS={hook:'Hook',why:'Why It Works',exercise:'Exercise',concept:'Concept',quote:'Quote',list:'List',mockup:'App Mockup',cta:'Call to Action'};
 const FIELD_DEFS={
   hook:[['eyebrow','Eyebrow'],['headline','Headline'],['subtext','Subtext']],
   why:[['eyebrow','Eyebrow (optional)'],['headline','Headline (optional)'],['body','Body copy']],
@@ -678,6 +705,7 @@ const FIELD_DEFS={
   concept:[['eyebrow','Eyebrow'],['headline','Headline'],['body','Body copy']],
   quote:[['quote','Quote text'],['attribution','Attribution']],
   list:[['eyebrow','Eyebrow']],
+  mockup:[['eyebrow','Eyebrow'],['headline','Headline'],['caption','Caption (optional)']],
   cta:[['eyebrow','Eyebrow'],['headline','Headline'],['body','Body copy'],['nudge','Nudge text']],
 };
 
@@ -697,7 +725,8 @@ function renderEds(){
     }).join('');
 
     // Gfx picker (for types that support it)
-    const showGfx=!['hook','cta'].includes(s.type);
+    const showGfx=!['hook','cta','mockup'].includes(s.type);
+    const screenshotPicker=s.type==='mockup'?`<div class="fg"><label>Screenshot</label><button class="phone-upload-btn" onclick="document.getElementById('ss-upload-${i}').click()">${s.screenshot?'✓ Screenshot uploaded — click to replace':'+ Upload screenshot'}</button><input type="file" id="ss-upload-${i}" accept="image/*" style="display:none" onchange="loadScreenshot(this,${i})"></div>`:'';
     const curGfxLbl=(GFX_OPTIONS.find(o=>o.v===(s.graphic||'none'))||GFX_OPTIONS[0]).l;
     const gfxPicker=showGfx?`<div class="fg"><label>Graphic <span style="color:var(--gd);font-size:9px;letter-spacing:.05em;text-transform:none">${curGfxLbl}</span></label><div class="gfx-grid" onclick="gfxClick(event,${i})">${GFX_OPTIONS.map(o=>`<div class="gfx-thumb${(s.graphic||'none')===o.v?' sel':''}" data-gfx="${o.v}" title="${o.l}">${gfx(o.v)||`<div style="height:44px;display:flex;align-items:center;justify-content:center;color:#444;font-size:18px">∅</div>`}<span class="gfx-lbl">${o.l.split(' — ')[1]||o.l}</span></div>`).join('')}</div></div>`:'';
 
@@ -719,6 +748,7 @@ function renderEds(){
           <div class="sw"><select onchange="changeType(${i},this.value)">${SLIDE_TYPES.map(t=>`<option value="${t}"${t===s.type?' selected':''}>${TYPE_LABELS[t]}</option>`).join('')}</select></div>
         </div>
         ${fields}
+        ${screenshotPicker}
         ${gfxPicker}
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">
           <button class="rbtn" onclick="regen(${i})">↻ Regenerate</button>
@@ -782,6 +812,7 @@ function changeType(idx,newType){
     concept:{type:'concept',eyebrow:s.eyebrow||'concept',headline:s.headline||'Headline',body:s.body||'Body copy here.',graphic:s.graphic||'none'},
     quote:{type:'quote',quote:s.quote||s.headline||'Your quote here.',attribution:s.attribution||'— Source'},
     list:{type:'list',eyebrow:s.eyebrow||'',items:s.items||['Item one','Item two','Item three']},
+    mockup:{type:'mockup',eyebrow:s.eyebrow||'inside velum',headline:s.headline||'',caption:s.caption||'',screenshot:s.screenshot||null},
     cta:{type:'cta',eyebrow:s.eyebrow||'go deeper',headline:s.headline||'Ready to begin?',body:s.body||'Start your practice today.',nudge:'↑ link in bio'},
   };
   slides[idx]={...defs[newType],bg:s.bg};
@@ -798,6 +829,7 @@ function addBlankSlide(type){
     concept:{type:'concept',eyebrow:'concept',headline:'Headline',body:'Body copy here.',graphic:'none'},
     quote:{type:'quote',quote:'Your quote here.',attribution:'— Source'},
     list:{type:'list',eyebrow:'',items:['Item one','Item two','Item three']},
+    mockup:{type:'mockup',eyebrow:'inside velum',headline:'',caption:'',screenshot:null},
     cta:{type:'cta',eyebrow:'go deeper',headline:'Ready to begin?',body:'Start your practice today.',nudge:'↑ link in bio'},
   };
   const newSlide=defs[type]||{type,headline:'',body:''};
@@ -909,6 +941,21 @@ function setFont(font){
 
 // ── LOGO ──
 let logoDataUrl=null;
+function loadScreenshot(input,idx){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    slides[idx].screenshot=e.target.result;
+    saveSlides();
+    const el=document.getElementById('sl'+idx);
+    if(el){const n=bslide(slides[idx],idx);n.id='sl'+idx;if(el.classList.contains('active'))n.classList.add('active');el.replaceWith(n);}
+    renderEds();
+    setTimeout(()=>{const card=document.getElementById('card'+idx);if(card)card.classList.add('open');goTo(idx);},10);
+    st('Screenshot loaded',false);
+  };
+  reader.readAsDataURL(file);
+}
+
 function loadLogo(input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
