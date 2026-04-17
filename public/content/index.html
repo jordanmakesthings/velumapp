@@ -1297,34 +1297,44 @@ async function genImage(idx,hiRes=false){
       body:JSON.stringify(body)
     });
     const subTxt=await sub.text();
-    if(!sub.ok)throw new Error('Fal submit '+sub.status+(subTxt?': '+subTxt.slice(0,100):' (empty response — check your API key)'));
+    if(!sub.ok)throw new Error('Fal submit '+sub.status+(subTxt?': '+subTxt.slice(0,100):' (empty — check API key)'));
     if(!subTxt)throw new Error('Empty response from Fal — check your API key or try again');
     let subJson;try{subJson=JSON.parse(subTxt);}catch(e){throw new Error('Bad submit JSON: '+subTxt.slice(0,80));}
     const request_id=subJson.request_id;
     if(!request_id)throw new Error('No request_id from Fal: '+JSON.stringify(subJson).slice(0,120));
-    // Poll status
+    // Prefer URLs returned by Fal (always correct regardless of model / version)
+    const statusUrl=subJson.status_url||`https://queue.fal.run/${endpoint}/requests/${request_id}/status`;
+    const responseUrl=subJson.response_url||`https://queue.fal.run/${endpoint}/requests/${request_id}`;
+    // Poll status — up to 180s (Flux Pro can take a minute+)
+    const maxPolls=hiRes?90:45;
     let completed=false;
-    for(let i=0;i<45;i++){
+    let lastStatus='';
+    for(let i=0;i<maxPolls;i++){
       await new Promise(r=>setTimeout(r,2000));
-      const statusRes=await fetch(`https://queue.fal.run/${endpoint}/requests/${request_id}/status`,{headers:{'Authorization':'Key '+key}});
-      if(!statusRes.ok){if(statusRes.status===404)continue;continue;}
-      const statusTxt=await statusRes.text();
-      if(!statusTxt)continue;
-      let statusData;try{statusData=JSON.parse(statusTxt);}catch(e){continue;}
-      if(statusData.status==='COMPLETED'){completed=true;break;}
-      if(statusData.status==='FAILED')throw new Error('Fal returned FAILED: '+(statusData.logs?.[0]?.message||'unknown'));
+      try{
+        const statusRes=await fetch(statusUrl,{headers:{'Authorization':'Key '+key}});
+        if(!statusRes.ok)continue;
+        const statusTxt=await statusRes.text();
+        if(!statusTxt)continue;
+        let statusData;try{statusData=JSON.parse(statusTxt);}catch(e){continue;}
+        lastStatus=statusData.status||'';
+        if(lastStatus==='COMPLETED'){completed=true;break;}
+        if(lastStatus==='FAILED')throw new Error('Fal returned FAILED: '+(statusData.logs?.[0]?.message||'unknown'));
+        // Surface progress so UI shows something
+        if(i%5===0)st(`${hiRes?'Flux Pro':'Flux Dev'}: ${lastStatus||'queued'}… ${i*2}s`,true);
+      }catch(inner){if(inner.message?.includes('FAILED'))throw inner;/* ignore transient */}
     }
-    if(!completed)throw new Error('Timed out waiting for image (90s)');
+    if(!completed)throw new Error('Timed out after '+(maxPolls*2)+'s (last status: '+(lastStatus||'unknown')+')');
     // Fetch result
-    const resultRes=await fetch(`https://queue.fal.run/${endpoint}/requests/${request_id}`,{headers:{'Authorization':'Key '+key}});
+    const resultRes=await fetch(responseUrl,{headers:{'Authorization':'Key '+key}});
     if(!resultRes.ok){
       const txt=await resultRes.text().catch(()=>'');
       throw new Error('Result fetch '+resultRes.status+(txt?': '+txt.slice(0,80):''));
     }
     const resultTxt=await resultRes.text();
-    if(!resultTxt)throw new Error('Empty response from Fal');
-    let result;try{result=JSON.parse(resultTxt);}catch(e){throw new Error('Bad JSON from Fal: '+resultTxt.slice(0,80));}
-    if(!result?.images?.[0]?.url)throw new Error('No image URL in response');
+    if(!resultTxt)throw new Error('Empty result from Fal');
+    let result;try{result=JSON.parse(resultTxt);}catch(e){throw new Error('Bad result JSON: '+resultTxt.slice(0,80));}
+    if(!result?.images?.[0]?.url)throw new Error('No image URL in response: '+JSON.stringify(result).slice(0,120));
     const url=result.images[0].url;
     slides[idx].bgImage=url;
     if(!slides[idx].imgLayout)slides[idx].imgLayout='full';
