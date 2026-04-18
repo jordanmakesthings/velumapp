@@ -244,10 +244,10 @@ export default function HomePage() {
     <div className="min-h-screen w-full max-w-full bg-radial-subtle overflow-x-hidden">
     <div className="mx-auto w-full max-w-3xl overflow-x-hidden px-4 pt-14 pb-8 lg:px-8">
       {/* Header */}
-      <div className="mb-10 min-w-0 w-full max-w-full">
+      <div className="mb-8 min-w-0 w-full max-w-full">
         <div className="mb-6 flex items-center gap-2.5 min-w-0">
           <img src={logoLotus} alt="Velum" className="w-7 h-7 rounded-md object-cover" />
-          <span className="text-accent text-[10px] font-medium tracking-[4px] uppercase">VELUM</span>
+          <span className="text-accent text-[11px] font-medium tracking-[6px] uppercase">VELUM</span>
         </div>
         <p className="text-eyebrow mb-3">{getGreeting()}{firstName ? `, ${firstName}` : ""}</p>
         <h1 className="text-display mb-5 max-w-full break-words text-[2.4rem] leading-[1.02] lg:text-5xl">
@@ -257,6 +257,19 @@ export default function HomePage() {
           "{todayQuote.text}" — {todayQuote.author}
         </p>
       </div>
+
+      {/* ⭐ TODAY — promoted Session Finder is the anchor */}
+      <button onClick={() => setFinderOpen(true)} className="velum-card-accent group mb-6 w-full min-w-0 p-6 text-left relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-green/30 via-transparent to-transparent pointer-events-none" />
+        <div className="relative">
+          <p className="text-eyebrow mb-3">Today · 60 seconds</p>
+          <p className="text-display text-[1.9rem] leading-tight mb-2">Tell me how you<br /><span className="text-accent italic">feel right now.</span></p>
+          <p className="text-muted-foreground text-sm mb-5 max-w-[380px]">Four questions. One tool that matches what your nervous system actually needs today.</p>
+          <span className="inline-flex items-center gap-2 rounded-full gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-semibold tracking-wide">
+            Find my session <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </span>
+        </div>
+      </button>
 
       {/* Trial countdown banner */}
       {isInTrial && (
@@ -316,19 +329,6 @@ export default function HomePage() {
           )}
         </div>
       )}
-
-      {/* Session Finder — hero card with brand-green glow */}
-      <button onClick={() => setFinderOpen(true)} className="velum-card-accent group mb-10 w-full min-w-0 p-6 text-left relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-green/30 via-transparent to-transparent pointer-events-none" />
-        <div className="relative">
-          <p className="text-eyebrow mb-3">Session Finder · 60 seconds</p>
-          <p className="text-display text-2xl leading-tight mb-2">Not sure<br />where to start?</p>
-          <p className="text-muted-foreground text-sm mb-5 max-w-[380px]">Answer 4 questions about how you feel right now. Get one tool that matches.</p>
-          <span className="inline-flex items-center gap-2 rounded-full gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-semibold tracking-wide">
-            Find my session <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </span>
-        </div>
-      </button>
 
       {/* Tools grid — 2×2 */}
       <div className="mb-10 min-w-0 w-full">

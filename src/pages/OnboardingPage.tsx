@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import TermsGateModal from "@/components/TermsGateModal";
 
 const GOALS = [
   { key: "stress",     label: "Manage stress & anxiety",               icon: "◌" },
@@ -37,11 +38,25 @@ const slide = {
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const [goal, setGoal] = useState("");
   const [experience, setExperience] = useState("");
   const [saving, setSaving] = useState(false);
+  const [termsGateOpen, setTermsGateOpen] = useState(false);
+
+  useEffect(() => {
+    if (profile && !profile.terms_accepted_at) setTermsGateOpen(true);
+  }, [profile]);
+
+  const acceptTerms = async () => {
+    if (!user) return;
+    await supabase.from("profiles").update({
+      terms_accepted_at: new Date().toISOString(),
+    }).eq("id", user.id);
+    await refreshProfile();
+    setTermsGateOpen(false);
+  };
 
   const complete = async () => {
     if (!user || saving) return;
@@ -49,7 +64,6 @@ export default function OnboardingPage() {
     await supabase.from("profiles").update({
       onboarding_completed: true,
       onboarding_answers: { goal, experience },
-      terms_accepted_at: new Date().toISOString(),
     }).eq("id", user.id);
     await refreshProfile();
     navigate("/home");
@@ -59,6 +73,8 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+
+      {termsGateOpen && <TermsGateModal onAccept={acceptTerms} />}
 
       {/* Progress dots */}
       <div className="flex justify-center gap-2 pt-8 pb-2 flex-shrink-0">

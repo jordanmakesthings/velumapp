@@ -79,9 +79,14 @@ export default function CoursesPage() {
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
-      <p className="text-accent/50 text-[10px] font-sans tracking-[2.5px] uppercase mb-2">Programs</p>
-      <h1 className="text-display text-3xl mb-2">Courses</h1>
-      <p className="text-ui text-sm mb-6">Structured transformation, at your pace.</p>
+      <div className="mb-8">
+        <div className="flex flex-col items-start mb-5">
+          <span className="text-accent text-[11px] font-sans font-medium tracking-[6px] uppercase">Velum</span>
+          <span className="w-10 h-[1px] gold-underline mt-1" />
+        </div>
+        <h1 className="text-display text-[2.4rem] leading-[1.05]">The <span className="text-accent italic">programs.</span></h1>
+        <p className="text-muted-foreground text-sm font-sans mt-2">Structured transformation, at your pace.</p>
+      </div>
 
       {/* Search */}
       <div className="relative mb-8">

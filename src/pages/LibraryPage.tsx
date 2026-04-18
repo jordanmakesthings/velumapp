@@ -4,6 +4,7 @@ import { Search, Heart, Sparkles, Wind, Zap, GraduationCap, Feather, BookOpen, C
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import VelumMark from "@/components/VelumMark";
 
 type Tab = "sessions" | "favorites" | "courses" | "mastery" | "journal";
 
@@ -165,7 +166,14 @@ export default function LibraryPage() {
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto overflow-x-hidden">
-      <h1 className="text-display text-3xl mb-6">Library</h1>
+      <div className="mb-8">
+        <div className="flex flex-col items-start mb-5">
+          <span className="text-accent text-[11px] font-sans font-medium tracking-[6px] uppercase">Velum</span>
+          <span className="w-10 h-[1px] gold-underline mt-1" />
+        </div>
+        <h1 className="text-display text-[2.4rem] leading-[1.05]">The <span className="text-accent italic">library.</span></h1>
+        <p className="text-muted-foreground text-sm font-sans mt-2">Every tool, sorted the way your body finds them.</p>
+      </div>
 
       <div className="flex gap-1 mb-6 overflow-x-auto pb-1 -mx-4 px-4">
         {TABS.map(({ key, label }) => (

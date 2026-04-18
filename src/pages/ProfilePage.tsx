@@ -170,6 +170,10 @@ export default function ProfilePage() {
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
+      <div className="flex flex-col items-start mb-6">
+        <span className="text-accent text-[11px] font-sans font-medium tracking-[6px] uppercase">Velum</span>
+        <span className="w-10 h-[1px] gold-underline mt-1" />
+      </div>
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">

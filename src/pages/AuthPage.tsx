@@ -13,7 +13,6 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
@@ -37,7 +36,6 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        if (!termsAccepted) { setError("Please accept the terms to continue."); setLoading(false); return; }
         const { error } = await signUp(email, password, name);
         if (error) throw error;
         navigate("/onboarding");
@@ -145,27 +143,6 @@ export default function AuthPage() {
                   minLength={6}
                   className="w-full bg-black/30 border border-accent/15 rounded-xl px-4 py-4 text-foreground text-sm font-sans focus:outline-none focus:border-accent/45 transition-colors placeholder:text-muted-foreground/50"
                 />
-              )}
-
-              {mode === "signup" && (
-                <button
-                  type="button"
-                  onClick={() => setTermsAccepted(!termsAccepted)}
-                  className="flex items-start gap-3 text-left mt-1"
-                >
-                  <div className={`mt-0.5 w-4 h-4 rounded flex-shrink-0 border transition-all flex items-center justify-center ${
-                    termsAccepted ? "border-accent bg-accent" : "border-muted-foreground/30"
-                  }`}>
-                    {termsAccepted && (
-                      <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-                        <path d="M2 5l2.5 2.5L8 3" stroke="#0d0d0d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </div>
-                  <p className="text-muted-foreground text-xs font-sans leading-relaxed">
-                    I understand Velum is for educational and wellness purposes only — not a substitute for professional mental health treatment.
-                  </p>
-                </button>
               )}
 
               {error && <p className="text-destructive text-xs font-sans text-center">{error}</p>}
