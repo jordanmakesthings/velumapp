@@ -177,14 +177,14 @@ export default function PremiumPage() {
 
   return (
     <div className="min-h-screen bg-background relative">
-      {/* Ambient green glow */}
+      {/* Ambient green glow — stronger */}
       <div className="fixed inset-0 pointer-events-none -z-10">
-        <div className="absolute top-[8%] left-[-10%] w-[600px] h-[600px] rounded-full"
-             style={{ background: "radial-gradient(circle, hsla(156,51%,16%,0.55) 0%, transparent 60%)", filter: "blur(50px)" }} />
-        <div className="absolute top-[40%] right-[-15%] w-[500px] h-[500px] rounded-full"
-             style={{ background: "radial-gradient(circle, hsla(156,51%,14%,0.45) 0%, transparent 60%)", filter: "blur(50px)" }} />
-        <div className="absolute bottom-[5%] left-[-5%] w-[450px] h-[450px] rounded-full"
-             style={{ background: "radial-gradient(circle, hsla(42,53%,32%,0.08) 0%, transparent 60%)", filter: "blur(50px)" }} />
+        <div className="absolute top-[-5%] left-[-15%] w-[700px] h-[700px] rounded-full"
+             style={{ background: "radial-gradient(circle, hsla(156,51%,18%,0.85) 0%, transparent 65%)", filter: "blur(40px)" }} />
+        <div className="absolute top-[30%] right-[-20%] w-[600px] h-[600px] rounded-full"
+             style={{ background: "radial-gradient(circle, hsla(156,51%,15%,0.75) 0%, transparent 65%)", filter: "blur(40px)" }} />
+        <div className="absolute bottom-[0%] left-[-10%] w-[500px] h-[500px] rounded-full"
+             style={{ background: "radial-gradient(circle, hsla(42,53%,32%,0.15) 0%, transparent 65%)", filter: "blur(40px)" }} />
       </div>
 
       <div className="px-6 pt-12 pb-12 max-w-lg mx-auto relative">

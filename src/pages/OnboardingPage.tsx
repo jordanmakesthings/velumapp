@@ -132,7 +132,7 @@ export default function OnboardingPage() {
           {step === 0 && (
             <motion.div key="details" {...slide} className="w-full">
               <div className="text-center mb-8">
-                <img src={logoCircle} alt="Velum" className="w-16 h-16 object-contain mx-auto mb-4" />
+                <img src={logoCircle} alt="Velum" className="w-24 h-24 object-contain mx-auto mb-4" />
                 <h1 className="text-display text-[2.4rem] leading-[1.05] mb-3">Let's get<br />you <span className="text-accent italic">set up.</span></h1>
                 <p className="text-muted-foreground text-sm font-light">
                   Your details stay yours. We use phone for important account messages only.

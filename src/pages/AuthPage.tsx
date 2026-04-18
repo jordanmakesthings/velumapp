@@ -11,7 +11,6 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<Mode>("signup");
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,7 +36,7 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await signUp(email, password, name);
+        const { error } = await signUp(email, password);
         if (error) throw error;
         navigate("/onboarding");
       } else if (mode === "login") {
@@ -115,16 +114,6 @@ export default function AuthPage() {
             </div>
           ) : (
             <form onSubmit={handle} className="flex flex-col gap-3">
-              {mode === "signup" && (
-                <input
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="First name"
-                  required
-                  className="w-full bg-black/30 border border-accent/15 rounded-xl px-4 py-4 text-foreground text-sm font-sans focus:outline-none focus:border-accent/45 transition-colors placeholder:text-muted-foreground/50"
-                />
-              )}
               <input
                 type="email"
                 value={email}
