@@ -42,11 +42,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: `Invalid plan: ${plan}. Price env var likely missing.` });
   }
 
-  // Lazy init so a bad key gives a clean error above instead of module-load crash
+  // Lazy init so a bad key gives a clean error above instead of module-load crash.
+  // Use fetch HTTP client — Node's https module has been unreliable on Vercel ESM ("type": "module").
   const stripe = new Stripe(secret, {
     apiVersion: "2025-04-30.basil",
     maxNetworkRetries: 0,
     timeout: 15000,
+    httpClient: Stripe.createFetchHttpClient(),
   });
 
   const isLifetime = plan === "lifetime";
