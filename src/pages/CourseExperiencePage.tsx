@@ -12,6 +12,8 @@ function AudioPlayerSimple({ src }: { src: string }) {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [scrubbing, setScrubbing] = useState(false);
+  const [scrubValue, setScrubValue] = useState(0);
 
   const toggle = () => {
     if (!audioRef.current) return;
@@ -21,10 +23,21 @@ function AudioPlayerSimple({ src }: { src: string }) {
 
   const fmt = (s: number) => { const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, "0")}`; };
 
+  const displayValue = scrubbing ? scrubValue : currentTime;
+  const percent = duration > 0 ? (displayValue / duration) * 100 : 0;
+
+  const commit = (val: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = val;
+      setCurrentTime(val);
+    }
+    setScrubbing(false);
+  };
+
   return (
     <div className="velum-card p-7 text-center">
       <audio ref={audioRef} src={src}
-        onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
+        onTimeUpdate={() => { if (!scrubbing) setCurrentTime(audioRef.current?.currentTime || 0); }}
         onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
         onEnded={() => setPlaying(false)} />
       <button onClick={toggle}
@@ -33,11 +46,24 @@ function AudioPlayerSimple({ src }: { src: string }) {
       </button>
       {duration > 0 && (
         <>
-          <input type="range" min={0} max={duration} value={currentTime}
-            onChange={e => { if (audioRef.current) { audioRef.current.currentTime = Number(e.target.value); setCurrentTime(Number(e.target.value)); } }}
-            className="w-full accent-accent cursor-pointer" />
-          <div className="flex justify-between mt-1.5">
-            <span className="text-ui text-[11px] tabular-nums">{fmt(currentTime)}</span>
+          <input
+            type="range"
+            min={0}
+            max={duration}
+            step={0.1}
+            value={displayValue}
+            onPointerDown={() => { setScrubbing(true); setScrubValue(currentTime); }}
+            onInput={e => setScrubValue(Number((e.target as HTMLInputElement).value))}
+            onChange={e => { if (scrubbing) setScrubValue(Number(e.target.value)); }}
+            onPointerUp={e => commit(Number((e.target as HTMLInputElement).value))}
+            onPointerCancel={() => setScrubbing(false)}
+            className="velum-audio-slider w-full touch-pan-y cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, hsl(var(--accent)) 0%, hsl(var(--accent)) ${percent}%, hsl(var(--foreground) / 0.12) ${percent}%, hsl(var(--foreground) / 0.12) 100%)`,
+            }}
+          />
+          <div className="flex justify-between mt-2">
+            <span className="text-ui text-[11px] tabular-nums">{fmt(displayValue)}</span>
             <span className="text-ui text-[11px] tabular-nums">{fmt(duration)}</span>
           </div>
         </>

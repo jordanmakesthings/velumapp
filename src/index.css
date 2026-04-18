@@ -277,6 +277,29 @@ input[type="range"]::-moz-range-thumb {
   border: none;
 }
 
+/* Audio scrubber — beefier thumb, easier to grab on touch devices */
+input.velum-audio-slider[type="range"] {
+  height: 6px;
+  background: transparent; /* inline gradient handles fill */
+  touch-action: none;
+}
+input.velum-audio-slider[type="range"]::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+  background: hsl(var(--accent));
+  box-shadow: 0 0 0 4px hsla(42, 53%, 45%, 0.18);
+}
+input.velum-audio-slider[type="range"]::-webkit-slider-thumb:hover,
+input.velum-audio-slider[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.1);
+}
+input.velum-audio-slider[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  background: hsl(var(--accent));
+  box-shadow: 0 0 0 4px hsla(42, 53%, 45%, 0.18);
+}
+
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
