@@ -39,7 +39,7 @@ const PLANS = [
   {
     key: "lifetime" as const,
     label: "Lifetime",
-    badge: "Founding",
+    badge: "14 remaining",
     price: "$199",
     sub: "one-time",
     note: "Every future update included",

@@ -153,20 +153,19 @@ export default function PremiumPage() {
       <div className="px-6 pt-12 pb-12 max-w-lg mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="text-center mb-10">
-            <img src={logoCircle} alt="Velum" className="w-[52px] h-[52px] object-contain mx-auto mb-3" />
-            <p className="text-accent text-[11px] font-sans font-medium tracking-[4px] uppercase mb-6">Velum</p>
-            <h1 className="text-display text-4xl italic mb-3">Invest in Your Nervous System.</h1>
+            <img src={logoCircle} alt="Velum" className="w-24 h-24 object-contain mx-auto mb-6" />
+            <h1 className="text-display text-[2.6rem] leading-[1.05] font-light mb-4">Invest in your<br />nervous system.</h1>
             <p className="text-muted-foreground text-[15px] font-sans font-light">Full access to everything in Velum.</p>
           </div>
 
           {/* Plans */}
           <div className="flex flex-col gap-3 mb-8">
 
-            {/* LIFETIME — FOUNDING */}
+            {/* LIFETIME */}
             <div className="relative">
               {isFounding && (
                 <span className="absolute -top-2.5 left-4 gold-gradient text-primary-foreground text-[10px] font-sans font-semibold px-2.5 py-0.5 rounded-full tracking-wide z-10">
-                  Founding — {foundingLeft} left
+                  14 remaining
                 </span>
               )}
               <button
@@ -176,19 +175,10 @@ export default function PremiumPage() {
               >
                 <div>
                   <p className="text-foreground font-sans font-medium">Lifetime</p>
-                  <p className="text-muted-foreground text-xs mt-0.5">
-                    {isFounding ? "Pay once · Every future feature included" : "Pay once · Every future feature included"}
-                  </p>
+                  <p className="text-muted-foreground text-xs mt-0.5">Pay once · Every future feature included</p>
                 </div>
                 <div className="text-right">
-                  {isFounding ? (
-                    <div className="flex items-baseline gap-2 justify-end">
-                      <span className="text-muted-foreground text-sm line-through">$299</span>
-                      <span className="text-accent text-2xl font-serif">$199</span>
-                    </div>
-                  ) : (
-                    <p className="text-accent text-2xl font-serif">$299</p>
-                  )}
+                  <p className="text-accent text-2xl font-serif">$199</p>
                   <p className="text-muted-foreground text-xs">one-time</p>
                 </div>
               </button>

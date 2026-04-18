@@ -146,7 +146,7 @@ export default function OnboardingPage() {
               <p className="text-eyebrow mb-3">One last step</p>
               <h1 className="text-editorial text-5xl italic mb-4 font-light">You're in.</h1>
               <p className="text-muted-foreground text-[15px] leading-relaxed mb-8 max-w-[320px] mx-auto">
-                Pick the way you want to practice. From $19/mo, or become a founding member for $199 lifetime.
+                Pick the way you want to practice. From $19/mo, or $199 lifetime.
               </p>
 
               <div className="velum-card p-5 mb-8 text-left">
@@ -170,7 +170,7 @@ export default function OnboardingPage() {
               </button>
 
               <p className="mt-4 text-muted-foreground/70 text-[11px]">
-                Monthly · Annual (7-day trial) · Founding Lifetime
+                Monthly · Annual (7-day trial) · Lifetime
               </p>
             </motion.div>
           )}
