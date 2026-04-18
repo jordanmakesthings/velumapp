@@ -122,13 +122,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!error && data.user) {
       const trialEnd = new Date();
       trialEnd.setDate(trialEnd.getDate() + 7);
-      // Start trial + save phone — slight delay for profile trigger
+      // Attribute referral if stored from ?ref= param
+      const refCode = localStorage.getItem("velum_ref") || "";
       setTimeout(() => {
         supabase.from("profiles").update({
           ...(phone ? { phone } : {}),
           trial_started_at: new Date().toISOString(),
           trial_ends_at: trialEnd.toISOString(),
         }).eq("id", data.user!.id);
+        if (refCode) {
+          supabase.rpc("attribute_referral", { p_referral_code: refCode })
+            .then(() => { localStorage.removeItem("velum_ref"); });
+        }
       }, 1500);
       // Fire-and-forget: add contact to Loops
       supabase.functions.invoke("loops-signup", {

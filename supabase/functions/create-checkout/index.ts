@@ -7,9 +7,13 @@ const corsHeaders = {
 };
 
 const PRICE_IDS = {
-  monthly: "price_1TC9J5Lv0dyfXaxONNpQ9wHV",
-  lifetime: "price_1TC9JLLv0dyfXaxOM4HC5j8l",
+  monthly: "price_1TMulfLFHHLwAHKUNNKLRI66",       // $29/mo, no trial
+  annual: "price_1TMulgLFHHLwAHKUFVXu0O2l",        // $149/yr, 7-day trial
+  lifetime_founding: "price_1TNMvNLFHHLwAHKUE3NXvdxD", // $199 one-time (first 100)
+  lifetime: "price_1TMulhLFHHLwAHKUbKNuLmWs",      // $299 one-time (post-founding)
 };
+
+const FOUNDING_LIFETIME_CAP = 100;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -41,37 +45,33 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub as string;
     const userEmail = claimsData.claims.email as string;
 
-    const { plan, promoCode, returnUrl } = await req.json();
-    if (!plan || !["monthly", "lifetime"].includes(plan)) {
+    const { plan, returnUrl } = await req.json();
+    if (!plan || !["monthly", "annual", "lifetime"].includes(plan)) {
       return new Response(JSON.stringify({ error: "Invalid plan" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
 
-    const { data: profile } = await supabase
+    const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+    const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("stripe_customer_id")
+      .select("stripe_customer_id, referred_by")
       .eq("id", userId)
       .single();
 
     let customerId = profile?.stripe_customer_id;
 
-    // Verify the stored customer ID actually exists in Stripe
     if (customerId) {
       try {
         const existing = await stripe.customers.retrieve(customerId);
-        if ((existing as any).deleted) {
-          console.warn(`Stored customer ${customerId} was deleted in Stripe, will create new one`);
-          customerId = null;
-        }
+        if ((existing as any).deleted) customerId = null;
       } catch {
-        console.warn(`Stored customer ${customerId} not found in Stripe, will create new one`);
         customerId = null;
       }
     }
 
     if (!customerId) {
-      // Check if customer exists by email first
       const existing = await stripe.customers.list({ email: userEmail, limit: 1 });
       if (existing.data.length > 0) {
         customerId = existing.data[0].id;
@@ -82,12 +82,21 @@ Deno.serve(async (req) => {
         });
         customerId = customer.id;
       }
-
-      const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       await supabaseAdmin.from("profiles").update({ stripe_customer_id: customerId }).eq("id", userId);
     }
 
-    const priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS];
+    // Pick price ID — lifetime swaps to regular once 100 founding sold
+    let priceId: string;
+    if (plan === "lifetime") {
+      const { count: soldCount } = await supabaseAdmin
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("subscription_plan", "lifetime");
+      const founding = (soldCount ?? 0) < FOUNDING_LIFETIME_CAP;
+      priceId = founding ? PRICE_IDS.lifetime_founding : PRICE_IDS.lifetime;
+    } else {
+      priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS];
+    }
 
     const successBase = returnUrl || "https://app.govelum.com";
     const cancelBase = returnUrl || "https://app.govelum.com";
@@ -95,17 +104,35 @@ Deno.serve(async (req) => {
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       success_url: `${successBase}/paymentsuccess?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${cancelBase}/onboarding`,
-      metadata: { supabase_user_id: userId, plan },
+      cancel_url: `${cancelBase}/premium`,
+      metadata: {
+        supabase_user_id: userId,
+        plan,
+        referred_by: profile?.referred_by ?? "",
+      },
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
     };
 
-    if (plan === "monthly") {
+    if (plan === "annual") {
       sessionParams.mode = "subscription";
       sessionParams.subscription_data = {
         trial_period_days: 7,
-        metadata: { supabase_user_id: userId },
+        metadata: {
+          supabase_user_id: userId,
+          plan,
+          referred_by: profile?.referred_by ?? "",
+        },
+      };
+      sessionParams.payment_method_collection = "always";
+    } else if (plan === "monthly") {
+      sessionParams.mode = "subscription";
+      sessionParams.subscription_data = {
+        metadata: {
+          supabase_user_id: userId,
+          plan,
+          referred_by: profile?.referred_by ?? "",
+        },
       };
     } else {
       sessionParams.mode = "payment";
@@ -117,7 +144,6 @@ Deno.serve(async (req) => {
     } catch (stripeErr: unknown) {
       const msg = stripeErr instanceof Error ? stripeErr.message : "";
       if (msg.includes("currencies") || msg.includes("currency")) {
-        console.warn("Currency conflict on customer, falling back to customer_email");
         delete (sessionParams as any).customer;
         (sessionParams as any).customer_email = userEmail;
         session = await stripe.checkout.sessions.create(sessionParams);

@@ -1,36 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, Crown, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Crown, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import logoCircle from "@/assets/logo-circle.png";
-
-const PLANS = [
-  {
-    key: "annual" as const,
-    label: "Annual",
-    price: "$149",
-    sub: "/year",
-    note: "~$12/mo · save 57%",
-    badge: "Best value",
-  },
-  {
-    key: "monthly" as const,
-    label: "Monthly",
-    price: "$29",
-    sub: "/month",
-    note: "Cancel anytime",
-    badge: null,
-  },
-  {
-    key: "lifetime" as const,
-    label: "Lifetime",
-    price: "$299",
-    sub: "one-time",
-    note: "Every future update included",
-    badge: null,
-  },
-];
 
 const INCLUDED_FEATURES = [
   {
@@ -58,28 +32,38 @@ const INCLUDED_FEATURES = [
 export default function PremiumPage() {
   const navigate = useNavigate();
   const { session, profile, refreshProfile } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual" | "lifetime">("annual");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<"monthly" | "annual" | "lifetime" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [canceling, setCanceling] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(false);
+  const [foundingLeft, setFoundingLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.rpc("founding_lifetime_remaining");
+      if (typeof data === "number") setFoundingLeft(data);
+    })();
+  }, []);
 
   const isPremium = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
   const isLifetime = profile?.subscription_plan === "lifetime";
   const isCanceling = profile?.subscription_status === "canceling";
+  const isFounding = foundingLeft !== null && foundingLeft > 0;
 
   const handleSubscribe = async (plan: "monthly" | "annual" | "lifetime") => {
     if (!session) { navigate("/signup"); return; }
-    setLoading(true);
+    setLoading(plan);
     setError(null);
     try {
       const res = await fetch("/api/create-checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           plan,
           returnUrl: window.location.origin,
-          customerEmail: session.user.email,
         }),
       });
       const data = await res.json();
@@ -90,7 +74,7 @@ export default function PremiumPage() {
       console.error("Checkout error:", err);
       setError(err.message || "Failed to start checkout");
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
@@ -131,8 +115,7 @@ export default function PremiumPage() {
             className="w-20 h-20 rounded-3xl gold-gradient flex items-center justify-center mx-auto mb-6">
             <Crown className="w-9 h-9 text-primary-foreground" />
           </motion.div>
-           <h1 className="text-display text-3xl mb-3">You Have Full Access</h1>
-
+          <h1 className="text-display text-3xl mb-3">You Have Full Access</h1>
           <p className="text-ui text-sm mb-2">You have access to everything in Velum.</p>
           {profile?.subscription_plan && (
             <p className="text-ui text-xs mb-6 capitalize">
@@ -169,45 +152,84 @@ export default function PremiumPage() {
     <div className="min-h-screen bg-background">
       <div className="px-6 pt-12 pb-12 max-w-lg mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          {/* Logo + Hero */}
           <div className="text-center mb-10">
             <img src={logoCircle} alt="Velum" className="w-[52px] h-[52px] object-contain mx-auto mb-3" />
             <p className="text-accent text-[11px] font-sans font-medium tracking-[4px] uppercase mb-6">Velum</p>
             <h1 className="text-display text-4xl italic mb-3">Invest in Your Nervous System.</h1>
-            <p className="text-muted-foreground text-[15px] font-sans font-light">
-              Full access to everything in Velum.
-            </p>
+            <p className="text-muted-foreground text-[15px] font-sans font-light">Full access to everything in Velum.</p>
           </div>
 
           {/* Plans */}
           <div className="flex flex-col gap-3 mb-8">
-            {PLANS.map((plan) => (
-              <div key={plan.key} className="relative">
-                {plan.badge && (
-                  <span className="absolute -top-2.5 left-4 gold-gradient text-primary-foreground text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full tracking-wide z-10">
-                    {plan.badge}
-                  </span>
-                )}
-                <button
-                  onClick={() => handleSubscribe(plan.key)}
-                  disabled={loading}
-                  className={`w-full p-5 rounded-xl text-left transition-all border flex items-center justify-between ${
-                    plan.key === "annual"
-                      ? "border-accent/50 bg-accent/5"
-                      : "border-foreground/10 bg-card hover:border-foreground/20"
-                  } disabled:opacity-70`}
-                >
-                  <div>
-                    <p className="text-foreground font-sans font-medium">{plan.label}</p>
-                    <p className="text-muted-foreground text-xs mt-0.5">{plan.note}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-accent text-2xl font-serif">{plan.price}</p>
-                    <p className="text-muted-foreground text-xs">{plan.sub}</p>
-                  </div>
-                </button>
+
+            {/* LIFETIME — FOUNDING */}
+            <div className="relative">
+              {isFounding && (
+                <span className="absolute -top-2.5 left-4 gold-gradient text-primary-foreground text-[10px] font-sans font-semibold px-2.5 py-0.5 rounded-full tracking-wide z-10">
+                  Founding — {foundingLeft} left
+                </span>
+              )}
+              <button
+                onClick={() => handleSubscribe("lifetime")}
+                disabled={loading !== null}
+                className="w-full p-5 rounded-xl text-left transition-all border border-accent bg-accent/8 hover:border-accent flex items-center justify-between disabled:opacity-70"
+              >
+                <div>
+                  <p className="text-foreground font-sans font-medium">Lifetime</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">
+                    {isFounding ? "Pay once · Every future feature included" : "Pay once · Every future feature included"}
+                  </p>
+                </div>
+                <div className="text-right">
+                  {isFounding ? (
+                    <div className="flex items-baseline gap-2 justify-end">
+                      <span className="text-muted-foreground text-sm line-through">$299</span>
+                      <span className="text-accent text-2xl font-serif">$199</span>
+                    </div>
+                  ) : (
+                    <p className="text-accent text-2xl font-serif">$299</p>
+                  )}
+                  <p className="text-muted-foreground text-xs">one-time</p>
+                </div>
+              </button>
+            </div>
+
+            {/* ANNUAL — 7-day trial */}
+            <div className="relative">
+              <span className="absolute -top-2.5 left-4 bg-foreground/10 text-foreground text-[10px] font-sans font-semibold px-2.5 py-0.5 rounded-full tracking-wide z-10 border border-foreground/15">
+                7-day free trial
+              </span>
+              <button
+                onClick={() => handleSubscribe("annual")}
+                disabled={loading !== null}
+                className="w-full p-5 rounded-xl text-left transition-all border border-foreground/15 bg-card hover:border-foreground/25 flex items-center justify-between disabled:opacity-70"
+              >
+                <div>
+                  <p className="text-foreground font-sans font-medium">Annual</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">~$12/mo · save 57% vs monthly</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-accent text-2xl font-serif">$149</p>
+                  <p className="text-muted-foreground text-xs">/year</p>
+                </div>
+              </button>
+            </div>
+
+            {/* MONTHLY — no trial */}
+            <button
+              onClick={() => handleSubscribe("monthly")}
+              disabled={loading !== null}
+              className="w-full p-5 rounded-xl text-left transition-all border border-foreground/10 bg-card hover:border-foreground/20 flex items-center justify-between disabled:opacity-70"
+            >
+              <div>
+                <p className="text-foreground font-sans font-medium">Monthly</p>
+                <p className="text-muted-foreground text-xs mt-0.5">Charged today · Cancel anytime</p>
               </div>
-            ))}
+              <div className="text-right">
+                <p className="text-accent text-2xl font-serif">$29</p>
+                <p className="text-muted-foreground text-xs">/month</p>
+              </div>
+            </button>
           </div>
 
           {loading && (
@@ -224,7 +246,6 @@ export default function PremiumPage() {
 
           <div className="w-full h-px bg-accent/15 mb-8" />
 
-          {/* Everything Included */}
           <div className="mb-10">
             <p className="text-accent text-[10px] font-sans font-medium tracking-[2.5px] uppercase text-center mb-8">
               Everything Included

@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Flame, Sparkles, Wind, LogOut, CheckCircle2, AlertCircle, Bell, Camera, Edit2, X, Check, Zap } from "lucide-react";
+import { Flame, Sparkles, Wind, LogOut, CheckCircle2, AlertCircle, Bell, Camera, Edit2, X, Check, Zap, Gift, Copy } from "lucide-react";
 import { getSUDSStats, getCheckins } from "@/lib/velumStorage";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import NervousSystemScore from "@/components/profile/NervousSystemScore";
 import { useUserProgress, useTracks, calculateStreak } from "@/hooks/useVelumData";
@@ -267,6 +267,9 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Invite Friends */}
+      <InviteFriendsCard />
+
       {/* Notification Time */}
       <div className="velum-card p-4 mb-6">
         <div className="flex items-center justify-between">
@@ -397,6 +400,96 @@ export default function ProfilePage() {
             </Link>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function InviteFriendsCard() {
+  const { profile } = useAuth();
+  const [stats, setStats] = useState<{ invited: number; credited: number } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const code = (profile as any)?.referral_code as string | undefined;
+  const creditMonths = (profile as any)?.referral_credit_months as number | undefined;
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("referrals")
+        .select("status")
+        .eq("referrer_id", profile.id);
+      if (data) {
+        setStats({
+          invited: data.length,
+          credited: data.filter((r: any) => r.status === "credited").length,
+        });
+      }
+    })();
+  }, [profile?.id]);
+
+  if (!code) return null;
+
+  const link = `https://govelum.com?ref=${code}`;
+  const shareText = `I've been using Velum to regulate my nervous system — breathwork, AI tapping, somatic tools. You get 1 free month on me: ${link}`;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {}
+  };
+
+  const share = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Try Velum", text: shareText, url: link });
+        return;
+      } catch {}
+    }
+    copy();
+  };
+
+  return (
+    <div className="velum-card p-5 mb-6 border border-accent/30 bg-accent/5">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center">
+          <Gift className="w-4 h-4 text-accent" />
+        </div>
+        <div>
+          <p className="text-foreground text-sm font-sans font-medium">Invite friends — you both get 1 month</p>
+          <p className="text-muted-foreground text-[11px] mt-0.5">Every friend who subscribes adds a free month to your account.</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 mb-3 bg-background border border-accent/20 rounded-lg px-3 py-2">
+        <span className="text-foreground text-xs font-sans flex-1 truncate">{link}</span>
+        <button onClick={copy} className="text-accent text-[11px] font-sans font-medium tracking-wide hover:text-accent/80 flex items-center gap-1">
+          {copied ? (<><Check className="w-3 h-3" />Copied</>) : (<><Copy className="w-3 h-3" />Copy</>)}
+        </button>
+      </div>
+
+      <button
+        onClick={share}
+        className="w-full gold-gradient text-primary-foreground text-sm font-sans font-semibold rounded-lg py-2.5 mb-3"
+      >
+        Share
+      </button>
+
+      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-accent/10">
+        <div className="text-center">
+          <p className="text-foreground text-lg font-serif">{stats?.invited ?? 0}</p>
+          <p className="text-muted-foreground text-[10px] font-sans tracking-wide uppercase mt-0.5">Invited</p>
+        </div>
+        <div className="text-center">
+          <p className="text-foreground text-lg font-serif">{stats?.credited ?? 0}</p>
+          <p className="text-muted-foreground text-[10px] font-sans tracking-wide uppercase mt-0.5">Subscribed</p>
+        </div>
+        <div className="text-center">
+          <p className="text-accent text-lg font-serif">{creditMonths ?? 0}</p>
+          <p className="text-muted-foreground text-[10px] font-sans tracking-wide uppercase mt-0.5">Free months</p>
+        </div>
       </div>
     </div>
   );

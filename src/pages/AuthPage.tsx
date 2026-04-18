@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,19 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
+  const [referrerCode, setReferrerCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      localStorage.setItem("velum_ref", ref.trim());
+      setReferrerCode(ref.trim());
+    } else {
+      const stored = localStorage.getItem("velum_ref");
+      if (stored) setReferrerCode(stored);
+    }
+  }, []);
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,8 +106,16 @@ export default function AuthPage() {
 
         <div className="w-full max-w-sm">
 
+          {/* Referral banner — takes priority over trial badge */}
+          {mode === "signup" && referrerCode && (
+            <div className="flex items-center gap-2 gold-gradient rounded-full px-4 py-2 mb-4 w-fit mx-auto">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
+              <span className="text-primary-foreground text-[10px] font-sans font-semibold tracking-[2px] uppercase">You were invited · Both get 1 free month</span>
+            </div>
+          )}
+
           {/* Trial badge — signup only */}
-          {mode === "signup" && (
+          {mode === "signup" && !referrerCode && (
             <div className="flex items-center gap-2 bg-accent/8 border border-accent/20 rounded-full px-4 py-2 mb-8 w-fit mx-auto">
               <div className="w-1.5 h-1.5 rounded-full bg-accent" />
               <span className="text-accent text-[10px] font-sans font-medium tracking-[2px] uppercase">7 days free · No credit card</span>

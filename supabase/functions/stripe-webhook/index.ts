@@ -27,20 +27,71 @@ Deno.serve(async (req) => {
 
     if (webhookSecret) {
       const sig = req.headers.get("stripe-signature");
-      if (!sig) {
-        return new Response("Missing stripe-signature", { status: 400 });
-      }
+      if (!sig) return new Response("Missing stripe-signature", { status: 400 });
       event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
     } else {
       event = JSON.parse(body) as Stripe.Event;
     }
 
-    const updateSubscription = async (userId: string, status: string, plan: string | null, expiresAt: string | null) => {
-      await supabaseAdmin.from("profiles").update({
-        subscription_status: status,
-        subscription_plan: plan,
-        subscription_expires_at: expiresAt,
-      }).eq("id", userId);
+    const updateSubscription = async (
+      userId: string,
+      status: string,
+      plan: string | null,
+      expiresAt: string | null,
+    ) => {
+      await supabaseAdmin
+        .from("profiles")
+        .update({
+          subscription_status: status,
+          subscription_plan: plan,
+          subscription_expires_at: expiresAt,
+        })
+        .eq("id", userId);
+    };
+
+    // Credit referrer with 1 free month when their referred user first becomes paid.
+    // Idempotent — only credits once per referred user (status transitions signed_up -> credited).
+    const creditReferrerIfEligible = async (referredUserId: string) => {
+      const { data: r } = await supabaseAdmin
+        .from("referrals")
+        .select("id, referrer_id, status")
+        .eq("referred_id", referredUserId)
+        .maybeSingle();
+      if (!r || r.status === "credited") return;
+
+      const { data: referrer } = await supabaseAdmin
+        .from("profiles")
+        .select("referral_credit_months")
+        .eq("id", r.referrer_id)
+        .single();
+      const current = referrer?.referral_credit_months ?? 0;
+
+      await supabaseAdmin
+        .from("profiles")
+        .update({ referral_credit_months: current + 1 })
+        .eq("id", r.referrer_id);
+
+      await supabaseAdmin
+        .from("referrals")
+        .update({
+          status: "credited",
+          subscribed_at: new Date().toISOString(),
+          credited_at: new Date().toISOString(),
+        })
+        .eq("id", r.id);
+    };
+
+    const resolveUserId = async (
+      metadataUserId: string | undefined,
+      stripeCustomerId: string,
+    ): Promise<string | null> => {
+      if (metadataUserId) return metadataUserId;
+      const { data } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("stripe_customer_id", stripeCustomerId)
+        .maybeSingle();
+      return data?.id ?? null;
     };
 
     switch (event.type) {
@@ -52,8 +103,10 @@ Deno.serve(async (req) => {
 
         if (plan === "lifetime") {
           await updateSubscription(userId, "active", "lifetime", null);
-        } else if (session.subscription) {
-          await updateSubscription(userId, "active", "monthly", null);
+          await creditReferrerIfEligible(userId);
+        } else if (session.subscription && (plan === "monthly" || plan === "annual")) {
+          await updateSubscription(userId, "active", plan, null);
+          await creditReferrerIfEligible(userId);
         }
         break;
       }
@@ -61,36 +114,28 @@ Deno.serve(async (req) => {
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
-        const userId = sub.metadata?.supabase_user_id;
-        if (!userId) {
-          const { data } = await supabaseAdmin
-            .from("profiles")
-            .select("id")
-            .eq("stripe_customer_id", sub.customer as string)
-            .single();
-          if (data) {
-            const status = sub.status === "active" ? "active" : sub.status;
-            await updateSubscription(data.id, status, "monthly",
-              sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null);
-          }
-        } else {
-          const status = sub.status === "active" ? "active" : sub.status;
-          await updateSubscription(userId, status, "monthly",
-            sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null);
+        const userId = await resolveUserId(sub.metadata?.supabase_user_id, sub.customer as string);
+        if (!userId) break;
+
+        const plan =
+          sub.metadata?.plan ||
+          (sub.items?.data?.[0]?.price?.recurring?.interval === "year" ? "annual" : "monthly");
+        const status = sub.status === "active" ? "active" : sub.status;
+        const expiresAt = sub.current_period_end
+          ? new Date(sub.current_period_end * 1000).toISOString()
+          : null;
+
+        await updateSubscription(userId, status, plan, expiresAt);
+        if (status === "active" || status === "trialing") {
+          await creditReferrerIfEligible(userId);
         }
         break;
       }
 
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
-        const { data } = await supabaseAdmin
-          .from("profiles")
-          .select("id")
-          .eq("stripe_customer_id", sub.customer as string)
-          .single();
-        if (data) {
-          await updateSubscription(data.id, "canceled", null, null);
-        }
+        const userId = await resolveUserId(sub.metadata?.supabase_user_id, sub.customer as string);
+        if (userId) await updateSubscription(userId, "canceled", null, null);
         break;
       }
 
