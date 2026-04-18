@@ -18,7 +18,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/signup" replace />;
   }
 
-  // Redirect to onboarding if not completed — no payment gate, trial starts at signup
+  // Redirect TO onboarding if not completed
   if (
     profile &&
     !profile.onboarding_completed &&
@@ -26,6 +26,15 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     location.pathname !== "/paymentsuccess"
   ) {
     return <Navigate to="/onboarding" replace />;
+  }
+
+  // Redirect AWAY from onboarding if already completed
+  if (
+    profile &&
+    profile.onboarding_completed &&
+    location.pathname === "/onboarding"
+  ) {
+    return <Navigate to="/home" replace />;
   }
 
   return <>{children}</>;
