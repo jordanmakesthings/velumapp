@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import logoCircle from "@/assets/logo-circle.png";
 
 const GOALS = [
   { key: "stress",     label: "Manage stress & anxiety",               icon: "◌" },
@@ -77,9 +76,10 @@ export default function OnboardingPage() {
           {step === 0 && (
             <motion.div key="goal" {...slide} className="w-full">
               <div className="text-center mb-8">
-                <img src={logoCircle} alt="Velum" className="w-10 h-10 object-contain mx-auto mb-5" />
+                <p className="text-accent text-[11px] font-sans font-medium tracking-[6px] uppercase mb-1">Velum</p>
+                <div className="w-10 h-[1px] gold-underline mx-auto mb-6" />
                 <p className="text-eyebrow mb-3">Step 1 of 3</p>
-                <h1 className="text-display text-[2.2rem] leading-[1.05] mb-3">What brought<br />you <span className="text-accent italic font-light font-serif">here?</span></h1>
+                <h1 className="text-display text-[2.4rem] leading-[1.05] mb-3">What brought<br />you <span className="text-accent italic">here?</span></h1>
                 <p className="text-muted-foreground text-sm font-light">
                   Pick the one that matters most right now.
                 </p>
@@ -89,10 +89,8 @@ export default function OnboardingPage() {
                   <button
                     key={key}
                     onClick={() => { setGoal(key); next(); }}
-                    className={`w-full border rounded-xl px-5 py-4 flex items-center gap-4 text-left transition-all duration-200 active:scale-[0.98] ${
-                      goal === key
-                        ? "border-accent/40 bg-surface-light/30"
-                        : "border-foreground/10 hover:border-foreground/20"
+                    className={`velum-card w-full px-5 py-4 flex items-center gap-4 text-left transition-all duration-200 active:scale-[0.98] ${
+                      goal === key ? "!border-accent/50 shadow-[0_0_24px_rgba(201,168,76,0.15)]" : ""
                     }`}
                   >
                     <span className="text-accent text-base w-4 flex-shrink-0">{icon}</span>
@@ -108,7 +106,7 @@ export default function OnboardingPage() {
             <motion.div key="exp" {...slide} className="w-full">
               <div className="text-center mb-8">
                 <p className="text-eyebrow mb-3">Step 2 of 3</p>
-                <h1 className="text-display text-[2.2rem] leading-[1.05] mb-3">Where are you<br /><span className="text-accent italic font-light font-serif">starting</span> from?</h1>
+                <h1 className="text-display text-[2.4rem] leading-[1.05] mb-3">Where are you<br /><span className="text-accent italic">starting</span> from?</h1>
                 <p className="text-muted-foreground text-sm font-light">
                   There's no wrong answer. Every path through Velum begins where you are.
                 </p>
@@ -118,10 +116,8 @@ export default function OnboardingPage() {
                   <button
                     key={key}
                     onClick={() => { setExperience(key); next(); }}
-                    className={`w-full border rounded-xl px-5 py-5 flex items-center justify-between text-left transition-all duration-200 active:scale-[0.98] ${
-                      experience === key
-                        ? "border-accent/40 bg-surface-light/30"
-                        : "border-foreground/10 hover:border-foreground/20"
+                    className={`velum-card w-full px-5 py-5 flex items-center justify-between text-left transition-all duration-200 active:scale-[0.98] ${
+                      experience === key ? "!border-accent/50 shadow-[0_0_24px_rgba(201,168,76,0.15)]" : ""
                     }`}
                   >
                     <div>
@@ -178,9 +174,12 @@ export default function OnboardingPage() {
         </AnimatePresence>
       </div>
 
-      {/* Background */}
+      {/* Ambient green glow */}
       <div className="fixed inset-0 pointer-events-none -z-10">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,hsl(155,52%,10%)_0%,transparent_65%)] opacity-30" />
+        <div className="absolute top-[10%] left-[-10%] w-[500px] h-[500px] rounded-full"
+             style={{ background: "radial-gradient(circle, hsla(156,51%,14%,0.5) 0%, transparent 60%)", filter: "blur(40px)" }} />
+        <div className="absolute bottom-[5%] right-[-10%] w-[400px] h-[400px] rounded-full"
+             style={{ background: "radial-gradient(circle, hsla(42,53%,35%,0.1) 0%, transparent 60%)", filter: "blur(40px)" }} />
       </div>
     </div>
   );

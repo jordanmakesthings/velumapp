@@ -4,63 +4,64 @@
 
 @layer base {
   :root {
-    /* Dark charcoal base — near-black with a whisper of warmth */
+    /* Near-black base with a warm green undertone — feels like being in a forest at night */
     --background: 0 0% 5%;
     --foreground: 40 24% 93%;
 
-    /* Cards: charcoal, not green. Green lives in accents only. */
-    --card: 0 0% 9%;
+    /* Cards = deep emerald. This is the signature. */
+    --card: 156 51% 12%;
     --card-foreground: 40 24% 93%;
 
-    --popover: 0 0% 7%;
+    --popover: 156 51% 10%;
     --popover-foreground: 40 24% 93%;
 
     --primary: 40 24% 93%;
     --primary-foreground: 0 0% 5%;
 
-    --secondary: 0 0% 12%;
+    --secondary: 156 51% 16%;
     --secondary-foreground: 40 24% 93%;
 
-    --muted: 0 0% 55%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 156 13% 55%;
+    --muted-foreground: 156 13% 55%;
 
     /* Gold — signature accent */
     --accent: 42 53% 54%;
     --accent-foreground: 0 0% 5%;
 
-    /* Brand green — deep emerald, used sparingly */
+    /* Brand green tokens for gradients, glows, and subtle overlays */
     --brand-green: 156 51% 16%;
-    --brand-green-light: 156 43% 30%;
-    --brand-green-glow: 156 51% 12%;
+    --brand-green-deep: 156 51% 12%;
+    --brand-green-glow: 156 51% 22%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 40 24% 93%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 12%;
+    --border: 42 53% 54% / 0.15;
+    --input: 156 51% 14%;
     --ring: 42 53% 54%;
 
-    --radius: 10px;
+    --radius: 12px;
 
-    --surface: 0 0% 9%;
-    --surface-light: 0 0% 14%;
+    --surface: 156 51% 12%;
+    --surface-light: 156 43% 18%;
 
     --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 55%;
+    --sidebar-foreground: 156 13% 55%;
     --sidebar-primary: 40 24% 93%;
     --sidebar-primary-foreground: 0 0% 5%;
-    --sidebar-accent: 0 0% 9%;
+    --sidebar-accent: 156 51% 12%;
     --sidebar-accent-foreground: 40 24% 93%;
-    --sidebar-border: 0 0% 18%;
+    --sidebar-border: 42 53% 54% / 0.12;
     --sidebar-ring: 42 53% 54%;
 
     --font-serif: 'Cormorant Garamond', Georgia, serif;
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-display: 'Cormorant Garamond', Georgia, serif;
 
     --shadow-card: 0 0 0 1px rgba(201,168,76,0.15), 0 4px 12px rgba(0,0,0,0.4);
     --shadow-card-hover: 0 0 0 1px rgba(201,168,76,0.3), 0 8px 24px rgba(0,0,0,0.5);
     --shadow-gold-glow: 0 0 40px rgba(201,168,76,0.15);
+    --shadow-green-glow: 0 0 60px rgba(34, 102, 74, 0.35);
   }
 }
 
@@ -76,7 +77,7 @@
   textarea:-webkit-autofill,
   select:-webkit-autofill {
     -webkit-box-shadow: 0 0 0px 1000px hsl(var(--card)) inset !important;
-    -webkit-text-fill-color: hsl(var(--accent)) !important;
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
     transition: background-color 5000s ease-in-out 0s;
   }
 
@@ -95,13 +96,17 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: var(--font-sans);
+    background:
+      radial-gradient(ellipse at 20% 15%, hsla(156, 51%, 14%, 0.55) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 85%, hsla(156, 51%, 10%, 0.45) 0%, transparent 55%),
+      hsl(var(--background));
   }
 
-  /* Default headlines: Inter. Use .text-editorial for Cormorant (quotes, poetic moments). */
+  /* Editorial headlines — Cormorant for that mysterious, literary feel */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -0.015em;
+    font-weight: 400;
+    letter-spacing: -0.01em;
   }
 
   /* Scrollbar */
@@ -123,52 +128,57 @@
 }
 
 @layer utilities {
+
+  /* Standard velum card — deep green, subtle gold border */
   .velum-card {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
+    background:
+      linear-gradient(135deg, hsla(156, 51%, 14%, 0.9), hsla(156, 51%, 10%, 0.95));
+    border: 1px solid hsla(42, 53%, 54%, 0.18);
     border-radius: 14px;
-    transition: border-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms;
   }
 
   .velum-card:hover {
-    border-color: rgba(201,168,76,0.22);
+    border-color: hsla(42, 53%, 54%, 0.35);
   }
 
   .velum-card-flat {
     background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
+    border: 1px solid hsla(42, 53%, 54%, 0.15);
     border-radius: 14px;
   }
 
-  /* Signature accent — green-glow card for anchor CTAs */
+  /* Signature anchor card — used for hero CTAs, glows gold */
   .velum-card-accent {
     background:
-      linear-gradient(135deg, hsla(156, 51%, 12%, 0.6), hsla(0, 0%, 9%, 0.8)),
-      hsl(var(--card));
-    border: 1px solid hsla(42, 53%, 54%, 0.22);
-    border-radius: 14px;
+      linear-gradient(135deg, hsla(156, 51%, 18%, 0.85), hsla(156, 51%, 10%, 0.95));
+    border: 1px solid hsla(42, 53%, 54%, 0.35);
+    border-radius: 16px;
+    box-shadow: var(--shadow-gold-glow);
     transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .velum-card-accent:hover {
-    border-color: hsla(42, 53%, 54%, 0.42);
+    border-color: hsla(42, 53%, 54%, 0.55);
+    box-shadow: 0 0 60px rgba(201,168,76,0.25);
   }
 
-  /* Display type — bold Inter for confident headlines */
+  /* Display type — Cormorant editorial for the poetic moments */
   .text-display {
     font-family: var(--font-display);
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-weight: 300;
+    letter-spacing: -0.015em;
     color: hsl(var(--foreground));
     line-height: 1.05;
   }
 
-  /* Editorial — Cormorant for poetic moments only */
+  /* Editorial — italic Cormorant for accent words */
   .text-editorial {
     font-family: var(--font-serif);
     font-weight: 300;
+    font-style: italic;
     letter-spacing: -0.01em;
-    color: hsl(var(--foreground));
+    color: hsl(var(--accent));
   }
 
   .text-ui {
@@ -181,7 +191,7 @@
     font-family: var(--font-sans);
     font-size: 10px;
     font-weight: 500;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.28em;
     text-transform: uppercase;
     color: hsl(var(--accent));
   }
@@ -190,11 +200,26 @@
     background: linear-gradient(135deg, hsl(42, 53%, 54%), hsl(42, 60%, 65%));
   }
 
+  .gold-underline {
+    background: linear-gradient(90deg, transparent, hsla(42,53%,54%,0.6), transparent);
+  }
+
   .bg-radial-subtle {
     background:
-      radial-gradient(ellipse at 15% 10%, hsla(156, 51%, 12%, 0.4) 0%, transparent 55%),
-      radial-gradient(ellipse at 90% 85%, hsla(42, 53%, 45%, 0.06) 0%, transparent 45%),
+      radial-gradient(ellipse at 15% 10%, hsla(156, 51%, 14%, 0.5) 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 85%, hsla(42, 53%, 45%, 0.08) 0%, transparent 45%),
       hsl(var(--background));
+  }
+
+  /* Ambient green orbs — drop into any section for the 'velum atmosphere' */
+  .ambient-green-glow {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, hsla(156, 51%, 14%, 0.5) 0%, transparent 65%);
+    pointer-events: none;
+    filter: blur(40px);
   }
 
   .safe-area-pt {

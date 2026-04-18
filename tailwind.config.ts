@@ -15,8 +15,8 @@ export default {
     extend: {
       fontFamily: {
         serif: ["Cormorant Garamond", "Georgia", "serif"],
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Inter", "system-ui", "sans-serif"],
+        sans: ["DM Sans", "system-ui", "sans-serif"],
+        display: ["Cormorant Garamond", "Georgia", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -58,7 +58,7 @@ export default {
         },
         brand: {
           green: "hsl(var(--brand-green))",
-          "green-light": "hsl(var(--brand-green-light))",
+          "green-deep": "hsl(var(--brand-green-deep))",
           "green-glow": "hsl(var(--brand-green-glow))",
         },
         sidebar: {
