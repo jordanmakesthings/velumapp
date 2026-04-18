@@ -18,6 +18,7 @@ interface LessonForm {
   lesson_type: "audio" | "video" | "writing";
   thumbnail_url: string;
   thumbnail_square_url: string;
+  journal_prompt: string;
 }
 
 interface ModuleData {
@@ -31,6 +32,7 @@ const emptyLesson: LessonForm = {
   written_content: "", is_free_preview: false, order_index: 0,
   downloadable_files: [], lesson_type: "audio",
   thumbnail_url: "", thumbnail_square_url: "",
+  journal_prompt: "",
 };
 
 const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
@@ -161,6 +163,7 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
         downloadable_files: data.downloadable_files as any,
         thumbnail_url: data.thumbnail_url || null,
         thumbnail_square_url: data.thumbnail_square_url || null,
+        journal_prompt: data.journal_prompt || null,
       };
       if (editingLesson) {
         const { error } = await supabase.from("lessons").update(saveData).eq("id", editingLesson.id);
@@ -368,6 +371,21 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                 </div>
                 )}
 
+                {/* Guided journal prompt */}
+                <div className="md:col-span-2 border-t border-foreground/5 pt-4">
+                  <label className={labelClass}>Guided Journal Prompt</label>
+                  <textarea
+                    value={lessonForm.journal_prompt}
+                    onChange={e => setLessonForm(f => ({ ...f, journal_prompt: e.target.value }))}
+                    rows={3}
+                    className={inputClass + " resize-none"}
+                    placeholder="Optional — shown to the user after they finish this lesson, captured in course_journal_entries."
+                  />
+                  <p className="text-[11px] text-muted-foreground/70 mt-1.5 font-sans">
+                    Leave blank to skip journaling for this lesson.
+                  </p>
+                </div>
+
                 {/* Thumbnail Generator */}
                 <div className="md:col-span-2 border-t border-foreground/5 pt-4">
                   <ThumbnailGenerator
@@ -446,6 +464,7 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                         lesson_type: detectLessonType(lesson) as any,
                         thumbnail_url: lesson.thumbnail_url || "",
                         thumbnail_square_url: lesson.thumbnail_square_url || "",
+                        journal_prompt: lesson.journal_prompt || "",
                       });
                       setShowLessonForm(true);
                     }} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground">
