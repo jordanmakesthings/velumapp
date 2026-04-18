@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import TermsGateModal from "@/components/TermsGateModal";
 import VelumMark from "@/components/VelumMark";
 
 const GOALS = [
@@ -25,7 +24,7 @@ const EXPERIENCE = [
 ];
 
 const WHAT_YOU_GET = [
-  { icon: "✦", label: "AI-personalised EFT tapping sessions" },
+  { icon: "✦", label: "Guided EFT tapping sessions" },
   { icon: "◎", label: "Breathwork, bilateral & somatic tools" },
   { icon: "≡", label: "Courses, Mastery Classes & daily journal" },
   { icon: "◌", label: "SOS Reset — regulation in minutes" },
@@ -39,25 +38,11 @@ const slide = {
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const [goal, setGoal] = useState("");
   const [experience, setExperience] = useState("");
   const [saving, setSaving] = useState(false);
-  const [termsGateOpen, setTermsGateOpen] = useState(false);
-
-  useEffect(() => {
-    if (profile && !profile.terms_accepted_at) setTermsGateOpen(true);
-  }, [profile]);
-
-  const acceptTerms = async () => {
-    if (!user) return;
-    await supabase.from("profiles").update({
-      terms_accepted_at: new Date().toISOString(),
-    }).eq("id", user.id);
-    await refreshProfile();
-    setTermsGateOpen(false);
-  };
 
   const complete = async () => {
     if (!user || saving) return;
@@ -74,8 +59,6 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-
-      {termsGateOpen && <TermsGateModal onAccept={acceptTerms} />}
 
       {/* Progress dots */}
       <div className="flex justify-center gap-2 pt-8 pb-2 flex-shrink-0">
@@ -157,7 +140,7 @@ export default function OnboardingPage() {
               <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(201,168,76,0.25)]">
                 <span className="text-primary-foreground text-2xl">✦</span>
               </div>
-              <p className="text-eyebrow mb-3">7 days free · No credit card</p>
+              <p className="text-eyebrow mb-3">Welcome</p>
               <h1 className="text-editorial text-5xl italic mb-4 font-light">You're in.</h1>
               <p className="text-muted-foreground text-[15px] leading-relaxed mb-8 max-w-[320px] mx-auto">
                 Your trial starts now. Explore every tool, every course, every session — no card needed until you choose to stay.

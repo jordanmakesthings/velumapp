@@ -339,7 +339,7 @@ export default function HomePage() {
           {[
             { to: "/breathe", icon: Wind, name: "Breathwork", sub: "6 techniques · live pacing", primary: true },
             { to: "/bilateral", icon: Zap, name: "Bilateral", sub: "Visual + stereo audio" },
-            { to: "/tapping", icon: Heart, name: "Tapping", sub: "EFT · AI-personalised" },
+            { to: "/tapping", icon: Heart, name: "Tapping", sub: "EFT · Guided sequences" },
             { to: "/somatic-touch", icon: Fingerprint, name: "Somatic", sub: "Grounding sequences" },
           ].map(({ to, icon: Icon, name, sub, primary }) => (
             <Link

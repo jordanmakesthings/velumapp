@@ -87,9 +87,9 @@ export default function AuthPage() {
         {/* Green card — the container for everything */}
         <div className="velum-card-accent p-8 md:p-10">
 
-          {/* Trial eyebrow */}
+          {/* Eyebrow */}
           {mode === "signup" && !referrerCode && (
-            <p className="text-eyebrow text-center mb-5">7 days free · No credit card</p>
+            <p className="text-eyebrow text-center mb-5">Regulate your body in 60 seconds</p>
           )}
 
           {/* Headline — Cormorant editorial */}
