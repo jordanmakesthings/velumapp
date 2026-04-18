@@ -9,10 +9,10 @@
     --foreground: 40 24% 93%;
 
     /* Cards = deep emerald. This is the signature. */
-    --card: 156 51% 12%;
+    --card: 156 52% 14%;
     --card-foreground: 40 24% 93%;
 
-    --popover: 156 51% 10%;
+    --popover: 156 51% 12%;
     --popover-foreground: 40 24% 93%;
 
     --primary: 40 24% 93%;
@@ -97,9 +97,11 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-family: var(--font-sans);
     background:
-      radial-gradient(ellipse at 20% 15%, hsla(156, 51%, 14%, 0.55) 0%, transparent 55%),
-      radial-gradient(ellipse at 85% 85%, hsla(156, 51%, 10%, 0.45) 0%, transparent 55%),
+      radial-gradient(ellipse at 20% 10%, hsla(156, 52%, 18%, 0.45) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 90%, hsla(156, 52%, 14%, 0.35) 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 50%, hsla(156, 52%, 10%, 0.3) 0%, transparent 70%),
       hsl(var(--background));
+    background-attachment: fixed;
   }
 
   /* Editorial headlines — Cormorant for that mysterious, literary feel */
@@ -129,30 +131,30 @@
 
 @layer utilities {
 
-  /* Standard velum card — deep green, subtle gold border */
+  /* Standard velum card — deep emerald, subtle gold border */
   .velum-card {
     background:
-      linear-gradient(135deg, hsla(156, 51%, 14%, 0.9), hsla(156, 51%, 10%, 0.95));
-    border: 1px solid hsla(42, 53%, 54%, 0.18);
+      linear-gradient(135deg, hsl(156, 52%, 15%), hsl(156, 51%, 11%));
+    border: 1px solid hsla(42, 53%, 54%, 0.22);
     border-radius: 14px;
     transition: border-color 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms;
   }
 
   .velum-card:hover {
-    border-color: hsla(42, 53%, 54%, 0.35);
+    border-color: hsla(42, 53%, 54%, 0.4);
   }
 
   .velum-card-flat {
-    background: hsl(var(--card));
-    border: 1px solid hsla(42, 53%, 54%, 0.15);
+    background: linear-gradient(135deg, hsl(156, 52%, 14%), hsl(156, 51%, 11%));
+    border: 1px solid hsla(42, 53%, 54%, 0.2);
     border-radius: 14px;
   }
 
   /* Signature anchor card — used for hero CTAs, glows gold */
   .velum-card-accent {
     background:
-      linear-gradient(135deg, hsla(156, 51%, 18%, 0.85), hsla(156, 51%, 10%, 0.95));
-    border: 1px solid hsla(42, 53%, 54%, 0.35);
+      linear-gradient(135deg, hsl(156, 52%, 18%), hsl(156, 51%, 10%));
+    border: 1px solid hsla(42, 53%, 54%, 0.38);
     border-radius: 16px;
     box-shadow: var(--shadow-gold-glow);
     transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
