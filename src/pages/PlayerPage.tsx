@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { ArrowLeft, SkipBack, Play, Pause, SkipForward, Heart, RotateCcw, Star, CheckCircle2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeft, SkipBack, Play, Pause, SkipForward, RotateCcw, Star, CheckCircle2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -78,7 +78,15 @@ export default function PlayerPage() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [scrubbing, setScrubbing] = useState(false);
   const [scrubValue, setScrubValue] = useState(0);
+  const [controlsVisible, setControlsVisible] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const revealControls = () => {
+    setControlsVisible(true);
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => setControlsVisible(false), 3200);
+  };
 
   const { data: track, isLoading } = useQuery({
     queryKey: ["track", trackId],
@@ -179,6 +187,12 @@ export default function PlayerPage() {
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = speed;
   }, [speed]);
+
+  useEffect(() => {
+    if (step !== "playing") return;
+    revealControls();
+    return () => { if (hideTimerRef.current) clearTimeout(hideTimerRef.current); };
+  }, [step]);
 
   const formatTime = (s: number) => {
     const mins = Math.floor(s / 60);
@@ -321,8 +335,15 @@ export default function PlayerPage() {
     );
   }
 
+  const isImmersive = step === "playing";
+
   return (
-    <div className="relative flex min-h-screen w-full max-w-full flex-col overflow-x-hidden bg-background">
+    <div
+      className="relative flex min-h-screen w-full max-w-full flex-col overflow-x-hidden"
+      onPointerMove={isImmersive ? revealControls : undefined}
+      onPointerDown={isImmersive ? revealControls : undefined}
+      style={{ background: "#07100c" }}
+    >
       {track.audio_url && (
         <audio
           ref={audioRef}
@@ -333,26 +354,73 @@ export default function PlayerPage() {
         />
       )}
 
-      <div className="absolute inset-0 bg-surface opacity-40" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(42,53%,54%,0.08)_0%,_transparent_60%)]" />
-
-      <div className="safe-area-pt relative z-10 flex items-center justify-between px-4 pt-4">
-        <button onClick={() => navigate(-1)} className="flex min-h-10 items-center gap-1 text-sm font-sans text-foreground">
-          <ArrowLeft className="w-4 h-4 shrink-0" />
-          Back
-        </button>
-        <p className="text-ui max-w-[40vw] truncate text-xs tracking-wide uppercase text-center">
-          {categoryLabels[track.category] || track.category}
-        </p>
-        <button onClick={() => toggleFavMutation.mutate()} className="p-2 shrink-0" aria-label="Toggle favorite">
-          <Star className={`w-5 h-5 transition-all ${isFavorited ? "text-accent fill-accent" : "text-muted-foreground hover:text-foreground"}`} />
-        </button>
+      {/* Aurora — three slowly drifting emerald + gold pools */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <motion.div
+          className="absolute rounded-full"
+          style={{
+            width: "90vw", height: "90vw",
+            top: "-30%", left: "-25%",
+            background: "radial-gradient(circle, hsla(156,55%,22%,0.75) 0%, transparent 60%)",
+            filter: "blur(60px)",
+          }}
+          animate={{ x: [0, 40, -20, 0], y: [0, -30, 20, 0] }}
+          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute rounded-full"
+          style={{
+            width: "80vw", height: "80vw",
+            bottom: "-25%", right: "-20%",
+            background: "radial-gradient(circle, hsla(168,50%,18%,0.7) 0%, transparent 60%)",
+            filter: "blur(80px)",
+          }}
+          animate={{ x: [0, -30, 20, 0], y: [0, 20, -30, 0] }}
+          transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute rounded-full"
+          style={{
+            width: "55vw", height: "55vw",
+            top: "20%", right: "-10%",
+            background: "radial-gradient(circle, hsla(42,60%,38%,0.14) 0%, transparent 65%)",
+            filter: "blur(70px)",
+          }}
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+        />
+        {/* Vignette for depth */}
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.55) 100%)" }} />
       </div>
 
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6">
+      {/* Header */}
+      <AnimatePresence>
+        {(!isImmersive || controlsVisible) && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.4 }}
+            className="safe-area-pt relative z-20 flex items-center justify-between px-5 pt-5"
+          >
+            <button onClick={() => navigate(-1)} className="flex min-h-10 items-center gap-1.5 text-xs font-sans text-foreground/80 hover:text-foreground transition-colors tracking-wide">
+              <ArrowLeft className="w-4 h-4 shrink-0" />
+              Back
+            </button>
+            <p className="text-[10px] font-sans text-accent/90 tracking-[3px] uppercase text-center">
+              {categoryLabels[track.category] || track.category}
+            </p>
+            <button onClick={() => toggleFavMutation.mutate()} className="p-2 shrink-0" aria-label="Toggle favorite">
+              <Star className={`w-5 h-5 transition-all ${isFavorited ? "text-accent fill-accent" : "text-muted-foreground hover:text-foreground"}`} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-10">
         {step === "before" ? (
           <>
-            <div className="mb-6 aspect-square w-48 relative overflow-hidden rounded-xl shadow-2xl">
+            <div className="mb-6 aspect-square w-48 relative overflow-hidden rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
               {((track as any).thumbnail_square_url || track.thumbnail_url) ? (
                 <img src={(track as any).thumbnail_square_url ?? track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
               ) : (
@@ -361,8 +429,8 @@ export default function PlayerPage() {
                 </div>
               )}
             </div>
-            <h2 className="text-display text-2xl mb-1 text-center break-words max-w-full">{track.title}</h2>
-            {track.description && <p className="text-ui text-sm mb-6 text-center max-w-md break-words">{track.description}</p>}
+            <h2 className="text-display italic text-4xl md:text-5xl mb-2 text-center break-words max-w-full leading-[1.05]">{track.title}</h2>
+            {track.description && <p className="text-muted-foreground text-sm font-sans mb-6 text-center max-w-md break-words leading-relaxed">{track.description}</p>}
             <StressCheckin
               title="Rate your levels of stress or negative emotions."
               subtitle="Before this session"
@@ -372,78 +440,127 @@ export default function PlayerPage() {
           </>
         ) : step === "playing" ? (
           <>
-            <motion.div
-              animate={{ scale: isPlaying ? [1, 1.02, 1] : 1 }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="mb-10 aspect-square w-64 relative overflow-hidden rounded-xl shadow-2xl lg:w-72"
-            >
-              {((track as any).thumbnail_square_url || track.thumbnail_url) ? (
-                <img src={(track as any).thumbnail_square_url ?? track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-surface-light flex items-center justify-center">
-                  <div className="w-24 h-24 rounded-full bg-[radial-gradient(circle,_hsl(42,53%,54%)_0%,_transparent_70%)] opacity-60" />
-                </div>
+            {/* Breathing orb behind the title */}
+            <div className="relative flex flex-col items-center justify-center w-full flex-1">
+              <motion.div
+                aria-hidden
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width: "min(78vw, 480px)",
+                  height: "min(78vw, 480px)",
+                  background: "radial-gradient(circle, hsla(156,55%,30%,0.55) 0%, hsla(42,60%,45%,0.10) 40%, transparent 72%)",
+                  filter: "blur(10px)",
+                }}
+                animate={
+                  isPlaying
+                    ? { scale: [0.92, 1.06, 0.92], opacity: [0.75, 1, 0.75] }
+                    : { scale: 0.95, opacity: 0.6 }
+                }
+                transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+              />
+              {/* Inner ring */}
+              <motion.div
+                aria-hidden
+                className="absolute rounded-full border border-accent/20 pointer-events-none"
+                style={{ width: "min(52vw, 320px)", height: "min(52vw, 320px)" }}
+                animate={
+                  isPlaying
+                    ? { scale: [1, 1.04, 1], opacity: [0.35, 0.7, 0.35] }
+                    : { scale: 1, opacity: 0.3 }
+                }
+                transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+              />
+
+              {/* Title */}
+              <div className="relative z-10 text-center px-4 max-w-lg">
+                <p className="text-[10px] font-sans text-accent/70 tracking-[4px] uppercase mb-5">
+                  Now playing
+                </p>
+                <h1 className="text-display italic text-5xl md:text-6xl leading-[1.02] text-foreground mb-4 break-words">
+                  {track.title}
+                </h1>
+                <p className="text-xs font-sans text-muted-foreground/70 tracking-[2px] uppercase">
+                  {track.duration_minutes} minutes · {categoryLabels[track.category] || track.category}
+                </p>
+              </div>
+            </div>
+
+            {/* Controls — fade after 3s inactivity */}
+            <AnimatePresence>
+              {controlsVisible && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  className="relative z-20 w-full max-w-sm flex flex-col items-center"
+                >
+                  {/* Scrubber */}
+                  <div className="w-full mb-5">
+                    {(() => {
+                      const max = duration || displayDuration || 1;
+                      const display = scrubbing ? scrubValue : currentTime;
+                      const pct = max > 0 ? (display / max) * 100 : 0;
+                      return (
+                        <>
+                          <input
+                            type="range"
+                            min={0}
+                            max={max}
+                            step={0.1}
+                            value={display}
+                            onPointerDown={() => { setScrubbing(true); setScrubValue(currentTime); revealControls(); }}
+                            onInput={e => setScrubValue(Number((e.target as HTMLInputElement).value))}
+                            onChange={e => { if (scrubbing) setScrubValue(Number(e.target.value)); }}
+                            onPointerUp={e => {
+                              const v = Number((e.target as HTMLInputElement).value);
+                              if (audioRef.current) audioRef.current.currentTime = v;
+                              setCurrentTime(v);
+                              setScrubbing(false);
+                              revealControls();
+                            }}
+                            onPointerCancel={() => setScrubbing(false)}
+                            className="velum-audio-slider w-full cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to right, hsl(var(--accent)) 0%, hsl(var(--accent)) ${pct}%, hsl(var(--foreground) / 0.12) ${pct}%, hsl(var(--foreground) / 0.12) 100%)`,
+                            }}
+                          />
+                          <div className="flex justify-between mt-2.5 px-0.5">
+                            <span className="text-accent/80 text-[11px] font-sans tabular-nums tracking-wider">{formatTime(display)}</span>
+                            <span className="text-muted-foreground/60 text-[11px] font-sans tabular-nums tracking-wider">{formatTime(duration || displayDuration)}</span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Playback controls */}
+                  <div className="mb-5 flex items-center gap-10">
+                    <button onClick={() => { skip(-15); revealControls(); }} className="text-muted-foreground/80 hover:text-foreground transition-colors p-2" aria-label="Back 15 seconds">
+                      <SkipBack className="w-6 h-6" />
+                    </button>
+                    <motion.button
+                      onClick={() => { togglePlay(); revealControls(); }}
+                      whileTap={{ scale: 0.92 }}
+                      className="relative flex h-20 w-20 items-center justify-center rounded-full gold-gradient shadow-[0_0_40px_rgba(201,168,76,0.35)] transition-shadow hover:shadow-[0_0_60px_rgba(201,168,76,0.55)]"
+                      aria-label={isPlaying ? "Pause" : "Play"}
+                    >
+                      {isPlaying ? <Pause className="w-7 h-7 text-primary-foreground" /> : <Play className="w-7 h-7 ml-1 text-primary-foreground" />}
+                    </motion.button>
+                    <button onClick={() => { skip(15); revealControls(); }} className="text-muted-foreground/80 hover:text-foreground transition-colors p-2" aria-label="Forward 15 seconds">
+                      <SkipForward className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => { cycleSpeed(); revealControls(); }}
+                    className="rounded-full bg-black/30 border border-accent/15 px-4 py-1.5 text-[11px] font-sans font-medium text-muted-foreground hover:text-foreground hover:border-accent/40 transition-colors tracking-wider"
+                  >
+                    {speed}x speed
+                  </button>
+                </motion.div>
               )}
-            </motion.div>
-
-            <h2 className="text-display text-2xl mb-1 text-center break-words max-w-full">{track.title}</h2>
-            <p className="text-ui text-sm mb-10">{track.duration_minutes} min</p>
-
-            <div className="w-full max-w-sm mb-3">
-              {(() => {
-                const max = duration || displayDuration || 1;
-                const display = scrubbing ? scrubValue : currentTime;
-                const pct = max > 0 ? (display / max) * 100 : 0;
-                return (
-                  <>
-                    <input
-                      type="range"
-                      min={0}
-                      max={max}
-                      step={0.1}
-                      value={display}
-                      onPointerDown={() => { setScrubbing(true); setScrubValue(currentTime); }}
-                      onInput={e => setScrubValue(Number((e.target as HTMLInputElement).value))}
-                      onChange={e => { if (scrubbing) setScrubValue(Number(e.target.value)); }}
-                      onPointerUp={e => {
-                        const v = Number((e.target as HTMLInputElement).value);
-                        if (audioRef.current) audioRef.current.currentTime = v;
-                        setCurrentTime(v);
-                        setScrubbing(false);
-                      }}
-                      onPointerCancel={() => setScrubbing(false)}
-                      className="velum-audio-slider w-full cursor-pointer"
-                      style={{
-                        background: `linear-gradient(to right, hsl(var(--accent)) 0%, hsl(var(--accent)) ${pct}%, hsl(var(--foreground) / 0.12) ${pct}%, hsl(var(--foreground) / 0.12) 100%)`,
-                      }}
-                    />
-                    <div className="flex justify-between mt-2">
-                      <span className="text-ui text-[10px] tabular-nums">{formatTime(display)}</span>
-                      <span className="text-ui text-[10px] tabular-nums">{formatTime(duration || displayDuration)}</span>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-
-            <div className="mb-8 flex items-center gap-8">
-              <button onClick={() => skip(-15)} className="text-muted-foreground hover:text-foreground transition-colors">
-                <SkipBack className="w-6 h-6" />
-              </button>
-              <button onClick={togglePlay} className="flex h-16 w-16 items-center justify-center rounded-full gold-gradient active:scale-95 transition-transform">
-                {isPlaying ? <Pause className="w-6 h-6 text-primary-foreground" /> : <Play className="w-6 h-6 ml-1 text-primary-foreground" />}
-              </button>
-              <button onClick={() => skip(15)} className="text-muted-foreground hover:text-foreground transition-colors">
-                <SkipForward className="w-6 h-6" />
-              </button>
-            </div>
-
-            <button
-              onClick={cycleSpeed}
-              className="rounded-full bg-card px-3 py-1.5 text-xs font-sans font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {speed}x
-            </button>
+            </AnimatePresence>
           </>
         ) : step === "after" ? (
           <StressCheckin
