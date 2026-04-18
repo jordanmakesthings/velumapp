@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-03-25.dahlia" });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2025-04-30.basil" });
 
 const PRICE_IDS: Record<string, string | undefined> = {
   monthly:  process.env.STRIPE_PRICE_MONTHLY,
@@ -18,8 +18,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { plan, returnUrl, customerEmail } = req.body ?? {};
 
+  console.log("[create-checkout] incoming", { plan, returnUrl, hasEmail: !!customerEmail });
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.error("[create-checkout] STRIPE_SECRET_KEY not set in Vercel env");
+    return res.status(500).json({ error: "Server config: STRIPE_SECRET_KEY missing" });
+  }
+
   const priceId = PRICE_IDS[plan];
-  if (!priceId) return res.status(400).json({ error: `Invalid plan: ${plan}` });
+  if (!priceId) {
+    console.error("[create-checkout] bad plan or missing price env", { plan, availablePrices: Object.keys(PRICE_IDS).filter(k => !!PRICE_IDS[k]) });
+    return res.status(400).json({ error: `Invalid plan: ${plan}. Price env var likely missing in Vercel.` });
+  }
 
   const isLifetime = plan === "lifetime";
   const origin = returnUrl || "https://app.govelum.com";
@@ -40,6 +50,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ url: session.url });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message ?? "Checkout failed" });
+    console.error("[create-checkout] stripe error", {
+      plan,
+      priceId,
+      type: err?.type,
+      code: err?.code,
+      message: err?.message,
+      raw: err?.raw?.message,
+    });
+    return res.status(500).json({ error: err?.message ?? "Checkout failed", type: err?.type, code: err?.code });
   }
 }

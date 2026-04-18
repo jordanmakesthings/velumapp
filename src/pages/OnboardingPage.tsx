@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import VelumMark from "@/components/VelumMark";
+import logoCircle from "@/assets/logo-circle.png";
 
 const GOALS = [
   { key: "stress",     label: "Manage stress & anxiety" },
@@ -31,17 +31,13 @@ const BUILDING_LINES = [
   "Ready.",
 ];
 
-// Future-paced outcome by top goal.
-const OUTCOME: Record<string, { headline: string; bullets: string[] }> = {
-  stress:     { headline: "In 21 days you could", bullets: ["Rate your stress lower than today", "Reach for a tool before reacting", "Sleep through the night", "Feel your nervous system on your side"] },
-  emotions:   { headline: "In 21 days you could", bullets: ["Name what you feel without drowning in it", "Move emotion through your body in minutes", "Catch old patterns before they run you", "Trust your reactions again"] },
-  sleep:      { headline: "In 21 days you could", bullets: ["Fall asleep without the racing mind", "Wake up fewer times a night", "Stop dreading bedtime", "Feel rested instead of wrecked"] },
-  confidence: { headline: "In 21 days you could", bullets: ["Meet your own eyes in the mirror", "Speak up without the stomach-drop", "Stop apologising for taking space", "Feel earned, not imposter"] },
-  habits:     { headline: "In 21 days you could", bullets: ["Interrupt a pattern mid-spiral", "Rewire the trigger, not just the response", "Stop the numbing loop", "Feel the pull and not follow it"] },
-  self:       { headline: "In 21 days you could", bullets: ["Know what you want — actually", "Feel at home in your own body", "Stop performing. Start being.", "Meet yourself as a friend"] },
-  focus:      { headline: "In 21 days you could", bullets: ["Think clearly for hours, not minutes", "Wake up without the fog", "Finish what you start", "Feel your energy steady, not spiked"] },
-  trauma:     { headline: "In 21 days you could", bullets: ["Feel less charged by old memories", "Move stuck energy out of your body", "Sleep without the guard up", "Remember who you were before all of it"] },
-};
+const OUTCOME_BULLETS = [
+  "Reclaim agency over your thinking",
+  "Snap yourself out of fight-or-flight at will",
+  "Wake up with the inner peace you know you're capable of",
+  "Fall asleep embodying a deep sense of safety",
+  "Have the tools to break through the beliefs keeping you anchored to the past",
+];
 
 const slide = {
   initial: { opacity: 0, x: 32 },
@@ -49,8 +45,8 @@ const slide = {
   exit:    { opacity: 0, x: -24, transition: { duration: 0.2 } },
 };
 
-// 4 data-collection steps drive the progress bar: 0 → 25%, 3 → 100%
-const DATA_STEPS = 4;
+// 3 data-collection steps drive the progress bar: 0 → 33%, 2 → 100%
+const DATA_STEPS = 3;
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -69,30 +65,22 @@ export default function OnboardingPage() {
   // Step 2
   const [experience, setExperience] = useState("");
 
-  // Step 3 — baseline (0-10)
-  const [stress, setStress] = useState(5);
-  const [overwhelm, setOverwhelm] = useState(5);
-  const [sleep, setSleep] = useState(5);
-
-  // Step 4 — building animation
+  // Step 3 — building animation
   const [buildLine, setBuildLine] = useState(0);
 
-  const topGoal = goals[0] ?? "stress";
-  const outcome = OUTCOME[topGoal] ?? OUTCOME.stress;
-
-  // Progress bar fill — only shown on data steps (0-3)
+  // Progress bar fill — only shown on data steps (0-2)
   const progressPercent = Math.min(100, ((step + 1) / DATA_STEPS) * 100);
   const showProgress = step < DATA_STEPS;
 
   // Step 0 validity
   const detailsValid = firstName.trim().length >= 1 && lastName.trim().length >= 1 && phone.trim().length >= 7;
 
-  // Step 4 — cycle through building lines, then auto-advance
+  // Step 3 — cycle through building lines, then auto-advance
   useEffect(() => {
-    if (step !== 4) return;
+    if (step !== 3) return;
     setBuildLine(0);
     const tick = setInterval(() => setBuildLine(l => Math.min(l + 1, BUILDING_LINES.length - 1)), 1000);
-    const finish = setTimeout(() => setStep(5), 5000);
+    const finish = setTimeout(() => setStep(4), 5000);
     return () => { clearInterval(tick); clearTimeout(finish); };
   }, [step]);
 
@@ -110,12 +98,6 @@ export default function OnboardingPage() {
         last_name: lastName.trim(),
         goals,
         experience,
-        baseline: {
-          stress,
-          overwhelm,
-          sleep,
-          taken_at: new Date().toISOString(),
-        },
       },
     }).eq("id", user.id);
     await refreshProfile();
@@ -150,9 +132,7 @@ export default function OnboardingPage() {
           {step === 0 && (
             <motion.div key="details" {...slide} className="w-full">
               <div className="text-center mb-8">
-                <div className="flex justify-center mb-6">
-                  <VelumMark variant="lotus" size="md" />
-                </div>
+                <img src={logoCircle} alt="Velum" className="w-16 h-16 object-contain mx-auto mb-4" />
                 <h1 className="text-display text-[2.4rem] leading-[1.05] mb-3">Let's get<br />you <span className="text-accent italic">set up.</span></h1>
                 <p className="text-muted-foreground text-sm font-light">
                   Your details stay yours. We use phone for important account messages only.
@@ -265,31 +245,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* STEP 3 — Baseline */}
+          {/* STEP 3 — Building your program (5s) */}
           {step === 3 && (
-            <motion.div key="baseline" {...slide} className="w-full">
-              <div className="text-center mb-8">
-                <h1 className="text-display text-[2.2rem] leading-[1.1] mb-3">Where are you <span className="text-accent italic">today?</span></h1>
-                <p className="text-muted-foreground text-sm font-light">
-                  Rate honestly. We'll check in again in 14 days so you can see what's changed.
-                </p>
-              </div>
-              <div className="flex flex-col gap-5">
-                <Slider label="Stress right now" value={stress} onChange={setStress} />
-                <Slider label="Overwhelm right now" value={overwhelm} onChange={setOverwhelm} />
-                <Slider label="Sleep quality this week" value={sleep} onChange={setSleep} />
-              </div>
-              <button
-                onClick={next}
-                className="w-full py-5 rounded-full gold-gradient text-primary-foreground font-bold text-base tracking-wide active:scale-[0.98] transition-transform mt-8"
-              >
-                Continue →
-              </button>
-            </motion.div>
-          )}
-
-          {/* STEP 4 — Building your program (5s) */}
-          {step === 4 && (
             <motion.div key="building" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full text-center">
               <div className="relative w-24 h-24 mx-auto mb-8">
                 <div className="absolute inset-0 rounded-full border-2 border-accent/15" />
@@ -316,21 +273,23 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* STEP 5 — Almost there */}
-          {step === 5 && (
+          {/* STEP 4 — Almost there */}
+          {step === 4 && (
             <motion.div key="almost" {...slide} className="w-full text-center">
               <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(201,168,76,0.25)]">
                 <span className="text-primary-foreground text-2xl">✦</span>
               </div>
               <p className="text-eyebrow mb-3">Almost there</p>
-              <h1 className="text-editorial text-[2.8rem] italic mb-4 font-light leading-[1.05]">Your program<br />is ready{firstName ? `, ${firstName}` : ""}.</h1>
+              <h1 className="text-editorial text-[2.6rem] italic mb-6 font-light leading-[1.05]">
+                Imagine 7 days<br />from now{firstName ? `, ${firstName}` : ""}.
+              </h1>
 
               <div className="velum-card-accent p-5 mb-6 text-left">
-                <p className="text-eyebrow mb-3 text-center">{outcome.headline}</p>
-                <div className="flex flex-col gap-2.5">
-                  {outcome.bullets.map((bullet, i) => (
+                <p className="text-eyebrow mb-4 text-center">Where you…</p>
+                <div className="flex flex-col gap-3">
+                  {OUTCOME_BULLETS.map((bullet, i) => (
                     <div key={i} className="flex items-start gap-3">
-                      <span className="text-accent text-sm mt-0.5">—</span>
+                      <span className="text-accent text-sm mt-0.5 flex-shrink-0">—</span>
                       <p className="text-foreground text-sm font-sans leading-snug">{bullet}</p>
                     </div>
                   ))}
@@ -352,33 +311,6 @@ export default function OnboardingPage() {
           )}
 
         </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-
-function Slider({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
-  return (
-    <div className="velum-card p-5">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-foreground text-sm font-sans font-medium">{label}</p>
-        <p className="text-accent text-xl font-serif">{value}<span className="text-muted-foreground text-xs">/10</span></p>
-      </div>
-      <input
-        type="range"
-        min={0}
-        max={10}
-        step={1}
-        value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className="w-full h-1 bg-foreground/10 rounded-full appearance-none cursor-pointer accent-accent velum-slider"
-        style={{
-          background: `linear-gradient(to right, hsl(var(--accent)) 0%, hsl(var(--accent)) ${value * 10}%, hsl(var(--foreground) / 0.1) ${value * 10}%, hsl(var(--foreground) / 0.1) 100%)`,
-        }}
-      />
-      <div className="flex justify-between mt-1.5 text-muted-foreground/50 text-[10px]">
-        <span>0 · none</span>
-        <span>10 · intense</span>
       </div>
     </div>
   );
