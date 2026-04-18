@@ -7,10 +7,10 @@ const corsHeaders = {
 };
 
 const PRICE_IDS = {
-  monthly: "price_1TNbaMLFHHLwAHKUOFa8i8K9",       // $19/mo, no trial
-  annual: "price_1TNbaRLFHHLwAHKUSuJQVPPS",        // $99/yr, 7-day trial
-  lifetime_founding: "price_1TNMvNLFHHLwAHKUE3NXvdxD", // $199 one-time (first 100)
-  lifetime: "price_1TMulhLFHHLwAHKUbKNuLmWs",      // $299 one-time (post-founding)
+  monthly: "price_1TNdHOLv0dyfXaxOb7sXtEEq",           // $19/mo, no trial
+  annual: "price_1TNdIWLv0dyfXaxONxmXLkI7",            // $99/yr, 7-day trial
+  lifetime_founding: "price_1TNdI3Lv0dyfXaxOCrV1jy1S", // $199 one-time (first 100)
+  lifetime: "price_1TNdI3Lv0dyfXaxOCrV1jy1S",          // TODO: create $299 price and swap here when founding sells out
 };
 
 const FOUNDING_LIFETIME_CAP = 100;

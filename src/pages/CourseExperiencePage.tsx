@@ -201,7 +201,7 @@ export default function CourseExperiencePage() {
                     {isOpen && (
                       <div className="pl-2">
                         {modLessons.map((lesson: any) => (
-                          {(() => { const di = lessonDripInfo(lesson); return <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} isLocked={di.isLocked} unlocksInDays={di.unlocksInDays} onClick={() => openLesson(lesson)} />; })()}
+                          <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} daysSinceStart={daysSinceStart} onClick={() => openLesson(lesson)} />
                         ))}
                         {(mod.submodules || []).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).map((sub: any) => {
                           const subLessons = (sub.lesson_ids || []).map((lid: string) => lessons.find((l: any) => l.id === lid)).filter(Boolean);
@@ -209,7 +209,7 @@ export default function CourseExperiencePage() {
                             <div key={sub.id} className="ml-2">
                               <p className="text-ui text-[10px] px-3 py-1.5 tracking-wide">{sub.title}</p>
                               {subLessons.map((lesson: any) => (
-                                {(() => { const di = lessonDripInfo(lesson); return <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} isLocked={di.isLocked} unlocksInDays={di.unlocksInDays} onClick={() => openLesson(lesson)} />; })()}
+                                <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} daysSinceStart={daysSinceStart} onClick={() => openLesson(lesson)} />
                               ))}
                             </div>
                           );
@@ -219,7 +219,7 @@ export default function CourseExperiencePage() {
                   </div>
                 );
               }) : lessons.map((lesson: any) => (
-                {(() => { const di = lessonDripInfo(lesson); return <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} isLocked={di.isLocked} unlocksInDays={di.unlocksInDays} onClick={() => openLesson(lesson)} />; })()}
+                <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} daysSinceStart={daysSinceStart} onClick={() => openLesson(lesson)} />
               ))}
             </div>
           </aside>
@@ -318,7 +318,10 @@ export default function CourseExperiencePage() {
   );
 }
 
-function SidebarLesson({ lesson, isActive, isCompleted, isLocked, unlocksInDays, onClick }: { lesson: any; isActive: boolean; isCompleted: boolean; isLocked?: boolean; unlocksInDays?: number; onClick: () => void }) {
+function SidebarLesson({ lesson, isActive, isCompleted, daysSinceStart, onClick }: { lesson: any; isActive: boolean; isCompleted: boolean; daysSinceStart: number; onClick: () => void }) {
+  const offset = typeof lesson.drip_day_offset === "number" ? lesson.drip_day_offset : 0;
+  const isLocked = offset > daysSinceStart;
+  const unlocksInDays = isLocked ? offset - daysSinceStart : 0;
   return (
     <button onClick={onClick}
       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left mb-0.5 transition-all ${
