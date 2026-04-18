@@ -42,6 +42,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const sig = req.headers["stripe-signature"] as string;
   const rawBody = await getRawBody(req);
 
+  console.log("[stripe-webhook] verifying", {
+    sigPresent: !!sig,
+    sigPrefix: sig?.slice(0, 40),
+    bodyBytes: rawBody.length,
+    bodyPrefix: rawBody.toString("utf8").slice(0, 80),
+    secretPrefix: webhookSecret.slice(0, 12),
+    secretLength: webhookSecret.length,
+  });
+
   let event: Stripe.Event;
   try {
     event = await stripe.webhooks.constructEventAsync(rawBody, sig, webhookSecret);
