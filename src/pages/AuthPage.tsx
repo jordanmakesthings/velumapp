@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import VelumMark from "@/components/VelumMark";
 
 type Mode = "signup" | "login" | "forgot";
 
@@ -70,10 +71,9 @@ export default function AuthPage() {
 
       <div className="relative w-full max-w-md">
 
-        {/* Brand wordmark — centered, small, gold underline */}
-        <div className="text-center mb-10">
-          <h1 className="text-accent text-[13px] font-sans font-medium tracking-[8px] uppercase mb-1.5">Velum</h1>
-          <div className="w-12 h-[1px] gold-underline mx-auto" />
+        {/* Brand lockup */}
+        <div className="flex justify-center mb-10">
+          <VelumMark variant="lockup" size="md" />
         </div>
 
         {/* Referral banner */}

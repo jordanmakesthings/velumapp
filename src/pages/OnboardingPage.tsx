@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import TermsGateModal from "@/components/TermsGateModal";
+import VelumMark from "@/components/VelumMark";
 
 const GOALS = [
   { key: "stress",     label: "Manage stress & anxiety",               icon: "◌" },
@@ -92,8 +93,9 @@ export default function OnboardingPage() {
           {step === 0 && (
             <motion.div key="goal" {...slide} className="w-full">
               <div className="text-center mb-8">
-                <p className="text-accent text-[11px] font-sans font-medium tracking-[6px] uppercase mb-1">Velum</p>
-                <div className="w-10 h-[1px] gold-underline mx-auto mb-6" />
+                <div className="flex justify-center mb-6">
+                  <VelumMark variant="lotus" size="md" />
+                </div>
                 <p className="text-eyebrow mb-3">Step 1 of 3</p>
                 <h1 className="text-display text-[2.4rem] leading-[1.05] mb-3">What brought<br />you <span className="text-accent italic">here?</span></h1>
                 <p className="text-muted-foreground text-sm font-light">

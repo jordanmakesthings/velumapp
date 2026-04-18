@@ -6,6 +6,7 @@ import { getSUDSStats, getCheckins } from "@/lib/velumStorage";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import NervousSystemScore from "@/components/profile/NervousSystemScore";
+import VelumMark from "@/components/VelumMark";
 import { useUserProgress, useTracks, calculateStreak } from "@/hooks/useVelumData";
 
 const categoryLabels: Record<string, string> = {
@@ -170,9 +171,8 @@ export default function ProfilePage() {
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
-      <div className="flex flex-col items-start mb-6">
-        <span className="text-accent text-[11px] font-sans font-medium tracking-[6px] uppercase">Velum</span>
-        <span className="w-10 h-[1px] gold-underline mt-1" />
+      <div className="mb-6">
+        <VelumMark variant="lotus" size="sm" />
       </div>
       {/* Header */}
       <div className="flex items-center justify-between mb-8">

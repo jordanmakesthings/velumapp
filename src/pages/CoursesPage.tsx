@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import VelumMark from "@/components/VelumMark";
 
 export default function CoursesPage() {
   const { user } = useAuth();
@@ -80,9 +81,8 @@ export default function CoursesPage() {
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
       <div className="mb-8">
-        <div className="flex flex-col items-start mb-5">
-          <span className="text-accent text-[11px] font-sans font-medium tracking-[6px] uppercase">Velum</span>
-          <span className="w-10 h-[1px] gold-underline mt-1" />
+        <div className="mb-5">
+          <VelumMark variant="lotus" size="sm" />
         </div>
         <h1 className="text-display text-[2.4rem] leading-[1.05]">The <span className="text-accent italic">programs.</span></h1>
         <p className="text-muted-foreground text-sm font-sans mt-2">Structured transformation, at your pace.</p>

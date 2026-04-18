@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SessionFinderModal } from "@/components/home/SessionFinderModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOneSignalInit } from "@/hooks/useOneSignal";
-import logoLotus from "@/assets/logo-lotus.jpg";
+import logoLotus from "@/assets/brand/velum-lotus.png";
 import { format } from "date-fns";
 import NervousSystemScore from "@/components/profile/NervousSystemScore";
 
@@ -246,8 +246,7 @@ export default function HomePage() {
       {/* Header */}
       <div className="mb-8 min-w-0 w-full max-w-full">
         <div className="mb-6 flex items-center gap-2.5 min-w-0">
-          <img src={logoLotus} alt="Velum" className="w-7 h-7 rounded-md object-cover" />
-          <span className="text-accent text-[11px] font-medium tracking-[6px] uppercase">VELUM</span>
+          <img src={logoLotus} alt="Velum" className="w-9 h-9 object-contain" draggable={false} />
         </div>
         <p className="text-eyebrow mb-3">{getGreeting()}{firstName ? `, ${firstName}` : ""}</p>
         <h1 className="text-display mb-5 max-w-full break-words text-[2.4rem] leading-[1.02] lg:text-5xl">

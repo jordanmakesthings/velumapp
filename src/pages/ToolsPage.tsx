@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Wind, Zap, Hand, Fingerprint } from "lucide-react";
+import VelumMark from "@/components/VelumMark";
 
 const TOOLS = [
   {
@@ -44,9 +45,8 @@ export default function ToolsPage() {
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto">
       <div className="mb-8">
-        <div className="flex flex-col items-start mb-5">
-          <span className="text-accent text-[11px] font-sans font-medium tracking-[6px] uppercase">Velum</span>
-          <span className="w-10 h-[1px] gold-underline mt-1" />
+        <div className="mb-5">
+          <VelumMark variant="lotus" size="sm" />
         </div>
         <h1 className="text-display text-[2.4rem] leading-[1.05]">Real-time <span className="text-accent italic">tools.</span></h1>
         <p className="text-muted-foreground text-sm font-sans mt-2">Interactive practices for immediate nervous system regulation.</p>

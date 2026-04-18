@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import VelumMark from "@/components/VelumMark";
 
 type Props = {
   onAccept: () => void | Promise<void>;
@@ -22,9 +23,8 @@ export default function TermsGateModal({ onAccept }: Props) {
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className="velum-card-accent w-full max-w-md p-8 md:p-10 text-center relative"
       >
-        <div className="mb-6">
-          <p className="text-accent text-[11px] font-sans font-medium tracking-[8px] uppercase mb-1">Velum</p>
-          <div className="w-10 h-[1px] gold-underline mx-auto" />
+        <div className="flex justify-center mb-6">
+          <VelumMark variant="lotus" size="sm" />
         </div>
 
         <p className="text-eyebrow mb-3">Before we begin</p>
