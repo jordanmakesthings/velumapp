@@ -104,44 +104,71 @@ export default function PremiumPage() {
   // Already subscribed view
   if (isPremium) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col relative">
+        {/* Ambient green glow */}
+        <div className="fixed inset-0 pointer-events-none -z-10">
+          <div className="absolute top-[15%] left-[-10%] w-[550px] h-[550px] rounded-full"
+               style={{ background: "radial-gradient(circle, hsla(156,51%,16%,0.55) 0%, transparent 60%)", filter: "blur(50px)" }} />
+          <div className="absolute bottom-[5%] right-[-10%] w-[400px] h-[400px] rounded-full"
+               style={{ background: "radial-gradient(circle, hsla(42,53%,32%,0.1) 0%, transparent 60%)", filter: "blur(50px)" }} />
+        </div>
+
         <div className="fixed top-0 inset-x-0 z-50 flex items-center px-4 py-4">
-          <button onClick={() => navigate(-1)} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={() => navigate("/home")} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
         </div>
-        <div className="px-6 pt-20 pb-12 max-w-lg mx-auto text-center">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}
-            className="w-20 h-20 rounded-3xl gold-gradient flex items-center justify-center mx-auto mb-6">
-            <Crown className="w-9 h-9 text-primary-foreground" />
-          </motion.div>
-          <h1 className="text-display text-3xl mb-3">You Have Full Access</h1>
-          <p className="text-ui text-sm mb-2">You have access to everything in Velum.</p>
+
+        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12 max-w-lg mx-auto text-center w-full">
+          <motion.img
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            src={logoCircle}
+            alt="Velum"
+            className="w-24 h-24 object-contain mx-auto mb-6"
+          />
+          <p className="text-eyebrow mb-3">You're in</p>
+          <h1 className="text-editorial text-[2.8rem] italic mb-4 font-light leading-[1.05]">
+            Welcome{profile?.onboarding_answers && (profile.onboarding_answers as any).first_name ? `, ${(profile.onboarding_answers as any).first_name}` : ""}.
+          </h1>
+          <p className="text-muted-foreground text-[15px] font-light mb-8 max-w-[320px]">
+            Full access unlocked. Time to practice.
+          </p>
+
+          <button
+            onClick={() => navigate("/home")}
+            className="w-full max-w-[320px] py-5 rounded-full gold-gradient text-primary-foreground font-bold text-base tracking-wide active:scale-[0.98] transition-transform mb-6"
+          >
+            Enter Velum →
+          </button>
+
           {profile?.subscription_plan && (
-            <p className="text-ui text-xs mb-6 capitalize">
-              Plan: {profile.subscription_plan} · Status: {profile.subscription_status}
+            <p className="text-muted-foreground/60 text-[11px] mb-4 capitalize">
+              {profile.subscription_plan} · {profile.subscription_status}
             </p>
           )}
+
           {cancelSuccess ? (
-            <div className="velum-card p-4 text-sm text-muted-foreground">
+            <div className="velum-card p-4 text-sm text-muted-foreground max-w-[320px]">
               Your subscription will cancel at the end of the current billing period.
             </div>
           ) : isCanceling ? (
-            <div className="velum-card-flat p-4 text-sm text-muted-foreground">
+            <div className="velum-card-flat p-4 text-sm text-muted-foreground max-w-[320px]">
               Your subscription is set to cancel at the end of the billing period.
             </div>
           ) : !isLifetime && (
-            <div className="mt-4">
+            <>
               <button onClick={handleCancel} disabled={canceling}
-                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors">
-                {canceling ? "Canceling..." : "Cancel subscription"}
+                className="text-[11px] text-muted-foreground/60 underline underline-offset-2 hover:text-foreground transition-colors">
+                {canceling ? "Canceling…" : "Cancel subscription"}
               </button>
               {error && (
                 <div className="flex items-center gap-2 text-destructive text-xs mt-2 justify-center">
                   <AlertCircle className="w-3.5 h-3.5" />{error}
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
       </div>
