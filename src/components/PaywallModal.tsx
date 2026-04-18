@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { X, Sparkles, Loader2, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import logoLotus from "@/assets/logo-lotus.jpg";
+import logoLotus from "@/assets/brand/velum-lotus.png";
 
 interface PaywallModalProps {
   open: boolean;

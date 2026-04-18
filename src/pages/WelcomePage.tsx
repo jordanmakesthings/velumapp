@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
-import logoLotus from "@/assets/logo-lotus.jpg";
+import logoLotus from "@/assets/brand/velum-lotus.png";
 
 export default function WelcomePage() {
   const navigate = useNavigate();
