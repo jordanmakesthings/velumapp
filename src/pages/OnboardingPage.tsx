@@ -30,6 +30,7 @@ const WHAT_YOU_GET = [
   { icon: "◌", label: "SOS Reset — regulation in minutes" },
 ];
 
+
 const slide = {
   initial: { opacity: 0, x: 32 },
   animate: { opacity: 1, x: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
@@ -52,7 +53,9 @@ export default function OnboardingPage() {
       onboarding_answers: { goal, experience },
     }).eq("id", user.id);
     await refreshProfile();
-    navigate("/home");
+    // Force paywall moment — user must pick a plan before entering the app.
+    // PremiumPage sends them to /home via success_url after checkout.
+    navigate("/premium");
   };
 
   const next = () => setStep(s => s + 1);
@@ -140,13 +143,13 @@ export default function OnboardingPage() {
               <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(201,168,76,0.25)]">
                 <span className="text-primary-foreground text-2xl">✦</span>
               </div>
-              <p className="text-eyebrow mb-3">Welcome</p>
+              <p className="text-eyebrow mb-3">One last step</p>
               <h1 className="text-editorial text-5xl italic mb-4 font-light">You're in.</h1>
               <p className="text-muted-foreground text-[15px] leading-relaxed mb-8 max-w-[320px] mx-auto">
-                Your trial starts now. Explore every tool, every course, every session — no card needed until you choose to stay.
+                Pick the way you want to practice. From $19/mo, or become a founding member for $199 lifetime.
               </p>
 
-              <div className="rounded-2xl border border-border bg-card/50 p-5 mb-8 text-left">
+              <div className="velum-card p-5 mb-8 text-left">
                 <p className="text-eyebrow mb-4 text-center">What's unlocked</p>
                 <div className="flex flex-col gap-3">
                   {WHAT_YOU_GET.map(({ icon, label }, i) => (
@@ -163,11 +166,11 @@ export default function OnboardingPage() {
                 disabled={saving}
                 className="w-full py-5 rounded-full gold-gradient text-primary-foreground font-bold text-base tracking-wide active:scale-[0.98] transition-transform disabled:opacity-50"
               >
-                {saving ? "Setting up…" : "Start exploring →"}
+                {saving ? "Setting up…" : "Choose your plan →"}
               </button>
 
               <p className="mt-4 text-muted-foreground/70 text-[11px]">
-                After trial: keep 1 free tapping session daily · Upgrade from $8/mo
+                Monthly · Annual (7-day trial) · Founding Lifetime
               </p>
             </motion.div>
           )}

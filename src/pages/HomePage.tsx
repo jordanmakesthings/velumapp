@@ -248,13 +248,11 @@ export default function HomePage() {
         <div className="mb-6 flex items-center gap-2.5 min-w-0">
           <img src={logoLotus} alt="Velum" className="w-9 h-9 object-contain" draggable={false} />
         </div>
-        <p className="text-eyebrow mb-3">{getGreeting()}{firstName ? `, ${firstName}` : ""}</p>
-        <h1 className="text-display mb-5 max-w-full break-words text-[2.4rem] leading-[1.02] lg:text-5xl">
-          What does your<br />nervous system<br />need <span className="text-accent italic font-light font-serif">right now?</span>
-        </h1>
-        <p className="text-editorial max-w-full break-words text-sm leading-relaxed italic text-foreground/55" style={{ overflowWrap: "break-word" }}>
-          "{todayQuote.text}" — {todayQuote.author}
+        <p className="text-eyebrow mb-4">{getGreeting()}{firstName ? `, ${firstName}` : ""}</p>
+        <p className="text-editorial max-w-full break-words text-[17px] leading-snug italic text-foreground/75 mb-2" style={{ overflowWrap: "break-word" }}>
+          "{todayQuote.text}"
         </p>
+        <p className="text-muted-foreground text-xs font-sans tracking-wide">— {todayQuote.author}</p>
       </div>
 
       {/* ⭐ TODAY — promoted Session Finder is the anchor */}
