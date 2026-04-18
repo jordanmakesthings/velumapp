@@ -51,7 +51,7 @@ export default function CourseExperiencePage() {
   const [searchParams] = useSearchParams();
   const courseId = searchParams.get("courseId") || "";
   const qc = useQueryClient();
-  const { user, hasAccess } = useAuth();
+  const { user, profile, hasAccess } = useAuth();
   const [activeLessonId, setActiveLessonId] = useState<string | null>(searchParams.get("lessonId"));
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
@@ -117,14 +117,30 @@ export default function CourseExperiencePage() {
   const nextLesson = flatLessons[activeIndex + 1] || null;
   const prevLesson = flatLessons[activeIndex - 1] || null;
 
+  // Drip unlock — lessons become available on a per-day schedule since trial start
+  const anchorDate = (profile as any)?.trial_started_at || (user as any)?.created_at || null;
+  const daysSinceStart = anchorDate ? Math.floor((Date.now() - new Date(anchorDate).getTime()) / 86400000) : 9999;
+  const lessonDripInfo = (lesson: any) => {
+    const offset = typeof lesson.drip_day_offset === "number" ? lesson.drip_day_offset : 0;
+    const isLocked = offset > daysSinceStart;
+    const unlocksInDays = isLocked ? offset - daysSinceStart : 0;
+    return { isLocked, unlocksInDays };
+  };
+
   const openLesson = (lesson: any) => {
     if (!hasAccess) { setShowPaywall(true); return; }
+    const { isLocked } = lessonDripInfo(lesson);
+    if (isLocked) return;
     setActiveLessonId(lesson.id);
   };
 
   useEffect(() => {
     if (course && !activeLessonId && flatLessons.length > 0) {
-      setActiveLessonId(flatLessons[0].id);
+      // Default to the first unlocked lesson the user hasn't completed, or fall back to first unlocked
+      const firstAvailable = flatLessons.find(l => !lessonDripInfo(l).isLocked && !completedIds.has(l.id))
+        || flatLessons.find(l => !lessonDripInfo(l).isLocked)
+        || flatLessons[0];
+      setActiveLessonId(firstAvailable.id);
       const expandAll: Record<string, boolean> = {};
       modules.forEach((m: any) => { expandAll[m.id] = true; });
       setExpandedModules(expandAll);
@@ -185,7 +201,7 @@ export default function CourseExperiencePage() {
                     {isOpen && (
                       <div className="pl-2">
                         {modLessons.map((lesson: any) => (
-                          <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} onClick={() => openLesson(lesson)} />
+                          {(() => { const di = lessonDripInfo(lesson); return <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} isLocked={di.isLocked} unlocksInDays={di.unlocksInDays} onClick={() => openLesson(lesson)} />; })()}
                         ))}
                         {(mod.submodules || []).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).map((sub: any) => {
                           const subLessons = (sub.lesson_ids || []).map((lid: string) => lessons.find((l: any) => l.id === lid)).filter(Boolean);
@@ -193,7 +209,7 @@ export default function CourseExperiencePage() {
                             <div key={sub.id} className="ml-2">
                               <p className="text-ui text-[10px] px-3 py-1.5 tracking-wide">{sub.title}</p>
                               {subLessons.map((lesson: any) => (
-                                <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} onClick={() => openLesson(lesson)} />
+                                {(() => { const di = lessonDripInfo(lesson); return <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} isLocked={di.isLocked} unlocksInDays={di.unlocksInDays} onClick={() => openLesson(lesson)} />; })()}
                               ))}
                             </div>
                           );
@@ -203,7 +219,7 @@ export default function CourseExperiencePage() {
                   </div>
                 );
               }) : lessons.map((lesson: any) => (
-                <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} onClick={() => openLesson(lesson)} />
+                {(() => { const di = lessonDripInfo(lesson); return <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} isLocked={di.isLocked} unlocksInDays={di.unlocksInDays} onClick={() => openLesson(lesson)} />; })()}
               ))}
             </div>
           </aside>
@@ -302,15 +318,25 @@ export default function CourseExperiencePage() {
   );
 }
 
-function SidebarLesson({ lesson, isActive, isCompleted, onClick }: { lesson: any; isActive: boolean; isCompleted: boolean; onClick: () => void }) {
+function SidebarLesson({ lesson, isActive, isCompleted, isLocked, unlocksInDays, onClick }: { lesson: any; isActive: boolean; isCompleted: boolean; isLocked?: boolean; unlocksInDays?: number; onClick: () => void }) {
   return (
     <button onClick={onClick}
       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left mb-0.5 transition-all ${
         isActive ? "bg-card border border-accent/25" : "border border-transparent hover:bg-card/30"
-      }`}>
-      {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0" /> : <Circle className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />}
+      } ${isLocked ? "opacity-60" : ""}`}>
+      {isLocked ? (
+        <Lock className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
+      ) : isCompleted ? (
+        <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0" />
+      ) : (
+        <Circle className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
+      )}
       <span className={`text-xs font-sans flex-1 leading-snug truncate ${isActive ? "text-foreground" : "text-muted-foreground"}`}>{lesson.title}</span>
-      {lesson.duration_minutes > 0 && <span className="text-ui text-[10px] shrink-0">{lesson.duration_minutes}m</span>}
+      {isLocked && typeof unlocksInDays === "number" ? (
+        <span className="text-[10px] font-sans text-accent/70 shrink-0">{unlocksInDays === 1 ? "1 day" : `${unlocksInDays} days`}</span>
+      ) : (
+        lesson.duration_minutes > 0 && <span className="text-ui text-[10px] shrink-0">{lesson.duration_minutes}m</span>
+      )}
     </button>
   );
 }
