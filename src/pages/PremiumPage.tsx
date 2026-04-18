@@ -181,7 +181,14 @@ export default function PremiumPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-accent text-2xl font-serif">{isFounding ? "$199" : "$299"}</p>
+                  {isFounding ? (
+                    <div className="flex items-baseline gap-2 justify-end">
+                      <span className="text-muted-foreground text-sm line-through">$299</span>
+                      <span className="text-accent text-2xl font-serif">$199</span>
+                    </div>
+                  ) : (
+                    <p className="text-accent text-2xl font-serif">$299</p>
+                  )}
                   <p className="text-muted-foreground text-xs">one-time</p>
                 </div>
               </button>
