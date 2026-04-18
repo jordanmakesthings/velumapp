@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import logoCircle from "@/assets/logo-circle.png";
 
 type Mode = "signup" | "login" | "forgot";
 
@@ -71,17 +70,16 @@ export default function AuthPage() {
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
 
       {/* Left — brand panel (desktop only) */}
-      <div className="hidden lg:flex flex-col justify-between p-12 w-[420px] flex-shrink-0 border-r border-accent/10 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_50%,hsl(155,52%,10%)_0%,transparent_70%)] pointer-events-none" />
+      <div className="hidden lg:flex flex-col justify-between p-14 w-[460px] flex-shrink-0 border-r border-border relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_30%,hsl(156,51%,10%)_0%,transparent_60%)] opacity-50 pointer-events-none" />
         <div className="relative">
-          <img src={logoCircle} alt="Velum" className="w-10 h-10 object-contain mb-10" />
-          <p className="text-accent text-[10px] font-sans font-medium tracking-[4px] uppercase mb-6">Velum</p>
-          <h2 className="text-display text-4xl leading-tight mb-6">
+          <p className="text-accent text-[11px] font-medium tracking-[6px] uppercase mb-12">Velum</p>
+          <h2 className="text-display text-5xl leading-[1.02] mb-7 tracking-tight">
             Regulate.<br />
-            <span className="italic text-accent">Rewire.</span><br />
+            <span className="italic font-light font-serif text-accent">Rewire.</span><br />
             Rise.
           </h2>
-          <p className="text-muted-foreground text-sm font-sans leading-relaxed max-w-[280px]">
+          <p className="text-muted-foreground text-sm leading-relaxed max-w-[300px]">
             Real-time tools to move your nervous system out of survival mode — and into the version of you that's actually possible.
           </p>
         </div>
@@ -89,7 +87,7 @@ export default function AuthPage() {
           {VALUE_PROPS.map((v, i) => (
             <div key={i} className="flex items-center gap-3">
               <span className="text-accent text-xs">✓</span>
-              <span className="text-muted-foreground text-xs font-sans">{v}</span>
+              <span className="text-muted-foreground text-xs">{v}</span>
             </div>
           ))}
         </div>
@@ -98,37 +96,37 @@ export default function AuthPage() {
       {/* Right — form */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 min-h-screen lg:min-h-0">
 
-        {/* Mobile logo */}
+        {/* Mobile brand mark — VELUM wordmark as the mark itself */}
         <div className="lg:hidden text-center mb-10">
-          <img src={logoCircle} alt="Velum" className="w-10 h-10 object-contain mx-auto mb-3" />
-          <p className="text-accent text-[10px] font-sans font-medium tracking-[4px] uppercase">Velum</p>
+          <p className="text-accent text-[11px] font-medium tracking-[6px] uppercase mb-1">Velum</p>
+          <div className="w-10 h-[1px] bg-accent/40 mx-auto" />
         </div>
 
         <div className="w-full max-w-sm">
 
           {/* Referral banner — takes priority over trial badge */}
           {mode === "signup" && referrerCode && (
-            <div className="flex items-center gap-2 gold-gradient rounded-full px-4 py-2 mb-4 w-fit mx-auto">
+            <div className="flex items-center gap-2 gold-gradient rounded-full px-4 py-2 mb-5 w-fit mx-auto">
               <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
-              <span className="text-primary-foreground text-[10px] font-sans font-semibold tracking-[2px] uppercase">You were invited · Both get 1 free month</span>
+              <span className="text-primary-foreground text-[10px] font-semibold tracking-[2px] uppercase">You were invited · Both get 1 free month</span>
             </div>
           )}
 
           {/* Trial badge — signup only */}
           {mode === "signup" && !referrerCode && (
-            <div className="flex items-center gap-2 bg-accent/8 border border-accent/20 rounded-full px-4 py-2 mb-8 w-fit mx-auto">
+            <div className="flex items-center gap-2 bg-accent/8 border border-accent/20 rounded-full px-4 py-2 mb-6 w-fit mx-auto">
               <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-              <span className="text-accent text-[10px] font-sans font-medium tracking-[2px] uppercase">7 days free · No credit card</span>
+              <span className="text-accent text-[10px] font-medium tracking-[2px] uppercase">7 days free · No credit card</span>
             </div>
           )}
 
-          <h1 className="text-display text-3xl mb-2 text-center">
-            {mode === "signup" && "Begin your practice."}
-            {mode === "login" && "Welcome back."}
-            {mode === "forgot" && "Reset your password."}
+          <h1 className="text-display text-4xl leading-[1.05] mb-3 text-center">
+            {mode === "signup" && <>Start regulating<br />your <span className="text-accent italic font-light font-serif">nervous system.</span></>}
+            {mode === "login" && <>Welcome<br /><span className="text-accent italic font-light font-serif">back.</span></>}
+            {mode === "forgot" && <>Reset your<br /><span className="text-accent italic font-light font-serif">password.</span></>}
           </h1>
-          <p className="text-muted-foreground text-sm font-sans text-center mb-8">
-            {mode === "signup" && "Create your account. It takes 30 seconds."}
+          <p className="text-muted-foreground text-sm text-center mb-8 max-w-[320px] mx-auto leading-relaxed">
+            {mode === "signup" && "30 seconds to sign up. Full access starts immediately."}
             {mode === "login" && "Return to where you left off."}
             {mode === "forgot" && "We'll send you a reset link."}
           </p>
