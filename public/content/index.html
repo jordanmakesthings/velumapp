@@ -70,10 +70,27 @@ select option{background:#1e1e1e}
 .card-bg-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0;border:1px solid rgba(255,255,255,.1)}
 .chv{font-size:9px;color:var(--sg);transition:transform .2s;flex-shrink:0}
 .secard.open .chv{transform:rotate(180deg)}
-.sebdy{display:none;padding:12px;flex-direction:column;gap:10px}
+.sebdy{display:none;padding:14px;flex-direction:column;gap:0}
 .secard.open .sebdy{display:flex}
-.fg{display:flex;flex-direction:column;gap:4px}
-.fg label{margin-bottom:0}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:11px}
+.fg:last-child{margin-bottom:0}
+.fg label{margin-bottom:0;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--sg);font-weight:500}
+/* Sidebar subsection — titled group with subtle divider above */
+.subsec{border-top:1px solid rgba(255,255,255,.05);margin-top:14px;padding-top:14px}
+.subsec:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.subsec-hdr{display:flex;align-items:center;justify-content:space-between;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--gd);font-weight:600;margin-bottom:9px;font-family:'DM Sans',sans-serif}
+.subsec-hdr .subsec-hint{color:var(--sg);font-weight:400;letter-spacing:.02em;text-transform:none;font-size:9.5px}
+/* Collapsed disclosure */
+.disc{border-top:1px solid rgba(255,255,255,.04);padding-top:9px;margin-top:4px}
+.disc summary{list-style:none;cursor:pointer;font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--sg);display:flex;align-items:center;gap:5px;padding:2px 0;transition:color .15s}
+.disc summary:hover{color:var(--cr)}
+.disc summary::-webkit-details-marker{display:none}
+.disc summary::before{content:'+';color:var(--gd);font-size:13px;line-height:0;margin-right:2px}
+.disc[open] summary::before{content:'−'}
+.disc-body{padding-top:8px}
+/* Pill row */
+.pill-row{display:flex;flex-wrap:wrap;gap:3px}
+.pill-row .rbtn{padding:4px 8px;font-size:9.5px;letter-spacing:.04em}
 
 /* Quick bg strip in card header */
 .card-bgstrip{display:flex;gap:5px;padding:10px 12px;background:rgba(0,0,0,.2);flex-wrap:wrap;border-top:1px solid var(--br)}
@@ -1027,6 +1044,7 @@ function renderEds(){
     const bgStrip=`<div class="card-bgstrip">${BG_OPTIONS.map(o=>`<div class="bgsw${(s.bg||'#111111')===o.v?' sel':''}" data-bg="${o.v}" style="background:${o.v}" title="${o.l}" onclick="bgClick(event,${i})"></div>`).join('')}</div>`;
 
     const curBg=s.bg||'#111111';
+    const bankCount=getImageBank().length;
     card.innerHTML=`
       <div class="sehdr" onclick="togCard(${i})">
         <span class="snum">${String(i+1).padStart(2,'0')}</span>
@@ -1036,84 +1054,114 @@ function renderEds(){
       </div>
       ${bgStrip}
       <div class="sebdy">
-        <div class="fg">
-          <label>Slide type</label>
-          <div class="sw"><select onchange="changeType(${i},this.value)">${SLIDE_TYPES.map(t=>`<option value="${t}"${t===s.type?' selected':''}>${TYPE_LABELS[t]}</option>`).join('')}</select></div>
-        </div>
-        ${fields}
-        ${itemsEditor}
-        <div class="fg">
-          <label>Footer Nudge <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— tiny italic text, position below</span></label>
-          <input type="text" value="${(s.footerNudge||'').replace(/"/g,'&quot;')}" oninput="upd(${i},'footerNudge',this.value)" placeholder="e.g. swipe for the truth" style="font-size:11px">
-          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px">
-            ${['swipe for the truth','(here\'s why) →','keep reading ↓','the 5-day fix →','save this one','wait for it…'].map(n=>`<button class="rbtn" style="padding:3px 7px;font-size:9.5px" onclick="upd(${i},'footerNudge','${n.replace(/'/g,"\\'")}')">${n}</button>`).join('')}
-            <button class="rbtn" style="padding:3px 7px;font-size:9.5px;color:var(--red);border-color:rgba(201,124,92,.3)" onclick="upd(${i},'footerNudge','')">clear</button>
+
+        <!-- CONTENT -->
+        <div class="subsec">
+          <div class="subsec-hdr">Content</div>
+          <div class="fg">
+            <label>Slide type</label>
+            <div class="sw"><select onchange="changeType(${i},this.value)">${SLIDE_TYPES.map(t=>`<option value="${t}"${t===s.type?' selected':''}>${TYPE_LABELS[t]}</option>`).join('')}</select></div>
           </div>
+          ${fields}
+          ${itemsEditor}
+          ${screenshotPicker}
+          ${gfxPicker}
+        </div>
+
+        <!-- FOOTER NUDGE -->
+        <div class="subsec">
+          <div class="subsec-hdr">Footer Nudge <span class="subsec-hint">tiny italic text at bottom of slide</span></div>
+          <div class="fg">
+            <input type="text" value="${(s.footerNudge||'').replace(/"/g,'&quot;')}" oninput="upd(${i},'footerNudge',this.value)" placeholder="e.g. swipe for the truth" style="font-size:11px">
+          </div>
+          <details class="disc"${s.footerNudge?'':' open'}>
+            <summary>Quick presets</summary>
+            <div class="disc-body pill-row">
+              ${['swipe for the truth','(here\'s why) →','keep reading ↓','the 5-day fix →','save this one','wait for it…'].map(n=>`<button class="rbtn" onclick="upd(${i},'footerNudge','${n.replace(/'/g,"\\'")}')">${n}</button>`).join('')}
+              <button class="rbtn" style="color:var(--red);border-color:rgba(201,124,92,.3)" onclick="upd(${i},'footerNudge','')">clear</button>
+            </div>
+          </details>
           ${s.footerNudge?`
-            <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;align-items:center">
-              <span style="font-size:8.5px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;margin-right:2px">POSITION</span>
-              ${[['top','8'],['upper','25'],['mid','50'],['lower','75'],['bottom','90']].map(([lbl,val])=>`<button class="rbtn" style="padding:3px 7px;font-size:9px;${(s.nudgeY!==undefined?s.nudgeY:90)==parseInt(val)?'border-color:#C9A84C;color:#C9A84C':''}" onclick="upd(${i},'nudgeY',${val})">${lbl}</button>`).join('')}
-            </div>
-            <div style="display:flex;gap:6px;align-items:center;margin-top:5px">
-              <span style="font-size:8.5px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap">FINE</span>
-              <input type="range" min="2" max="97" step="1" value="${s.nudgeY!==undefined?s.nudgeY:90}" oninput="upd(${i},'nudgeY',parseInt(this.value))" style="flex:1;accent-color:#C9A84C">
-              <span style="font-size:9px;color:var(--gd);min-width:30px;text-align:right">${s.nudgeY!==undefined?s.nudgeY:90}%</span>
-            </div>
+            <details class="disc">
+              <summary>Position — ${s.nudgeY!==undefined?s.nudgeY:90}%</summary>
+              <div class="disc-body">
+                <div class="pill-row" style="margin-bottom:7px">
+                  ${[['top','8'],['upper','25'],['mid','50'],['lower','75'],['bottom','90']].map(([lbl,val])=>`<button class="rbtn"${(s.nudgeY!==undefined?s.nudgeY:90)==parseInt(val)?' style="border-color:#C9A84C;color:#C9A84C"':''} onclick="upd(${i},'nudgeY',${val})">${lbl}</button>`).join('')}
+                </div>
+                <input type="range" min="2" max="97" step="1" value="${s.nudgeY!==undefined?s.nudgeY:90}" oninput="upd(${i},'nudgeY',parseInt(this.value))" style="width:100%;accent-color:#C9A84C">
+              </div>
+            </details>
           `:''}
         </div>
-        ${screenshotPicker}
-        ${gfxPicker}
-        <div class="fg">
-          <label>AI Image <span style="text-transform:none;letter-spacing:0;color:var(--sg);font-size:9px">— Fal.ai Flux · ~$0.025/img (Pro ~$0.05)</span></label>
+
+        <!-- IMAGE -->
+        <div class="subsec">
+          <div class="subsec-hdr">Image <span class="subsec-hint">Fal.ai Flux · $0.025 / $0.05 Hi-Res</span></div>
           ${s.suggestedImg && !s.bgImage?`
-            <div style="margin-bottom:6px;padding:7px 9px;background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border:1px solid #C9A84C;border-radius:4px;display:flex;align-items:center;gap:8px">
+            <div style="margin-bottom:8px;padding:8px 10px;background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.04));border:1px solid #C9A84C;border-radius:4px;display:flex;align-items:center;gap:8px">
               <span style="font-size:10px;color:#C9A84C;font-weight:500">✦ AI suggests: ${s.suggestedImgLabel}</span>
               <button class="rbtn" onclick="usePresetAndGen(${i},'${s.suggestedImg}')" style="margin-left:auto;padding:3px 9px;font-size:10px;background:#C9A84C;color:#000;border-color:#C9A84C">Gen it →</button>
             </div>
           `:''}
-          <div style="display:flex;gap:5px">
-            <input type="text" id="img-prompt-${i}" placeholder="Custom prompt, or tap a preset below…" style="flex:1;font-size:11px"${s.suggestedImg && !s.bgImage?` value="${(s.suggestedImgPrompt||'').replace(/"/g,'&quot;')}"`:''}>
-            <button class="rbtn" onclick="genImage(${i},false)" id="img-btn-${i}" style="flex-shrink:0;white-space:nowrap">✦ Gen</button>
-            <button class="rbtn" onclick="genImage(${i},true)" id="img-btn-hires-${i}" style="flex-shrink:0;white-space:nowrap;border-color:#C9A84C;color:#C9A84C" title="Flux Pro — sharper, costs ~$0.05">✦ Hi-Res</button>
+          <div style="display:flex;gap:5px;margin-bottom:7px">
+            <input type="text" id="img-prompt-${i}" placeholder="Describe the image, or tap a preset…" style="flex:1;font-size:11px"${s.suggestedImg && !s.bgImage?` value="${(s.suggestedImgPrompt||'').replace(/"/g,'&quot;')}"`:''}>
+            <button class="rbtn" onclick="genImage(${i},false)" id="img-btn-${i}" style="flex-shrink:0;white-space:nowrap">Gen</button>
+            <button class="rbtn" onclick="genImage(${i},true)" id="img-btn-hires-${i}" style="flex-shrink:0;white-space:nowrap;border-color:#C9A84C;color:#C9A84C" title="Flux Pro — sharper, costs ~$0.05">Hi-Res</button>
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">
-            ${IMG_PRESETS.map(p=>`<button class="rbtn" style="padding:4px 7px;font-size:9.5px;letter-spacing:.03em;${s.suggestedImg===p.id?'border-color:#C9A84C;color:#C9A84C':''}" onclick="usePreset(${i},'${p.id}')" title="${p.prompt.slice(0,80)}…">${p.label}</button>`).join('')}
-          </div>
-          <div style="font-size:9px;color:var(--sg);margin-top:4px;font-style:italic">Tap a preset to fill the prompt (free) — then hit Gen.</div>
-          <div style="display:flex;gap:5px;margin-top:6px">
-            <input type="text" id="img-url-${i}" placeholder="Or paste image URL…" style="flex:1;font-size:10.5px" oninput="applyImageUrl(${i},this.value)">
-          </div>
+          <details class="disc">
+            <summary>Preset styles <span style="color:var(--sg);margin-left:6px;font-size:9px;letter-spacing:0;text-transform:none">(fills prompt, free)</span></summary>
+            <div class="disc-body pill-row">
+              ${IMG_PRESETS.map(p=>`<button class="rbtn"${s.suggestedImg===p.id?' style="border-color:#C9A84C;color:#C9A84C"':''} onclick="usePreset(${i},'${p.id}')" title="${p.prompt.slice(0,80)}…">${p.label}</button>`).join('')}
+            </div>
+          </details>
+          <details class="disc">
+            <summary>Paste image URL</summary>
+            <div class="disc-body">
+              <input type="text" id="img-url-${i}" placeholder="https://…" style="width:100%;font-size:10.5px" oninput="applyImageUrl(${i},this.value)">
+            </div>
+          </details>
+          ${bankCount>0?`
+            <details class="disc">
+              <summary>Image bank (${bankCount}) <span style="color:var(--sg);margin-left:6px;font-size:9px;letter-spacing:0;text-transform:none">— click to reuse</span></summary>
+              <div class="disc-body" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">
+                ${getImageBank().slice(0,12).map((b,bi)=>`<div style="position:relative;aspect-ratio:1;background:#0a0a0a;border:1px solid #222;border-radius:3px;overflow:hidden;cursor:pointer" onclick="applyImageUrl(${i},'${b.url}')"><img src="${b.url}" style="width:100%;height:100%;object-fit:cover" alt=""><button onclick="event.stopPropagation();removeFromBank(${bi})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:#888;width:14px;height:14px;border-radius:50%;cursor:pointer;font-size:9px;line-height:1">×</button></div>`).join('')}
+              </div>
+            </details>
+          `:''}
           ${s.bgImage?`
-            <div style="margin-top:8px;padding:7px 8px;background:#0a0a0a;border:1px solid #222;border-radius:4px">
-              <div style="font-size:9px;color:var(--gd);margin-bottom:5px">✓ Image applied</div>
-              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px">
-                <span style="font-size:8.5px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;margin-right:2px;align-self:center">LAYOUT</span>
-                ${['full','bottom','top','right','left','center'].map(mode=>`<button class="rbtn" style="padding:3px 6px;font-size:9px;${(s.imgLayout||'full')===mode?'border-color:#C9A84C;color:#C9A84C':''}" onclick="setImgLayout(${i},'${mode}')">${mode}</button>`).join('')}
+            <div style="margin-top:10px;padding:10px;background:#0a0a0a;border:1px solid rgba(201,168,76,.15);border-radius:4px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <span style="font-size:9px;color:var(--gd);letter-spacing:.18em;text-transform:uppercase;font-weight:500">✓ Applied</span>
+                <button onclick="clearBgImage(${i})" style="background:none;border:none;color:var(--sg);cursor:pointer;font-size:9px;padding:0;text-decoration:underline;letter-spacing:.05em">remove</button>
               </div>
-              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px">
-                <span style="font-size:8.5px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;margin-right:2px;align-self:center">TREATMENT</span>
-                ${[['none','none'],['dark30','darken'],['dark60','darker'],['dark80','deep'],['veil','veil'],['blur','blur'],['grayscale','b&w']].map(([val,lbl])=>`<button class="rbtn" style="padding:3px 6px;font-size:9px;${(s.imgTreatment||'none')===val?'border-color:#C9A84C;color:#C9A84C':''}" onclick="setImgTreatment(${i},'${val}')">${lbl}</button>`).join('')}
+              <div class="fg" style="margin-bottom:8px">
+                <label>Layout</label>
+                <div class="pill-row">${['full','bottom','top','right','left','center'].map(mode=>`<button class="rbtn"${(s.imgLayout||'full')===mode?' style="border-color:#C9A84C;color:#C9A84C"':''} onclick="setImgLayout(${i},'${mode}')">${mode}</button>`).join('')}</div>
               </div>
-              <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
-                <span style="font-size:8.5px;color:var(--sg);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap">CUSTOM DIM</span>
-                <input type="range" min="0" max="95" step="5" value="${s.imgDim||0}" oninput="setImgDim(${i},this.value)" style="flex:1;accent-color:#C9A84C">
-                <span style="font-size:9px;color:var(--gd);min-width:30px;text-align:right">${s.imgDim||0}%</span>
+              <div class="fg" style="margin-bottom:8px">
+                <label>Treatment</label>
+                <div class="pill-row">${[['none','none'],['dark30','darken'],['dark60','darker'],['dark80','deep'],['veil','veil'],['blur','blur'],['grayscale','b&w']].map(([val,lbl])=>`<button class="rbtn"${(s.imgTreatment||'none')===val?' style="border-color:#C9A84C;color:#C9A84C"':''} onclick="setImgTreatment(${i},'${val}')">${lbl}</button>`).join('')}</div>
               </div>
-              <div style="display:flex;gap:5px;align-items:center">
-                <button class="rbtn" onclick="saveToBank(${i})" style="padding:3px 7px;font-size:9px" title="Save to your reusable image bank">★ Bank it</button>
-                <button onclick="clearBgImage(${i})" style="background:none;border:none;color:var(--sg);cursor:pointer;font-size:9px;padding:0">remove</button>
+              <div class="fg" style="margin-bottom:0">
+                <label style="display:flex;justify-content:space-between">Custom dim <span style="color:var(--gd);font-weight:400;letter-spacing:.05em;text-transform:none">${s.imgDim||0}%</span></label>
+                <input type="range" min="0" max="95" step="5" value="${s.imgDim||0}" oninput="setImgDim(${i},this.value)" style="width:100%;accent-color:#C9A84C">
               </div>
             </div>
           `:''}
-          ${(function(){const bank=getImageBank();if(bank.length===0)return '';return `<details style="margin-top:6px"><summary style="font-size:9.5px;color:var(--sg);cursor:pointer;letter-spacing:.08em;text-transform:uppercase">My Image Bank (${bank.length}) — reuse saved images</summary><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:5px">${bank.slice(0,12).map((b,bi)=>`<div style="position:relative;aspect-ratio:1;background:#0a0a0a;border:1px solid #222;border-radius:3px;overflow:hidden;cursor:pointer" onclick="applyImageUrl(${i},'${b.url}')"><img src="${b.url}" style="width:100%;height:100%;object-fit:cover" alt=""><button onclick="event.stopPropagation();removeFromBank(${bi})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:#888;width:14px;height:14px;border-radius:50%;cursor:pointer;font-size:9px;line-height:1">×</button></div>`).join('')}</div></details>`;})()}
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">
-          <button class="rbtn" onclick="regen(${i})">↻ Regenerate</button>
-          <button class="rbtn" onclick="duplicateSlide(${i})">⊕ Duplicate</button>
-          <button class="rbtn" onclick="addArrow(${i})">+ Arrow</button>
-          <button class="rbtn" onclick="addTextBox(${i})">+ Text</button>
+
+        <!-- ACTIONS -->
+        <div class="subsec">
+          <div class="subsec-hdr">Actions</div>
+          <div class="pill-row" style="margin-bottom:10px">
+            <button class="rbtn" onclick="regen(${i})">↻ Regenerate</button>
+            <button class="rbtn" onclick="duplicateSlide(${i})">⊕ Duplicate</button>
+            <button class="rbtn" onclick="addArrow(${i})">+ Arrow</button>
+            <button class="rbtn" onclick="addTextBox(${i})">+ Text</button>
+          </div>
+          <button class="del-btn" onclick="deleteSlide(${i})" ${slides.length<=1?'disabled':''}>× Delete This Slide</button>
         </div>
-        <button class="del-btn" onclick="deleteSlide(${i})" ${slides.length<=1?'disabled':''}>× Delete This Slide</button>
+
       </div>`;
     c.appendChild(card);
   });
