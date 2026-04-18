@@ -76,6 +76,8 @@ export default function PlayerPage() {
   const [speed, setSpeed] = useState(1);
   const [isFavorited, setIsFavorited] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [scrubbing, setScrubbing] = useState(false);
+  const [scrubValue, setScrubValue] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const { data: track, isLoading } = useQuery({
@@ -164,7 +166,7 @@ export default function PlayerPage() {
   });
 
   const handleTimeUpdate = () => {
-    if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+    if (audioRef.current && !scrubbing) setCurrentTime(audioRef.current.currentTime);
   };
   const handleLoadedMetadata = () => {
     if (audioRef.current) setDuration(audioRef.current.duration);
@@ -388,14 +390,40 @@ export default function PlayerPage() {
             <p className="text-ui text-sm mb-10">{track.duration_minutes} min</p>
 
             <div className="w-full max-w-sm mb-3">
-              <div className="h-1.5 bg-surface-light rounded-full cursor-pointer relative" onClick={handleSeek}>
-                <div className="absolute inset-y-0 left-0 gold-gradient rounded-full transition-all duration-100" style={{ width: `${progress}%` }} />
-                <div className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-accent shadow-lg transition-all duration-100" style={{ left: `calc(${progress}% - 7px)` }} />
-              </div>
-              <div className="flex justify-between mt-2">
-                <span className="text-ui text-[10px] tabular-nums">{formatTime(currentTime)}</span>
-                <span className="text-ui text-[10px] tabular-nums">{formatTime(duration || displayDuration)}</span>
-              </div>
+              {(() => {
+                const max = duration || displayDuration || 1;
+                const display = scrubbing ? scrubValue : currentTime;
+                const pct = max > 0 ? (display / max) * 100 : 0;
+                return (
+                  <>
+                    <input
+                      type="range"
+                      min={0}
+                      max={max}
+                      step={0.1}
+                      value={display}
+                      onPointerDown={() => { setScrubbing(true); setScrubValue(currentTime); }}
+                      onInput={e => setScrubValue(Number((e.target as HTMLInputElement).value))}
+                      onChange={e => { if (scrubbing) setScrubValue(Number(e.target.value)); }}
+                      onPointerUp={e => {
+                        const v = Number((e.target as HTMLInputElement).value);
+                        if (audioRef.current) audioRef.current.currentTime = v;
+                        setCurrentTime(v);
+                        setScrubbing(false);
+                      }}
+                      onPointerCancel={() => setScrubbing(false)}
+                      className="velum-audio-slider w-full cursor-pointer"
+                      style={{
+                        background: `linear-gradient(to right, hsl(var(--accent)) 0%, hsl(var(--accent)) ${pct}%, hsl(var(--foreground) / 0.12) ${pct}%, hsl(var(--foreground) / 0.12) 100%)`,
+                      }}
+                    />
+                    <div className="flex justify-between mt-2">
+                      <span className="text-ui text-[10px] tabular-nums">{formatTime(display)}</span>
+                      <span className="text-ui text-[10px] tabular-nums">{formatTime(duration || displayDuration)}</span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             <div className="mb-8 flex items-center gap-8">
