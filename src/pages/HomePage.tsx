@@ -280,7 +280,7 @@ export default function HomePage() {
             <p className="text-foreground text-sm font-sans font-medium">
               {trialDaysLeft <= 0 ? "Your trial ends today" : `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left in your trial`}
             </p>
-            <p className="text-muted-foreground text-[11px]">Annual plan · $149/yr · save 57% →</p>
+            <p className="text-muted-foreground text-[11px]">Annual plan · $99/yr · save 57% →</p>
           </div>
         </Link>
       )}

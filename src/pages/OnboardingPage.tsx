@@ -184,7 +184,7 @@ export default function OnboardingPage() {
               </button>
 
               <p className="mt-4 text-muted-foreground/70 text-[11px]">
-                After trial: keep 1 free tapping session daily · Upgrade from $12/mo
+                After trial: keep 1 free tapping session daily · Upgrade from $8/mo
               </p>
             </motion.div>
           )}

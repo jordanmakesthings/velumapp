@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 const PRICE_IDS = {
-  monthly: "price_1TMulfLFHHLwAHKUNNKLRI66",       // $29/mo, no trial
-  annual: "price_1TMulgLFHHLwAHKUFVXu0O2l",        // $149/yr, 7-day trial
+  monthly: "price_1TNbaMLFHHLwAHKUOFa8i8K9",       // $19/mo, no trial
+  annual: "price_1TNbaRLFHHLwAHKUSuJQVPPS",        // $99/yr, 7-day trial
   lifetime_founding: "price_1TNMvNLFHHLwAHKUE3NXvdxD", // $199 one-time (first 100)
   lifetime: "price_1TMulhLFHHLwAHKUbKNuLmWs",      // $299 one-time (post-founding)
 };

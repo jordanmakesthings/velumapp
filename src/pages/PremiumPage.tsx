@@ -181,14 +181,7 @@ export default function PremiumPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  {isFounding ? (
-                    <div className="flex items-baseline gap-2 justify-end">
-                      <span className="text-muted-foreground text-sm line-through">$299</span>
-                      <span className="text-accent text-2xl font-serif">$199</span>
-                    </div>
-                  ) : (
-                    <p className="text-accent text-2xl font-serif">$299</p>
-                  )}
+                  <p className="text-accent text-2xl font-serif">{isFounding ? "$199" : "$299"}</p>
                   <p className="text-muted-foreground text-xs">one-time</p>
                 </div>
               </button>
@@ -206,10 +199,10 @@ export default function PremiumPage() {
               >
                 <div>
                   <p className="text-foreground font-sans font-medium">Annual</p>
-                  <p className="text-muted-foreground text-xs mt-0.5">~$12/mo · save 57% vs monthly</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">~$8/mo · save 57% vs monthly</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-accent text-2xl font-serif">$149</p>
+                  <p className="text-accent text-2xl font-serif">$99</p>
                   <p className="text-muted-foreground text-xs">/year</p>
                 </div>
               </button>
@@ -226,7 +219,7 @@ export default function PremiumPage() {
                 <p className="text-muted-foreground text-xs mt-0.5">Charged today · Cancel anytime</p>
               </div>
               <div className="text-right">
-                <p className="text-accent text-2xl font-serif">$29</p>
+                <p className="text-accent text-2xl font-serif">$19</p>
                 <p className="text-muted-foreground text-xs">/month</p>
               </div>
             </button>
