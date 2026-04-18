@@ -3,8 +3,8 @@
   "short_name": "Velum",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#111111",
-  "theme_color": "#111111",
+  "background_color": "#0a1410",
+  "theme_color": "#0a1410",
   "orientation": "portrait",
   "icons": [
     {
