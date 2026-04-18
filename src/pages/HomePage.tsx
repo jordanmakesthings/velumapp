@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSessionFinder } from "@/contexts/SessionFinderContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOneSignalInit } from "@/hooks/useOneSignal";
-import logoLotus from "@/assets/brand/velum-lotus.png";
 import { format } from "date-fns";
 import NervousSystemScore from "@/components/profile/NervousSystemScore";
 
@@ -245,9 +244,6 @@ export default function HomePage() {
     <div className="mx-auto w-full max-w-3xl overflow-x-hidden px-4 pt-14 pb-8 lg:px-8">
       {/* Header */}
       <div className="mb-8 min-w-0 w-full max-w-full">
-        <div className="mb-6 flex items-center gap-2.5 min-w-0">
-          <img src={logoLotus} alt="Velum" className="w-9 h-9 object-contain" draggable={false} />
-        </div>
         <p className="text-eyebrow mb-4">{getGreeting()}{firstName ? `, ${firstName}` : ""}</p>
         <p className="text-editorial max-w-full break-words text-[17px] leading-snug italic text-foreground/75 mb-2" style={{ overflowWrap: "break-word" }}>
           "{todayQuote.text}"
