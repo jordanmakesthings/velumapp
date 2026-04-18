@@ -153,8 +153,8 @@ export default function PremiumPage() {
       <div className="px-6 pt-12 pb-12 max-w-lg mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="text-center mb-10">
-            <img src={logoCircle} alt="Velum" className="w-24 h-24 object-contain mx-auto mb-6" />
-            <h1 className="text-display text-[2.6rem] leading-[1.05] font-light mb-4">Invest in your<br />nervous system.</h1>
+            <img src={logoCircle} alt="Velum" className="w-20 h-20 object-contain mx-auto mb-2" />
+            <h1 className="text-display text-[2.4rem] leading-[1.05] font-light mb-3 mt-0">Invest in your<br />nervous system.</h1>
             <p className="text-muted-foreground text-[15px] font-sans font-light">Full access to everything in Velum.</p>
           </div>
 
