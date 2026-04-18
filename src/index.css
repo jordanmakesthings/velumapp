@@ -131,10 +131,10 @@
 
 @layer utilities {
 
-  /* Standard velum card — deep emerald, subtle gold border */
+  /* Standard velum card — deep emerald glowing from center */
   .velum-card {
     background:
-      linear-gradient(135deg, hsl(156, 52%, 15%), hsl(156, 51%, 11%));
+      radial-gradient(ellipse at 50% 50%, hsl(156, 52%, 17%) 0%, hsl(156, 51%, 9%) 85%);
     border: 1px solid hsla(42, 53%, 54%, 0.22);
     border-radius: 14px;
     transition: border-color 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms;
@@ -145,16 +145,17 @@
   }
 
   .velum-card-flat {
-    background: linear-gradient(135deg, hsl(156, 52%, 14%), hsl(156, 51%, 11%));
+    background:
+      radial-gradient(ellipse at 50% 50%, hsl(156, 52%, 15%) 0%, hsl(156, 51%, 9%) 90%);
     border: 1px solid hsla(42, 53%, 54%, 0.2);
     border-radius: 14px;
   }
 
-  /* Signature anchor card — used for hero CTAs, glows gold */
+  /* Signature anchor card — used for hero CTAs, radial glow + gold border */
   .velum-card-accent {
     background:
-      linear-gradient(135deg, hsl(156, 52%, 18%), hsl(156, 51%, 10%));
-    border: 1px solid hsla(42, 53%, 54%, 0.38);
+      radial-gradient(ellipse at 50% 40%, hsl(156, 52%, 22%) 0%, hsl(156, 51%, 9%) 90%);
+    border: 1px solid hsla(42, 53%, 54%, 0.4);
     border-radius: 16px;
     box-shadow: var(--shadow-gold-glow);
     transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
