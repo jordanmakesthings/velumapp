@@ -5,7 +5,7 @@ import { useState } from "react";
 import { getTodayCheckin } from "@/lib/velumStorage";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SessionFinderModal } from "@/components/home/SessionFinderModal";
+import { useSessionFinder } from "@/contexts/SessionFinderContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOneSignalInit } from "@/hooks/useOneSignal";
 import logoLotus from "@/assets/brand/velum-lotus.png";
@@ -111,7 +111,7 @@ function getDayOfYear() {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [finderOpen, setFinderOpen] = useState(false);
+  const { setOpen: setFinderOpen } = useSessionFinder();
   const [reflectionText, setReflectionText] = useState("");
   const [savingReflection, setSavingReflection] = useState(false);
   const todayCheckin = getTodayCheckin();
@@ -464,7 +464,6 @@ export default function HomePage() {
       {/* Nervous System Score */}
       <NervousSystemScore />
 
-      <SessionFinderModal open={finderOpen} onClose={() => setFinderOpen(false)} />
     </div>
     </div>);
 

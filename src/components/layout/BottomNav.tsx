@@ -1,14 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Library, Zap, BookOpen, User } from "lucide-react";
+import { Sparkles, Compass, User } from "lucide-react";
 
-const TOOLS_PATHS = ["/tools", "/breathe", "/bilateral", "/tapping", "/somatic-touch", "/sos"];
-
+// Three-tab simplified navigation
+// - Today: the anchor (home + session finder)
+// - Discover: library, tools, courses, mastery, journal all live here
+// - Me: profile + premium + settings
 const navItems = [
-  { path: "/home", icon: Home, label: "Home", match: ["/home", "/"] },
-  { path: "/library", icon: Library, label: "Library", match: ["/library", "/subcategory"] },
-  { path: "/tools", icon: Zap, label: "Tools", match: TOOLS_PATHS },
-  { path: "/courses", icon: BookOpen, label: "Courses", match: ["/courses", "/course"] },
-  { path: "/profile", icon: User, label: "Profile", match: ["/profile"] },
+  { path: "/home",    icon: Sparkles, label: "Today",    match: ["/home", "/"] },
+  { path: "/library", icon: Compass,  label: "Discover", match: ["/library", "/tools", "/courses", "/course", "/subcategory", "/journal", "/breathe", "/bilateral", "/tapping", "/somatic-touch", "/sos"] },
+  { path: "/profile", icon: User,     label: "Me",       match: ["/profile", "/premium"] },
 ];
 
 export function BottomNav() {

@@ -1,14 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Library, Zap, BookOpen, User, Feather } from "lucide-react";
-import logoLotus from "@/assets/logo-lotus.jpg";
+import { Sparkles, Compass, User } from "lucide-react";
+import velumLotus from "@/assets/brand/velum-lotus.png";
 
 const navItems = [
-  { path: "/home", icon: Home, label: "Home" },
-  { path: "/library", icon: Library, label: "Library" },
-  { path: "/tools", icon: Zap, label: "Tools" },
-  { path: "/courses", icon: BookOpen, label: "Courses" },
-  { path: "/journal", icon: Feather, label: "Journal" },
-  { path: "/profile", icon: User, label: "Profile" },
+  { path: "/home",    icon: Sparkles, label: "Today" },
+  { path: "/library", icon: Compass,  label: "Discover" },
+  { path: "/profile", icon: User,     label: "Me" },
 ];
 
 export function DesktopSidebar() {
@@ -17,15 +14,17 @@ export function DesktopSidebar() {
   return (
     <div className="flex flex-col h-full py-8 px-5">
       <div className="mb-12 flex items-center gap-3">
-        <img src={logoLotus} alt="Velum" className="w-8 h-8 rounded-md object-cover" />
-        <span className="text-accent text-[10px] font-sans font-medium tracking-[4px] uppercase">
-          VELUM
+        <img src={velumLotus} alt="Velum" className="w-9 h-9 object-contain" draggable={false} />
+        <span className="text-accent text-[11px] font-sans font-medium tracking-[5px] uppercase">
+          Velum
         </span>
       </div>
 
       <nav className="flex flex-col gap-1 flex-1">
         {navItems.map(({ path, icon: Icon, label }) => {
-          const isActive = location.pathname === path;
+          const isActive = location.pathname === path
+            || (path === "/library" && (location.pathname.startsWith("/library") || location.pathname.startsWith("/tools") || location.pathname.startsWith("/courses") || location.pathname.startsWith("/journal") || location.pathname.startsWith("/breathe") || location.pathname.startsWith("/bilateral") || location.pathname.startsWith("/tapping") || location.pathname.startsWith("/somatic-touch")))
+            || (path === "/profile" && location.pathname.startsWith("/premium"));
           return (
             <Link
               key={path}
