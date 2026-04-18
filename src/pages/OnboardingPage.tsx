@@ -30,6 +30,19 @@ const WHAT_YOU_GET = [
   { icon: "◌", label: "SOS Reset — regulation in minutes" },
 ];
 
+// Goal-specific first sessions keyed to the user's chosen goal.
+// Shows at step 2 so they can see their pick actually produced a path.
+const GOAL_PATH: Record<string, { label: string; queued: string[] }> = {
+  stress:     { label: "Managing stress & anxiety",       queued: ["SOS Reset (3 min)", "Box breathing", "EFT for anxiety loop", "Meditation Made Easy"] },
+  emotions:   { label: "Mastering your emotions",         queued: ["Tapping for emotional release", "EFT Essentials course", "Bilateral reset", "Daily journal"] },
+  sleep:      { label: "Sleeping deeper",                 queued: ["Wind-down breath", "Body scan for sleep", "EFT for racing mind", "Evening journal"] },
+  confidence: { label: "Building confidence & self-worth", queued: ["EFT for self-worth", "Confidence MasteryClass", "Morning reset", "Belief-rewrite journal"] },
+  habits:     { label: "Breaking patterns",               queued: ["Pattern-interrupt tapping", "Rewiring MasteryClass", "Somatic urge release", "Journal for triggers"] },
+  self:       { label: "Deepening connection to yourself", queued: ["Somatic check-in", "Inner witness meditation", "Daily Reflection", "EFT for self-trust"] },
+  focus:      { label: "More energy & clarity",           queued: ["Activating breath", "Clarity meditation", "Energy reset tapping", "Focus MasteryClass"] },
+  trauma:     { label: "Processing what you're carrying", queued: ["Bilateral regulation", "EFT for stuck emotion", "Trauma-informed journal", "Somatic release"] },
+};
+
 
 const slide = {
   initial: { opacity: 0, x: 32 },
@@ -44,6 +57,8 @@ export default function OnboardingPage() {
   const [goal, setGoal] = useState("");
   const [experience, setExperience] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const path = GOAL_PATH[goal] ?? GOAL_PATH.stress;
 
   const complete = async () => {
     if (!user || saving) return;
@@ -137,20 +152,34 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* STEP 2 — You're in */}
+          {/* STEP 2 — Almost in */}
           {step === 2 && (
             <motion.div key="welcome" {...slide} className="w-full text-center">
               <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(201,168,76,0.25)]">
                 <span className="text-primary-foreground text-2xl">✦</span>
               </div>
-              <p className="text-eyebrow mb-3">One last step</p>
-              <h1 className="text-editorial text-5xl italic mb-4 font-light">You're in.</h1>
+              <p className="text-eyebrow mb-3">Last step</p>
+              <h1 className="text-editorial text-5xl italic mb-4 font-light">Almost <span className="text-accent">in.</span></h1>
               <p className="text-muted-foreground text-[15px] leading-relaxed mb-8 max-w-[320px] mx-auto">
-                Pick the way you want to practice. From $19/mo, or $199 lifetime.
+                Your path is ready. Pick how you want to practice.
               </p>
 
+              {/* Goal-specific path reveal */}
+              <div className="velum-card-accent p-5 mb-4 text-left">
+                <p className="text-eyebrow mb-1 text-center">Your path</p>
+                <p className="text-muted-foreground text-xs text-center mb-4 italic">{path.label}</p>
+                <div className="flex flex-col gap-2.5">
+                  {path.queued.map((item, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-accent text-[10px] font-sans font-semibold w-5 flex-shrink-0 tabular-nums">0{i + 1}</span>
+                      <p className="text-foreground text-sm font-sans">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="velum-card p-5 mb-8 text-left">
-                <p className="text-eyebrow mb-4 text-center">What's unlocked</p>
+                <p className="text-eyebrow mb-4 text-center">Plus everything in Velum</p>
                 <div className="flex flex-col gap-3">
                   {WHAT_YOU_GET.map(({ icon, label }, i) => (
                     <div key={i} className="flex items-center gap-3">
