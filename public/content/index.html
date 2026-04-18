@@ -424,7 +424,7 @@ select option{background:#1e1e1e}
       <div style="margin-bottom:10px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
           <label style="margin:0">Topic</label>
-          <button class="rbtn" onclick="openTopicBank()" style="padding:3px 9px;font-size:10px;border-color:#C9A84C;color:#C9A84C">✦ Topic Bank</button>
+          <button class="rbtn" onclick="openTopicBank()" style="padding:3px 9px;font-size:10px;background:#C9A84C;border-color:#C9A84C;color:#0a0a0a;font-weight:600">✦ Topic Bank</button>
         </div>
         <textarea id="topic" placeholder="e.g. 3 signs your nervous system is dysregulated — or tap Topic Bank" rows="3"></textarea>
       </div>
@@ -568,7 +568,7 @@ select option{background:#1e1e1e}
     <span class="fbar-label">Size</span>
     <button onclick="setDims('square')" id="dim-square" style="font-size:9px">1:1</button>
     <button onclick="setDims('portrait')" id="dim-portrait" style="font-size:9px">4:5</button>
-    <button onclick="setDims('story')" id="dim-story" style="font-size:9px;border-color:#C9A84C;color:#C9A84C">9:16</button>
+    <button onclick="setDims('story')" id="dim-story" style="font-size:9px;background:#C9A84C;border-color:#C9A84C;color:#0a0a0a;font-weight:600">9:16</button>
     <span class="hint-text">Select text on slide first</span>
   </div>
 
@@ -1086,7 +1086,7 @@ function renderEds(){
               <summary>Position — ${s.nudgeY!==undefined?s.nudgeY:90}%</summary>
               <div class="disc-body">
                 <div class="pill-row" style="margin-bottom:7px">
-                  ${[['top','8'],['upper','25'],['mid','50'],['lower','75'],['bottom','90']].map(([lbl,val])=>`<button class="rbtn"${(s.nudgeY!==undefined?s.nudgeY:90)==parseInt(val)?' style="border-color:#C9A84C;color:#C9A84C"':''} onclick="upd(${i},'nudgeY',${val})">${lbl}</button>`).join('')}
+                  ${[['top','8'],['upper','25'],['mid','50'],['lower','75'],['bottom','90']].map(([lbl,val])=>`<button class="rbtn"${(s.nudgeY!==undefined?s.nudgeY:90)==parseInt(val)?' style="background:#C9A84C;border-color:#C9A84C;color:#0a0a0a;font-weight:600"':''} onclick="upd(${i},'nudgeY',${val})">${lbl}</button>`).join('')}
                 </div>
                 <input type="range" min="2" max="97" step="1" value="${s.nudgeY!==undefined?s.nudgeY:90}" oninput="upd(${i},'nudgeY',parseInt(this.value))" style="width:100%;accent-color:#C9A84C">
               </div>
@@ -1106,12 +1106,12 @@ function renderEds(){
           <div style="display:flex;gap:5px;margin-bottom:7px">
             <input type="text" id="img-prompt-${i}" placeholder="Describe the image, or tap a preset…" style="flex:1;font-size:11px"${s.suggestedImg && !s.bgImage?` value="${(s.suggestedImgPrompt||'').replace(/"/g,'&quot;')}"`:''}>
             <button class="rbtn" onclick="genImage(${i},false)" id="img-btn-${i}" style="flex-shrink:0;white-space:nowrap">Gen</button>
-            <button class="rbtn" onclick="genImage(${i},true)" id="img-btn-hires-${i}" style="flex-shrink:0;white-space:nowrap;border-color:#C9A84C;color:#C9A84C" title="Flux Pro — sharper, costs ~$0.05">Hi-Res</button>
+            <button class="rbtn" onclick="genImage(${i},true)" id="img-btn-hires-${i}" style="flex-shrink:0;white-space:nowrap;background:#C9A84C;border-color:#C9A84C;color:#0a0a0a;font-weight:600" title="Flux Pro — sharper, costs ~$0.05">Hi-Res</button>
           </div>
           <details class="disc">
             <summary>Preset styles <span style="color:var(--sg);margin-left:6px;font-size:9px;letter-spacing:0;text-transform:none">(fills prompt, free)</span></summary>
             <div class="disc-body pill-row">
-              ${IMG_PRESETS.map(p=>`<button class="rbtn"${s.suggestedImg===p.id?' style="border-color:#C9A84C;color:#C9A84C"':''} onclick="usePreset(${i},'${p.id}')" title="${p.prompt.slice(0,80)}…">${p.label}</button>`).join('')}
+              ${IMG_PRESETS.map(p=>`<button class="rbtn"${s.suggestedImg===p.id?' style="background:#C9A84C;border-color:#C9A84C;color:#0a0a0a;font-weight:600"':''} onclick="usePreset(${i},'${p.id}')" title="${p.prompt.slice(0,80)}…">${p.label}</button>`).join('')}
             </div>
           </details>
           <details class="disc">
@@ -1136,11 +1136,11 @@ function renderEds(){
               </div>
               <div class="fg" style="margin-bottom:8px">
                 <label>Layout</label>
-                <div class="pill-row">${['full','bottom','top','right','left','center'].map(mode=>`<button class="rbtn"${(s.imgLayout||'full')===mode?' style="border-color:#C9A84C;color:#C9A84C"':''} onclick="setImgLayout(${i},'${mode}')">${mode}</button>`).join('')}</div>
+                <div class="pill-row">${['full','bottom','top','right','left','center'].map(mode=>`<button class="rbtn"${(s.imgLayout||'full')===mode?' style="background:#C9A84C;border-color:#C9A84C;color:#0a0a0a;font-weight:600"':''} onclick="setImgLayout(${i},'${mode}')">${mode}</button>`).join('')}</div>
               </div>
               <div class="fg" style="margin-bottom:8px">
                 <label>Treatment</label>
-                <div class="pill-row">${[['none','none'],['dark30','darken'],['dark60','darker'],['dark80','deep'],['veil','veil'],['blur','blur'],['grayscale','b&w']].map(([val,lbl])=>`<button class="rbtn"${(s.imgTreatment||'none')===val?' style="border-color:#C9A84C;color:#C9A84C"':''} onclick="setImgTreatment(${i},'${val}')">${lbl}</button>`).join('')}</div>
+                <div class="pill-row">${[['none','none'],['dark30','darken'],['dark60','darker'],['dark80','deep'],['veil','veil'],['blur','blur'],['grayscale','b&w']].map(([val,lbl])=>`<button class="rbtn"${(s.imgTreatment||'none')===val?' style="background:#C9A84C;border-color:#C9A84C;color:#0a0a0a;font-weight:600"':''} onclick="setImgTreatment(${i},'${val}')">${lbl}</button>`).join('')}</div>
               </div>
               <div class="fg" style="margin-bottom:0">
                 <label style="display:flex;justify-content:space-between">Custom dim <span style="color:var(--gd);font-weight:400;letter-spacing:.05em;text-transform:none">${s.imgDim||0}%</span></label>
@@ -1870,7 +1870,7 @@ const TOPIC_BANK=[
 function openTopicBank(){
   const modal=document.getElementById('topic-modal');
   const cats=['All',...new Set(TOPIC_BANK.map(t=>t.cat))];
-  document.getElementById('topic-cats').innerHTML=cats.map((c,i)=>`<button class="rbtn tcat ${i===0?'on':''}" data-cat="${c}" onclick="filterTopics('${c}')" style="padding:5px 11px;font-size:10px;${i===0?'border-color:#C9A84C;color:#C9A84C':''}">${c}</button>`).join('');
+  document.getElementById('topic-cats').innerHTML=cats.map((c,i)=>`<button class="rbtn tcat ${i===0?'on':''}" data-cat="${c}" onclick="filterTopics('${c}')" style="padding:5px 11px;font-size:10px;${i===0?'background:#C9A84C;border-color:#C9A84C;color:#0a0a0a;font-weight:600':''}">${c}</button>`).join('');
   filterTopics('All');
   modal.style.display='block';
 }
@@ -2134,7 +2134,7 @@ function renderLibrary(){
         <div style="font-family:Inter,sans-serif;font-size:12px;font-weight:600;color:var(--cr);margin-bottom:2px;line-height:1.3">${name.replace(/"/g,'&quot;')}</div>
         <div style="font-family:Inter,sans-serif;font-size:10px;color:var(--sg);margin-bottom:8px">${count} slide${count===1?'':'s'} · ${ratioLabel} · ${date}</div>
         <div style="display:flex;gap:4px;flex-wrap:wrap">
-          <button class="rbtn" onclick="openDeck('${name.replace(/'/g,"\\'")}')" style="padding:4px 9px;font-size:10px;border-color:#C9A84C;color:#C9A84C">Open</button>
+          <button class="rbtn" onclick="openDeck('${name.replace(/'/g,"\\'")}')" style="padding:4px 9px;font-size:10px;background:#C9A84C;border-color:#C9A84C;color:#0a0a0a;font-weight:600">Open</button>
           <button class="rbtn" onclick="duplicateDeck('${name.replace(/'/g,"\\'")}')" style="padding:4px 9px;font-size:10px">Duplicate</button>
           <button class="rbtn" onclick="renameDeck('${name.replace(/'/g,"\\'")}')" style="padding:4px 9px;font-size:10px">Rename</button>
           <button class="rbtn" onclick="deleteDeck('${name.replace(/'/g,"\\'")}')" style="padding:4px 9px;font-size:10px;color:var(--red);border-color:rgba(201,124,92,.3)">Delete</button>
