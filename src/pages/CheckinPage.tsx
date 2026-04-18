@@ -191,10 +191,10 @@ export default function CheckinPage() {
                   <button
                     key={s}
                     onClick={() => toggleSensation(s)}
-                    className={`px-4 py-2 rounded-full text-sm font-sans transition-all ${
+                    className={`px-4 py-2 rounded-full text-sm font-sans transition-all border ${
                       sensations.includes(s)
-                        ? "gold-gradient text-primary-foreground"
-                        : "bg-card text-muted-foreground hover:text-foreground"
+                        ? "gold-gradient text-primary-foreground border-transparent"
+                        : "bg-[hsl(156,52%,14%)] border-accent/22 text-muted-foreground hover:text-foreground hover:border-accent/40"
                     }`}
                   >
                     {s}
@@ -228,7 +228,7 @@ export default function CheckinPage() {
               Recommended for you
             </p>
 
-            <div className="velum-card p-6 mb-6">
+            <div className="velum-card-accent p-6 mb-6">
               <div className="flex items-start gap-4 mb-4">
                 <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${rec.gradient ? "gold-gradient" : "bg-surface-light"}`}>
                   <Icon className={`w-5 h-5 ${rec.gradient ? "text-primary-foreground" : "text-accent"}`} />
@@ -252,7 +252,7 @@ export default function CheckinPage() {
 
             <button
               onClick={() => navigate("/tools")}
-              className="w-full py-3 rounded-2xl bg-card text-foreground text-sm font-sans border border-foreground/10 active:scale-[0.98] transition-transform"
+              className="velum-card-flat w-full py-3 rounded-2xl text-foreground text-sm font-sans active:scale-[0.98] transition-transform"
             >
               See all tools
             </button>

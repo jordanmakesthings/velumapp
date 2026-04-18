@@ -179,8 +179,8 @@ export default function LibraryPage() {
           <button
             key={key}
             onClick={() => { setActiveTab(key); setSelectedCategory(null); setSearch(""); setShowAllSessions(false); }}
-            className={`px-4 py-2 rounded-full text-xs font-sans font-medium tracking-wide whitespace-nowrap transition-all ${
-              activeTab === key ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"
+            className={`px-4 py-2 rounded-full text-xs font-sans font-medium tracking-wide whitespace-nowrap transition-all border ${
+              activeTab === key ? "gold-gradient text-primary-foreground border-transparent" : "bg-[hsl(156,52%,14%)] border-accent/22 text-muted-foreground hover:text-foreground hover:border-accent/40"
             }`}
           >
             {label}
@@ -196,7 +196,7 @@ export default function LibraryPage() {
               type="text" value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search sessions..."
-              className="w-full bg-card rounded-xl pl-11 pr-4 py-3 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent/30"
+              className="w-full bg-[hsl(156,52%,14%)] border border-accent/22 rounded-xl pl-11 pr-4 py-3 text-foreground text-sm font-sans placeholder:text-muted-foreground/40 focus:outline-none focus:border-accent/45 transition-colors"
             />
           </div>
 

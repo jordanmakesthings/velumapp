@@ -99,10 +99,10 @@ export function PaywallModal({ open, onClose }: PaywallModalProps) {
             <button
               key={plan.key}
               onClick={() => setSelectedPlan(plan.key)}
-              className={`relative p-4 rounded-xl text-left transition-all border ${
+              className={`relative velum-card p-4 text-left transition-all ${
                 selectedPlan === plan.key
-                  ? "border-accent/60 bg-accent/5"
-                  : "border-foreground/10 bg-card hover:border-foreground/20"
+                  ? "!border-accent/60 shadow-[0_0_30px_rgba(201,168,76,0.2)]"
+                  : ""
               }`}
             >
               {plan.badge && (

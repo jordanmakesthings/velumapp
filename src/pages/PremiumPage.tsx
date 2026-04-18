@@ -172,7 +172,7 @@ export default function PremiumPage() {
               <button
                 onClick={() => handleSubscribe("lifetime")}
                 disabled={loading !== null}
-                className="w-full p-5 rounded-xl text-left transition-all border border-accent bg-accent/8 hover:border-accent flex items-center justify-between disabled:opacity-70"
+                className="velum-card-accent w-full p-5 text-left transition-all flex items-center justify-between disabled:opacity-70"
               >
                 <div>
                   <p className="text-foreground font-sans font-medium">Lifetime</p>
@@ -202,7 +202,7 @@ export default function PremiumPage() {
               <button
                 onClick={() => handleSubscribe("annual")}
                 disabled={loading !== null}
-                className="w-full p-5 rounded-xl text-left transition-all border border-foreground/15 bg-card hover:border-foreground/25 flex items-center justify-between disabled:opacity-70"
+                className="velum-card w-full p-5 text-left transition-all flex items-center justify-between disabled:opacity-70"
               >
                 <div>
                   <p className="text-foreground font-sans font-medium">Annual</p>
@@ -219,7 +219,7 @@ export default function PremiumPage() {
             <button
               onClick={() => handleSubscribe("monthly")}
               disabled={loading !== null}
-              className="w-full p-5 rounded-xl text-left transition-all border border-foreground/10 bg-card hover:border-foreground/20 flex items-center justify-between disabled:opacity-70"
+              className="velum-card w-full p-5 text-left transition-all flex items-center justify-between disabled:opacity-70"
             >
               <div>
                 <p className="text-foreground font-sans font-medium">Monthly</p>

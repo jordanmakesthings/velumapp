@@ -282,10 +282,10 @@ export function SessionFinderModal({ open, onClose }: Props) {
                         <button
                           key={key}
                           onClick={() => toggleGoingOn(key)}
-                          className={`w-full p-4 rounded-xl text-left transition-all border ${
+                          className={`velum-card w-full p-4 text-left transition-all ${
                             goingOn.includes(key)
-                              ? "border-accent/50 bg-accent/8"
-                              : "border-foreground/8 bg-card hover:border-foreground/15"
+                              ? "!border-accent/50 shadow-[0_0_24px_rgba(201,168,76,0.18)]"
+                              : ""
                           }`}
                         >
                           <p className={`text-sm font-sans font-medium ${goingOn.includes(key) ? "text-foreground" : "text-foreground/80"}`}>{label}</p>
@@ -313,10 +313,10 @@ export function SessionFinderModal({ open, onClose }: Props) {
                         <button
                           key={key}
                           onClick={() => { setWalkAway(key); }}
-                          className={`w-full p-4 rounded-xl text-left transition-all border ${
+                          className={`velum-card w-full p-4 text-left transition-all ${
                             walkAway === key
-                              ? "border-accent/50 bg-accent/8"
-                              : "border-foreground/8 bg-card hover:border-foreground/15"
+                              ? "!border-accent/50 shadow-[0_0_24px_rgba(201,168,76,0.18)]"
+                              : ""
                           }`}
                         >
                           <p className={`text-sm font-sans font-medium ${walkAway === key ? "text-foreground" : "text-foreground/80"}`}>{label}</p>
@@ -344,10 +344,10 @@ export function SessionFinderModal({ open, onClose }: Props) {
                         <button
                           key={key}
                           onClick={() => { setTime(key); }}
-                          className={`w-full p-4 rounded-xl text-left transition-all border flex items-center justify-between ${
+                          className={`velum-card w-full p-4 text-left transition-all flex items-center justify-between ${
                             time === key
-                              ? "border-accent/50 bg-accent/8"
-                              : "border-foreground/8 bg-card hover:border-foreground/15"
+                              ? "!border-accent/50 shadow-[0_0_24px_rgba(201,168,76,0.18)]"
+                              : ""
                           }`}
                         >
                           <div>
