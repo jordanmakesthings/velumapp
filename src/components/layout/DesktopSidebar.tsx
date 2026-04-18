@@ -3,7 +3,7 @@ import { Sparkles, Compass, User } from "lucide-react";
 import velumLotus from "@/assets/brand/velum-lotus.png";
 
 const navItems = [
-  { path: "/home",    icon: Sparkles, label: "Today" },
+  { path: "/home",    icon: Sparkles, label: "Home" },
   { path: "/library", icon: Compass,  label: "Discover" },
   { path: "/profile", icon: User,     label: "Me" },
 ];

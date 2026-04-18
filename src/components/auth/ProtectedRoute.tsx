@@ -2,8 +2,12 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReactNode } from "react";
 
+// Routes an onboarded-but-unpaid user is still allowed to hit.
+// Everything else bounces to /premium until they subscribe.
+const PAYWALL_WHITELIST = ["/premium", "/paymentsuccess", "/profile"];
+
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, hasAccess } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -35,6 +39,17 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     location.pathname === "/onboarding"
   ) {
     return <Navigate to="/home" replace />;
+  }
+
+  // Hard paywall gate: onboarded but not subscribed → force /premium
+  // Whitelist allows /premium itself, /paymentsuccess (post-checkout), /profile (so they can sign out)
+  if (
+    profile &&
+    profile.onboarding_completed &&
+    !hasAccess &&
+    !PAYWALL_WHITELIST.some(p => location.pathname.startsWith(p))
+  ) {
+    return <Navigate to="/premium" replace />;
   }
 
   return <>{children}</>;

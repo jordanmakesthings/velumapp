@@ -6,7 +6,7 @@ import { Sparkles, Compass, User } from "lucide-react";
 // - Discover: library, tools, courses, mastery, journal all live here
 // - Me: profile + premium + settings
 const navItems = [
-  { path: "/home",    icon: Sparkles, label: "Today",    match: ["/home", "/"] },
+  { path: "/home",    icon: Sparkles, label: "Home",     match: ["/home", "/"] },
   { path: "/library", icon: Compass,  label: "Discover", match: ["/library", "/tools", "/courses", "/course", "/subcategory", "/journal", "/breathe", "/bilateral", "/tapping", "/somatic-touch", "/sos"] },
   { path: "/profile", icon: User,     label: "Me",       match: ["/profile", "/premium"] },
 ];

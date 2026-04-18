@@ -1,4 +1,6 @@
-import velumLotus from "@/assets/brand/velum-lotus.png";
+// Using logo-circle.png (transparent, lotus-in-ring) as the lotus variant because
+// brand/velum-lotus.png has no alpha channel — renders a cream rectangle on dark bg.
+import velumLotus from "@/assets/logo-circle.png";
 import velumLockup from "@/assets/brand/velum-lockup.png";
 
 type Variant = "lotus" | "lockup";

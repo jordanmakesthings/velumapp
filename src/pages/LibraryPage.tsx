@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Search, Heart, Sparkles, Wind, Zap, GraduationCap, Feather, BookOpen, Check, Play, ChevronLeft } from "lucide-react";
+import { Search, Heart, Sparkles, Wind, Zap, GraduationCap, Feather, BookOpen, Check, Play, ChevronLeft, Hand, Fingerprint, AlertCircle } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import VelumMark from "@/components/VelumMark";
 
 type Tab = "sessions" | "favorites" | "courses" | "mastery" | "journal";
 
@@ -166,12 +165,28 @@ export default function LibraryPage() {
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto overflow-x-hidden">
-      <div className="mb-8">
-        <div className="mb-5">
-          <VelumMark variant="lotus" size="sm" />
-        </div>
-        <h1 className="text-display text-[2.4rem] leading-[1.05]">The <span className="text-accent italic">library.</span></h1>
+      <div className="mb-6">
+        <h1 className="text-display text-[2.4rem] leading-[1.05]">Discover.</h1>
         <p className="text-muted-foreground text-sm font-sans mt-2">Every tool, sorted the way your body finds them.</p>
+      </div>
+
+      {/* Tools quick-access row */}
+      <div className="mb-8">
+        <p className="text-eyebrow mb-3">Interactive tools</p>
+        <div className="grid grid-cols-5 gap-2">
+          {[
+            { path: "/sos",           icon: AlertCircle,  label: "SOS" },
+            { path: "/breathe",       icon: Wind,         label: "Breathe" },
+            { path: "/tapping",       icon: Hand,         label: "Tapping" },
+            { path: "/bilateral",     icon: Zap,          label: "Bilateral" },
+            { path: "/somatic-touch", icon: Fingerprint,  label: "Somatic" },
+          ].map(({ path, icon: Icon, label }) => (
+            <Link key={path} to={path} className="velum-card flex flex-col items-center gap-1.5 py-3 px-1.5 active:scale-[0.97] transition-transform">
+              <Icon className="w-4 h-4 text-accent" strokeWidth={1.5} />
+              <span className="text-foreground text-[10px] font-sans font-medium leading-tight text-center">{label}</span>
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div className="flex gap-1 mb-6 overflow-x-auto pb-1 -mx-4 px-4">
