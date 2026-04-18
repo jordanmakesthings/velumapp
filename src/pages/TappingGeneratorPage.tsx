@@ -27,20 +27,22 @@ type Phase =
   | "shift_reassess"
   | "complete";
 
-interface PointPhrase { point: string; location: string; phrase: string; }
+interface PointPhrase { point: string; location: string; image: string; phrase: string; }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const POINTS: { point: string; location: string }[] = [
-  { point: "Eyebrow",      location: "Inner edge of eyebrow, at the bridge of your nose" },
-  { point: "Side of Eye",  location: "On the bone at the outer corner of your eye" },
-  { point: "Under Eye",    location: "On the bone directly below your pupil" },
-  { point: "Under Nose",   location: "Between your nose and upper lip" },
-  { point: "Chin",         location: "In the crease between your lower lip and chin" },
-  { point: "Collarbone",   location: "Below the collarbone, either side of the chest" },
-  { point: "Under Arm",    location: "About four inches below your armpit" },
-  { point: "Top of Head",  location: "Crown of your head" },
+const POINTS: { point: string; location: string; image: string }[] = [
+  { point: "Eyebrow",      location: "Inner edge of eyebrow, at the bridge of your nose",   image: "/tapping-points/eyebrow.png" },
+  { point: "Side of Eye",  location: "On the bone at the outer corner of your eye",         image: "/tapping-points/side-of-eye.png" },
+  { point: "Under Eye",    location: "On the bone directly below your pupil",               image: "/tapping-points/under-eye.png" },
+  { point: "Under Nose",   location: "Between your nose and upper lip",                     image: "/tapping-points/under-nose.png" },
+  { point: "Chin",         location: "In the crease between your lower lip and chin",       image: "/tapping-points/under-mouth.png" },
+  { point: "Collarbone",   location: "Just below the collarbone, either side of the chest", image: "/tapping-points/collarbone.png" },
+  { point: "Under Arm",    location: "About four inches below your armpit",                 image: "/tapping-points/under-arm.png" },
+  { point: "Top of Head",  location: "Crown of your head",                                  image: "/tapping-points/top-of-head.png" },
 ];
+
+const KARATE_CHOP_IMAGE = "/tapping-points/karate-chop.png";
 
 const BODY_LOCATIONS = ["Chest", "Throat", "Stomach", "Shoulders", "Jaw", "Head", "Back", "Hands", "Whole body", "Nowhere specific"];
 
@@ -654,50 +656,52 @@ export default function TappingGeneratorPage() {
     </div>
   );
 
-  if (phase === "generating_setup") return <Generating msg="Building your setup…" />;
-  if (phase === "generating_round") return <Generating msg={`Preparing round ${roundNumber}…`} />;
-  if (phase === "generating_shift") return <Generating msg="Building your positive round…" />;
+  if (phase === "generating_setup") return <Generating msg="Writing your session…" />;
+  if (phase === "generating_round") return <Generating msg={`Writing round ${roundNumber}…`} />;
+  if (phase === "generating_shift") return <Generating msg="Writing your positive round…" />;
 
-  // SETUP (karate chop)
+  // SETUP (karate chop) — single statement, repeated 3x, one tap to begin
   if (phase === "setup" && setupStatements.length > 0) return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex items-center justify-between px-4 pt-4 mb-6 flex-shrink-0">
+      <div className="flex items-center justify-between px-4 pt-4 mb-4 flex-shrink-0">
         <button onClick={restart} className="flex items-center gap-1 text-sm font-sans text-muted-foreground min-h-10">
           <ArrowLeft className="w-4 h-4" /> New session
         </button>
-        <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Setup · Karate Chop</p>
+        <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Setup</p>
         <div className="w-20" />
       </div>
       <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full pb-8">
         <AnimatePresence mode="wait">
-          <motion.div key={setupIdx} {...slide} className="w-full text-center">
-            <div className="mb-6 p-4 rounded-xl bg-surface-light/20 border border-foreground/10">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Where to tap</p>
-              <p className="text-foreground text-sm font-sans">Side of your hand · below your pinky finger</p>
+          <motion.div key="setup" {...slide} className="w-full text-center flex flex-col items-center">
+            <div className="mb-5 w-full max-w-[280px]">
+              <img
+                src={KARATE_CHOP_IMAGE}
+                alt="Karate chop point"
+                className="w-full rounded-2xl border border-foreground/10 bg-surface-light/10"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
             </div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">
-              Say out loud · {setupIdx + 1} of {setupStatements.length}
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Where to tap</p>
+            <p className="text-foreground text-sm font-sans mb-7">Karate chop</p>
+
+            <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-4">
+              Say this 3 times
             </p>
-            <p className="text-foreground font-serif text-xl leading-relaxed mb-8 px-2">
-              "{setupStatements[setupIdx]}"
+            <p className="text-foreground font-serif text-xl leading-relaxed mb-6 px-2">
+              "{setupStatements[0]}"
             </p>
-            <div className="flex gap-2 justify-center mb-8">
-              {setupStatements.map((_, i) => (
-                <div key={i} className={`h-[3px] rounded-full transition-all ${i === setupIdx ? "w-8 bg-accent" : "w-4 bg-foreground/15"}`} />
-              ))}
-            </div>
-            <p className="text-muted-foreground text-[11px] leading-relaxed">
-              Tap continuously on the side of your hand while repeating each statement 3 times.
+            <p className="text-muted-foreground text-[11px] leading-relaxed max-w-xs">
+              Tap continuously on the side of your hand while repeating the statement 3 times.
             </p>
           </motion.div>
         </AnimatePresence>
       </div>
       <div className="p-6">
         <button
-          onClick={handleSetupNext}
+          onClick={() => generateRound(1)}
           className="w-full py-4 rounded-xl gold-gradient text-primary-foreground font-sans font-semibold text-base active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
         >
-          {setupIdx < setupStatements.length - 1 ? "Next Statement" : "Begin Tapping"}
+          Begin tapping
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
@@ -722,12 +726,17 @@ export default function TappingGeneratorPage() {
         <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full">
           <AnimatePresence mode="wait">
             <motion.div key={`${roundNumber}-${pointIdx}`} {...slide} className="w-full flex flex-col items-center">
-              <div className="mb-6 text-center">
-                <div className="w-14 h-14 rounded-full bg-accent/10 border border-accent/25 flex items-center justify-center mx-auto mb-3">
-                  <div className="w-2.5 h-2.5 rounded-full bg-accent" />
+              <div className="mb-5 text-center flex flex-col items-center">
+                <div className="mb-3 w-full max-w-[240px]">
+                  <img
+                    src={point.image}
+                    alt={`${point.point} tapping point`}
+                    className="w-full rounded-2xl border border-foreground/10 bg-surface-light/10"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                  />
                 </div>
                 <p className="text-foreground font-sans font-semibold text-lg tracking-wide">{point.point}</p>
-                <p className="text-muted-foreground text-xs mt-1">{point.location}</p>
+                <p className="text-muted-foreground text-xs mt-1 max-w-xs">{point.location}</p>
               </div>
               <p className="text-foreground font-serif text-2xl leading-relaxed text-center mb-8 px-2">
                 "{point.phrase}"

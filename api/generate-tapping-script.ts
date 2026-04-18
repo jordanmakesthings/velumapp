@@ -14,13 +14,24 @@ const TAPPING_POINTS = [
   "Chin", "Collarbone", "Under Arm", "Top of Head",
 ];
 
-const BRAND = `You are a Level 2 certified EFT (Emotional Freedom Techniques) practitioner generating personalised tapping phrases.
-Voice: warm, direct, grounded. Speak in first person as the client.
-Phrases must be 4–8 words maximum — SHORT anchor phrases, not sentences.
-Round 1 phrases: raw, honest acknowledgment of the feeling.
-Round 2 phrases: mixed — some acknowledgment, some opening to possibility.
-Round 3+ phrases: more openness, gentle shift.
-Never toxic positivity. Stay real.`;
+const BRAND = `You are writing personalised EFT tapping phrases for a wellness app.
+Voice: warm, direct, grounded, first-person. The user will read these out loud as they tap.
+
+PHRASE RULES (absolutely critical):
+- Every phrase MUST be grammatical, complete English. No fragments. No garbled word salad.
+- Every phrase reads as something a real human would say about their real feeling.
+- 4-9 words per phrase. Short, natural anchor phrases.
+- First person, present tense, specific to the issue the user named.
+- Do NOT reference numbers, SUDS, ratings, or levels.
+- Do NOT say "even though" inside reminder phrases — only in setup statements.
+- Do NOT repeat the same phrase twice in a round.
+
+ROUND ARC:
+- Round 1: name it. Raw, honest, specific. "This tight worry in my chest." "I'm so sick of feeling this."
+- Round 2: mixed. Half still naming it, half opening to possibility. "Still this fear, but maybe I don't have to carry it alone."
+- Round 3+: open, softer, emerging. Not forced positivity — realistic possibility. "I'm starting to feel a little more space."
+
+NEVER produce nonsense like "This stomach not of money fear" or "This tight worried feeling inside." If you can't write a grammatical phrase, write a plainer one.`;
 
 async function callClaude(system: string, user: string, apiKey: string): Promise<string> {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -49,6 +60,51 @@ function parseJSON(raw: string) {
   return JSON.parse(clean);
 }
 
+function fallbackRoundPhrases(issue: string, roundNum: number): string[] {
+  const topic = issue.slice(0, 60).replace(/[.!?]+$/, "").toLowerCase();
+  if (roundNum === 1) {
+    return [
+      `This feeling about ${topic}`,
+      `I notice it's still here`,
+      `Right here in my body`,
+      `I'm letting myself feel it`,
+      `I don't want to feel this`,
+      `This is what's up right now`,
+      `I acknowledge this fully`,
+      `All of this, right now`,
+    ];
+  }
+  if (roundNum === 2) {
+    return [
+      `Still feeling this, and that's okay`,
+      `Part of me is ready to release`,
+      `I can let some of this go`,
+      `Opening to something new`,
+      `I'm allowed to feel lighter`,
+      `This doesn't have to define me`,
+      `I'm choosing to soften`,
+      `A little more space now`,
+    ];
+  }
+  return [
+    `I'm feeling more settled`,
+    `My body is softening`,
+    `I'm safe right here`,
+    `I'm allowed to feel good`,
+    `Something is shifting`,
+    `I'm grateful for this moment`,
+    `I choose to feel ease`,
+    `I am okay, right now`,
+  ];
+}
+
+function ensureEight(phrases: unknown, issue: string, roundNum: number): string[] {
+  const arr = Array.isArray(phrases) ? phrases.filter(p => typeof p === "string" && p.trim().length > 0) : [];
+  if (arr.length >= 8) return arr.slice(0, 8);
+  const pad = fallbackRoundPhrases(issue, roundNum);
+  return [...arr, ...pad].slice(0, 8);
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -59,7 +115,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY not configured" });
 
-  // ── Auth + rate limiting ──
   const token = req.headers.authorization?.replace("Bearer ", "");
   if (!token) return res.status(401).json({ error: "Authentication required" });
 
@@ -92,90 +147,148 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  const { action, path, issue, body_location, suds, aspects, round_number,
+  const { action, path, issue, body_location, aspects, round_number,
           positive_belief, resistance } = req.body ?? {};
 
   try {
     let result: object;
 
-    // ── SETUP STATEMENTS ──
+    // ── SETUP STATEMENT ──
+    // Returns ONE clean karate-chop statement. User will repeat it 3 times.
+    // No SUDS / number reference inside the statement text.
     if (action === "setup") {
-      const bodyPart = body_location ? `, and I feel it in my ${body_location}` : "";
-      const sudsStr = suds !== undefined ? `, and it's a ${suds} out of 10` : "";
-      const aspectsStr = aspects ? ` Specific aspects: ${aspects}.` : "";
+      const bodyPart = body_location ? ` in my ${body_location}` : "";
+      const aspectsStr = aspects ? ` Context the user shared: ${aspects}.` : "";
 
-      const prompt = `Generate exactly 3 EFT karate chop setup statements for this person.
-Issue: "${issue}"${bodyPart}${sudsStr}.${aspectsStr}
+      const prompt = `Write ONE EFT karate-chop setup statement for this user.
+Their issue (verbatim): "${issue}"${aspectsStr}
+${body_location ? `They feel it physically ${bodyPart}.` : ""}
 
-Statement 1 (full): "Even though I [feel/am experiencing] ${issue}${bodyPart}${sudsStr}, I deeply and completely love and accept myself."
-Statement 2 (condensed): A shorter variation acknowledging the feeling.
-Statement 3 (condensed variation): Use specific aspects if provided, or another angle.
+Format: "Even though I [acknowledge this feeling + where they feel it, in their own words], I deeply and completely love and accept myself."
 
-Return ONLY valid JSON array of 3 strings. No preamble.
-Example: ["Even though I feel...", "Even though...", "Even though..."]`;
+Rules:
+- Use their language, not generic filler.
+- Reference the body location if given.
+- Do NOT mention numbers, ratings, SUDS, or "out of 10."
+- Grammatical English. Natural. A real human would say this.
+- 15-28 words total.
+
+Return ONLY a JSON array with ONE string: ["Even though ..."].
+No preamble. No markdown.`;
 
       const raw = await callClaude(BRAND, prompt, apiKey);
-      const statements = parseJSON(raw) as string[];
+      let statements: string[];
+      try {
+        const parsed = parseJSON(raw);
+        statements = Array.isArray(parsed) ? parsed : [String(parsed)];
+      } catch {
+        statements = [`Even though I'm feeling ${issue}${bodyPart}, I deeply and completely love and accept myself.`];
+      }
+      if (!statements[0] || typeof statements[0] !== "string") {
+        statements = [`Even though I'm feeling ${issue}${bodyPart}, I deeply and completely love and accept myself.`];
+      }
 
-      result = { statements };
+      result = { statements: [statements[0]] };
 
     // ── TAPPING ROUND ──
     } else if (action === "round") {
       const roundNum = round_number ?? 1;
       const bodyPart = body_location ? ` in my ${body_location}` : "";
-      const sudsStr = suds !== undefined ? ` (currently ${suds}/10)` : "";
-      const aspectsStr = aspects ? `\nAdditional aspects: ${aspects}` : "";
+      const aspectsStr = aspects ? `\nAdditional context: ${aspects}` : "";
       const pathNote = path === "positive"
-        ? "This is a positive intention session — the person wants to feel more of this but has resistance."
+        ? "This is a positive-intention session — the user wants more of something but has resistance."
         : "";
 
-      const prompt = `Generate EFT reminder phrases for round ${roundNum} of an 8-point tapping sequence.
+      const prompt = `Generate 8 EFT reminder phrases for Round ${roundNum} of a tapping sequence.
 ${pathNote}
-Issue: "${issue}"${bodyPart}${sudsStr}.${aspectsStr}
+User's issue (verbatim): "${issue}"${bodyPart ? ` They feel it${bodyPart}.` : ""}${aspectsStr}
 
-Round guidance:
-- Round 1: Raw, honest acknowledgment. Name the feeling directly.
-- Round 2: Mixed — some acknowledgment, some openness ("even though... I'm open to...")
-- Round 3+: More openness, gentle positive reframe.
+The 8 points in order — ONE phrase per point:
+1. Eyebrow
+2. Side of Eye
+3. Under Eye
+4. Under Nose
+5. Chin
+6. Collarbone
+7. Under Arm
+8. Top of Head
 
-Generate exactly 8 phrases, one for each point in order: ${TAPPING_POINTS.join(", ")}.
-Each phrase: 4–8 words MAX. First person. No quotes needed.
+Round ${roundNum} tone: ${
+  roundNum === 1
+    ? "raw, honest, name the specific feeling. No softening yet."
+    : roundNum === 2
+      ? "mixed — still naming the feeling but starting to open. Some phrases acknowledge, some suggest possibility."
+      : "softer, emerging openness. Real possibility, not forced positivity."
+}
 
-Return ONLY a valid JSON array of 8 strings. No preamble.`;
+Absolute requirements:
+- Every phrase is grammatical, natural English a real human would say aloud.
+- 4-9 words each.
+- First person, present tense.
+- Specific to THIS issue, not generic.
+- Do NOT say numbers, ratings, or "out of 10."
+- Do NOT use "Even though" — that's for setup, not reminders.
+- Do NOT repeat phrases.
+
+Return ONLY a JSON array of exactly 8 strings. No preamble. No markdown.`;
 
       const raw = await callClaude(BRAND, prompt, apiKey);
-      const phrases = parseJSON(raw) as string[];
+      let phrases: string[];
+      try {
+        phrases = ensureEight(parseJSON(raw), issue, roundNum);
+      } catch {
+        phrases = fallbackRoundPhrases(issue, roundNum);
+      }
       result = { phrases };
 
     // ── POSITIVE SHIFT ROUND ──
     } else if (action === "positive_round") {
       const roundNum = round_number ?? 1;
-      const res_level = resistance ?? 5;
 
-      const prompt = `Generate EFT tapping phrases for a positive belief installation round.
-Desired belief/feeling: "${positive_belief}"
-Resistance level: ${res_level}/10 (10 = can't believe it at all, 0 = fully believe it).
-Round: ${roundNum}
+      const prompt = `Generate 8 EFT reminder phrases for a positive-belief installation round.
+Desired belief/feeling (verbatim): "${positive_belief}"
+Round ${roundNum}.
 
-Round 1: Acknowledge the resistance while opening to the possibility.
-  e.g. "Even though this feels hard to believe...", "Opening to this possibility..."
-Round 2+: Lean more into the positive — installing the belief.
-  e.g. "I am open to feeling this...", "Choosing ${positive_belief}..."
+The 8 points in order — ONE phrase per point:
+1. Eyebrow
+2. Side of Eye
+3. Under Eye
+4. Under Nose
+5. Chin
+6. Collarbone
+7. Under Arm
+8. Top of Head
 
-Generate exactly 8 phrases for: ${TAPPING_POINTS.join(", ")}.
-Each phrase: 4–8 words MAX. First person.
+Round ${roundNum} tone: ${
+  roundNum === 1
+    ? "acknowledge the resistance while opening. 'Part of me still doesn't believe this.' 'I'm allowed to want this.'"
+    : "lean into the positive. The belief feels more real. Embody it."
+}
 
-Return ONLY a valid JSON array of 8 strings. No preamble.`;
+Requirements:
+- Grammatical, natural, spoken-aloud English.
+- 4-9 words each.
+- First person, present tense.
+- Specific to their stated belief.
+- No numbers, no "out of 10."
+- No "even though."
+- No repeats.
+
+Return ONLY a JSON array of exactly 8 strings. No preamble.`;
 
       const raw = await callClaude(BRAND, prompt, apiKey);
-      const phrases = parseJSON(raw) as string[];
+      let phrases: string[];
+      try {
+        phrases = ensureEight(parseJSON(raw), positive_belief ?? "this feeling", roundNum);
+      } catch {
+        phrases = fallbackRoundPhrases(positive_belief ?? "this feeling", roundNum);
+      }
       result = { phrases };
 
     } else {
       return res.status(400).json({ error: "Invalid action" });
     }
 
-    // Increment daily counter
     await supabase.from("profiles").update({
       tapping_daily_count: count + 1,
       tapping_daily_date: today,
