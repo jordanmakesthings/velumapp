@@ -244,15 +244,16 @@ export default function HomePage() {
     <div className="min-h-screen w-full max-w-full bg-radial-subtle overflow-x-hidden">
     <div className="mx-auto w-full max-w-3xl overflow-x-hidden px-4 pt-14 pb-8 lg:px-8">
       {/* Header */}
-      <div className="mb-8 min-w-0 w-full max-w-full">
-        <div className="mb-3 flex items-center gap-3 min-w-0">
+      <div className="mb-10 min-w-0 w-full max-w-full">
+        <div className="mb-6 flex items-center gap-2.5 min-w-0">
           <img src={logoLotus} alt="Velum" className="w-7 h-7 rounded-md object-cover" />
-          <span className="text-accent text-[10px] font-sans font-medium tracking-[4px] uppercase">VELUM</span>
+          <span className="text-accent text-[10px] font-medium tracking-[4px] uppercase">VELUM</span>
         </div>
-        <h1 className="text-display mb-4 max-w-full break-words text-4xl leading-tight lg:text-5xl">
-          {getGreeting()}{firstName ? `, ${firstName}` : ""}.
+        <p className="text-eyebrow mb-3">{getGreeting()}{firstName ? `, ${firstName}` : ""}</p>
+        <h1 className="text-display mb-5 max-w-full break-words text-[2.4rem] leading-[1.02] lg:text-5xl">
+          What does your<br />nervous system<br />need <span className="text-accent italic font-light font-serif">right now?</span>
         </h1>
-        <p className="text-foreground/70 max-w-full break-words text-sm italic font-serif leading-relaxed" style={{ overflowWrap: "break-word" }}>
+        <p className="text-editorial max-w-full break-words text-sm leading-relaxed italic text-foreground/55" style={{ overflowWrap: "break-word" }}>
           "{todayQuote.text}" — {todayQuote.author}
         </p>
       </div>
@@ -286,97 +287,94 @@ export default function HomePage() {
         </Link>
       )}
 
-      {/* Stats pills */}
-      <div className="mb-8 flex w-full min-w-0 flex-wrap gap-3">
-        {[
-          { label: `${streak} day streak`, icon: Flame },
-          { label: `${totalSessions} sessions`, icon: Sparkles },
-          { label: `${Math.round(totalMinutes)} mins`, icon: Wind },
-          ...(weeklyReductionPct !== null ? [{ label: `${weeklyReductionPct}% stress ↓`, icon: Heart }] : []),
-        ].
-          map(({ label, icon: Icon }) =>
-          <div key={label} className="velum-card-flat flex min-w-0 flex-1 items-center justify-center gap-2 px-3 py-2.5">
-            <Icon className="w-3.5 h-3.5 shrink-0 text-accent" />
-            <span className="text-ui min-w-0 text-center text-xs leading-tight break-words">{label}</span>
-          </div>
+      {/* Stats — show aspirational empty state instead of "0 streak" */}
+      {totalSessions === 0 ? (
+        <div className="mb-10 w-full rounded-2xl border border-accent/15 bg-accent/[0.03] p-5">
+          <p className="text-eyebrow mb-2">Your first session</p>
+          <p className="text-foreground text-sm font-sans leading-relaxed">
+            You haven't started yet. Your nervous system doesn't need 20 minutes — <span className="text-accent font-medium">3 minutes today</span> beats 20 minutes tomorrow that never happens.
+          </p>
+        </div>
+      ) : (
+        <div className="mb-10 grid grid-cols-3 gap-2 w-full">
+          {[
+            { num: streak, label: "day streak", icon: Flame },
+            { num: totalSessions, label: "sessions", icon: Sparkles },
+            { num: Math.round(totalMinutes), label: "minutes", icon: Wind },
+          ].map(({ num, label, icon: Icon }) =>
+            <div key={label} className="velum-card-flat flex flex-col items-center justify-center gap-1 px-2 py-4">
+              <Icon className="w-3.5 h-3.5 text-accent/60 mb-1" />
+              <p className="text-display text-2xl leading-none">{num}</p>
+              <span className="text-ui text-[10px] uppercase tracking-widest leading-tight">{label}</span>
+            </div>
           )}
-      </div>
+          {weeklyReductionPct !== null && (
+            <div className="col-span-3 velum-card-flat flex items-center justify-center gap-2 px-3 py-2.5 mt-1 border-accent/25">
+              <Heart className="w-3.5 h-3.5 shrink-0 text-accent" />
+              <span className="text-ui text-xs"><span className="text-accent font-semibold">{weeklyReductionPct}%</span> average stress reduction this week</span>
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Session Finder — hero card */}
-      <button onClick={() => setFinderOpen(true)} className="velum-card group mb-8 w-full min-w-0 p-6 text-left border border-accent/20 bg-accent/5 hover:bg-accent/8 transition-colors">
-        <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-2">Session Finder</p>
-        <p className="text-foreground font-serif text-xl leading-snug mb-1">Not sure where to start?</p>
-        <p className="text-muted-foreground text-sm font-sans mb-4">Answer 4 questions. Get one specific recommendation.</p>
-        <span className="inline-flex items-center gap-2 rounded-xl gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-sans font-medium">
-          Find my session <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-        </span>
+      {/* Session Finder — hero card with brand-green glow */}
+      <button onClick={() => setFinderOpen(true)} className="velum-card-accent group mb-10 w-full min-w-0 p-6 text-left relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-green/30 via-transparent to-transparent pointer-events-none" />
+        <div className="relative">
+          <p className="text-eyebrow mb-3">Session Finder · 60 seconds</p>
+          <p className="text-display text-2xl leading-tight mb-2">Not sure<br />where to start?</p>
+          <p className="text-muted-foreground text-sm mb-5 max-w-[380px]">Answer 4 questions about how you feel right now. Get one tool that matches.</p>
+          <span className="inline-flex items-center gap-2 rounded-full gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-semibold tracking-wide">
+            Find my session <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </span>
+        </div>
       </button>
 
       {/* Tools grid — 2×2 */}
-      <div className="mb-8 min-w-0 w-full">
-        <p className="text-ui mb-4 text-[11px] tracking-[2.5px] uppercase">Tools</p>
+      <div className="mb-10 min-w-0 w-full">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-eyebrow">Real-time tools</p>
+          <span className="text-ui text-[10px] tracking-wider uppercase opacity-60">Interactive</span>
+        </div>
         <div className="grid grid-cols-2 gap-3">
-          {/* Breathwork */}
-          <Link to="/breathe" className="velum-card p-5 flex flex-col gap-3 min-h-[130px] border border-accent/20">
-            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-              <Wind className="w-4 h-4 text-accent" />
-            </div>
-            <div>
-              <p className="text-foreground text-sm font-sans font-medium">Breathwork</p>
-              <p className="text-ui text-[11px] mt-0.5">6 techniques · Interactive</p>
-            </div>
-          </Link>
-
-          {/* Bilateral */}
-          <Link to="/bilateral" className="velum-card p-5 flex flex-col gap-3 min-h-[130px]">
-            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-accent" />
-            </div>
-            <div>
-              <p className="text-foreground text-sm font-sans font-medium">Bilateral</p>
-              <p className="text-ui text-[11px] mt-0.5">Visual + stereo audio</p>
-            </div>
-          </Link>
-
-          {/* Guided Tapping */}
-          <Link to="/tapping" className="velum-card p-5 flex flex-col gap-3 min-h-[130px]">
-            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-              <Heart className="w-4 h-4 text-accent" />
-            </div>
-            <div>
-              <p className="text-foreground text-sm font-sans font-medium">Tapping</p>
-              <p className="text-ui text-[11px] mt-0.5">EFT sequences · Stress + beliefs</p>
-            </div>
-          </Link>
-
-          {/* Somatic Touch */}
-          <Link to="/somatic-touch" className="velum-card p-5 flex flex-col gap-3 min-h-[130px]">
-            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-              <Fingerprint className="w-4 h-4 text-accent" />
-            </div>
-            <div>
-              <p className="text-foreground text-sm font-sans font-medium">Somatic Touch</p>
-              <p className="text-ui text-[11px] mt-0.5">4 sequences · Grounding</p>
-            </div>
-          </Link>
+          {[
+            { to: "/breathe", icon: Wind, name: "Breathwork", sub: "6 techniques · live pacing", primary: true },
+            { to: "/bilateral", icon: Zap, name: "Bilateral", sub: "Visual + stereo audio" },
+            { to: "/tapping", icon: Heart, name: "Tapping", sub: "EFT · AI-personalised" },
+            { to: "/somatic-touch", icon: Fingerprint, name: "Somatic", sub: "Grounding sequences" },
+          ].map(({ to, icon: Icon, name, sub, primary }) => (
+            <Link
+              key={to}
+              to={to}
+              className={`velum-card p-5 flex flex-col justify-between min-h-[140px] group transition-all ${primary ? "border-accent/30 bg-accent/[0.04]" : ""}`}
+            >
+              <div className="w-9 h-9 rounded-lg bg-accent/10 border border-accent/15 flex items-center justify-center group-hover:bg-accent/15 transition-colors">
+                <Icon className="w-4 h-4 text-accent" />
+              </div>
+              <div>
+                <p className="text-foreground text-[15px] font-semibold tracking-tight">{name}</p>
+                <p className="text-ui text-[11px] mt-1 tracking-wide">{sub}</p>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
 
       {/* Library quick links */}
-      <div className="mb-8 min-w-0 w-full">
-        <p className="text-ui mb-4 text-[11px] tracking-[2.5px] uppercase">Library</p>
-        <div className="flex flex-col gap-2">
+      <div className="mb-10 min-w-0 w-full">
+        <p className="text-eyebrow mb-4">The Library</p>
+        <div className="flex flex-col gap-1.5">
           {[
             { label: "Meditation", count: categoryCounts["meditation"] || 0, to: "/library?category=meditation" },
             { label: "Rapid Resets", count: categoryCounts["rapid_resets"] || 0, to: "/library?category=rapid_resets" },
             { label: "Mastery Classes", count: masteryCount, to: "/library?tab=mastery" },
             { label: "Courses", count: courses.length, to: "/courses" },
           ].map(({ label, count, to }) => (
-            <Link key={to} to={to} className="velum-card-flat flex items-center justify-between px-4 py-3.5">
-              <p className="text-foreground text-sm font-sans">{label}</p>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-xs">{count}</span>
-                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
+            <Link key={to} to={to} className="velum-card-flat flex items-center justify-between px-4 py-3.5 group hover:border-accent/25 transition-colors">
+              <p className="text-foreground text-sm font-medium">{label}</p>
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground/70 text-xs tabular-nums">{count}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/60 group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
               </div>
             </Link>
           ))}
@@ -384,33 +382,33 @@ export default function HomePage() {
       </div>
 
       {/* Today's Reflection */}
-      <div className="mb-8 min-w-0 w-full max-w-full">
-        <div className="mb-4 flex flex-wrap gap-6">
-          <button className="text-accent border-b-2 border-accent pb-1 text-[11px] tracking-[2.5px] uppercase">Today's Reflection</button>
-          <Link to="/journal" className="text-muted-foreground pb-1 text-[11px] tracking-[2.5px] uppercase hover:text-foreground transition-colors">Past Entries</Link>
+      <div className="mb-10 min-w-0 w-full max-w-full">
+        <div className="mb-4 flex flex-wrap gap-6 items-center">
+          <p className="text-eyebrow">Today's Reflection</p>
+          <Link to="/journal" className="text-muted-foreground/70 text-[10px] tracking-[0.2em] uppercase hover:text-accent transition-colors">Past entries →</Link>
         </div>
         <div className="velum-card w-full max-w-full min-w-0 p-6">
-          <p className="text-accent mb-3 text-[10px] font-sans font-bold tracking-wide uppercase">
-            {format(new Date(), "EEE, MMMM d").toUpperCase()}
+          <p className="text-muted-foreground/60 mb-4 text-[10px] font-medium tracking-[0.2em] uppercase tabular-nums">
+            {format(new Date(), "EEE · MMMM d")}
           </p>
-          <p className="text-foreground mb-5 max-w-full break-words font-serif text-lg italic">"{todayPrompt}"</p>
+          <p className="text-editorial text-foreground mb-5 max-w-full break-words text-xl italic leading-snug">"{todayPrompt}"</p>
           <textarea
-              value={reflectionText}
-              onChange={(e) => setReflectionText(e.target.value)}
-              placeholder="Take a breath, then write freely..."
-              className="mb-4 h-28 w-full max-w-full rounded-xl p-4 text-sm font-sans resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 transition-shadow bg-[sidebar-primary-foreground] bg-primary-foreground text-accent" />
+            value={reflectionText}
+            onChange={(e) => setReflectionText(e.target.value)}
+            placeholder="Take a breath, then write freely…"
+            className="mb-4 h-28 w-full max-w-full rounded-xl p-4 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 transition-shadow bg-background/80 border border-border text-foreground placeholder:text-muted-foreground/40"
+          />
 
           {user &&
             <div className="flex justify-end">
               <button
                 onClick={handleSaveReflection}
                 disabled={!reflectionText.trim() || savingReflection}
-                className="rounded-lg bg-surface-light px-5 py-2.5 text-sm font-sans font-medium text-foreground disabled:opacity-30 hover:bg-surface transition-colors">
-
+                className="rounded-full border border-accent/30 hover:border-accent px-5 py-2.5 text-xs font-medium tracking-wide text-accent disabled:opacity-30 disabled:border-border disabled:text-muted-foreground transition-all">
                 Save reflection →
               </button>
             </div>
-            }
+          }
         </div>
       </div>
 

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, ChevronDown, ChevronRight, CheckCircle2, Circle, Download, Play, Pause, ChevronLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, CheckCircle2, Circle, Download, Play, Pause, ChevronLeft, Lock } from "lucide-react";
 import { PaywallModal } from "@/components/PaywallModal";
 import LessonJournal from "@/components/course/LessonJournal";
 

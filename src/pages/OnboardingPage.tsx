@@ -78,8 +78,9 @@ export default function OnboardingPage() {
             <motion.div key="goal" {...slide} className="w-full">
               <div className="text-center mb-8">
                 <img src={logoCircle} alt="Velum" className="w-10 h-10 object-contain mx-auto mb-5" />
-                <h1 className="text-display text-3xl mb-2">What brought<br />you here?</h1>
-                <p className="text-muted-foreground text-sm font-sans font-light">
+                <p className="text-eyebrow mb-3">Step 1 of 3</p>
+                <h1 className="text-display text-[2.2rem] leading-[1.05] mb-3">What brought<br />you <span className="text-accent italic font-light font-serif">here?</span></h1>
+                <p className="text-muted-foreground text-sm font-light">
                   Pick the one that matters most right now.
                 </p>
               </div>
@@ -106,9 +107,10 @@ export default function OnboardingPage() {
           {step === 1 && (
             <motion.div key="exp" {...slide} className="w-full">
               <div className="text-center mb-8">
-                <h1 className="text-display text-3xl mb-2">Where are you<br />starting from?</h1>
-                <p className="text-muted-foreground text-sm font-sans font-light">
-                  There's no right answer. Every path through Velum begins exactly where you are.
+                <p className="text-eyebrow mb-3">Step 2 of 3</p>
+                <h1 className="text-display text-[2.2rem] leading-[1.05] mb-3">Where are you<br /><span className="text-accent italic font-light font-serif">starting</span> from?</h1>
+                <p className="text-muted-foreground text-sm font-light">
+                  There's no wrong answer. Every path through Velum begins where you are.
                 </p>
               </div>
               <div className="flex flex-col gap-3">
@@ -138,36 +140,37 @@ export default function OnboardingPage() {
           {/* STEP 2 — You're in */}
           {step === 2 && (
             <motion.div key="welcome" {...slide} className="w-full text-center">
-              <div className="w-16 h-16 rounded-2xl gold-gradient flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(201,168,76,0.25)]">
                 <span className="text-primary-foreground text-2xl">✦</span>
               </div>
-              <p className="text-accent text-[10px] font-sans font-medium tracking-[4px] uppercase mb-3">
-                7 days free
-              </p>
-              <h1 className="text-display text-4xl italic mb-3">You're in.</h1>
-              <p className="text-muted-foreground text-[15px] font-sans font-light leading-relaxed mb-8 max-w-[300px] mx-auto">
-                Your trial starts now. No credit card needed — ever, until you choose to upgrade.
+              <p className="text-eyebrow mb-3">7 days free · No credit card</p>
+              <h1 className="text-editorial text-5xl italic mb-4 font-light">You're in.</h1>
+              <p className="text-muted-foreground text-[15px] leading-relaxed mb-8 max-w-[320px] mx-auto">
+                Your trial starts now. Explore every tool, every course, every session — no card needed until you choose to stay.
               </p>
 
-              <div className="flex flex-col gap-3 mb-10 text-left">
-                {WHAT_YOU_GET.map(({ icon, label }, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-accent text-base w-5 flex-shrink-0">{icon}</span>
-                    <p className="text-foreground text-sm font-sans font-medium">{label}</p>
-                  </div>
-                ))}
+              <div className="rounded-2xl border border-border bg-card/50 p-5 mb-8 text-left">
+                <p className="text-eyebrow mb-4 text-center">What's unlocked</p>
+                <div className="flex flex-col gap-3">
+                  {WHAT_YOU_GET.map(({ icon, label }, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-accent text-base w-5 flex-shrink-0">{icon}</span>
+                      <p className="text-foreground text-sm font-medium">{label}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <button
                 onClick={complete}
                 disabled={saving}
-                className="w-full py-5 rounded-xl gold-gradient text-primary-foreground font-sans font-bold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
+                className="w-full py-5 rounded-full gold-gradient text-primary-foreground font-bold text-base tracking-wide active:scale-[0.98] transition-transform disabled:opacity-50"
               >
-                {saving ? "Setting up…" : "Start Exploring →"}
+                {saving ? "Setting up…" : "Start exploring →"}
               </button>
 
-              <p className="mt-4 text-muted-foreground text-[11px] font-sans">
-                After 7 days, keep 1 free tapping session daily. Upgrade anytime from $12/mo.
+              <p className="mt-4 text-muted-foreground/70 text-[11px]">
+                After trial: keep 1 free tapping session daily · Upgrade from $12/mo
               </p>
             </motion.div>
           )}

@@ -4,50 +4,59 @@
 
 @layer base {
   :root {
-    --background: 0 0% 6.7%;
+    /* Dark charcoal base — near-black with a whisper of warmth */
+    --background: 0 0% 5%;
     --foreground: 40 24% 93%;
 
-    --card: 156 51% 12%;
+    /* Cards: charcoal, not green. Green lives in accents only. */
+    --card: 0 0% 9%;
     --card-foreground: 40 24% 93%;
 
-    --popover: 156 51% 12%;
+    --popover: 0 0% 7%;
     --popover-foreground: 40 24% 93%;
 
     --primary: 40 24% 93%;
-    --primary-foreground: 0 0% 6.7%;
+    --primary-foreground: 0 0% 5%;
 
-    --secondary: 156 51% 16%;
+    --secondary: 0 0% 12%;
     --secondary-foreground: 40 24% 93%;
 
-    --muted: 156 13% 49%;
-    --muted-foreground: 156 13% 49%;
+    --muted: 0 0% 55%;
+    --muted-foreground: 0 0% 55%;
 
+    /* Gold — signature accent */
     --accent: 42 53% 54%;
-    --accent-foreground: 0 0% 6.7%;
+    --accent-foreground: 0 0% 5%;
+
+    /* Brand green — deep emerald, used sparingly */
+    --brand-green: 156 51% 16%;
+    --brand-green-light: 156 43% 30%;
+    --brand-green-glow: 156 51% 12%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 40 24% 93%;
 
-    --border: 42 53% 54% / 0.15;
-    --input: 156 51% 16%;
+    --border: 0 0% 18%;
+    --input: 0 0% 12%;
     --ring: 42 53% 54%;
 
     --radius: 10px;
 
-    --surface: 156 51% 12%;
-    --surface-light: 156 43% 19%;
+    --surface: 0 0% 9%;
+    --surface-light: 0 0% 14%;
 
-    --sidebar-background: 0 0% 6.7%;
-    --sidebar-foreground: 156 13% 49%;
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 55%;
     --sidebar-primary: 40 24% 93%;
-    --sidebar-primary-foreground: 0 0% 6.7%;
-    --sidebar-accent: 156 51% 12%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 0 0% 9%;
     --sidebar-accent-foreground: 40 24% 93%;
-    --sidebar-border: 42 53% 54% / 0.1;
+    --sidebar-border: 0 0% 18%;
     --sidebar-ring: 42 53% 54%;
 
     --font-serif: 'Cormorant Garamond', Georgia, serif;
-    --font-sans: 'DM Sans', system-ui, sans-serif;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
     --shadow-card: 0 0 0 1px rgba(201,168,76,0.15), 0 4px 12px rgba(0,0,0,0.4);
     --shadow-card-hover: 0 0 0 1px rgba(201,168,76,0.3), 0 8px 24px rgba(0,0,0,0.5);
@@ -88,8 +97,11 @@
     font-family: var(--font-sans);
   }
 
+  /* Default headlines: Inter. Use .text-editorial for Cormorant (quotes, poetic moments). */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-serif);
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.015em;
   }
 
   /* Scrollbar */
@@ -113,32 +125,65 @@
 @layer utilities {
   .velum-card {
     background: hsl(var(--card));
-    border-radius: 18px;
-    box-shadow: var(--shadow-card);
-    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid hsl(var(--border));
+    border-radius: 14px;
+    transition: border-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .velum-card:hover {
-    box-shadow: var(--shadow-card-hover);
+    border-color: rgba(201,168,76,0.22);
   }
 
   .velum-card-flat {
     background: hsl(var(--card));
-    border-radius: 18px;
-    box-shadow: 0 0 0 1px rgba(201,168,76,0.15);
+    border: 1px solid hsl(var(--border));
+    border-radius: 14px;
   }
 
+  /* Signature accent — green-glow card for anchor CTAs */
+  .velum-card-accent {
+    background:
+      linear-gradient(135deg, hsla(156, 51%, 12%, 0.6), hsla(0, 0%, 9%, 0.8)),
+      hsl(var(--card));
+    border: 1px solid hsla(42, 53%, 54%, 0.22);
+    border-radius: 14px;
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .velum-card-accent:hover {
+    border-color: hsla(42, 53%, 54%, 0.42);
+  }
+
+  /* Display type — bold Inter for confident headlines */
   .text-display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: hsl(var(--foreground));
+    line-height: 1.05;
+  }
+
+  /* Editorial — Cormorant for poetic moments only */
+  .text-editorial {
     font-family: var(--font-serif);
     font-weight: 300;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
     color: hsl(var(--foreground));
   }
 
   .text-ui {
     font-family: var(--font-sans);
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
     color: hsl(var(--muted-foreground));
+  }
+
+  .text-eyebrow {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: hsl(var(--accent));
   }
 
   .gold-gradient {
@@ -147,8 +192,8 @@
 
   .bg-radial-subtle {
     background:
-      radial-gradient(ellipse at 10% 90%, rgba(15,47,38,0.5) 0%, transparent 50%),
-      radial-gradient(ellipse at 90% 10%, rgba(15,47,38,0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 15% 10%, hsla(156, 51%, 12%, 0.4) 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 85%, hsla(42, 53%, 45%, 0.06) 0%, transparent 45%),
       hsl(var(--background));
   }
 
