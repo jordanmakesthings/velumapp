@@ -161,6 +161,16 @@ export default function AuthPage() {
                   </>
                 )}
               </button>
+
+              {mode === "login" && (
+                <button
+                  type="button"
+                  onClick={() => setMode("forgot")}
+                  className="text-muted-foreground/60 text-xs font-sans hover:text-muted-foreground self-center mt-1"
+                >
+                  Forgot password?
+                </button>
+              )}
             </form>
           )}
 
@@ -175,15 +185,10 @@ export default function AuthPage() {
             </p>
           )}
           {mode === "login" && (
-            <>
-              <p className="text-muted-foreground text-xs font-sans">
-                No account?{" "}
-                <button onClick={() => setMode("signup")} className="text-accent hover:underline underline-offset-2">Start free trial</button>
-              </p>
-              <button onClick={() => setMode("forgot")} className="text-muted-foreground/60 text-xs font-sans hover:text-muted-foreground">
-                Forgot password?
-              </button>
-            </>
+            <p className="text-muted-foreground text-xs font-sans">
+              No account?{" "}
+              <button onClick={() => setMode("signup")} className="text-accent hover:underline underline-offset-2">Start free trial</button>
+            </p>
           )}
           {mode === "forgot" && (
             <button onClick={() => setMode("login")} className="text-accent text-xs font-sans hover:underline underline-offset-2">

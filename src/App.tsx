@@ -30,6 +30,7 @@ import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import AdminPage from "./pages/AdminPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import AuthConfirmPage from "./pages/AuthConfirmPage";
 import SubcategoryPage from "./pages/SubcategoryPage";
 import NotFound from "./pages/NotFound";
 
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/signin" element={<Navigate to="/login" replace />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/auth/confirm" element={<AuthConfirmPage />} />
 
             {/* App routes with layout — all protected */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
