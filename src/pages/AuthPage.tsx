@@ -166,7 +166,7 @@ export default function AuthPage() {
                 <button
                   type="button"
                   onClick={() => setMode("forgot")}
-                  className="text-muted-foreground/60 text-xs font-sans hover:text-muted-foreground self-center mt-1"
+                  className="text-accent/90 text-sm font-sans hover:text-accent self-center mt-3 underline underline-offset-4 decoration-accent/40 hover:decoration-accent"
                 >
                   Forgot password?
                 </button>
