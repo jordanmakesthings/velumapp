@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    /* Near-black base with a warm green undertone — feels like being in a forest at night */
-    --background: 0 0% 5%;
+    /* Deep forest-night emerald — NOT black. Cards + inputs sit on top of this. */
+    --background: 156 40% 7%;
     --foreground: 40 24% 93%;
 
     /* Cards = deep emerald. This is the signature. */
@@ -45,7 +45,7 @@
     --surface: 156 51% 12%;
     --surface-light: 156 43% 18%;
 
-    --sidebar-background: 0 0% 5%;
+    --sidebar-background: 156 40% 7%;
     --sidebar-foreground: 156 13% 55%;
     --sidebar-primary: 40 24% 93%;
     --sidebar-primary-foreground: 0 0% 5%;
