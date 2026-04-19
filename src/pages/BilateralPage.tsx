@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Play, Pause, Volume2, VolumeX, Eye, EyeOff, Wind, Shuffle, Flame, Rewind, Users, Layers, Brain, HeartCrack } from "lucide-react";
+import { ArrowLeft, ArrowRight, Play, Pause, Volume2, VolumeX, Eye, EyeOff, Wind, Shuffle, Flame, Rewind, Users, Layers, Brain, HeartCrack, Settings2, X as XIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence, useAnimationFrame } from "framer-motion";
@@ -256,6 +256,7 @@ export default function BilateralPage() {
   const [durationIdx, setDurationIdx] = useState(2);
   const [soundTypeIdx, setSoundTypeIdx] = useState(0);
   const [hapticOn, setHapticOn]       = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const canHaptic = typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
   const [isRunning, setIsRunning] = useState(false);
@@ -1169,11 +1170,97 @@ export default function BilateralPage() {
         <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">
           {isInstallMode ? "Install" : "Process"}
         </p>
-        {roundCount > 0
-          ? <p className="text-muted-foreground text-xs font-sans w-16 text-right">Round {roundCount}</p>
-          : <div className="w-16" />
-        }
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="w-16 flex items-center justify-end gap-1.5 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Session settings"
+        >
+          {roundCount > 0 && <span className="tabular-nums">R{roundCount}</span>}
+          <Settings2 className="w-4 h-4" />
+        </button>
       </div>
+
+      {settingsOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => setSettingsOpen(false)}>
+          <div
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-md bg-background border-t sm:border border-foreground/10 sm:rounded-2xl rounded-t-2xl p-5 space-y-5"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)" }}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-display text-xl">Settings</p>
+              <button onClick={() => setSettingsOpen(false)} className="w-9 h-9 rounded-full bg-surface-light flex items-center justify-center" aria-label="Close settings">
+                <XIcon className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Speed</p>
+              <div className="flex gap-2">
+                {SPEEDS.map((s, i) => (
+                  <button key={s.label} onClick={() => setSpeedIdx(i)}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-sans transition-all ${speedIdx === i ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"}`}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Duration</p>
+              <div className="grid grid-cols-3 gap-2">
+                {DURATIONS.map((d, i) => (
+                  <button key={d.label} onClick={() => setDurationIdx(i)}
+                    className={`py-2.5 rounded-xl text-xs font-sans transition-all ${durationIdx === i ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"}`}>
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Sound</p>
+                <button
+                  onClick={() => setSoundOn(!soundOn)}
+                  className={`flex items-center gap-1.5 text-xs font-sans px-3 py-1 rounded-full transition-all ${soundOn ? "bg-accent/15 text-accent" : "bg-card text-muted-foreground"}`}
+                >
+                  {soundOn ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
+                  {soundOn ? "On" : "Off"}
+                </button>
+              </div>
+              <div className={`grid grid-cols-2 gap-2 transition-opacity ${!soundOn ? "opacity-40 pointer-events-none" : ""}`}>
+                {SOUND_TYPES.map((s, i) => (
+                  <button key={s.label} onClick={() => { setSoundTypeIdx(i); previewSound(i); }}
+                    className={`py-2.5 rounded-xl text-xs font-sans transition-all flex flex-col items-center gap-0.5 ${soundTypeIdx === i ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground"}`}>
+                    <span>{s.label}</span>
+                    <span className={`text-[10px] ${soundTypeIdx === i ? "text-primary-foreground/70" : "text-muted-foreground/50"}`}>{s.description}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-foreground/5">
+              <p className="text-sm font-sans text-foreground">Show orb</p>
+              <button onClick={() => setShowOrb(!showOrb)}
+                className={`flex items-center gap-1.5 text-xs font-sans px-3 py-1 rounded-full transition-all ${showOrb ? "bg-accent/15 text-accent" : "bg-card text-muted-foreground"}`}>
+                {showOrb ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                {showOrb ? "Visual" : "Eyes closed"}
+              </button>
+            </div>
+
+            {canHaptic && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-sans text-foreground">Haptic feedback</p>
+                <button onClick={() => setHapticOn(!hapticOn)}
+                  className={`text-xs font-sans px-3 py-1 rounded-full transition-all ${hapticOn ? "bg-accent/15 text-accent" : "bg-card text-muted-foreground"}`}>
+                  {hapticOn ? "On" : "Off"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Landscape hint */}
       {!isRunning && (
@@ -1204,7 +1291,7 @@ export default function BilateralPage() {
       </div>
 
       {/* Orb track */}
-      <div className="relative flex items-center justify-center flex-1" style={{ minHeight: "25vh" }}>
+      <div className="relative flex items-center justify-center flex-1 overflow-hidden w-full" style={{ minHeight: "25vh" }}>
         <div className="absolute inset-x-[5%] top-1/2 -translate-y-1/2 h-px bg-foreground/8" />
         <div className="absolute left-[5%] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-foreground/15" />
         <div className="absolute right-[5%] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-foreground/15" />

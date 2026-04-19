@@ -24,8 +24,8 @@ const TOOLS = [
   {
     path: "/tapping",
     label: "Guided Tapping",
-    tag: "AI-Powered",
-    description: "Describe what you're feeling. Get a personalised EFT tapping script generated in seconds.",
+    tag: "Personalised",
+    description: "Describe what you're feeling. Get a personalised EFT tapping script in seconds.",
     detail: "3-round script · Specific to your situation · Guided step-by-step",
     icon: Hand,
     gradient: false,

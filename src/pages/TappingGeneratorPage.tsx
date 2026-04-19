@@ -229,7 +229,12 @@ export default function TappingGeneratorPage() {
         suds: initialSuds,
         aspects: aspects || null,
       });
-      setSetupStatements(data.statements);
+      const stmts: string[] = Array.isArray(data?.statements) ? data.statements.filter((s: unknown) => typeof s === "string" && s.trim().length > 0) : [];
+      const bodyPart = hasBodyLocation && bodyLocation ? ` in my ${bodyLocation}` : "";
+      const safeStmts = stmts.length > 0
+        ? stmts
+        : [`Even though I'm feeling ${issue}${bodyPart}, I deeply and completely love and accept myself.`];
+      setSetupStatements(safeStmts);
       setSetupIdx(0);
       setPhase("setup");
     } catch (e: any) {
@@ -745,12 +750,20 @@ export default function TappingGeneratorPage() {
   if (phase === "round" && roundPhrases.length > 0) {
     const point = roundPhrases[pointIdx];
     const progress = (pointIdx / POINTS.length) * 100;
+    const handleExit = () => {
+      if (confirm("Exit this tapping session? Your progress will not be saved.")) {
+        navigate("/tools");
+      }
+    };
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="px-4 pt-4 pb-2 flex-shrink-0">
+        <div className="px-4 flex-shrink-0" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)", paddingBottom: "8px" }}>
           <div className="flex items-center justify-between mb-3">
+            <button onClick={handleExit} className="flex items-center gap-1 text-sm font-sans text-muted-foreground hover:text-foreground min-h-10 -ml-1 px-1" aria-label="Exit session">
+              <ArrowLeft className="w-4 h-4" /> Exit
+            </button>
             <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Round {roundNumber}</p>
-            <p className="text-muted-foreground text-xs font-sans">{pointIdx + 1} / {POINTS.length}</p>
+            <p className="text-muted-foreground text-xs font-sans tabular-nums">{pointIdx + 1} / {POINTS.length}</p>
           </div>
           <div className="h-1 bg-surface-light rounded-full overflow-hidden">
             <div className="h-full gold-gradient rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
