@@ -2,11 +2,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/content$", "dest": "/content/index.html" },
-    { "src": "/content/", "dest": "/content/index.html" },
-    { "src": "/content/(.*)", "dest": "/content/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/content", "destination": "/content/index.html" },
+    { "source": "/content/", "destination": "/content/index.html" },
+    { "source": "/((?!api/|content/|assets/|.*\\.).*)", "destination": "/index.html" }
   ]
 }
