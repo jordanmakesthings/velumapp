@@ -19,7 +19,11 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    return <Navigate to="/signup" replace />;
+    // Returning users (previously authed on this device / in this PWA) land on /login.
+    // Fresh-to-the-funnel visitors land on /signup.
+    let hasAccount = false;
+    try { hasAccount = localStorage.getItem("velum_has_account") === "1"; } catch {}
+    return <Navigate to={hasAccount ? "/login" : "/signup"} replace />;
   }
 
   // Redirect TO onboarding if not completed

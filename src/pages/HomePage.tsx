@@ -244,7 +244,9 @@ export default function HomePage() {
     <div className="mx-auto w-full max-w-3xl overflow-x-hidden px-4 pt-14 pb-8 lg:px-8">
       {/* Header */}
       <div className="mb-8 min-w-0 w-full max-w-full">
-        <p className="text-eyebrow mb-4">{getGreeting()}{firstName ? `, ${firstName}` : ""}</p>
+        <h1 className="text-display text-3xl md:text-4xl leading-[1.1] text-foreground mb-5">
+          {getGreeting()}{firstName ? <>, <span className="italic text-accent">{firstName}.</span></> : <span className="italic text-accent">.</span>}
+        </h1>
         <p className="text-editorial max-w-full break-words text-[17px] leading-snug italic text-foreground/75 mb-2" style={{ overflowWrap: "break-word" }}>
           "{todayQuote.text}"
         </p>

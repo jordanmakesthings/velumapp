@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -7,10 +7,20 @@ import VelumMark from "@/components/VelumMark";
 
 type Mode = "signup" | "login" | "forgot";
 
+function resolveInitialMode(pathname: string): Mode {
+  if (pathname.startsWith("/login") || pathname.startsWith("/signin")) return "login";
+  if (pathname.startsWith("/signup")) return "signup";
+  try {
+    if (localStorage.getItem("velum_has_account") === "1") return "login";
+  } catch {}
+  return "signup";
+}
+
 export default function AuthPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<Mode>("signup");
+  const [mode, setMode] = useState<Mode>(() => resolveInitialMode(location.pathname));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,10 +48,12 @@ export default function AuthPage() {
       if (mode === "signup") {
         const { error } = await signUp(email, password);
         if (error) throw error;
+        try { localStorage.setItem("velum_has_account", "1"); } catch {}
         navigate("/onboarding");
       } else if (mode === "login") {
         const { error } = await signIn(email, password);
         if (error) throw error;
+        try { localStorage.setItem("velum_has_account", "1"); } catch {}
         navigate("/home");
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {

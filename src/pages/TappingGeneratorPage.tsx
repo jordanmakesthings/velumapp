@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Hand, Sparkles, RotateCcw, Wind } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Hand, Sparkles, RotateCcw, Wind, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,6 +132,7 @@ export default function TappingGeneratorPage() {
   const [phase, setPhase] = useState<Phase>("intent");
   const [path, setPath] = useState<Path>("negative");
   const [error, setError] = useState("");
+  const [showGuide, setShowGuide] = useState(false);
 
   // Input state
   const [issue, setIssue] = useState("");
@@ -408,7 +409,7 @@ export default function TappingGeneratorPage() {
   // ─── Shared UI pieces ─────────────────────────────────────────────────────
 
   const BackBar = ({ onBack, label = "Back" }: { onBack: () => void; label?: string }) => (
-    <div className="flex items-center px-4 mb-6 flex-shrink-0" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
+    <div className="flex items-center px-4 mb-6 flex-shrink-0" style={{ paddingTop: "calc(env(safe-area-inset-top) + 32px)" }}>
       <button onClick={onBack} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
         <ArrowLeft className="w-4 h-4" /> {label}
       </button>
@@ -457,15 +458,47 @@ export default function TappingGeneratorPage() {
             <p className="text-muted-foreground text-sm font-sans leading-relaxed">Gratitude, joy, abundance, confidence — but something's in the way.</p>
           </button>
         </div>
-        <a
-          href="/velum-tapping-guide.pdf"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => setShowGuide(true)}
           className="mt-8 text-accent text-xs font-sans underline underline-offset-2 hover:opacity-80 transition-opacity"
         >
           New to tapping? Read the intro guide →
-        </a>
+        </button>
       </div>
+
+      {showGuide && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col" onClick={() => setShowGuide(false)}>
+          <div
+            className="relative flex-1 flex flex-col max-w-3xl w-full mx-auto"
+            style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)", paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 pb-3">
+              <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Intro Guide</p>
+              <button
+                onClick={() => setShowGuide(false)}
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-foreground transition-colors"
+                aria-label="Close guide"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <iframe
+              src="/velum-tapping-guide.pdf"
+              title="Tapping Intro Guide"
+              className="flex-1 w-full rounded-xl border border-foreground/10 bg-background"
+            />
+            <a
+              href="/velum-tapping-guide.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mx-4 mt-3 text-center text-accent text-xs font-sans underline underline-offset-2"
+            >
+              Open in new tab / download
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 

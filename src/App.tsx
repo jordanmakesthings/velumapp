@@ -45,7 +45,9 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/signup" element={<AuthPage />} />
-            <Route path="/auth" element={<Navigate to="/signup" replace />} />
+            <Route path="/login" element={<AuthPage />} />
+            <Route path="/signin" element={<Navigate to="/login" replace />} />
+            <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             {/* App routes with layout — all protected */}
