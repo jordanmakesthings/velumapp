@@ -1,7 +1,12 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "framework": "vite",
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/content$", "dest": "/content/index.html" },
+    { "src": "/content/", "dest": "/content/index.html" },
+    { "src": "/content/(.*)", "dest": "/content/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
