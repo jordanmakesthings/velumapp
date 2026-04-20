@@ -2562,20 +2562,24 @@ function drawReelFrame(ts){
   const eased=phaseProgress<0.5?2*phaseProgress*phaseProgress:1-Math.pow(-2*phaseProgress+2,2)/2;
 
   const visual=reel.visual==='auto'?tech.defaultVisual:reel.visual;
-  if(visual==='slope' && reel.technique==='breath_ladder'){
+  const isSlope=visual==='slope' && reel.technique==='breath_ladder';
+  if(isSlope){
     drawBallOnSlope(ctx,W,H,phase,eased);
   }else{
     drawOrb(ctx,W,H,phase,eased);
   }
 
+  // Phase label + countdown — positioned higher when using slope visual
+  const labelY=isSlope?H*0.46:H*0.56;
+  const countY=isSlope?H*0.55:H*0.68;
   ctx.textAlign='center';
   ctx.fillStyle=REEL_CREAM;
   ctx.font='300 72px "Cormorant Garamond", Georgia, serif';
-  ctx.fillText(phase.label,W/2,H*0.56);
+  ctx.fillText(phase.label,W/2,labelY);
   ctx.fillStyle=REEL_GOLD;
-  ctx.font='600 140px "DM Sans", system-ui, sans-serif';
+  ctx.font=(isSlope?'600 110px':'600 140px')+' "DM Sans", system-ui, sans-serif';
   const remaining=Math.max(0,Math.ceil(phase.duration-phaseElapsed));
-  ctx.fillText(String(remaining),W/2,H*0.68);
+  ctx.fillText(String(remaining),W/2,countY);
 
   if(reel.hook){
     ctx.fillStyle=REEL_CREAM;
@@ -2629,20 +2633,35 @@ function drawOrb(ctx,W,H,phase,eased){
 }
 
 function drawBallOnSlope(ctx,W,H,phase,eased){
+  const phases=REEL_TECHNIQUES.breath_ladder.phases;
   const idxLocal=reel.phaseIdx%32;
   const descending=idxLocal<16;
-  const pairIdx=descending?Math.floor(idxLocal/2):Math.floor((idxLocal-16)/2);
-  const currentRung=descending?(8-pairIdx):(pairIdx+1);
 
+  // Cumulative time within the current journey (descent = phases 0-15, ascent = 16-31)
+  const journeyStart=descending?0:16;
+  let journeyElapsed=0;
+  for(let i=journeyStart;i<idxLocal;i++)journeyElapsed+=phases[i].duration;
+  const phaseElapsedS=(performance.now()-reel.phaseStartMs)/1000;
+  journeyElapsed+=Math.min(phaseElapsedS,phase.duration);
+  const JOURNEY_TOTAL=72; // seconds
+  const progress=Math.max(0,Math.min(journeyElapsed/JOURNEY_TOTAL,1));
+
+  // 8 steps. Descent: 0→7. Ascent: 7→0.
+  const stepFloat=descending?progress*7:(1-progress)*7;
+  const nearestStep=Math.max(0,Math.min(7,Math.round(stepFloat)));
+  const currentRung=8-nearestStep;
+
+  // Stair — bigger, more visible
   const steps=8;
-  const padX=W*0.12;
+  const padX=W*0.08;
   const stairLeft=padX,stairRight=W-padX;
-  const stairTop=H*0.82,stairBottom=H*0.93;
+  const stairTop=H*0.62,stairBottom=H*0.88;
   const stepW=(stairRight-stairLeft)/steps;
   const stepDY=(stairBottom-stairTop)/steps;
 
-  ctx.strokeStyle='rgba(201,168,76,0.35)';
-  ctx.lineWidth=2.5;
+  // Draw stair outline (gold, subtle)
+  ctx.strokeStyle='rgba(201,168,76,0.38)';
+  ctx.lineWidth=3;
   ctx.beginPath();
   let px=stairLeft,py=stairTop;
   ctx.moveTo(px,py);
@@ -2653,59 +2672,89 @@ function drawBallOnSlope(ctx,W,H,phase,eased){
   }
   ctx.stroke();
 
-  const stepIdx=8-currentRung;
-  const stepL=stairLeft+stepIdx*stepW;
-  const stepY=stairTop+stepIdx*stepDY;
-  const ballBaseX=stepL+stepW/2;
-  const ballBaseY=stepY-22;
-  let ballX=ballBaseX,ballY=ballBaseY;
-  let ballR=34;
-
-  const isInhale=phase.label.toLowerCase().includes('inhale');
-  if(isInhale){
-    ballY=ballBaseY-18*eased;
-    ballR=34+16*eased;
-  }else{
-    ballR=50-16*eased;
-    if(eased>0.5){
-      const t=(eased-0.5)*2;
-      const nextRung=descending?currentRung-1:currentRung+1;
-      if(nextRung>=1 && nextRung<=8){
-        const nsIdx=8-nextRung;
-        const nextX=stairLeft+nsIdx*stepW+stepW/2;
-        const nextY=stairTop+nsIdx*stepDY-22;
-        ballX=ballBaseX+(nextX-ballBaseX)*t;
-        ballY=ballBaseY+(nextY-ballBaseY)*t;
-      }
-    }
+  // Fill under the stair (subtle gradient)
+  ctx.fillStyle='rgba(26,74,58,0.25)';
+  ctx.beginPath();
+  ctx.moveTo(stairLeft,stairTop);
+  px=stairLeft;py=stairTop;
+  for(let s=0;s<steps;s++){
+    ctx.lineTo(px+stepW,py);
+    ctx.lineTo(px+stepW,py+stepDY);
+    px+=stepW;py+=stepDY;
   }
+  ctx.lineTo(stairRight,stairBottom+40);
+  ctx.lineTo(stairLeft,stairBottom+40);
+  ctx.closePath();
+  ctx.fill();
 
-  const g=ctx.createRadialGradient(ballX,ballY,ballR*0.3,ballX,ballY,ballR*2.4);
-  g.addColorStop(0,'rgba(201,168,76,0.6)');
+  // Ball position — smooth horizontal progression
+  const ballBaseX=stairLeft+stepFloat*stepW+stepW/2;
+  const ballBaseY=stairTop+stepFloat*stepDY-44;
+
+  // Breath-driven lift: inhale → ball lifts up, exhale → settles
+  const isInhale=phase.label.toLowerCase().includes('inhale');
+  const isHold=phase.label.toLowerCase().includes('hold');
+  let lift=0,breathScale=0;
+  if(isInhale){lift=eased*110;breathScale=eased;}
+  else if(isHold){lift=110;breathScale=1;}
+  else{lift=(1-eased)*110;breathScale=1-eased;}
+  const ballX=ballBaseX;
+  const ballY=ballBaseY-lift;
+  const ballR=46+breathScale*24; // 46..70
+
+  // Trail — fades behind the ball to show motion
+  ctx.strokeStyle='rgba(201,168,76,0.22)';
+  ctx.lineWidth=4;
+  ctx.setLineDash([10,14]);
+  ctx.beginPath();
+  const trailStartX=stairLeft+(descending?0:7)*stepW+stepW/2;
+  ctx.moveTo(trailStartX,stairTop+(descending?0:7)*stepDY-44);
+  // Follow stair up to current position
+  const curStepX=stairLeft+stepFloat*stepW+stepW/2;
+  const curStepY=stairTop+stepFloat*stepDY-44;
+  ctx.lineTo(curStepX,curStepY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Ball outer glow
+  const g=ctx.createRadialGradient(ballX,ballY,ballR*0.3,ballX,ballY,ballR*2.6);
+  g.addColorStop(0,'rgba(201,168,76,0.65)');
+  g.addColorStop(0.5,'rgba(201,168,76,0.25)');
   g.addColorStop(1,'rgba(201,168,76,0)');
   ctx.fillStyle=g;
-  ctx.beginPath();ctx.arc(ballX,ballY,ballR*2.4,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(ballX,ballY,ballR*2.6,0,Math.PI*2);ctx.fill();
 
-  const bb=ctx.createRadialGradient(ballX-ballR*0.3,ballY-ballR*0.3,ballR*0.1,ballX,ballY,ballR);
-  bb.addColorStop(0,'#f3d87a');
-  bb.addColorStop(1,'#8a6f22');
+  // Ball
+  const bb=ctx.createRadialGradient(ballX-ballR*0.35,ballY-ballR*0.4,ballR*0.1,ballX,ballY,ballR);
+  bb.addColorStop(0,'#f7e49a');
+  bb.addColorStop(0.6,'#d4a93c');
+  bb.addColorStop(1,'#7a5a1a');
   ctx.fillStyle=bb;
   ctx.beginPath();ctx.arc(ballX,ballY,ballR,0,Math.PI*2);ctx.fill();
 
+  // Ball highlight dot
+  ctx.fillStyle='rgba(255,255,255,0.35)';
+  ctx.beginPath();ctx.arc(ballX-ballR*0.35,ballY-ballR*0.4,ballR*0.18,0,Math.PI*2);ctx.fill();
+
+  // Rung numbers on each step
   ctx.textAlign='center';
-  ctx.font='500 26px "DM Sans", system-ui, sans-serif';
+  ctx.font='500 34px "DM Sans", system-ui, sans-serif';
   for(let s=0;s<steps;s++){
     const sRung=8-s;
     const sX=stairLeft+s*stepW+stepW/2;
-    const sY=stairTop+s*stepDY+56;
-    ctx.fillStyle=sRung===currentRung?REEL_GOLD:'rgba(242,239,231,0.28)';
+    const sY=stairTop+s*stepDY+stepDY+36;
+    const active=sRung===currentRung;
+    ctx.fillStyle=active?REEL_GOLD:'rgba(242,239,231,0.3)';
+    ctx.font=(active?'700 38px':'400 30px')+' "DM Sans", system-ui, sans-serif';
     ctx.fillText(String(sRung),sX,sY);
   }
 
-  ctx.fillStyle='rgba(111,138,126,0.6)';
-  ctx.font='500 22px "DM Sans", system-ui, sans-serif';
+  // Direction hint
+  ctx.fillStyle='rgba(111,138,126,0.7)';
+  ctx.font='500 24px "DM Sans", system-ui, sans-serif';
   ctx.textAlign='center';
-  ctx.fillText(descending?'↓  D E S C E N D I N G':'↑  A S C E N D I N G',W/2,H-30);
+  const pct=Math.round(progress*100);
+  ctx.fillText((descending?'↓  D E S C E N D I N G':'↑  A S C E N D I N G')+'  ·  '+pct+'%',W/2,H*0.96);
 }
 
 function wrapReelText(ctx,text,maxWidth){
