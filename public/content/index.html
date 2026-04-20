@@ -299,6 +299,27 @@ select option{background:#1e1e1e}
 
 /* Caption textarea */
 #caption-out{font-size:11px;line-height:1.7;margin-top:6px;color:var(--mt)}
+
+/* ── REELS STUDIO ── */
+#reels-view{position:fixed;inset:0;background:#0a0a0a;z-index:600;display:none;flex-direction:column}
+.rv-header{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;border-bottom:1px solid var(--br);flex-shrink:0;background:#0d0d0d}
+.rv-body{display:grid;grid-template-columns:340px 1fr;flex:1;min-height:0;overflow:hidden}
+.rv-sb{border-right:1px solid var(--br);background:var(--sf);padding:18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.rv-sb hr{border:none;border-top:1px solid var(--br);margin:4px 0}
+.rv-stage{display:flex;align-items:center;justify-content:center;padding:30px;overflow:auto;background:#0a0a0a}
+.reel-phone{position:relative;width:270px;height:480px;border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.06),0 30px 80px rgba(0,0,0,.8);background:#000}
+.reel-phone canvas{width:100%;height:100%;display:block}
+.reel-btn{background:transparent;border:1px solid var(--br);border-radius:3px;color:var(--sg);font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;padding:9px 14px;cursor:pointer;transition:all .15s;width:100%}
+.reel-btn:hover{border-color:var(--gd);color:var(--cr)}
+.reel-btn.primary{background:var(--gd);color:var(--ch);border-color:var(--gd);font-weight:500}
+.reel-btn.primary:hover{opacity:.88}
+.reel-btn.record{background:var(--forest);color:var(--cr);border-color:var(--fl)}
+.reel-btn.record:hover{border-color:var(--gd);color:var(--gd)}
+.reel-btn:disabled{opacity:.3;cursor:default}
+.reel-back{background:transparent;border:1px solid var(--br);border-radius:3px;color:var(--sg);font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;padding:6px 11px;cursor:pointer;transition:all .15s}
+.reel-back:hover{border-color:var(--gd);color:var(--cr)}
+#reel-status{font-size:10px;color:var(--sg);line-height:1.6;min-height:14px;text-align:center}
+#reel-status.active{color:var(--gd)}
 </style>
 </head>
 <body>
@@ -322,6 +343,7 @@ select option{background:#1e1e1e}
     <button onclick="openImgStudio()" style="font-size:9px;letter-spacing:.15em;color:#C9A84C;text-transform:uppercase;background:none;border:1px solid #C9A84C;border-radius:2px;padding:5px 10px;cursor:pointer;transition:all .2s">✦ Image Studio</button>
     <button id="lib-btn" onclick="openLibrary()" style="font-size:9px;letter-spacing:.15em;color:var(--sg);text-transform:uppercase;background:none;border:1px solid var(--br);border-radius:2px;padding:5px 10px;cursor:pointer;transition:all .2s">☰ Library</button>
     <button id="tt-btn" onclick="toggleTTMode()" style="font-size:9px;letter-spacing:.15em;color:var(--sg);text-transform:uppercase;background:none;border:1px solid var(--br);border-radius:2px;padding:5px 10px;cursor:pointer;transition:all .2s">TikTok Mode</button>
+    <button id="reels-btn" onclick="openReels()" style="font-size:9px;letter-spacing:.15em;color:#C9A84C;text-transform:uppercase;background:none;border:1px solid #C9A84C;border-radius:2px;padding:5px 10px;cursor:pointer;transition:all .2s">▶ Reels Studio</button>
   </div>
 </header>
 
@@ -594,6 +616,68 @@ select option{background:#1e1e1e}
   </div>
 </div>
 </div><!-- /app -->
+
+<!-- ── REELS STUDIO (overlay) ── -->
+<div id="reels-view">
+  <div class="rv-header">
+    <div class="logo">V<span>E</span>LUM</div>
+    <div class="htag">Reels Studio</div>
+    <button class="reel-back" onclick="closeReels()">← Back to Carousels</button>
+  </div>
+  <div class="rv-body">
+    <aside class="rv-sb">
+      <div>
+        <label>Technique</label>
+        <div class="sw"><select id="reel-technique" onchange="onReelTechnique()">
+          <option value="breath_ladder">Breath Ladder (8→1→8)</option>
+          <option value="box">Box Breathing (4-4-4-4)</option>
+          <option value="478">4-7-8 Breathing</option>
+          <option value="coherent">Coherent (5-5)</option>
+          <option value="extended_exhale">Extended Exhale (4-8)</option>
+          <option value="physiological">Physiological Sigh</option>
+        </select></div>
+      </div>
+      <div>
+        <label>Visual</label>
+        <div class="sw"><select id="reel-visual" onchange="onReelSettingChange()">
+          <option value="auto">Auto (by technique)</option>
+          <option value="orb">Orb (expand / contract)</option>
+          <option value="slope">Ball on Slope (Ladder)</option>
+        </select></div>
+      </div>
+      <div>
+        <label>Duration</label>
+        <div class="sw"><select id="reel-duration" onchange="onReelSettingChange()">
+          <option value="72">Descent only — 72s (Ladder)</option>
+          <option value="144">Full ladder — 144s</option>
+          <option value="60">60s loop</option>
+          <option value="45">45s loop</option>
+          <option value="30">30s loop</option>
+          <option value="90">90s loop</option>
+        </select></div>
+      </div>
+      <hr>
+      <div>
+        <label>Hook (top overlay)</label>
+        <textarea id="reel-hook" rows="2" placeholder="e.g. Reset your nervous system in 72 seconds" oninput="onReelSettingChange()"></textarea>
+      </div>
+      <div>
+        <label>CTA (bottom overlay)</label>
+        <input type="text" id="reel-cta" placeholder="e.g. Try it in Velum · link in bio" oninput="onReelSettingChange()">
+      </div>
+      <hr>
+      <button class="reel-btn primary" id="reel-play-btn" onclick="toggleReelPlayback()">▶ Play Preview</button>
+      <button class="reel-btn record" id="reel-record-btn" onclick="exportReel()">● Record &amp; Download</button>
+      <div id="reel-status"></div>
+      <div class="hint" style="margin-top:4px">Output 1080×1920. MP4 if your browser supports it, else WebM (convert free at cloudconvert.com).</div>
+    </aside>
+    <main class="rv-stage">
+      <div class="reel-phone">
+        <canvas id="reel-canvas" width="1080" height="1920"></canvas>
+      </div>
+    </main>
+  </div>
+</div>
 
 <script>
 // ── AUTH ──
@@ -2355,6 +2439,337 @@ document.addEventListener('keydown',e=>{
   if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'||e.target.isContentEditable)return;
   if(e.key==='ArrowRight')mv(1);if(e.key==='ArrowLeft')mv(-1);
 });
+
+// ═══════════════════════════════════════════════════════
+// ── REELS STUDIO ──
+// ═══════════════════════════════════════════════════════
+
+function buildLadderPhases(){
+  const ps=[];
+  for(let n=8;n>=1;n--){ps.push({label:'Inhale',duration:n,rung:n,descending:true});ps.push({label:'Exhale',duration:n,rung:n,descending:true});}
+  for(let n=1;n<=8;n++){ps.push({label:'Inhale',duration:n,rung:n,descending:false});ps.push({label:'Exhale',duration:n,rung:n,descending:false});}
+  return ps;
+}
+
+const REEL_TECHNIQUES={
+  breath_ladder:{name:'Breath Ladder',phases:buildLadderPhases(),defaultVisual:'slope',totalSeconds:144},
+  box:{name:'Box',phases:[{label:'Inhale',duration:4},{label:'Hold',duration:4},{label:'Exhale',duration:4},{label:'Hold',duration:4}],defaultVisual:'orb',totalSeconds:16},
+  '478':{name:'4-7-8',phases:[{label:'Inhale',duration:4},{label:'Hold',duration:7},{label:'Exhale',duration:8}],defaultVisual:'orb',totalSeconds:19},
+  coherent:{name:'Coherent',phases:[{label:'Inhale',duration:5},{label:'Exhale',duration:5}],defaultVisual:'orb',totalSeconds:10},
+  extended_exhale:{name:'Extended Exhale',phases:[{label:'Inhale',duration:4},{label:'Exhale',duration:8}],defaultVisual:'orb',totalSeconds:12},
+  physiological:{name:'Physiological Sigh',phases:[{label:'Inhale',duration:2},{label:'Inhale again',duration:2},{label:'Long exhale',duration:6}],defaultVisual:'orb',totalSeconds:10},
+};
+
+const reel={
+  technique:'breath_ladder',
+  visual:'auto',
+  durationS:72,
+  hook:'',
+  cta:'',
+  playing:false,
+  recording:false,
+  phaseIdx:0,
+  phaseStartMs:0,
+  startMs:0,
+  animFrame:null,
+};
+
+let _reelInited=false;
+function openReels(){
+  document.getElementById('reels-view').style.display='flex';
+  if(!_reelInited){_reelInited=true;onReelTechnique();}
+  resetReelPlayhead();
+  startReelLoop();
+  document.getElementById('reel-play-btn').textContent='⏸ Pause';
+}
+function closeReels(){
+  document.getElementById('reels-view').style.display='none';
+  stopReelLoop();
+}
+
+function onReelTechnique(){
+  reel.technique=document.getElementById('reel-technique').value;
+  document.getElementById('reel-duration').value=reel.technique==='breath_ladder'?'72':'60';
+  onReelSettingChange();
+  resetReelPlayhead();
+}
+
+function onReelSettingChange(){
+  reel.visual=document.getElementById('reel-visual').value;
+  reel.durationS=parseInt(document.getElementById('reel-duration').value,10)||60;
+  reel.hook=document.getElementById('reel-hook').value||'';
+  reel.cta=document.getElementById('reel-cta').value||'';
+}
+
+function resetReelPlayhead(){
+  reel.phaseIdx=0;
+  reel.phaseStartMs=performance.now();
+  reel.startMs=performance.now();
+}
+
+function toggleReelPlayback(){
+  if(reel.playing){
+    stopReelLoop();
+    document.getElementById('reel-play-btn').textContent='▶ Play Preview';
+  }else{
+    resetReelPlayhead();
+    startReelLoop();
+    document.getElementById('reel-play-btn').textContent='⏸ Pause';
+  }
+}
+
+function startReelLoop(){
+  if(reel.animFrame)return;
+  reel.playing=true;
+  if(!reel.startMs)reel.startMs=performance.now();
+  const tick=(ts)=>{
+    if(!reel.playing){reel.animFrame=null;return;}
+    drawReelFrame(ts);
+    const totalElapsed=(ts-reel.startMs)/1000;
+    if(!reel.recording && totalElapsed>=reel.durationS){resetReelPlayhead();}
+    reel.animFrame=requestAnimationFrame(tick);
+  };
+  reel.animFrame=requestAnimationFrame(tick);
+}
+
+function stopReelLoop(){
+  reel.playing=false;
+  if(reel.animFrame){cancelAnimationFrame(reel.animFrame);reel.animFrame=null;}
+}
+
+const REEL_GOLD='#C9A84C',REEL_CREAM='#F2EFE7',REEL_SAGE='#6F8A7E',REEL_FOREST='#0F2F26';
+
+function drawReelFrame(ts){
+  const c=document.getElementById('reel-canvas');if(!c)return;
+  const ctx=c.getContext('2d');
+  const W=c.width,H=c.height;
+
+  const bg=ctx.createRadialGradient(W/2,H*0.48,W*0.1,W/2,H*0.52,W*0.95);
+  bg.addColorStop(0,'#1a4a3a');
+  bg.addColorStop(0.55,REEL_FOREST);
+  bg.addColorStop(1,'#060606');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  const tech=REEL_TECHNIQUES[reel.technique];if(!tech)return;
+  const phase=tech.phases[reel.phaseIdx%tech.phases.length];
+  let phaseElapsed=(ts-reel.phaseStartMs)/1000;
+  if(phaseElapsed>=phase.duration){
+    reel.phaseIdx++;
+    reel.phaseStartMs=ts;
+    phaseElapsed=0;
+  }
+  const phaseProgress=Math.min(phaseElapsed/phase.duration,1);
+  const eased=phaseProgress<0.5?2*phaseProgress*phaseProgress:1-Math.pow(-2*phaseProgress+2,2)/2;
+
+  const visual=reel.visual==='auto'?tech.defaultVisual:reel.visual;
+  if(visual==='slope' && reel.technique==='breath_ladder'){
+    drawBallOnSlope(ctx,W,H,phase,eased);
+  }else{
+    drawOrb(ctx,W,H,phase,eased);
+  }
+
+  ctx.textAlign='center';
+  ctx.fillStyle=REEL_CREAM;
+  ctx.font='300 72px "Cormorant Garamond", Georgia, serif';
+  ctx.fillText(phase.label,W/2,H*0.56);
+  ctx.fillStyle=REEL_GOLD;
+  ctx.font='600 140px "DM Sans", system-ui, sans-serif';
+  const remaining=Math.max(0,Math.ceil(phase.duration-phaseElapsed));
+  ctx.fillText(String(remaining),W/2,H*0.68);
+
+  if(reel.hook){
+    ctx.fillStyle=REEL_CREAM;
+    ctx.font='700 64px "DM Sans", system-ui, sans-serif';
+    ctx.textAlign='center';
+    const lines=wrapReelText(ctx,reel.hook,W*0.82);
+    let y=240;
+    lines.forEach(ln=>{ctx.fillText(ln,W/2,y);y+=78;});
+  }
+
+  if(reel.cta){
+    ctx.fillStyle=REEL_GOLD;
+    ctx.font='500 46px "DM Sans", system-ui, sans-serif';
+    ctx.textAlign='center';
+    const lines=wrapReelText(ctx,reel.cta,W*0.82);
+    let y=H-200-(lines.length-1)*56;
+    lines.forEach(ln=>{ctx.fillText(ln,W/2,y);y+=56;});
+  }
+
+  ctx.fillStyle='rgba(111,138,126,0.45)';
+  ctx.font='300 32px "Cormorant Garamond", Georgia, serif';
+  ctx.textAlign='center';
+  ctx.fillText('V  E  L  U  M',W/2,H-90);
+}
+
+function drawOrb(ctx,W,H,phase,eased){
+  const cx=W/2,cy=H*0.48;
+  const minR=W*0.13,maxR=W*0.3;
+  const l=phase.label.toLowerCase();
+  let r=minR;
+  if(l.includes('inhale')){r=minR+(maxR-minR)*eased;}
+  else if(l.includes('exhale')){r=maxR-(maxR-minR)*eased;}
+  else {r=(minR+maxR)/2;}
+
+  const glow=ctx.createRadialGradient(cx,cy,r*0.4,cx,cy,r*2.1);
+  glow.addColorStop(0,'rgba(201,168,76,0.32)');
+  glow.addColorStop(1,'rgba(201,168,76,0)');
+  ctx.fillStyle=glow;
+  ctx.beginPath();ctx.arc(cx,cy,r*2.1,0,Math.PI*2);ctx.fill();
+
+  const body=ctx.createRadialGradient(cx-r*0.25,cy-r*0.3,r*0.1,cx,cy,r);
+  body.addColorStop(0,'rgba(242,239,231,0.78)');
+  body.addColorStop(0.6,'rgba(111,138,126,0.38)');
+  body.addColorStop(1,'rgba(15,47,38,0.1)');
+  ctx.fillStyle=body;
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+
+  ctx.strokeStyle='rgba(201,168,76,0.55)';
+  ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(cx,cy,r*1.16,0,Math.PI*2);ctx.stroke();
+}
+
+function drawBallOnSlope(ctx,W,H,phase,eased){
+  const idxLocal=reel.phaseIdx%32;
+  const descending=idxLocal<16;
+  const pairIdx=descending?Math.floor(idxLocal/2):Math.floor((idxLocal-16)/2);
+  const currentRung=descending?(8-pairIdx):(pairIdx+1);
+
+  const steps=8;
+  const padX=W*0.12;
+  const stairLeft=padX,stairRight=W-padX;
+  const stairTop=H*0.82,stairBottom=H*0.93;
+  const stepW=(stairRight-stairLeft)/steps;
+  const stepDY=(stairBottom-stairTop)/steps;
+
+  ctx.strokeStyle='rgba(201,168,76,0.35)';
+  ctx.lineWidth=2.5;
+  ctx.beginPath();
+  let px=stairLeft,py=stairTop;
+  ctx.moveTo(px,py);
+  for(let s=0;s<steps;s++){
+    ctx.lineTo(px+stepW,py);
+    ctx.lineTo(px+stepW,py+stepDY);
+    px+=stepW;py+=stepDY;
+  }
+  ctx.stroke();
+
+  const stepIdx=8-currentRung;
+  const stepL=stairLeft+stepIdx*stepW;
+  const stepY=stairTop+stepIdx*stepDY;
+  const ballBaseX=stepL+stepW/2;
+  const ballBaseY=stepY-22;
+  let ballX=ballBaseX,ballY=ballBaseY;
+  let ballR=34;
+
+  const isInhale=phase.label.toLowerCase().includes('inhale');
+  if(isInhale){
+    ballY=ballBaseY-18*eased;
+    ballR=34+16*eased;
+  }else{
+    ballR=50-16*eased;
+    if(eased>0.5){
+      const t=(eased-0.5)*2;
+      const nextRung=descending?currentRung-1:currentRung+1;
+      if(nextRung>=1 && nextRung<=8){
+        const nsIdx=8-nextRung;
+        const nextX=stairLeft+nsIdx*stepW+stepW/2;
+        const nextY=stairTop+nsIdx*stepDY-22;
+        ballX=ballBaseX+(nextX-ballBaseX)*t;
+        ballY=ballBaseY+(nextY-ballBaseY)*t;
+      }
+    }
+  }
+
+  const g=ctx.createRadialGradient(ballX,ballY,ballR*0.3,ballX,ballY,ballR*2.4);
+  g.addColorStop(0,'rgba(201,168,76,0.6)');
+  g.addColorStop(1,'rgba(201,168,76,0)');
+  ctx.fillStyle=g;
+  ctx.beginPath();ctx.arc(ballX,ballY,ballR*2.4,0,Math.PI*2);ctx.fill();
+
+  const bb=ctx.createRadialGradient(ballX-ballR*0.3,ballY-ballR*0.3,ballR*0.1,ballX,ballY,ballR);
+  bb.addColorStop(0,'#f3d87a');
+  bb.addColorStop(1,'#8a6f22');
+  ctx.fillStyle=bb;
+  ctx.beginPath();ctx.arc(ballX,ballY,ballR,0,Math.PI*2);ctx.fill();
+
+  ctx.textAlign='center';
+  ctx.font='500 26px "DM Sans", system-ui, sans-serif';
+  for(let s=0;s<steps;s++){
+    const sRung=8-s;
+    const sX=stairLeft+s*stepW+stepW/2;
+    const sY=stairTop+s*stepDY+56;
+    ctx.fillStyle=sRung===currentRung?REEL_GOLD:'rgba(242,239,231,0.28)';
+    ctx.fillText(String(sRung),sX,sY);
+  }
+
+  ctx.fillStyle='rgba(111,138,126,0.6)';
+  ctx.font='500 22px "DM Sans", system-ui, sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText(descending?'↓  D E S C E N D I N G':'↑  A S C E N D I N G',W/2,H-30);
+}
+
+function wrapReelText(ctx,text,maxWidth){
+  const words=(text||'').split(/\s+/).filter(Boolean);
+  const lines=[];let line='';
+  for(const w of words){
+    const test=line?line+' '+w:w;
+    if(ctx.measureText(test).width>maxWidth && line){lines.push(line);line=w;}
+    else line=test;
+  }
+  if(line)lines.push(line);
+  return lines;
+}
+
+async function exportReel(){
+  if(reel.recording)return;
+  const c=document.getElementById('reel-canvas');if(!c)return;
+  const btn=document.getElementById('reel-record-btn');
+  const statusEl=document.getElementById('reel-status');
+
+  onReelSettingChange();
+  resetReelPlayhead();
+  if(!reel.playing)startReelLoop();
+  document.getElementById('reel-play-btn').textContent='⏸ Pause';
+  reel.recording=true;
+
+  const candidates=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  let mime=null;
+  for(const m of candidates){if(MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m)){mime=m;break;}}
+  if(!mime){alert('Your browser does not support MediaRecorder. Use Chrome or Safari.');reel.recording=false;return;}
+
+  const stream=c.captureStream(30);
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000});
+  const chunks=[];
+  rec.ondataavailable=e=>{if(e.data&&e.data.size>0)chunks.push(e.data);};
+
+  btn.disabled=true;
+  statusEl.classList.add('active');
+  const total=reel.durationS;
+  let remaining=total;
+  statusEl.textContent=`Recording… ${remaining}s left`;
+  const tick=setInterval(()=>{remaining--;statusEl.textContent=`Recording… ${remaining}s left`;if(remaining<=0)clearInterval(tick);},1000);
+
+  rec.start(100);
+  setTimeout(()=>rec.stop(),total*1000+200);
+
+  rec.onstop=()=>{
+    clearInterval(tick);
+    reel.recording=false;
+    btn.disabled=false;
+    statusEl.classList.remove('active');
+    const blob=new Blob(chunks,{type:mime});
+    const isMp4=mime.includes('mp4');
+    const ext=isMp4?'mp4':'webm';
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    const stamp=new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
+    a.download=`velum-reel-${reel.technique}-${stamp}.${ext}`;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+    statusEl.textContent=isMp4?`Saved as .mp4 ✓`:`Saved as .webm — convert free at cloudconvert.com → mp4 for IG`;
+  };
+}
 </script>
 </body>
 </html>
