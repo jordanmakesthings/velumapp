@@ -7,6 +7,9 @@
     { "src": "/content$", "dest": "/content/index.html" },
     { "src": "/content/", "dest": "/content/index.html" },
     { "src": "/content/(.*)", "dest": "/content/$1" },
+    { "src": "/hypnosis-lab$", "dest": "/hypnosis-lab/index.html" },
+    { "src": "/hypnosis-lab/", "dest": "/hypnosis-lab/index.html" },
+    { "src": "/hypnosis-lab/(.*)", "dest": "/hypnosis-lab/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
