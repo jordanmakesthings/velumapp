@@ -376,6 +376,34 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Account management */}
+      <div className="velum-card p-5 mb-6">
+        <p className="text-ui text-xs tracking-wide uppercase mb-4">Account</p>
+        <div className="space-y-2">
+          <button
+            onClick={async () => {
+              if (!user?.email) return;
+              const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+                redirectTo: `${window.location.origin}/reset-password`,
+              });
+              if (error) toast.error(error.message);
+              else toast.success("Password reset email sent to " + user.email);
+            }}
+            className="w-full flex items-center justify-between p-3 rounded-xl border border-border hover:border-accent/40 transition-colors text-left"
+          >
+            <span className="text-foreground text-sm font-sans">Change password</span>
+            <span className="text-muted-foreground text-xs">Send reset email →</span>
+          </button>
+          <a
+            href={`mailto:hello@govelum.com?subject=Account%20deletion%20request&body=Please%20delete%20my%20account.%0A%0AEmail%3A%20${encodeURIComponent(user?.email || "")}`}
+            className="w-full flex items-center justify-between p-3 rounded-xl border border-border hover:border-destructive/40 transition-colors text-left"
+          >
+            <span className="text-destructive/90 text-sm font-sans">Delete my account</span>
+            <span className="text-muted-foreground text-xs">Email request →</span>
+          </a>
+        </div>
+      </div>
+
       {/* Completed sessions */}
       <div className="mb-8">
         <p className="text-ui text-xs tracking-wide uppercase mb-4">Completed Sessions</p>
@@ -404,6 +432,14 @@ export default function ProfilePage() {
             </Link>
           </div>
         )}
+      </div>
+
+      {/* Contact / support footer */}
+      <div className="text-center pb-4 pt-2">
+        <p className="text-muted-foreground text-xs">
+          Need help? <a href="mailto:hello@govelum.com" className="text-accent hover:underline">hello@govelum.com</a>
+        </p>
+        {/* TODO: Help / FAQ section — build later */}
       </div>
     </div>
   );
