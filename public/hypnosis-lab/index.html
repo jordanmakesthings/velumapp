@@ -127,6 +127,50 @@ textarea:focus,input:focus{border-color:var(--gd)}
 
     <button class="gbtn" id="gen-btn" onclick="generateScript()" disabled>✦ Generate Script</button>
     <div class="hint" id="gen-hint" style="text-align:center;margin-top:8px">Complete the diagnostic chat to enable.</div>
+
+    <hr style="border:none;border-top:1px solid var(--br);margin:18px 0">
+
+    <div class="set-card">
+      <label>ElevenLabs API Key</label>
+      <input type="password" id="ekey" placeholder="sk_…" autocomplete="off">
+      <div class="hint">Saved locally only. Sent only to ElevenLabs.</div>
+    </div>
+
+    <div class="set-card">
+      <label>Voice ID</label>
+      <input type="text" id="evoice" value="JBFqnCBsd6RMkjVDRZzb" placeholder="voice id">
+      <div class="hint">Default = George. Find others at elevenlabs.io → Voices.</div>
+    </div>
+
+    <div class="set-card">
+      <label>Voice settings</label>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:10px;color:var(--sg);min-width:80px">Stability</span>
+        <input type="range" id="estab" min="0" max="1" step="0.05" value="0.75" style="flex:1" oninput="document.getElementById('estab-v').textContent=this.value">
+        <span id="estab-v" style="font-size:10px;color:var(--sg);min-width:30px;text-align:right">0.75</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:10px;color:var(--sg);min-width:80px">Similarity</span>
+        <input type="range" id="esim" min="0" max="1" step="0.05" value="0.7" style="flex:1" oninput="document.getElementById('esim-v').textContent=this.value">
+        <span id="esim-v" style="font-size:10px;color:var(--sg);min-width:30px;text-align:right">0.7</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:10px;color:var(--sg);min-width:80px">Style</span>
+        <input type="range" id="estyle" min="0" max="1" step="0.05" value="0" style="flex:1" oninput="document.getElementById('estyle-v').textContent=this.value">
+        <span id="estyle-v" style="font-size:10px;color:var(--sg);min-width:30px;text-align:right">0</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:10px;color:var(--sg);min-width:80px">Speed</span>
+        <input type="range" id="espeed" min="0.7" max="1.2" step="0.05" value="0.85" style="flex:1" oninput="document.getElementById('espeed-v').textContent=this.value">
+        <span id="espeed-v" style="font-size:10px;color:var(--sg);min-width:30px;text-align:right">0.85</span>
+      </div>
+      <div class="hint" style="margin-top:8px">Trance defaults: high stability, low style, slow speed. [pause: N seconds] markers in script become real silences.</div>
+    </div>
+
+    <button class="gbtn alt" id="audio-btn" onclick="generateAudio()" disabled>♪ Generate Audio</button>
+    <div class="hint" id="audio-hint" style="text-align:center;margin-top:8px">Generate a script first.</div>
+
+    <div id="audio-out" style="margin-top:14px"></div>
   </div>
 </aside>
 
@@ -184,6 +228,8 @@ if(localStorage.getItem('velum_auth')===PASS){
 function init(){
   const k=localStorage.getItem('velum_key')||'';if(k)document.getElementById('akey').value=k;
   const n=localStorage.getItem('hl_name')||'';if(n)document.getElementById('uname').value=n;
+  const ek=localStorage.getItem('hl_ekey')||'';if(ek)document.getElementById('ekey').value=ek;
+  const ev=localStorage.getItem('hl_evoice')||'';if(ev)document.getElementById('evoice').value=ev;
   loadSession();
   if(chatHistory.length===0){
     pushMsg('system','Begin');
@@ -410,6 +456,72 @@ function downloadScript(){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=`velum-hypnosis-${(diagnosis?.first_name||'script')}-${Date.now()}.txt`;
+  a.click();
+}
+
+// ─── ELEVENLABS ───
+// Watch for script existence and enable audio button
+const audioBtnObserver=new MutationObserver(()=>{
+  const has=!!document.getElementById('script-out');
+  const btn=document.getElementById('audio-btn');
+  const hint=document.getElementById('audio-hint');
+  if(btn){btn.disabled=!has;if(hint)hint.textContent=has?'Generates a ~10-12 min MP3 from current script.':'Generate a script first.';}
+});
+audioBtnObserver.observe(document.getElementById('diag-body'),{childList:true,subtree:true});
+
+// Convert [pause: N seconds] markers to ElevenLabs SSML <break>
+function scriptToSsml(text){
+  return text.replace(/\[pause:\s*(\d+(?:\.\d+)?)\s*seconds?\]/gi,(_,n)=>`<break time="${n}s"/>`);
+}
+
+async function generateAudio(){
+  const el=document.getElementById('script-out');
+  if(!el){st('No script yet.',false);return;}
+  const text=scriptToSsml(el.innerText.trim());
+  const ekey=document.getElementById('ekey').value.trim();
+  const voice=document.getElementById('evoice').value.trim();
+  if(!ekey){st('Paste your ElevenLabs key.',false);return;}
+  if(!voice){st('Paste a Voice ID.',false);return;}
+  localStorage.setItem('hl_ekey',ekey);
+  localStorage.setItem('hl_evoice',voice);
+
+  const stab=parseFloat(document.getElementById('estab').value);
+  const sim=parseFloat(document.getElementById('esim').value);
+  const style=parseFloat(document.getElementById('estyle').value);
+  const speed=parseFloat(document.getElementById('espeed').value);
+
+  const btn=document.getElementById('audio-btn');btn.disabled=true;
+  const out=document.getElementById('audio-out');
+  out.innerHTML='<div style="font-size:10px;color:var(--sg);text-align:center;padding:14px">Synthesizing… this can take 30-90s for a long script.</div>';
+  st('Calling ElevenLabs…',true);
+
+  try{
+    const url=`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voice)}?output_format=mp3_44100_128`;
+    const body={
+      text,
+      model_id:'eleven_multilingual_v2',
+      voice_settings:{stability:stab,similarity_boost:sim,style,use_speaker_boost:true,speed},
+    };
+    const r=await fetch(url,{method:'POST',headers:{'xi-api-key':ekey,'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify(body)});
+    if(!r.ok){const t=await r.text();throw new Error('ElevenLabs '+r.status+': '+t.slice(0,200));}
+    const blob=await r.blob();
+    const audioUrl=URL.createObjectURL(blob);
+    out.innerHTML=`
+      <div style="font-size:9px;letter-spacing:.2em;color:var(--gd);text-transform:uppercase;margin-bottom:8px">✦ Audio ready</div>
+      <audio id="aud-player" controls src="${audioUrl}" style="width:100%;margin-bottom:8px"></audio>
+      <button class="reel-btn" onclick="downloadAudio('${audioUrl}')" style="width:100%;background:transparent;border:1px solid var(--br);border-radius:3px;color:var(--sg);font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;padding:8px;cursor:pointer">↓ Download MP3</button>`;
+    st(`Audio ready · ${(blob.size/1024/1024).toFixed(2)} MB`,false);
+  }catch(e){
+    out.innerHTML=`<div style="font-size:11px;color:var(--red);padding:12px;border:1px dashed var(--red);border-radius:4px">${e.message}</div>`;
+    st('Audio error: '+e.message,false);
+  }
+  btn.disabled=false;
+}
+
+function downloadAudio(url){
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`velum-hypnosis-${(diagnosis?.first_name||'track')}-${Date.now()}.mp3`;
   a.click();
 }
 </script>
