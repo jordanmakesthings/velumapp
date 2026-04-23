@@ -222,6 +222,9 @@ export default function ProfilePage() {
         </button>
       </div>
 
+      {/* Custom Hypnosis Tracks — hero placement (only renders if user has tracks) */}
+      <CustomTracksSection />
+
       {/* Subscription management */}
       <div className="velum-card p-4 mb-6">
         <div className="flex items-center justify-between">
@@ -270,9 +273,6 @@ export default function ProfilePage() {
           {cancelError}
         </div>
       )}
-
-      {/* Custom Hypnosis Tracks */}
-      <CustomTracksSection />
 
       {/* Invite Friends */}
       <InviteFriendsCard />
@@ -483,33 +483,37 @@ function CustomTracksSection() {
   if (tracks.length === 0) return null;
 
   return (
-    <div className="velum-card p-5 mb-6 border border-accent/30 bg-accent/5">
-      <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-4 h-4 text-accent" />
-        <p className="text-foreground text-sm font-sans font-medium">Your Custom Tracks</p>
+    <div className="velum-card p-6 mb-6 border border-accent/40 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent shadow-lg shadow-accent/5">
+      <div className="flex items-center gap-2.5 mb-1">
+        <Sparkles className="w-5 h-5 text-accent" />
+        <p className="text-ui text-[10px] tracking-[2px] uppercase text-accent">Made for you</p>
       </div>
+      <h2 className="text-display text-2xl mb-4">Your Custom Tracks</h2>
       <div className="space-y-3">
         {tracks.map((t: any) => (
-          <div key={t.id} className="bg-card rounded-xl p-3 border border-accent/10">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-foreground text-sm font-sans font-medium truncate">{t.title}</p>
+          <div key={t.id} className="bg-card rounded-xl p-4 border border-accent/20">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1 min-w-0 pr-3">
+                <p className="text-foreground text-base font-serif font-light leading-tight">{t.title}</p>
                 {t.issue_summary && (
-                  <p className="text-muted-foreground text-[11px] mt-0.5 truncate italic">{t.issue_summary}</p>
+                  <p className="text-muted-foreground text-xs mt-1 italic">{t.issue_summary}</p>
                 )}
               </div>
-              <span className="text-muted-foreground text-[10px] uppercase tracking-wider ml-3 shrink-0">
+              <span className="text-accent text-[10px] uppercase tracking-wider shrink-0 font-sans font-medium">
                 {t.duration_sec ? `${Math.round(t.duration_sec / 60)} min` : "—"}
               </span>
             </div>
             {signedUrls[t.id] ? (
-              <audio controls src={signedUrls[t.id]} className="w-full mt-1" preload="none" style={{ height: 36 }} />
+              <audio controls src={signedUrls[t.id]} className="w-full" preload="none" style={{ height: 40 }} />
             ) : (
               <p className="text-muted-foreground text-xs">Audio unavailable</p>
             )}
           </div>
         ))}
       </div>
+      <p className="text-muted-foreground text-[10px] tracking-wide mt-4 text-center italic">
+        Listen daily for 21 days for the full effect.
+      </p>
     </div>
   );
 }
