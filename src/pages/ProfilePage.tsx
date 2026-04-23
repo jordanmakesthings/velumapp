@@ -271,6 +271,9 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Custom Hypnosis Tracks */}
+      <CustomTracksSection />
+
       {/* Invite Friends */}
       <InviteFriendsCard />
 
@@ -440,6 +443,72 @@ export default function ProfilePage() {
           Need help? <a href="mailto:hello@govelum.com" className="text-accent hover:underline">hello@govelum.com</a>
         </p>
         {/* TODO: Help / FAQ section — build later */}
+      </div>
+    </div>
+  );
+}
+
+function CustomTracksSection() {
+  const { user } = useAuth();
+  const [tracks, setTracks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("custom_tracks" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        setTracks(data);
+        // Sign each audio url
+        const urls: Record<string, string> = {};
+        for (const t of data as any[]) {
+          if (!t.audio_url) continue;
+          const { data: s } = await supabase.storage
+            .from("custom-tracks")
+            .createSignedUrl(t.audio_url, 3600);
+          if (s?.signedUrl) urls[t.id] = s.signedUrl;
+        }
+        setSignedUrls(urls);
+      }
+      setLoading(false);
+    })();
+  }, [user]);
+
+  if (loading) return null;
+  if (tracks.length === 0) return null;
+
+  return (
+    <div className="velum-card p-5 mb-6 border border-accent/30 bg-accent/5">
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles className="w-4 h-4 text-accent" />
+        <p className="text-foreground text-sm font-sans font-medium">Your Custom Tracks</p>
+      </div>
+      <div className="space-y-3">
+        {tracks.map((t: any) => (
+          <div key={t.id} className="bg-card rounded-xl p-3 border border-accent/10">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-foreground text-sm font-sans font-medium truncate">{t.title}</p>
+                {t.issue_summary && (
+                  <p className="text-muted-foreground text-[11px] mt-0.5 truncate italic">{t.issue_summary}</p>
+                )}
+              </div>
+              <span className="text-muted-foreground text-[10px] uppercase tracking-wider ml-3 shrink-0">
+                {t.duration_sec ? `${Math.round(t.duration_sec / 60)} min` : "—"}
+              </span>
+            </div>
+            {signedUrls[t.id] ? (
+              <audio controls src={signedUrls[t.id]} className="w-full mt-1" preload="none" style={{ height: 36 }} />
+            ) : (
+              <p className="text-muted-foreground text-xs">Audio unavailable</p>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

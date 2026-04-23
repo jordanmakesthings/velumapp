@@ -171,6 +171,22 @@ textarea:focus,input:focus{border-color:var(--gd)}
     <div class="hint" id="audio-hint" style="text-align:center;margin-top:8px">Generate a script first.</div>
 
     <div id="audio-out" style="margin-top:14px"></div>
+
+    <hr style="border:none;border-top:1px solid var(--br);margin:18px 0">
+
+    <div class="set-card">
+      <label>Supabase Service Role Key</label>
+      <input type="password" id="skey" placeholder="eyJh…" autocomplete="off">
+      <div class="hint">Admin-only. Used to look up user by email + upload. Saved locally. <strong>Never share this.</strong></div>
+    </div>
+
+    <div class="set-card">
+      <label>Save to user (email)</label>
+      <input type="text" id="save-email" placeholder="user@example.com">
+      <input type="text" id="save-title" placeholder="Track title (e.g. Releasing the Gatekeeper)" style="margin-top:6px">
+      <button class="gbtn" id="save-btn" onclick="saveToUser()" disabled style="margin-top:8px">↓ Save to User Profile</button>
+      <div class="hint" id="save-hint" style="margin-top:6px">Generate audio first.</div>
+    </div>
   </div>
 </aside>
 
@@ -230,12 +246,16 @@ function init(){
   const n=localStorage.getItem('hl_name')||'';if(n)document.getElementById('uname').value=n;
   const ek=localStorage.getItem('hl_ekey')||'';if(ek)document.getElementById('ekey').value=ek;
   const ev=localStorage.getItem('hl_evoice')||'';if(ev)document.getElementById('evoice').value=ev;
+  const sk=localStorage.getItem('hl_skey')||'';if(sk)document.getElementById('skey').value=sk;
   loadSession();
   if(chatHistory.length===0){
     pushMsg('system','Begin');
     pushAssistant('What\'s been on your mind lately?');
   }
 }
+
+const SUPA_URL='https://etghaosktmxloqivquvu.supabase.co';
+let _lastAudioBlob=null; // captured at generation time
 
 function st(t,active=false){document.getElementById('stxt').textContent=t;document.getElementById('sdot').className='dot'+(active?' on':'');}
 
@@ -505,12 +525,16 @@ async function generateAudio(){
     const r=await fetch(url,{method:'POST',headers:{'xi-api-key':ekey,'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify(body)});
     if(!r.ok){const t=await r.text();throw new Error('ElevenLabs '+r.status+': '+t.slice(0,200));}
     const blob=await r.blob();
+    _lastAudioBlob=blob;
     const audioUrl=URL.createObjectURL(blob);
     out.innerHTML=`
       <div style="font-size:9px;letter-spacing:.2em;color:var(--gd);text-transform:uppercase;margin-bottom:8px">✦ Audio ready</div>
       <audio id="aud-player" controls src="${audioUrl}" style="width:100%;margin-bottom:8px"></audio>
       <button class="reel-btn" onclick="downloadAudio('${audioUrl}')" style="width:100%;background:transparent;border:1px solid var(--br);border-radius:3px;color:var(--sg);font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;padding:8px;cursor:pointer">↓ Download MP3</button>`;
     st(`Audio ready · ${(blob.size/1024/1024).toFixed(2)} MB`,false);
+    // Enable Save-to-User if service key + email present
+    const sb=document.getElementById('save-btn');
+    if(sb){sb.disabled=false;document.getElementById('save-hint').textContent='Enter the user\'s email + a title, then save.';}
   }catch(e){
     out.innerHTML=`<div style="font-size:11px;color:var(--red);padding:12px;border:1px dashed var(--red);border-radius:4px">${e.message}</div>`;
     st('Audio error: '+e.message,false);
@@ -524,6 +548,71 @@ function downloadAudio(url){
   a.download=`velum-hypnosis-${(diagnosis?.first_name||'track')}-${Date.now()}.mp3`;
   a.click();
 }
+
+// ─── SAVE TO USER PROFILE ───
+async function saveToUser(){
+  const skey=document.getElementById('skey').value.trim();
+  const email=document.getElementById('save-email').value.trim().toLowerCase();
+  const title=document.getElementById('save-title').value.trim();
+  const hint=document.getElementById('save-hint');
+  const btn=document.getElementById('save-btn');
+  if(!_lastAudioBlob){hint.textContent='Generate audio first.';return;}
+  if(!skey){hint.textContent='Paste your Supabase Service Role Key.';return;}
+  if(!email){hint.textContent='Enter the user\'s email.';return;}
+  if(!title){hint.textContent='Enter a title for the track.';return;}
+  localStorage.setItem('hl_skey',skey);
+  btn.disabled=true;
+  hint.textContent='Looking up user…';
+
+  try{
+    // 1. Find user by email via admin API
+    const ur=await fetch(`${SUPA_URL}/auth/v1/admin/users?filter=email.eq.${encodeURIComponent(email)}`,{
+      headers:{apikey:skey,Authorization:'Bearer '+skey}
+    });
+    if(!ur.ok){throw new Error('Lookup failed: '+ur.status);}
+    const ud=await ur.json();
+    const user=(ud.users||[]).find(u=>u.email?.toLowerCase()===email);
+    if(!user){throw new Error('No user found with email '+email);}
+
+    hint.textContent='Uploading audio…';
+    // 2. Upload MP3 to storage at <user_id>/<timestamp>.mp3
+    const fname=`${user.id}/${Date.now()}-${slugify(title)}.mp3`;
+    const upR=await fetch(`${SUPA_URL}/storage/v1/object/custom-tracks/${fname}`,{
+      method:'POST',
+      headers:{apikey:skey,Authorization:'Bearer '+skey,'Content-Type':'audio/mpeg','x-upsert':'false'},
+      body:_lastAudioBlob,
+    });
+    if(!upR.ok){const t=await upR.text();throw new Error('Upload failed: '+upR.status+' '+t.slice(0,200));}
+
+    hint.textContent='Saving record…';
+    // 3. Insert custom_tracks row via PostgREST (with service role)
+    const durSec=Math.round(estMin(scriptText)*60);
+    const insR=await fetch(`${SUPA_URL}/rest/v1/custom_tracks`,{
+      method:'POST',
+      headers:{apikey:skey,Authorization:'Bearer '+skey,'Content-Type':'application/json',Prefer:'return=representation'},
+      body:JSON.stringify({
+        user_id:user.id,
+        title,
+        modality:'hypnosis',
+        issue_summary:diagnosis?.issue||null,
+        script_text:scriptText,
+        audio_url:fname,
+        duration_sec:durSec,
+      }),
+    });
+    if(!insR.ok){const t=await insR.text();throw new Error('Insert failed: '+insR.status+' '+t.slice(0,200));}
+
+    hint.textContent='✓ Saved to '+email+' — they\'ll see it on their profile';
+    st('Track saved to user',false);
+    document.getElementById('save-title').value='';
+  }catch(e){
+    hint.textContent='Error: '+e.message;
+    st('Save error: '+e.message,false);
+  }
+  btn.disabled=false;
+}
+
+function slugify(s){return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,40);}
 </script>
 </body>
 </html>
