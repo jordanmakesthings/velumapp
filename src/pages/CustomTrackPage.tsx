@@ -584,7 +584,7 @@ export default function CustomTrackPage() {
               A new life awaits.
             </p>
             <Link
-              to="/profile"
+              to="/audios"
               className="inline-block gold-gradient text-primary-foreground rounded-xl px-8 py-3 text-sm font-sans font-bold tracking-wide"
             >
               Listen now
