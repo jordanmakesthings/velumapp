@@ -89,6 +89,7 @@ HARD RULES:
 When ready, send ONLY this JSON (no preamble, no markdown fences):
 {
   "ready": true,
+  "title": "2-4 word evocative track name (e.g. 'The Open Door', 'Soft Ground', 'Already Enough') — NOT a description of the problem",
   "issue": "1-line summary in their exact words where possible",
   "belief": "the L5 answer — what the problem says about them",
   "narrative": "the story they're telling themselves",
@@ -99,6 +100,8 @@ When ready, send ONLY this JSON (no preamble, no markdown fences):
   "modality_notes": "specific words/metaphors they used that the script should echo back",
   "first_name": "their name if mentioned, else null"
 }
+
+Title rules: 2-4 words. Title-case. Evocative, not descriptive. Should hint at the desired state, not the problem. Examples: "The Open Door" / "Soft Ground" / "Coming Home" / "Already Enough" / "The Quiet Yes" / "Worthy of Receiving".
 
 Until ready, keep moving through the layers.`;
 
@@ -252,7 +255,7 @@ export default function CustomTrackPage() {
         body: {
           diagnosis,
           voice,
-          title: diagnosis.issue ? diagnosis.issue.slice(0, 60) : "Custom track",
+          title: diagnosis.title || (diagnosis.issue ? diagnosis.issue.slice(0, 40) : "Custom track"),
         },
       });
       if (error) throw error;

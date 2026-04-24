@@ -469,8 +469,19 @@ function CustomTracksSection() {
     a.loop = true;
     a.volume = bgVol;
     a.preload = "auto";
+    a.crossOrigin = "anonymous";
+    // Belt-and-suspenders: some browsers ignore loop=true for streamed audio.
+    // Explicit restart on 'ended' guarantees the loop continues.
+    const onEnded = () => {
+      try {
+        a.currentTime = 0;
+        a.play().catch(() => {});
+      } catch {}
+    };
+    a.addEventListener("ended", onEnded);
     backingRef.current = a;
     return () => {
+      a.removeEventListener("ended", onEnded);
       a.pause();
       backingRef.current = null;
     };
