@@ -314,22 +314,22 @@ export default function CustomTrackPage() {
         )}
 
         {phase === "chat" && (
-          <div className="w-full flex flex-col h-[70vh]">
-            <div className="flex-1 overflow-y-auto pr-2 space-y-3 mb-4">
+          <div className="w-full flex flex-col h-[78vh]">
+            <div className="flex-1 overflow-y-auto pr-2 flex flex-col justify-end space-y-4 mb-4">
               {chat.map((m, i) => (
                 <div
                   key={i}
-                  className={`max-w-[88%] p-3.5 rounded-2xl text-sm leading-relaxed ${
+                  className={`max-w-[92%] p-5 rounded-2xl leading-relaxed ${
                     m.role === "assistant"
-                      ? "bg-card border border-border text-foreground font-serif italic text-base"
-                      : "bg-accent/15 border border-accent/30 text-foreground ml-auto"
+                      ? "bg-card border border-border text-foreground font-serif italic text-[20px]"
+                      : "bg-accent/15 border border-accent/30 text-foreground ml-auto text-[17px]"
                   }`}
                 >
                   {m.content}
                 </div>
               ))}
               {chatBusy && (
-                <div className="text-muted-foreground text-xs italic">listening…</div>
+                <div className="text-muted-foreground text-sm italic">listening…</div>
               )}
               <div ref={chatEndRef} />
             </div>
@@ -345,14 +345,14 @@ export default function CustomTrackPage() {
                 }}
                 placeholder="Type whatever comes up…"
                 rows={2}
-                className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground resize-none focus:outline-none focus:border-accent/50"
-                style={{ fontSize: "16px" }}
+                className="flex-1 bg-card border border-border rounded-xl px-4 py-3.5 text-foreground resize-none focus:outline-none focus:border-accent/50"
+                style={{ fontSize: "17px" }}
                 disabled={chatBusy}
               />
               <button
                 onClick={sendChat}
                 disabled={chatBusy || !chatInput.trim()}
-                className="gold-gradient text-primary-foreground rounded-xl px-5 text-xs font-sans font-bold tracking-wide disabled:opacity-40"
+                className="gold-gradient text-primary-foreground rounded-xl px-6 text-xs font-sans font-bold tracking-wide disabled:opacity-40"
               >
                 Send
               </button>
