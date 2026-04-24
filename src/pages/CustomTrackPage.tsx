@@ -88,7 +88,7 @@ This is not a problem-solving session. This is a clarity session focused on what
 
 ══════════════════════════════════
 TURN 1 — OPEN (always exactly this):
-"What are you wanting more of in your life right now?"
+"What would you love to be true for you right now?"
 
 If they answer with a problem ("I'm stuck", "I'm anxious", "I keep procrastinating"), reflect once and pivot to the outcome:
 
@@ -263,7 +263,7 @@ export default function CustomTrackPage() {
     if (user) {
       await supabase.from("profiles").update({ voice_preference: k } as any).eq("id", user.id);
     }
-    setChat([{ role: "assistant", content: "What's been on your mind lately?" }]);
+    setChat([{ role: "assistant", content: "What would you love to be true for you right now?" }]);
     setPhase("chat");
   };
 
@@ -541,7 +541,7 @@ export default function CustomTrackPage() {
                 onClick={() => {
                   try { localStorage.removeItem("velum_pending_diagnosis"); } catch {}
                   setDiagnosis(null);
-                  setChat([{ role: "assistant", content: "What are you wanting more of in your life right now?" }]);
+                  setChat([{ role: "assistant", content: "What would you love to be true for you right now?" }]);
                   setPhase("chat");
                 }}
                 className="border border-border rounded-xl px-5 py-2.5 text-foreground text-sm hover:border-accent/40"
