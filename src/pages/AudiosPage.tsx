@@ -53,12 +53,9 @@ export default function AudiosPage() {
     }
   }, [searchParams, setSearchParams]);
 
-  // Backing audio (Web Audio API for reliable looping)
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const bufferRef = useRef<AudioBuffer | null>(null);
-  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const gainRef = useRef<GainNode | null>(null);
-  const loadingRef = useRef<Promise<void> | null>(null);
+  // Backing audio: HTMLAudioElement + loop attr + watchdog poll. Web Audio kept dropping out on mobile.
+  const backingRef = useRef<HTMLAudioElement | null>(null);
+  const watchdogRef = useRef<number | null>(null);
   const playingCount = useRef(0);
 
   // Per-track audio state
@@ -120,50 +117,50 @@ export default function AudiosPage() {
   }, [user]);
 
   // Backing track load + control
-  const ensureBacking = async () => {
-    if (bufferRef.current) return;
-    if (loadingRef.current) return loadingRef.current;
-    loadingRef.current = (async () => {
-      try {
-        const Ctx: typeof AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
-        if (!Ctx) return;
-        const ctx = new Ctx();
-        audioCtxRef.current = ctx;
-        const gain = ctx.createGain();
-        gain.gain.value = bgVol;
-        gain.connect(ctx.destination);
-        gainRef.current = gain;
-        const res = await fetch(BACKING_TRACK_URL);
-        const arr = await res.arrayBuffer();
-        const buf = await ctx.decodeAudioData(arr);
-        bufferRef.current = buf;
-      } catch (e) {
-        console.warn("backing load failed", e);
-      }
-    })();
-    return loadingRef.current;
+  const ensureBackingEl = () => {
+    if (backingRef.current) return backingRef.current;
+    const a = new Audio(BACKING_TRACK_URL);
+    a.loop = true;
+    a.preload = "auto";
+    a.volume = bgVol;
+    a.crossOrigin = "anonymous";
+    // Belt: ended event fallback if loop attr drops on iOS
+    a.addEventListener("ended", () => { try { a.currentTime = 0; a.play().catch(() => {}); } catch {} });
+    backingRef.current = a;
+    return a;
   };
   const startBacking = async () => {
-    await ensureBacking();
-    const ctx = audioCtxRef.current; const buf = bufferRef.current; const gain = gainRef.current;
-    if (!ctx || !buf || !gain) return;
-    if (ctx.state === "suspended") await ctx.resume();
-    if (sourceRef.current) return;
-    const src = ctx.createBufferSource();
-    src.buffer = buf; src.loop = true; src.connect(gain); src.start();
-    sourceRef.current = src;
-  };
-  const stopBacking = () => {
-    if (sourceRef.current) {
-      try { sourceRef.current.stop(); sourceRef.current.disconnect(); } catch {}
-      sourceRef.current = null;
+    const a = ensureBackingEl();
+    try { await a.play(); } catch (e) { console.warn("backing play failed", e); }
+    // Watchdog: every 4 seconds while voice plays, verify backing is still going. Restart if not.
+    if (watchdogRef.current == null) {
+      watchdogRef.current = window.setInterval(() => {
+        const b = backingRef.current;
+        if (!b || playingCount.current === 0) return;
+        if (b.paused || b.ended) {
+          try { b.currentTime = 0; b.play().catch(() => {}); } catch {}
+        } else if (b.duration > 0 && (b.duration - b.currentTime) < 0.5) {
+          // About to end — preemptively rewind to avoid the gap
+          try { b.currentTime = 0; } catch {}
+        }
+      }, 4000);
     }
   };
-  useEffect(() => () => { stopBacking(); audioCtxRef.current?.close().catch(() => {}); }, []);
+  const stopBacking = () => {
+    if (backingRef.current) backingRef.current.pause();
+    if (watchdogRef.current != null) {
+      window.clearInterval(watchdogRef.current);
+      watchdogRef.current = null;
+    }
+  };
+  useEffect(() => () => {
+    stopBacking();
+    if (backingRef.current) { backingRef.current.src = ""; backingRef.current = null; }
+  }, []);
 
   // Persist + apply user controls
   useEffect(() => {
-    if (gainRef.current) gainRef.current.gain.value = bgVol;
+    if (backingRef.current) backingRef.current.volume = bgVol;
     localStorage.setItem("velum_bg_vol", String(bgVol));
   }, [bgVol]);
   useEffect(() => {
