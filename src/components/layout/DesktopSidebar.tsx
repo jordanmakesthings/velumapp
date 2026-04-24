@@ -1,11 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Sparkles, Compass, User } from "lucide-react";
-import velumLotus from "@/assets/brand/velum-lotus.png";
+import { Sparkles, Compass, Headphones, User } from "lucide-react";
 
 const navItems = [
-  { path: "/home",    icon: Sparkles, label: "Home" },
-  { path: "/library", icon: Compass,  label: "Discover" },
-  { path: "/profile", icon: User,     label: "Me" },
+  { path: "/home",    icon: Sparkles,   label: "Home",     match: ["/home", "/"] },
+  { path: "/library", icon: Compass,    label: "Discover", match: ["/library", "/tools", "/courses", "/course", "/subcategory", "/journal", "/breathe", "/bilateral", "/tapping", "/somatic-touch", "/sos"] },
+  { path: "/audios",  icon: Headphones, label: "Audios",   match: ["/audios", "/custom-track"] },
+  { path: "/profile", icon: User,       label: "Me",       match: ["/profile", "/premium"] },
 ];
 
 export function DesktopSidebar() {
@@ -13,18 +13,18 @@ export function DesktopSidebar() {
 
   return (
     <div className="flex flex-col h-full py-8 px-5">
-      <div className="mb-12 flex items-center gap-3">
-        <img src={velumLotus} alt="Velum" className="w-9 h-9 object-contain" draggable={false} />
-        <span className="text-accent text-[11px] font-sans font-medium tracking-[5px] uppercase">
-          Velum
+      <div className="mb-12 px-2">
+        <span
+          className="text-accent font-serif text-xl tracking-[0.4em]"
+          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+        >
+          VELUM
         </span>
       </div>
 
       <nav className="flex flex-col gap-1 flex-1">
-        {navItems.map(({ path, icon: Icon, label }) => {
-          const isActive = location.pathname === path
-            || (path === "/library" && (location.pathname.startsWith("/library") || location.pathname.startsWith("/tools") || location.pathname.startsWith("/courses") || location.pathname.startsWith("/journal") || location.pathname.startsWith("/breathe") || location.pathname.startsWith("/bilateral") || location.pathname.startsWith("/tapping") || location.pathname.startsWith("/somatic-touch")))
-            || (path === "/profile" && location.pathname.startsWith("/premium"));
+        {navItems.map(({ path, icon: Icon, label, match }) => {
+          const isActive = match.some(m => location.pathname.startsWith(m));
           return (
             <Link
               key={path}

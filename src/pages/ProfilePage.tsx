@@ -218,8 +218,7 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* Custom Hypnosis Tracks — hero placement (only renders if user has tracks) */}
-      <CustomTracksSection />
+      {/* Custom tracks live on /audios now — not duplicated here. */}
 
       {/* Subscription management */}
       <div className="velum-card p-4 mb-6">
