@@ -149,29 +149,54 @@ Deno.serve(async (req) => {
     if (!scriptText) return json({ error: "Empty script returned" }, 502);
 
     // 2. Synthesize audio via ElevenLabs
-    const ssml = scriptToSsml(scriptText);
-    const ttsRes = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`,
-      {
-        method: "POST",
-        headers: {
-          "xi-api-key": elevenKey,
-          "Content-Type": "application/json",
-          Accept: "audio/mpeg",
+    // Chunk the script at paragraph breaks for consistent pacing.
+    // ElevenLabs drifts (speeds up) on long single-shot inputs ~10+ min.
+    // Synthesizing in chunks of 1-2 min each avoids the drift entirely.
+    const chunkScript = (txt: string): string[] => {
+      // Split at double newlines (paragraph breaks). Then group small paragraphs.
+      const paras = txt.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+      const chunks: string[] = [];
+      let cur = "";
+      const TARGET = 600; // ~30-50 sec of audio per chunk
+      for (const p of paras) {
+        if (!cur) { cur = p; continue; }
+        if ((cur.length + p.length + 2) <= TARGET) {
+          cur = cur + "\n\n" + p;
+        } else {
+          chunks.push(cur);
+          cur = p;
+        }
+      }
+      if (cur) chunks.push(cur);
+      return chunks;
+    };
+    const chunks = chunkScript(scriptText);
+    const audioParts: Uint8Array[] = [];
+    for (const chunk of chunks) {
+      const ssmlChunk = scriptToSsml(chunk);
+      const ttsRes = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`,
+        {
+          method: "POST",
+          headers: { "xi-api-key": elevenKey, "Content-Type": "application/json", Accept: "audio/mpeg" },
+          body: JSON.stringify({
+            text: ssmlChunk,
+            model_id: "eleven_multilingual_v2", // most consistent on slow trance content
+            voice_settings: { stability: 0.9, similarity_boost: 0.75, style: 0, use_speaker_boost: true, speed: 0.78 },
+          }),
         },
-        body: JSON.stringify({
-          text: ssml,
-          // turbo_v2_5 is more consistent on long content (multilingual_v2 was drifting/speeding up)
-          model_id: "eleven_turbo_v2_5",
-          voice_settings: { stability: 0.85, similarity_boost: 0.75, style: 0, use_speaker_boost: true, speed: 0.8 },
-        }),
-      },
-    );
-    if (!ttsRes.ok) {
-      const t = await ttsRes.text();
-      return json({ error: "Audio synthesis failed", detail: t.slice(0, 400) }, 502);
+      );
+      if (!ttsRes.ok) {
+        const t = await ttsRes.text();
+        return json({ error: "Audio synthesis failed", detail: t.slice(0, 400), failed_chunk: chunks.indexOf(chunk) }, 502);
+      }
+      audioParts.push(new Uint8Array(await ttsRes.arrayBuffer()));
     }
-    const audioBuf = new Uint8Array(await ttsRes.arrayBuffer());
+    // Concat all MP3 buffers — works for ElevenLabs constant-bitrate MP3 output
+    const totalLen = audioParts.reduce((s, b) => s + b.byteLength, 0);
+    const audioBuf = new Uint8Array(totalLen);
+    let off = 0;
+    for (const part of audioParts) { audioBuf.set(part, off); off += part.byteLength; }
 
     // 3. Upload to storage at <user_id>/<timestamp>-<title-slug>.mp3
     const finalTitle = (title && String(title).trim()) || (diagnosis.issue ? String(diagnosis.issue).slice(0, 60) : "Custom track");
