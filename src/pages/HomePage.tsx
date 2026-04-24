@@ -124,14 +124,16 @@ class TileErrorBoundary extends React.Component<{ children: React.ReactNode }, {
   }
   render() {
     if (this.state.hasError) {
+      // Fallback links to /audios (the library) — NOT /custom-track (which is the create flow).
+      // From /audios the user can play any existing track or create a new one.
       return (
-        <Link to="/custom-track" className="velum-card mb-4 w-full p-5 flex items-center gap-4 border border-accent/30">
+        <Link to="/audios" className="velum-card mb-4 w-full p-5 flex items-center gap-4 border border-accent/30 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent">
           <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
             <Sparkles className="w-5 h-5 text-accent" />
           </div>
           <div className="flex-1">
-            <p className="text-foreground text-sm font-sans font-medium">Your custom track</p>
-            <p className="text-muted-foreground text-[11px]">Tap to open</p>
+            <p className="text-foreground text-sm font-sans font-medium">My Audio Library</p>
+            <p className="text-muted-foreground text-[11px]">Open your custom tracks</p>
           </div>
           <ArrowRight className="w-4 h-4 text-accent shrink-0" />
         </Link>
