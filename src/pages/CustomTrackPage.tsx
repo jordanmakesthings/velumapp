@@ -18,30 +18,46 @@ function buildStripeLink(base: string, userId?: string, email?: string | null): 
 function GeneratingScreen() {
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setElapsed((s) => s + 1), 1000);
+    const t = setInterval(() => setElapsed((s) => s + 0.25), 250);
     return () => clearInterval(t);
   }, []);
-  // Phases as honest status, not fake progress
   let stage = "Writing your script…";
   if (elapsed > 25) stage = "Voicing it now…";
-  if (elapsed > 75) stage = "Almost ready…";
-  if (elapsed > 150) stage = "Just a little longer — the longer takes are usually the best ones.";
+  if (elapsed > 90) stage = "Stitching it together…";
+  if (elapsed > 150) stage = "Almost there — the longer takes are usually the best ones.";
+
+  // Eased progress: fills smoothly from 0 → 92% over ~150s, holds at 95% after.
+  // The actual "done" transition is handled by the parent (component unmounts).
+  const targetSec = 150;
+  const rawPct = Math.min(elapsed / targetSec, 1);
+  // ease-out so it slows as it approaches the cap (feels less like it's stalled)
+  const easedPct = 1 - Math.pow(1 - rawPct, 2);
+  const pct = Math.min(95, easedPct * 92 + (elapsed > targetSec ? 3 : 0));
+
   const m = Math.floor(elapsed / 60);
-  const s = elapsed % 60;
+  const s = Math.floor(elapsed % 60);
+
   return (
-    <div className="text-center max-w-md">
+    <div className="text-center max-w-md w-full">
       <Sparkles className="w-8 h-8 text-accent mx-auto mb-5 animate-pulse" />
       <h1 className="text-display text-2xl mb-3">{stage}</h1>
-      <p className="text-muted-foreground text-sm leading-relaxed mb-1">
-        This usually takes 1–3 minutes. Stay on this screen.
+      <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+        Crafting the words, then voicing them. Stay on this screen — don't refresh.
       </p>
-      <p className="text-muted-foreground/60 text-xs leading-relaxed">
-        We're crafting the words first, then voicing them. Don't refresh.
-      </p>
-      <Loader2 className="w-6 h-6 animate-spin text-accent mx-auto mt-8" />
-      <p className="text-muted-foreground/50 text-[11px] tracking-wider uppercase mt-4 font-sans">
-        {m > 0 ? `${m}:${String(s).padStart(2, "0")}` : `${s}s`} elapsed
-      </p>
+
+      {/* Progress bar */}
+      <div className="w-full max-w-sm mx-auto">
+        <div className="h-1.5 bg-foreground/10 rounded-full overflow-hidden">
+          <div
+            className="h-full gold-gradient rounded-full transition-all duration-300 ease-out"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between mt-2.5 text-[10px] tracking-wider uppercase font-sans text-muted-foreground/70">
+          <span>{Math.round(pct)}%</span>
+          <span>{m > 0 ? `${m}:${String(s).padStart(2, "0")}` : `${s}s`}</span>
+        </div>
+      </div>
     </div>
   );
 }
