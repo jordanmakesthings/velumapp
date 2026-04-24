@@ -99,8 +99,22 @@ Deno.serve(async (req) => {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.supabase_user_id;
         const plan = session.metadata?.plan;
-        if (!userId) break;
 
+        // Handle Custom Track add-on Payment Link ($9 one-time).
+        // Identified by metadata.product === "custom_track_addon" OR by client_reference_id (user id).
+        const isAddon =
+          session.mode === "payment" &&
+          (session.metadata?.product === "custom_track_addon" ||
+            session.metadata?.plan === "custom_track_addon");
+        if (isAddon) {
+          const targetUserId = userId || session.client_reference_id;
+          if (targetUserId) {
+            await supabaseAdmin.rpc("increment_extra_track_credits", { uid: targetUserId, add: 1 });
+          }
+          break;
+        }
+
+        if (!userId) break;
         if (plan === "lifetime") {
           await updateSubscription(userId, "active", "lifetime", null);
           await creditReferrerIfEligible(userId);

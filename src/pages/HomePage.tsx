@@ -295,6 +295,19 @@ export default function HomePage() {
         </Link>
       )}
 
+      {/* Custom Track entry tile — hero placement */}
+      <Link to="/custom-track" className="velum-card mb-4 w-full p-5 flex items-center gap-4 border border-accent/30 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent">
+        <div className="w-11 h-11 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center shrink-0">
+          <Sparkles className="w-5 h-5 text-accent" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-eyebrow mb-0.5">Made for you</p>
+          <p className="text-foreground text-base font-serif font-light">Create your custom hypnosis track</p>
+          <p className="text-muted-foreground text-[11px] mt-1">5-min diagnostic · ~12-min audio · listen daily for 21 days</p>
+        </div>
+        <ArrowRight className="w-4 h-4 text-accent shrink-0" />
+      </Link>
+
       {/* Stats — show aspirational empty state instead of "0 streak" */}
       {totalSessions === 0 ? (
         <div className="mb-10 w-full rounded-2xl border border-accent/15 bg-accent/[0.03] p-5">
