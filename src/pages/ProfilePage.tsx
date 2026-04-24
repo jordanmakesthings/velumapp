@@ -457,18 +457,28 @@ function CustomTracksSection() {
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const backingRef = useRef<HTMLAudioElement | null>(null);
   const playingCount = useRef(0);
+  const [bgVol, setBgVol] = useState<number>(() => {
+    const v = parseFloat(localStorage.getItem("velum_bg_vol") || "0.22");
+    return isNaN(v) ? 0.22 : v;
+  });
 
   useEffect(() => {
     const a = new Audio(BACKING_TRACK_URL);
     a.loop = true;
-    a.volume = 0.22;
+    a.volume = bgVol;
     a.preload = "auto";
     backingRef.current = a;
     return () => {
       a.pause();
       backingRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (backingRef.current) backingRef.current.volume = bgVol;
+    localStorage.setItem("velum_bg_vol", String(bgVol));
+  }, [bgVol]);
 
   const handleVoicePlay = () => {
     playingCount.current += 1;
@@ -548,7 +558,20 @@ function CustomTracksSection() {
           </div>
         ))}
       </div>
-      <p className="text-muted-foreground text-[10px] tracking-wide mt-4 text-center italic">
+      <div className="flex items-center gap-3 mt-4 pt-4 border-t border-accent/15">
+        <span className="text-muted-foreground text-[10px] uppercase tracking-wider min-w-[80px]">Background</span>
+        <input
+          type="range"
+          min={0}
+          max={0.5}
+          step={0.01}
+          value={bgVol}
+          onChange={(e) => setBgVol(parseFloat(e.target.value))}
+          className="flex-1 accent-yellow-600"
+        />
+        <span className="text-muted-foreground text-[10px] min-w-[30px] text-right">{Math.round(bgVol * 200)}%</span>
+      </div>
+      <p className="text-muted-foreground text-[10px] tracking-wide mt-3 text-center italic">
         Listen daily for 21 days for the full effect.
       </p>
     </div>
