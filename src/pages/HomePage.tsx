@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Clock, Hand, Fingerprint, Play, Pause, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { getTodayCheckin } from "@/lib/velumStorage";
@@ -109,6 +109,37 @@ function getDayOfYear() {
 }
 
 const HOME_BACKING_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop.mp3";
+
+// Defensive wrapper — if anything inside CustomTrackHomeTile throws, the rest of Home still renders
+class TileErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(err: any) {
+    console.error("CustomTrackHomeTile crashed:", err);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Link to="/custom-track" className="velum-card mb-4 w-full p-5 flex items-center gap-4 border border-accent/30">
+          <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5 text-accent" />
+          </div>
+          <div className="flex-1">
+            <p className="text-foreground text-sm font-sans font-medium">Your custom track</p>
+            <p className="text-muted-foreground text-[11px]">Tap to open</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-accent shrink-0" />
+        </Link>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function CustomTrackHomeTile() {
   const { user } = useAuth();
@@ -556,8 +587,10 @@ export default function HomePage() {
         <p className="text-muted-foreground text-xs font-sans tracking-wide">— {todayQuote.author}</p>
       </div>
 
-      {/* HERO — Custom Track is the anchor of Today */}
-      <CustomTrackHomeTile />
+      {/* HERO — Custom Track is the anchor of Today (wrapped so any crash falls back gracefully) */}
+      <TileErrorBoundary>
+        <CustomTrackHomeTile />
+      </TileErrorBoundary>
 
       {/* Trial countdown banner */}
       {isInTrial && (
