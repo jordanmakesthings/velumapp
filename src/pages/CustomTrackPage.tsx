@@ -160,7 +160,12 @@ export default function CustomTrackPage() {
   const [voice, setVoice] = useState<string>("");
   const [chat, setChat] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
-  const [diagnosis, setDiagnosis] = useState<any>(null);
+  const [diagnosis, setDiagnosis] = useState<any>(() => {
+    try {
+      const raw = localStorage.getItem("velum_pending_diagnosis");
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
   const [errorMsg, setErrorMsg] = useState("");
   const [generatedTrackId, setGeneratedTrackId] = useState<string>("");
   const [chatBusy, setChatBusy] = useState(false);
@@ -206,8 +211,14 @@ export default function CustomTrackPage() {
           return;
         }
       }
+      // If a diagnosis was cached from an earlier failed attempt, jump straight to confirm
+      if (diagnosis) {
+        setPhase("confirm");
+        return;
+      }
       setPhase("voice");
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user, hasAccess, navigate]);
 
   useEffect(() => {
@@ -283,6 +294,7 @@ export default function CustomTrackPage() {
       }
       if (parsed) {
         setDiagnosis(parsed);
+        try { localStorage.setItem("velum_pending_diagnosis", JSON.stringify(parsed)); } catch {}
         setPhase("confirm");
       } else {
         setChat([...next, { role: "assistant", content: reply }]);
@@ -308,6 +320,8 @@ export default function CustomTrackPage() {
       if (error) throw error;
       if (data?.error) throw new Error(data.message || data.error);
       setGeneratedTrackId(data.track_id);
+      // Successful generation — clear the cached diagnosis
+      try { localStorage.removeItem("velum_pending_diagnosis"); } catch {}
       setPhase("done");
     } catch (e: any) {
       setErrorMsg(e.message || String(e));
@@ -511,13 +525,30 @@ export default function CustomTrackPage() {
         {phase === "error" && (
           <div className="text-center max-w-md">
             <h1 className="text-display text-2xl mb-3">Something didn't land.</h1>
-            <p className="text-destructive text-sm mb-6">{errorMsg}</p>
-            <button
-              onClick={() => setPhase("voice")}
-              className="border border-border rounded-xl px-5 py-2.5 text-foreground text-sm hover:border-accent/40"
-            >
-              Try again
-            </button>
+            <p className="text-destructive text-sm mb-2 break-words">{errorMsg}</p>
+            <p className="text-muted-foreground text-xs italic mb-6">
+              Your conversation was saved — tap below to try again without re-doing the chat.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={generate}
+                disabled={!diagnosis}
+                className="gold-gradient text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-sans font-bold disabled:opacity-40"
+              >
+                Retry generation
+              </button>
+              <button
+                onClick={() => {
+                  try { localStorage.removeItem("velum_pending_diagnosis"); } catch {}
+                  setDiagnosis(null);
+                  setChat([{ role: "assistant", content: "What are you wanting more of in your life right now?" }]);
+                  setPhase("chat");
+                }}
+                className="border border-border rounded-xl px-5 py-2.5 text-foreground text-sm hover:border-accent/40"
+              >
+                Start over
+              </button>
+            </div>
           </div>
         )}
       </main>

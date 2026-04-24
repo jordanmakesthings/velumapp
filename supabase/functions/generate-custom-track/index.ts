@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
       const paras = txt.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
       const chunks: string[] = [];
       let cur = "";
-      const TARGET = 600; // ~30-50 sec of audio per chunk
+      const TARGET = 1500; // bigger chunks = fewer API calls = under timeout // ~30-50 sec of audio per chunk
       for (const p of paras) {
         if (!cur) { cur = p; continue; }
         if ((cur.length + p.length + 2) <= TARGET) {
