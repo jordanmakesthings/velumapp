@@ -161,8 +161,15 @@ export default function CustomTrackPage() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [unlocksIn, setUnlocksIn] = useState<number>(0);
   const [extraCredits, setExtraCredits] = useState<number>(0);
-  const [voice, setVoice] = useState<string>("");
-  const [chat, setChat] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [voice, setVoice] = useState<string>(() => {
+    try { return localStorage.getItem("velum_pending_voice") || ""; } catch { return ""; }
+  });
+  const [chat, setChat] = useState<{ role: "user" | "assistant"; content: string }[]>(() => {
+    try {
+      const raw = localStorage.getItem("velum_pending_chat");
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  });
   const [chatInput, setChatInput] = useState("");
   const [diagnosis, setDiagnosis] = useState<any>(() => {
     try {
@@ -215,9 +222,25 @@ export default function CustomTrackPage() {
           return;
         }
       }
-      // If a diagnosis was cached from an earlier failed attempt, jump straight to confirm
+      // Restore in-progress state in priority order:
+      // 1) Cached diagnosis → confirm screen
+      // 2) Cached chat history → continue chat where left off
+      // 3) Cached voice choice → skip voice picker, go to chat
+      // 4) Fresh start → voice picker
       if (diagnosis) {
         setPhase("confirm");
+        return;
+      }
+      if (chat.length > 0 && voice) {
+        setPhase("chat");
+        return;
+      }
+      if (voice) {
+        setPhase("chat");
+        // Seed the opener if no chat exists yet
+        if (chat.length === 0) {
+          setChat([{ role: "assistant", content: "Welcome to the Custom Audio Generator. Let's get started by asking the most important question…\n\nWhat do you want to create right now?" }]);
+        }
         return;
       }
       setPhase("voice");
@@ -227,6 +250,10 @@ export default function CustomTrackPage() {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Persist chat history so reloads / page-leaves don't lose progress
+    try {
+      if (chat.length > 0) localStorage.setItem("velum_pending_chat", JSON.stringify(chat));
+    } catch {}
   }, [chat, phase]);
 
   // ── Voice preview ──
@@ -264,6 +291,7 @@ export default function CustomTrackPage() {
       setPreviewing("");
     }
     setVoice(k);
+    try { localStorage.setItem("velum_pending_voice", k); } catch {}
     if (user) {
       await supabase.from("profiles").update({ voice_preference: k } as any).eq("id", user.id);
     }
@@ -324,8 +352,12 @@ export default function CustomTrackPage() {
       if (error) throw error;
       if (data?.error) throw new Error(data.message || data.error);
       setGeneratedTrackId(data.track_id);
-      // Successful generation — clear the cached diagnosis
-      try { localStorage.removeItem("velum_pending_diagnosis"); } catch {}
+      // Successful generation — clear all in-progress cache
+      try {
+        localStorage.removeItem("velum_pending_diagnosis");
+        localStorage.removeItem("velum_pending_chat");
+        localStorage.removeItem("velum_pending_voice");
+      } catch {}
       setPhase("done");
     } catch (e: any) {
       setErrorMsg(e.message || String(e));
@@ -543,10 +575,15 @@ export default function CustomTrackPage() {
               </button>
               <button
                 onClick={() => {
-                  try { localStorage.removeItem("velum_pending_diagnosis"); } catch {}
+                  try {
+                    localStorage.removeItem("velum_pending_diagnosis");
+                    localStorage.removeItem("velum_pending_chat");
+                    localStorage.removeItem("velum_pending_voice");
+                  } catch {}
                   setDiagnosis(null);
-                  setChat([{ role: "assistant", content: "Welcome to the Custom Audio Generator. Let's get started by asking the most important question…\n\nWhat do you want to create right now?" }]);
-                  setPhase("chat");
+                  setVoice("");
+                  setChat([]);
+                  setPhase("voice");
                 }}
                 className="border border-border rounded-xl px-5 py-2.5 text-foreground text-sm hover:border-accent/40"
               >
