@@ -6,7 +6,6 @@ import { getSUDSStats, getCheckins } from "@/lib/velumStorage";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import NervousSystemScore from "@/components/profile/NervousSystemScore";
-import VelumMark from "@/components/VelumMark";
 import { useUserProgress, useTracks, calculateStreak } from "@/hooks/useVelumData";
 
 const categoryLabels: Record<string, string> = {
@@ -171,29 +170,26 @@ export default function ProfilePage() {
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
-      <div className="mb-6">
-        <VelumMark variant="lotus" size="sm" />
-      </div>
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <div className="relative group">
-            <div className="w-14 h-14 rounded-2xl bg-card flex items-center justify-center text-display text-xl overflow-hidden">
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
-              ) : (
-                displayName[0]?.toUpperCase() || "V"
-              )}
+          <button
+            onClick={() => avatarInputRef.current?.click()}
+            className="relative w-14 h-14 rounded-2xl bg-card flex items-center justify-center text-display text-xl overflow-hidden border border-accent/20 hover:border-accent/40 transition-colors"
+            title="Change profile photo"
+          >
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+            ) : (
+              <span>{displayName[0]?.toUpperCase() || "V"}</span>
+            )}
+            {/* Always-visible camera badge so users know it's editable */}
+            <div className="absolute bottom-0 right-0 w-5 h-5 rounded-tl-lg bg-background flex items-center justify-center">
+              <Camera className="w-3 h-3 text-accent" />
             </div>
-            <button
-              onClick={() => avatarInputRef.current?.click()}
-              className="absolute inset-0 rounded-2xl bg-background/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-            >
-              <Camera className="w-5 h-5 text-foreground" />
-            </button>
             <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
             {uploadingAvatar && <div className="absolute inset-0 rounded-2xl bg-background/80 flex items-center justify-center"><div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>}
-          </div>
+          </button>
           <div>
             {editingName ? (
               <div className="flex items-center gap-2">
@@ -457,57 +453,87 @@ function CustomTracksSection() {
   const [loading, setLoading] = useState(true);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [listensByTrack, setListensByTrack] = useState<Record<string, Set<string>>>({});
-  const backingRef = useRef<HTMLAudioElement | null>(null);
   const playingCount = useRef(0);
   const [bgVol, setBgVol] = useState<number>(() => {
     const v = parseFloat(localStorage.getItem("velum_bg_vol") || "0.22");
     return isNaN(v) ? 0.22 : v;
   });
 
-  useEffect(() => {
-    const a = new Audio(BACKING_TRACK_URL);
-    a.loop = true;
-    a.volume = bgVol;
-    a.preload = "auto";
-    // Strongest possible looping: combination of loop attr + ended handler + timeupdate seek.
-    // Some browsers (esp. Safari mobile) drop the loop attr on streamed mp3s.
-    const onEnded = () => {
-      try { a.currentTime = 0; a.play().catch(() => {}); } catch {}
-    };
-    const onTimeUpdate = () => {
-      // Seek back to start when within 0.25s of the end — prevents the brief gap
-      if (a.duration && a.duration - a.currentTime < 0.25 && !a.paused) {
-        try { a.currentTime = 0; } catch {}
+  // Web Audio API for the backing loop — decoded into memory once, loops perfectly.
+  // HTMLAudioElement loop attribute is unreliable for streamed MP3s.
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const bufferRef = useRef<AudioBuffer | null>(null);
+  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const loadingRef = useRef<Promise<void> | null>(null);
+
+  const ensureBackingLoaded = async () => {
+    if (bufferRef.current) return;
+    if (loadingRef.current) return loadingRef.current;
+    loadingRef.current = (async () => {
+      try {
+        const Ctx: typeof AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = new Ctx();
+        audioCtxRef.current = ctx;
+        const gain = ctx.createGain();
+        gain.gain.value = bgVol;
+        gain.connect(ctx.destination);
+        gainRef.current = gain;
+        const res = await fetch(BACKING_TRACK_URL);
+        const arr = await res.arrayBuffer();
+        const buf = await ctx.decodeAudioData(arr);
+        bufferRef.current = buf;
+      } catch (e) {
+        console.warn("backing load failed", e);
       }
-    };
-    a.addEventListener("ended", onEnded);
-    a.addEventListener("timeupdate", onTimeUpdate);
-    backingRef.current = a;
+    })();
+    return loadingRef.current;
+  };
+
+  const startBacking = async () => {
+    await ensureBackingLoaded();
+    const ctx = audioCtxRef.current;
+    const buf = bufferRef.current;
+    const gain = gainRef.current;
+    if (!ctx || !buf || !gain) return;
+    if (ctx.state === "suspended") await ctx.resume();
+    if (sourceRef.current) return;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    src.connect(gain);
+    src.start();
+    sourceRef.current = src;
+  };
+
+  const stopBacking = () => {
+    if (sourceRef.current) {
+      try { sourceRef.current.stop(); } catch {}
+      try { sourceRef.current.disconnect(); } catch {}
+      sourceRef.current = null;
+    }
+  };
+
+  useEffect(() => {
     return () => {
-      a.removeEventListener("ended", onEnded);
-      a.removeEventListener("timeupdate", onTimeUpdate);
-      a.pause();
-      backingRef.current = null;
+      stopBacking();
+      audioCtxRef.current?.close().catch(() => {});
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (backingRef.current) backingRef.current.volume = bgVol;
+    if (gainRef.current) gainRef.current.gain.value = bgVol;
     localStorage.setItem("velum_bg_vol", String(bgVol));
   }, [bgVol]);
 
   const handleVoicePlay = () => {
     playingCount.current += 1;
-    if (backingRef.current && backingRef.current.paused) {
-      backingRef.current.play().catch(() => {});
-    }
+    startBacking();
   };
   const handleVoicePause = () => {
     playingCount.current = Math.max(0, playingCount.current - 1);
-    if (playingCount.current === 0 && backingRef.current) {
-      backingRef.current.pause();
-    }
+    if (playingCount.current === 0) stopBacking();
   };
 
   useEffect(() => {

@@ -91,6 +91,14 @@ Deno.serve(async (req) => {
     const admin = createClient(supabaseUrl, serviceKey);
 
     // Cooldown / credits gate
+    // Check unlimited flag first (admin / founder bypass)
+    const { data: profileFlags } = await admin
+      .from("profiles")
+      .select("unlimited_tracks, extra_track_credits")
+      .eq("id", user.id)
+      .maybeSingle();
+    const unlimited = !!(profileFlags?.unlimited_tracks);
+
     const { data: lastTrack } = await admin
       .from("custom_tracks")
       .select("created_at")
@@ -100,17 +108,11 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     let consumedCredit = false;
-    if (lastTrack) {
+    if (!unlimited && lastTrack) {
       const ageMs = Date.now() - new Date(lastTrack.created_at as string).getTime();
       const ageDays = ageMs / 86400000;
       if (ageDays < COOLDOWN_DAYS) {
-        // Still in cooldown — must spend a credit
-        const { data: profile } = await admin
-          .from("profiles")
-          .select("extra_track_credits")
-          .eq("id", user.id)
-          .maybeSingle();
-        const credits = (profile?.extra_track_credits as number | null) ?? 0;
+        const credits = (profileFlags?.extra_track_credits as number | null) ?? 0;
         if (credits <= 0) {
           return json({
             error: "cooldown",
