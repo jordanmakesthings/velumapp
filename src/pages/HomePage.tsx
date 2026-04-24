@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo } from "react";
-import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Clock, Hand, Fingerprint, Play } from "lucide-react";
+import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Clock, Hand, Fingerprint, Play, Pause, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { getTodayCheckin } from "@/lib/velumStorage";
 import { useQuery } from "@tanstack/react-query";
@@ -108,128 +108,306 @@ function getDayOfYear() {
   );
 }
 
+const HOME_BACKING_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop.mp3";
+
 function CustomTrackHomeTile() {
   const { user } = useAuth();
-  const [state, setState] = useState<{ phase: "loading" | "none" | "active"; track?: any; daysListened?: number; listenedToday?: boolean; dayInProgram?: number }>({ phase: "loading" });
+  const [tracks, setTracks] = useState<any[]>([]);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [listens, setListens] = useState<Record<string, Set<string>>>({});
+  const [loading, setLoading] = useState(true);
+  const [idx, setIdx] = useState(0);
+  const [bgVol] = useState<number>(() => {
+    const v = parseFloat(localStorage.getItem("velum_bg_vol") || "0.22");
+    return isNaN(v) ? 0.22 : v;
+  });
+
+  // Audio refs
+  const voiceRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const bufferRef = useRef<AudioBuffer | null>(null);
+  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const loadingRef = useRef<Promise<void> | null>(null);
+  const recordedRef = useRef<Set<string>>(new Set());
+
+  const [playing, setPlaying] = useState(false);
+  const [curTime, setCurTime] = useState(0);
+  const [dur, setDur] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: lastTrack } = await supabase
+      const { data } = await supabase
         .from("custom_tracks" as any)
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!lastTrack) {
-        setState({ phase: "none" });
-        return;
+        .order("created_at", { ascending: false });
+      const list = (data || []) as any[];
+      setTracks(list);
+      if (list.length > 0) {
+        const urls: Record<string, string> = {};
+        for (const t of list) {
+          if (!t.audio_url) continue;
+          const { data: s } = await supabase.storage
+            .from("custom-tracks")
+            .createSignedUrl(t.audio_url, 3600);
+          if (s?.signedUrl) urls[t.id] = s.signedUrl;
+        }
+        setSignedUrls(urls);
+        const ids = list.map((t) => t.id);
+        const { data: ls } = await supabase
+          .from("custom_track_listens" as any)
+          .select("track_id, listened_date")
+          .in("track_id", ids);
+        const m: Record<string, Set<string>> = {};
+        (ls || []).forEach((l: any) => {
+          if (!m[l.track_id]) m[l.track_id] = new Set();
+          m[l.track_id].add(l.listened_date);
+        });
+        setListens(m);
       }
-      const { data: listens } = await supabase
-        .from("custom_track_listens" as any)
-        .select("listened_date")
-        .eq("track_id", (lastTrack as any).id);
-      const dates = new Set((listens || []).map((l: any) => l.listened_date));
-      const today = new Date(); today.setHours(0,0,0,0);
-      const cd = new Date((lastTrack as any).created_at); cd.setHours(0,0,0,0);
-      const dayInProgram = Math.min(21, Math.floor((today.getTime() - cd.getTime()) / 86400000) + 1);
-      const todayKey = new Date().toISOString().slice(0, 10);
-      setState({
-        phase: "active",
-        track: lastTrack,
-        daysListened: dates.size,
-        listenedToday: dates.has(todayKey),
-        dayInProgram,
-      });
+      setLoading(false);
     })();
   }, [user]);
 
-  if (state.phase === "loading") return null;
+  // Lazy-load backing buffer
+  const ensureBacking = async () => {
+    if (bufferRef.current) return;
+    if (loadingRef.current) return loadingRef.current;
+    loadingRef.current = (async () => {
+      try {
+        const Ctx: typeof AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = new Ctx();
+        audioCtxRef.current = ctx;
+        const gain = ctx.createGain();
+        gain.gain.value = bgVol;
+        gain.connect(ctx.destination);
+        gainRef.current = gain;
+        const res = await fetch(HOME_BACKING_URL);
+        const arr = await res.arrayBuffer();
+        const buf = await ctx.decodeAudioData(arr);
+        bufferRef.current = buf;
+      } catch {}
+    })();
+    return loadingRef.current;
+  };
+  const startBacking = async () => {
+    await ensureBacking();
+    const ctx = audioCtxRef.current; const buf = bufferRef.current; const gain = gainRef.current;
+    if (!ctx || !buf || !gain) return;
+    if (ctx.state === "suspended") await ctx.resume();
+    if (sourceRef.current) return;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true; src.connect(gain); src.start();
+    sourceRef.current = src;
+  };
+  const stopBacking = () => {
+    if (sourceRef.current) {
+      try { sourceRef.current.stop(); sourceRef.current.disconnect(); } catch {}
+      sourceRef.current = null;
+    }
+  };
+  useEffect(() => () => { stopBacking(); audioCtxRef.current?.close().catch(() => {}); }, []);
 
-  if (state.phase === "active" && state.track) {
-    const t = state.track;
-    const dayInProgram = state.dayInProgram || 1;
-    const todayKey = new Date().toISOString().slice(0, 10);
+  // Switch tracks: stop current playback
+  const switchTo = (newIdx: number) => {
+    if (voiceRef.current) {
+      voiceRef.current.pause();
+      voiceRef.current.currentTime = 0;
+    }
+    stopBacking();
+    setPlaying(false);
+    setCurTime(0);
+    setDur(0);
+    setIdx(newIdx);
+  };
+
+  if (loading) return null;
+
+  // No tracks yet — promo state
+  if (tracks.length === 0) {
     return (
       <Link
-        to="/profile"
-        className="velum-card mb-6 w-full p-6 block border border-accent/50 bg-gradient-to-br from-accent/20 via-accent/10 to-transparent shadow-xl shadow-accent/10 relative overflow-hidden"
+        to="/custom-track"
+        className="velum-card mb-6 w-full p-7 block border border-accent/45 bg-gradient-to-br from-accent/15 via-accent/8 to-transparent shadow-xl shadow-accent/10 relative overflow-hidden"
       >
-        {/* Decorative orb */}
-        <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
+        <div className="absolute -top-16 -right-16 w-52 h-52 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
         <div className="relative">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-3.5 h-3.5 text-accent" />
-                <p className="text-eyebrow text-accent">
-                  {state.listenedToday ? "✓ Done · Day " + dayInProgram + " of 21" : "Today's session · Day " + dayInProgram + " of 21"}
-                </p>
-              </div>
-              <p className="text-foreground text-2xl font-serif font-light leading-tight mb-1.5">{t.title}</p>
-              {t.issue_summary && (
-                <p className="text-muted-foreground text-xs italic line-clamp-2 max-w-[320px]">{t.issue_summary}</p>
-              )}
-            </div>
-            <div className="w-14 h-14 rounded-full gold-gradient flex items-center justify-center shrink-0 shadow-lg shadow-accent/20">
-              <Play className="w-6 h-6 text-primary-foreground ml-0.5" fill="currentColor" />
-            </div>
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-accent" />
+            <p className="text-eyebrow text-accent">Built for you · Included</p>
           </div>
-          {/* 21-day progress meter */}
-          <div className="flex gap-[3px] mt-4">
-            {Array.from({ length: 21 }).map((_, i) => {
-              const dayDate = new Date(t.created_at); dayDate.setHours(0,0,0,0);
-              dayDate.setDate(dayDate.getDate() + i);
-              const dayKey = dayDate.toISOString().slice(0, 10);
-              const isPast = dayDate < new Date(new Date().setHours(0,0,0,0));
-              const isToday = dayKey === todayKey;
-              // We don't have full listen data in the home tile state — use daysListened approximate via order
-              const listenedApprox = i < (state.daysListened || 0);
-              return (
-                <div
-                  key={i}
-                  className={`flex-1 h-1.5 rounded-full ${
-                    listenedApprox
-                      ? "bg-accent"
-                      : isToday
-                        ? "bg-accent/40 ring-1 ring-accent/50"
-                        : isPast
-                          ? "bg-destructive/20"
-                          : "bg-foreground/10"
-                  }`}
-                />
-              );
-            })}
-          </div>
+          <p className="text-foreground text-[1.7rem] md:text-[2rem] font-serif font-light leading-[1.15] mb-3 max-w-[440px]">
+            12 minutes a day for 21 days, written for the exact thing keeping you stuck.
+          </p>
+          <p className="text-muted-foreground text-sm leading-relaxed mb-5 max-w-[440px]">
+            A five-minute conversation. A custom Ericksonian hypnosis track in your chosen voice. Listen daily — your nervous system rewires itself.
+          </p>
+          <span className="inline-flex items-center gap-2 rounded-full gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-semibold tracking-wide">
+            Begin your track <ArrowRight className="w-3.5 h-3.5" />
+          </span>
         </div>
       </Link>
     );
   }
 
-  // No track yet — strong promotional hero
+  const t = tracks[idx];
+  const created = new Date(t.created_at); created.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dayInProgram = Math.min(21, Math.floor((today.getTime() - created.getTime()) / 86400000) + 1);
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const trackListens = listens[t.id] || new Set();
+
+  const togglePlay = async () => {
+    const v = voiceRef.current;
+    if (!v) return;
+    if (v.paused) {
+      await v.play();
+      await startBacking();
+      setPlaying(true);
+    } else {
+      v.pause();
+      stopBacking();
+      setPlaying(false);
+    }
+  };
+
+  const onTimeUpdate = async (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    const ct = e.currentTarget.currentTime;
+    setCurTime(ct);
+    const todayK = t.id + ":" + new Date().toISOString().slice(0, 10);
+    if (ct >= 30 && !recordedRef.current.has(todayK)) {
+      recordedRef.current.add(todayK);
+      await supabase.rpc("record_track_listen" as any, { p_track_id: t.id, p_seconds: Math.round(ct) });
+      setListens((prev) => {
+        const cp = { ...prev };
+        const set = new Set(cp[t.id] || []);
+        set.add(new Date().toISOString().slice(0, 10));
+        cp[t.id] = set;
+        return cp;
+      });
+    }
+  };
+
+  const fmtTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${String(sec).padStart(2, "0")}`;
+  };
+
   return (
-    <Link
-      to="/custom-track"
-      className="velum-card mb-6 w-full p-7 block border border-accent/45 bg-gradient-to-br from-accent/15 via-accent/8 to-transparent shadow-xl shadow-accent/10 relative overflow-hidden"
-    >
-      <div className="absolute -top-16 -right-16 w-52 h-52 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
+    <div className="velum-card mb-6 w-full p-6 border border-accent/50 bg-gradient-to-br from-accent/20 via-accent/10 to-transparent shadow-xl shadow-accent/10 relative overflow-hidden">
+      <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
       <div className="relative">
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-accent" />
-          <p className="text-eyebrow text-accent">Built for you · Included</p>
+        {/* Header: eyebrow + carousel arrows */}
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-accent" />
+            <p className="text-eyebrow text-accent">
+              {trackListens.has(todayKey) ? `Today's session · ✓ Done · Day ${dayInProgram} of 21` : `Today's session · Day ${dayInProgram} of 21`}
+            </p>
+          </div>
+          {tracks.length > 1 && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => switchTo((idx - 1 + tracks.length) % tracks.length)}
+                className="w-7 h-7 rounded-full border border-accent/30 flex items-center justify-center text-accent hover:bg-accent/10"
+                title="Previous track"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-muted-foreground text-[10px] font-sans tracking-wider min-w-[28px] text-center">
+                {idx + 1}/{tracks.length}
+              </span>
+              <button
+                onClick={() => switchTo((idx + 1) % tracks.length)}
+                className="w-7 h-7 rounded-full border border-accent/30 flex items-center justify-center text-accent hover:bg-accent/10"
+                title="Next track"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
-        <p className="text-foreground text-[1.7rem] md:text-[2rem] font-serif font-light leading-[1.15] mb-3 max-w-[440px]">
-          12 minutes a day for 21 days, written for the exact thing keeping you stuck.
-        </p>
-        <p className="text-muted-foreground text-sm leading-relaxed mb-5 max-w-[440px]">
-          A five-minute conversation. A custom Ericksonian hypnosis track in your chosen voice. Listen daily — your nervous system rewires itself.
-        </p>
-        <span className="inline-flex items-center gap-2 rounded-full gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-semibold tracking-wide">
-          Begin your track <ArrowRight className="w-3.5 h-3.5" />
-        </span>
+
+        {/* Title + subtitle */}
+        <p className="text-foreground text-2xl font-serif font-light leading-tight mb-1">{t.title}</p>
+        {t.issue_summary && (
+          <p className="text-muted-foreground text-xs italic line-clamp-2 mb-5">{t.issue_summary}</p>
+        )}
+
+        {/* Inline player */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={togglePlay}
+            className="w-14 h-14 rounded-full gold-gradient flex items-center justify-center shrink-0 shadow-lg shadow-accent/30 active:scale-95 transition-transform"
+            aria-label={playing ? "Pause" : "Play"}
+          >
+            {playing ? (
+              <Pause className="w-6 h-6 text-primary-foreground" fill="currentColor" />
+            ) : (
+              <Play className="w-6 h-6 text-primary-foreground ml-0.5" fill="currentColor" />
+            )}
+          </button>
+          <div className="flex-1 min-w-0">
+            <div className="h-1 bg-foreground/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-accent transition-all"
+                style={{ width: dur > 0 ? `${(curTime / dur) * 100}%` : "0%" }}
+              />
+            </div>
+            <div className="flex items-center justify-between mt-1.5 text-[10px] tracking-wider text-muted-foreground font-sans">
+              <span>{fmtTime(curTime)}</span>
+              <span>{dur > 0 ? fmtTime(dur) : (t.duration_sec ? fmtTime(t.duration_sec) : "—")}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 21-day checkmark progress */}
+        <div className="flex gap-1.5 justify-between">
+          {Array.from({ length: 21 }).map((_, i) => {
+            const dayDate = new Date(created);
+            dayDate.setDate(created.getDate() + i);
+            const dayKey = dayDate.toISOString().slice(0, 10);
+            const listened = trackListens.has(dayKey);
+            const isPast = dayDate < today;
+            const isToday = dayKey === todayKey;
+            return (
+              <div
+                key={i}
+                className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                  listened
+                    ? "bg-accent text-primary-foreground"
+                    : isToday
+                      ? "border-2 border-accent/70 bg-accent/10 ring-2 ring-accent/30 animate-pulse"
+                      : isPast
+                        ? "border border-destructive/30"
+                        : "border border-foreground/15"
+                }`}
+                title={`Day ${i + 1}${listened ? " · listened" : isToday ? " · today" : isPast ? " · missed" : ""}`}
+              >
+                {listened && <Check className="w-3 h-3" strokeWidth={3} />}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Hidden audio element driving playback */}
+        {signedUrls[t.id] && (
+          <audio
+            ref={voiceRef}
+            src={signedUrls[t.id]}
+            preload="metadata"
+            onLoadedMetadata={(e) => setDur(e.currentTarget.duration || 0)}
+            onTimeUpdate={onTimeUpdate}
+            onEnded={() => { setPlaying(false); stopBacking(); }}
+            className="hidden"
+          />
+        )}
       </div>
-    </Link>
+    </div>
   );
 }
 
