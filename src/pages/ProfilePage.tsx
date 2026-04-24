@@ -486,7 +486,7 @@ function CustomTracksSection() {
     <div className="velum-card p-6 mb-6 border border-accent/40 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent shadow-lg shadow-accent/5">
       <div className="flex items-center gap-2.5 mb-1">
         <Sparkles className="w-5 h-5 text-accent" />
-        <p className="text-ui text-[10px] tracking-[2px] uppercase text-accent">Made for you</p>
+        <p className="text-ui text-[10px] tracking-[2px] uppercase text-accent">My Audio Library</p>
       </div>
       <h2 className="text-display text-2xl mb-4">Your Custom Tracks</h2>
       <div className="space-y-3">
