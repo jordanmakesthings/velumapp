@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Plus, Check, Edit2, X, Play, Pause, Rewind, FastForward, Settings2, Flame, Clock, Library } from "lucide-react";
 import { toast } from "sonner";
+import { TrackArtwork } from "@/components/TrackArtwork";
 
 const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop.mp3";
 const PROGRAM_DAYS = 21;
@@ -438,13 +439,17 @@ function HeroTrackCard({
       </div>
 
       <div className="relative velum-card-accent p-7 md:p-9">
-        <div className="flex items-center justify-end mb-3">
-          <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
-            {track.duration_sec ? `${Math.round(track.duration_sec / 60)} min` : "—"}
-          </span>
+        <div className="flex items-start gap-5 mb-6">
+          <TrackArtwork trackId={track.id} size="lg" rounded="2xl" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-end mb-2">
+              <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
+                {track.duration_sec ? `${Math.round(track.duration_sec / 60)} min` : "—"}
+              </span>
+            </div>
+            {titleNode}
+          </div>
         </div>
-
-        <div className="mb-5">{titleNode}</div>
 
         {signedUrl ? (
           <BigPlayer
@@ -619,8 +624,11 @@ function ArchiveTrackRow({
       className="velum-card w-full p-4 text-left transition-all hover:border-accent/40 group"
     >
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 shrink-0 rounded-full gold-gradient flex items-center justify-center shadow-md shadow-accent/25 group-hover:scale-105 transition-transform">
-          <Play className="w-5 h-5 text-primary-foreground ml-0.5" fill="currentColor" />
+        <div className="relative shrink-0">
+          <TrackArtwork trackId={track.id} size="md" rounded="xl" />
+          <div className="absolute inset-0 rounded-xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <Play className="w-6 h-6 text-accent" fill="currentColor" />
+          </div>
         </div>
         <div className="flex-1 min-w-0">
           {titleNode}
