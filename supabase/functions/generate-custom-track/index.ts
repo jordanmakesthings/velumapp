@@ -29,31 +29,40 @@ Voice: quiet, deliberate, low-affect. Slow pace. Permissive language. NO direct 
 
 Output a complete script of approximately ${TARGET_WORDS} words spoken at a slow hypnotic pace (~130 wpm = 9-12 minutes audio).
 
-Structure (do NOT label sections in output, just write the flowing script):
+The diagnosis is desired-outcome-shaped. Fields you may receive: desired_outcome, picture (vivid scene), sensory (see/hear/feel), identity (who they become), somatic_pull (body felt-pull), already_true (the fragment already real — USE THIS as the central metaphor seed; it's the strongest Ericksonian leverage point), edge (the inner doubt to dissolve gently), modality_notes (verbatim phrases — echo AT LEAST 3 word-for-word in the script).
 
-1. Arrival (~10%) — invite them to settle. Body cues. Eye fixation or closure. Permission to make any small adjustments. Notice the breath without changing it.
-2. Induction (~20%) — progressive relaxation OR eye fixation OR confusion technique. Use 3-7-12 word patterns. Embed the user's first name 1-2 times if available. Include 2-3 silent pauses written as: [pause: 5 seconds] inline.
-3. Deepening (~15%) — staircase, descending elevator, drifting, or counting down 10→1 with embedded suggestions. Reference the user's somatic location naturally.
-4. Core work (~35%) — Ericksonian metaphor that addresses the belief WITHOUT naming it. Stories about other people, nature, processes that mirror the shift you want. Embed indirect suggestions inside the metaphor: "and as the river finds its way around the stone, you may begin to notice…" Touch the desired state 3-4 times through different angles.
-5. Integration (~12%) — let the work settle. "And whatever is true for you in this moment can stay with you, in whatever way is right for you." Permissive close.
-6. Return (~8%) — gentle re-orient. Count up 1→5. Open eyes. Carry the work forward.
+Use frequent paragraph breaks (every 50-100 words). Use SHORT sentences — periods give natural pacing.
 
-Hard rules:
-- NEVER use the words "deep sleep" or "unconscious" — clinical and dated.
+Structure (do NOT label sections in the output, just write the flowing script):
+
+1. ARRIVAL (~10%) — invite settling. Body cues. Eye fixation or closure. Notice the breath without changing it.
+2. INDUCTION (~20%) — progressive relaxation, eye fixation, OR confusion technique. Embed the user's first name 1-2 times if known. Include 2-3 silent pauses inline using this exact format: [pause: 5 seconds]
+3. DEEPENING (~15%) — choose ONE deepening image and stay with it: a staircase, a descending elevator, drifting downward, OR a slow countdown. If you do a countdown, count slowly and naturally (no need to put numbers on separate lines — just write "ten… nine… eight…" with ellipses). Reference somatic_pull naturally.
+4. CORE WORK (~35%) — build the central metaphor from already_true. Story them INTO the picture and identity they described. Embed indirect suggestions inside the metaphor: "and as the river finds its way around the stone, you may begin to notice…" Echo modality_notes verbatim at key moments.
+5. INTEGRATION (~12%) — let the work settle. "And whatever is true for you in this moment can stay with you, in whatever way is right for you."
+6. RETURN (~8%) — gentle re-orient. A simple count up to five — write it as a flowing sentence ("…one, becoming aware of the room… two, the weight of your body…") not a vertical list of numbers. Open eyes at the end.
+
+HARD RULES:
+- ONE deepening image only. Don't stack multiple counts.
+- Numbers ONLY appear in the deepening countdown and the return count-up. NEVER scatter numbers elsewhere.
+- NEVER use "deep sleep" or "unconscious."
 - NEVER use motivational clichés ("you've got this," "believe in yourself").
 - NEVER name the diagnosis directly — Ericksonian work is INDIRECT.
-- NEVER use "imagine that" — replace with "you may notice…" / "perhaps you'll find…"
-- Include 4-6 [pause: N seconds] markers inline. Pauses of 3-15 seconds.
-- Mark embedded commands with *asterisks* (these will be voiced with subtle emphasis).
-- Use the user's somatic words verbatim where natural.
+- NEVER use "imagine that" — use "you may notice…" / "perhaps you'll find…"
+- NEVER use negation toward the desired outcome ("don't worry" — the subconscious deletes the negator).
+- Include 4-6 silent pauses ONLY in this exact form: [pause: N seconds] where N is 3-15.
+- Mark 4-8 embedded commands across the script with *asterisks*.
+- Use SHORT sentences for natural pacing.
 
-Output ONLY the script text. No title. No preamble. No notes after.`;
+Output ONLY the script text. No title. No preamble. No notes after. No section labels.`;
 
 function scriptToSsml(text: string): string {
-  // Only convert explicit [pause: N seconds] markers from the script.
-  // Auto-inserting pauses after every period made the voice sound choppy and robotic —
-  // trust the script's natural cadence + writer-placed pauses.
-  let s = text.replace(/\[pause:\s*(\d+(?:\.\d+)?)\s*seconds?\]/gi, (_, n) => `<break time="${n}s"/>`);
+  // Convert pause markers in any common form Claude might write:
+  // [pause: 5 seconds], [pause: 5 second], [pause: 5 sec], [pause: 5s], [pause: 5]
+  // Also strip any stray instructional brackets like [breath] [silence] that would otherwise be voiced.
+  let s = text.replace(/\[pause:\s*(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)?\s*\]/gi, (_, n) => `<break time="${n}s"/>`);
+  // Catch other common silence directives the model sometimes invents
+  s = s.replace(/\[(?:breath|breathe|silence|long pause|short pause)[^\]]*\]/gi, '<break time="3s"/>');
   return s;
 }
 
