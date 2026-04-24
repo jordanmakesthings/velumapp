@@ -277,10 +277,10 @@ function CustomTrackHomeTile() {
             <p className="text-eyebrow text-accent">Built for you · Included</p>
           </div>
           <p className="text-foreground text-[1.7rem] md:text-[2rem] font-serif font-light leading-[1.15] mb-3 max-w-[440px]">
-            12 minutes a day for 21 days, written for the exact thing keeping you stuck.
+            10 minutes a day for 21 days, written for the exact thing keeping you stuck.
           </p>
           <p className="text-muted-foreground text-sm leading-relaxed mb-5 max-w-[440px]">
-            A five-minute conversation. A custom Ericksonian hypnosis track in your chosen voice. Listen daily — your nervous system rewires itself.
+            A short conversation. A custom rewiring audio in your chosen voice. Listen daily — your nervous system rewires itself.
           </p>
           <span className="inline-flex items-center gap-2 rounded-full gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-semibold tracking-wide">
             Begin your track <ArrowRight className="w-3.5 h-3.5" />
@@ -626,8 +626,8 @@ export default function HomePage() {
       )}
 
 
-{/* Daily check-in card (only if not done today) */}
-      {!todayCheckin && (
+{/* Daily check-in card hidden for now */}
+      {false && !todayCheckin && (
         <Link to="/checkin" className="velum-card mb-4 w-full p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-surface-light flex items-center justify-center shrink-0">
             <ClipboardCheck className="w-4.5 h-4.5 text-accent" />

@@ -225,14 +225,16 @@ export default function AudiosPage() {
     return { streak, totalListens, trackCount: tracks.length };
   }, [listensByTrack, tracks, today]);
 
-  // Active track = most recent within 21 days
+  // Active = user-promoted track or most-recent
+  const [promotedId, setPromotedId] = useState<string | null>(null);
   const activeTrack = useMemo(() => {
     if (tracks.length === 0) return null;
-    const top = tracks[0];
-    const created = new Date(top.created_at); created.setHours(0,0,0,0);
-    const age = Math.floor((today.getTime() - created.getTime()) / 86400000);
-    return age < PROGRAM_DAYS ? top : null;
-  }, [tracks, today]);
+    if (promotedId) {
+      const p = tracks.find((t) => t.id === promotedId);
+      if (p) return p;
+    }
+    return tracks[0];
+  }, [tracks, promotedId]);
   const archivedTracks = useMemo(() => {
     return tracks.filter((t) => !activeTrack || t.id !== activeTrack.id);
   }, [tracks, activeTrack]);
@@ -279,7 +281,7 @@ export default function AudiosPage() {
         <header className="mb-8 flex items-end justify-between gap-4">
           <div>
             <p className="text-eyebrow text-accent mb-2">Your Library</p>
-            <h1 className="text-display text-3xl md:text-4xl leading-tight">Daily listens.</h1>
+            <h1 className="text-display text-3xl md:text-4xl leading-tight">Custom Audio Library</h1>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -365,14 +367,13 @@ export default function AudiosPage() {
                         key={t.id}
                         track={t}
                         titleNode={renderTrackTitle(t, "row")}
-                        signedUrl={signedUrls[t.id]}
                         dayInProgram={dayInProgram}
                         listenCount={trackListens.size}
-                        voiceRate={voiceRate}
-                        onPlay={() => handleVoicePlay(t.id)}
-                        onPause={handleVoicePause}
-                        onTimeUpdate={(e) => handleVoiceTimeUpdate(t.id, e)}
-                        registerRef={(el) => { audioRefs.current[t.id] = el; }}
+                        onPromote={() => {
+                          setPromotedId(t.id);
+                          // Scroll the hero into view
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
                       />
                     );
                   })}
@@ -437,10 +438,8 @@ function HeroTrackCard({
       </div>
 
       <div className="relative velum-card-accent p-7 md:p-9">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-          <p className="text-eyebrow text-accent">Today's listen</p>
-          <span className="text-muted-foreground text-[10px] tracking-wider uppercase ml-auto">
+        <div className="flex items-center justify-end mb-3">
+          <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
             {track.duration_sec ? `${Math.round(track.duration_sec / 60)} min` : "—"}
           </span>
         </div>
@@ -603,71 +602,26 @@ function BigPlayer({
   );
 }
 
-// ────────────── Archive Row (compact) ──────────────
+// ────────────── Archive Row (tap to promote to hero) ──────────────
 function ArchiveTrackRow({
-  track, titleNode, signedUrl, dayInProgram, listenCount, voiceRate,
-  onPlay, onPause, onTimeUpdate, registerRef,
+  track, titleNode, dayInProgram, listenCount, onPromote,
 }: {
   track: any;
   titleNode: React.ReactNode;
-  signedUrl?: string;
   dayInProgram: number;
   listenCount: number;
-  voiceRate: number;
-  onPlay: () => void;
-  onPause: () => void;
-  onTimeUpdate: (e: React.SyntheticEvent<HTMLAudioElement>) => void;
-  registerRef: (el: HTMLAudioElement | null) => void;
+  onPromote: () => void;
 }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [current, setCurrent] = useState(0);
-  const [duration, setDuration] = useState(track.duration_sec || 0);
-
-  const toggle = async () => {
-    const a = audioRef.current;
-    if (!a) return;
-    if (a.paused) {
-      a.playbackRate = voiceRate;
-      try { await a.play(); } catch {}
-    } else a.pause();
-  };
-  const onSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const a = audioRef.current;
-    if (!a || !a.duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    a.currentTime = pct * a.duration;
-  };
-  const progress = duration > 0 ? (current / duration) * 100 : 0;
   const completedProgram = listenCount >= PROGRAM_DAYS;
-
   return (
-    <div className={`velum-card p-4 transition-all ${playing ? "border-accent/45" : ""}`}>
-      <audio
-        ref={(el) => { audioRef.current = el; registerRef(el); if (el) el.playbackRate = voiceRate; }}
-        src={signedUrl}
-        preload="metadata"
-        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || track.duration_sec || 0)}
-        onPlay={() => { setPlaying(true); onPlay(); }}
-        onPause={() => { setPlaying(false); onPause(); }}
-        onEnded={() => { setPlaying(false); setCurrent(0); onPause(); }}
-        onTimeUpdate={(e) => { setCurrent(e.currentTarget.currentTime); onTimeUpdate(e); }}
-        className="hidden"
-      />
+    <button
+      onClick={onPromote}
+      className="velum-card w-full p-4 text-left transition-all hover:border-accent/40 group"
+    >
       <div className="flex items-center gap-4">
-        <button
-          onClick={toggle}
-          disabled={!signedUrl}
-          className="w-12 h-12 shrink-0 rounded-full gold-gradient flex items-center justify-center shadow-md shadow-accent/25 active:scale-95 transition-transform disabled:opacity-40"
-          aria-label={playing ? "Pause" : "Play"}
-        >
-          {playing ? (
-            <Pause className="w-5 h-5 text-primary-foreground" fill="currentColor" />
-          ) : (
-            <Play className="w-5 h-5 text-primary-foreground ml-0.5" fill="currentColor" />
-          )}
-        </button>
+        <div className="w-12 h-12 shrink-0 rounded-full gold-gradient flex items-center justify-center shadow-md shadow-accent/25 group-hover:scale-105 transition-transform">
+          <Play className="w-5 h-5 text-primary-foreground ml-0.5" fill="currentColor" />
+        </div>
         <div className="flex-1 min-w-0">
           {titleNode}
           <div className="flex items-center gap-3 mt-1.5 text-[10px] tracking-wider uppercase text-muted-foreground/70">
@@ -683,18 +637,7 @@ function ArchiveTrackRow({
           </div>
         </div>
       </div>
-      {playing && (
-        <div className="mt-3">
-          <div className="h-1 bg-foreground/10 rounded-full overflow-hidden cursor-pointer" onClick={onSeek}>
-            <div className="h-full gold-gradient rounded-full" style={{ width: `${progress}%` }} />
-          </div>
-          <div className="flex items-center justify-between mt-1 text-[10px] font-sans text-muted-foreground/70 tabular-nums">
-            <span>{fmtTime(current)}</span>
-            <span>{fmtTime(duration)}</span>
-          </div>
-        </div>
-      )}
-    </div>
+    </button>
   );
 }
 
