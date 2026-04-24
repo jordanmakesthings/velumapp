@@ -274,8 +274,8 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Invite Friends */}
-      <InviteFriendsCard />
+      {/* Invite Friends — hidden until referral system is set up */}
+      {/* <InviteFriendsCard /> */}
 
       {/* Notification Time */}
       <div className="velum-card p-4 mb-6">
