@@ -547,7 +547,7 @@ export default function CustomTrackPage() {
             <div className="text-5xl mb-4 text-accent opacity-80">✦</div>
             <h1 className="text-display text-3xl mb-3">Your track is ready.</h1>
             <p className="text-muted-foreground text-sm leading-relaxed mb-8 italic">
-              Listen daily for 21 days for the full effect.
+              A new life awaits.
             </p>
             <Link
               to="/profile"
