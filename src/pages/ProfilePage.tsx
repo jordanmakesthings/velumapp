@@ -448,11 +448,40 @@ export default function ProfilePage() {
   );
 }
 
+const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop.mp3";
+
 function CustomTracksSection() {
   const { user } = useAuth();
   const [tracks, setTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const backingRef = useRef<HTMLAudioElement | null>(null);
+  const playingCount = useRef(0);
+
+  useEffect(() => {
+    const a = new Audio(BACKING_TRACK_URL);
+    a.loop = true;
+    a.volume = 0.22;
+    a.preload = "auto";
+    backingRef.current = a;
+    return () => {
+      a.pause();
+      backingRef.current = null;
+    };
+  }, []);
+
+  const handleVoicePlay = () => {
+    playingCount.current += 1;
+    if (backingRef.current && backingRef.current.paused) {
+      backingRef.current.play().catch(() => {});
+    }
+  };
+  const handleVoicePause = () => {
+    playingCount.current = Math.max(0, playingCount.current - 1);
+    if (playingCount.current === 0 && backingRef.current) {
+      backingRef.current.pause();
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -464,7 +493,6 @@ function CustomTracksSection() {
         .order("created_at", { ascending: false });
       if (!error && data) {
         setTracks(data);
-        // Sign each audio url
         const urls: Record<string, string> = {};
         for (const t of data as any[]) {
           if (!t.audio_url) continue;
@@ -504,7 +532,16 @@ function CustomTracksSection() {
               </span>
             </div>
             {signedUrls[t.id] ? (
-              <audio controls src={signedUrls[t.id]} className="w-full" preload="none" style={{ height: 40 }} />
+              <audio
+                controls
+                src={signedUrls[t.id]}
+                className="w-full"
+                preload="none"
+                style={{ height: 40 }}
+                onPlay={handleVoicePlay}
+                onPause={handleVoicePause}
+                onEnded={handleVoicePause}
+              />
             ) : (
               <p className="text-muted-foreground text-xs">Audio unavailable</p>
             )}
