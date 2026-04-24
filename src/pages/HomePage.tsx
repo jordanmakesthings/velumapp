@@ -108,6 +108,86 @@ function getDayOfYear() {
   );
 }
 
+function CustomTrackHomeTile() {
+  const { user } = useAuth();
+  const [state, setState] = useState<{ phase: "loading" | "none" | "active"; track?: any; daysListened?: number; listenedToday?: boolean; dayInProgram?: number }>({ phase: "loading" });
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: lastTrack } = await supabase
+        .from("custom_tracks" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!lastTrack) {
+        setState({ phase: "none" });
+        return;
+      }
+      const { data: listens } = await supabase
+        .from("custom_track_listens" as any)
+        .select("listened_date")
+        .eq("track_id", (lastTrack as any).id);
+      const dates = new Set((listens || []).map((l: any) => l.listened_date));
+      const today = new Date(); today.setHours(0,0,0,0);
+      const cd = new Date((lastTrack as any).created_at); cd.setHours(0,0,0,0);
+      const dayInProgram = Math.min(21, Math.floor((today.getTime() - cd.getTime()) / 86400000) + 1);
+      const todayKey = new Date().toISOString().slice(0, 10);
+      setState({
+        phase: "active",
+        track: lastTrack,
+        daysListened: dates.size,
+        listenedToday: dates.has(todayKey),
+        dayInProgram,
+      });
+    })();
+  }, [user]);
+
+  if (state.phase === "loading") return null;
+
+  if (state.phase === "active" && state.track) {
+    const t = state.track;
+    return (
+      <Link to="/profile" className="velum-card mb-4 w-full p-5 flex items-center gap-4 border border-accent/40 bg-gradient-to-br from-accent/15 via-accent/8 to-transparent shadow-lg shadow-accent/5">
+        <div className="w-12 h-12 rounded-xl gold-gradient flex items-center justify-center shrink-0">
+          <Sparkles className="w-5 h-5 text-primary-foreground" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-eyebrow text-accent mb-0.5">{state.listenedToday ? "Today's session · ✓ done" : "Today's listen"}</p>
+          <p className="text-foreground text-base font-serif font-light truncate">{t.title}</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-muted-foreground text-[11px]">Day {state.dayInProgram} of 21</p>
+            <span className="text-muted-foreground/40">·</span>
+            <p className="text-muted-foreground text-[11px]">{state.daysListened || 0} listened</p>
+          </div>
+        </div>
+        <ArrowRight className="w-4 h-4 text-accent shrink-0" />
+      </Link>
+    );
+  }
+
+  // No track yet — strong promotional copy
+  return (
+    <Link to="/custom-track" className="velum-card mb-4 w-full p-6 block border border-accent/40 bg-gradient-to-br from-accent/12 via-accent/5 to-transparent shadow-lg shadow-accent/5">
+      <div className="flex items-center gap-2 mb-2">
+        <Sparkles className="w-4 h-4 text-accent" />
+        <p className="text-eyebrow text-accent">Built for you</p>
+      </div>
+      <p className="text-foreground text-xl font-serif font-light leading-tight mb-2">
+        12 minutes a day for 21 days, written for the exact thing keeping you stuck.
+      </p>
+      <p className="text-muted-foreground text-xs leading-relaxed mb-4">
+        A 5-minute conversation. A custom Ericksonian hypnosis track in your chosen voice. Listen daily — your nervous system rewires itself.
+      </p>
+      <div className="inline-flex items-center gap-2 text-accent text-sm font-sans font-semibold">
+        Begin <ArrowRight className="w-4 h-4" />
+      </div>
+    </Link>
+  );
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { setOpen: setFinderOpen } = useSessionFinder();
@@ -295,18 +375,9 @@ export default function HomePage() {
         </Link>
       )}
 
-      {/* Custom Track entry tile — hero placement */}
-      <Link to="/custom-track" className="velum-card mb-4 w-full p-5 flex items-center gap-4 border border-accent/30 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent">
-        <div className="w-11 h-11 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center shrink-0">
-          <Sparkles className="w-5 h-5 text-accent" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-eyebrow mb-0.5">Made for you</p>
-          <p className="text-foreground text-base font-serif font-light">Create your custom hypnosis track</p>
-          <p className="text-muted-foreground text-[11px] mt-1">5-min diagnostic · ~12-min audio · listen daily for 21 days</p>
-        </div>
-        <ArrowRight className="w-4 h-4 text-accent shrink-0" />
-      </Link>
+      {/* Custom Track hero tile — the most important thing on the page */}
+      <CustomTrackHomeTile />
+
 
       {/* Stats — show aspirational empty state instead of "0 streak" */}
       {totalSessions === 0 ? (

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, ArrowLeft, ArrowRight, Loader2, Lock } from "lucide-react";
+import { Sparkles, ArrowLeft, ArrowRight, Loader2, Lock, Play, Pause } from "lucide-react";
 import { toast } from "sonner";
 
 type Phase = "loading" | "voice" | "chat" | "confirm" | "generating" | "done" | "cooldown" | "error";
@@ -66,6 +66,9 @@ export default function CustomTrackPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [generatedTrackId, setGeneratedTrackId] = useState<string>("");
   const [chatBusy, setChatBusy] = useState(false);
+  const [previewing, setPreviewing] = useState<string>("");
+  const [previewLoading, setPreviewLoading] = useState<string>("");
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // ── Initial load: check cooldown + voice preference ──
@@ -112,8 +115,40 @@ export default function CustomTrackPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat, phase]);
 
+  // ── Voice preview ──
+  const playPreview = async (k: string) => {
+    if (previewing === k && previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      setPreviewing("");
+      return;
+    }
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current = null;
+    }
+    setPreviewLoading(k);
+    try {
+      const { data, error } = await supabase.functions.invoke("voice-preview", { body: { voice: k } });
+      if (error) throw error;
+      if (!data?.url) throw new Error("No preview URL returned");
+      const a = new Audio(data.url);
+      a.addEventListener("ended", () => setPreviewing(""));
+      previewAudioRef.current = a;
+      await a.play();
+      setPreviewing(k);
+    } catch (e: any) {
+      toast.error("Preview unavailable: " + (e.message || e));
+    }
+    setPreviewLoading("");
+  };
+
   // ── Voice picker → start chat ──
   const pickVoiceAndContinue = async (k: string) => {
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current = null;
+      setPreviewing("");
+    }
     setVoice(k);
     if (user) {
       await supabase.from("profiles").update({ voice_preference: k } as any).eq("id", user.id);
@@ -237,21 +272,38 @@ export default function CustomTrackPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {VOICES.map((v) => {
                 const sel = voice === v.key;
+                const isPlaying = previewing === v.key;
+                const isLoading = previewLoading === v.key;
                 return (
-                  <button
+                  <div
                     key={v.key}
-                    onClick={() => pickVoiceAndContinue(v.key)}
-                    className={`velum-card p-4 text-left transition-all ${sel ? "border-accent/60 bg-accent/5" : "hover:border-accent/30"}`}
+                    className={`velum-card p-4 transition-all flex flex-col ${sel ? "border-accent/60 bg-accent/5" : "hover:border-accent/30"}`}
                   >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-[10px] tracking-wider uppercase text-accent">{v.gender}</span>
-                      {v.key === "jordan" && (
-                        <span className="text-[9px] tracking-wider uppercase text-muted-foreground bg-muted-foreground/15 px-1.5 py-0.5 rounded">Founder</span>
-                      )}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] tracking-wider uppercase text-accent">{v.gender}</span>
+                        {v.key === "jordan" && (
+                          <span className="text-[9px] tracking-wider uppercase text-muted-foreground bg-muted-foreground/15 px-1.5 py-0.5 rounded">Founder</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); playPreview(v.key); }}
+                        className="w-7 h-7 rounded-full border border-accent/30 bg-accent/10 flex items-center justify-center text-accent hover:bg-accent/20 transition-colors"
+                        title={isPlaying ? "Pause preview" : "Play preview"}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 ml-0.5" />}
+                      </button>
                     </div>
                     <div className="text-foreground text-base font-serif font-light">{v.name}</div>
-                    <div className="text-muted-foreground text-[11px] mt-1 italic">{v.blurb}</div>
-                  </button>
+                    <div className="text-muted-foreground text-[11px] mt-1 italic mb-3">{v.blurb}</div>
+                    <button
+                      onClick={() => pickVoiceAndContinue(v.key)}
+                      className={`mt-auto text-[10px] tracking-[2px] uppercase rounded-md py-2 transition-all ${sel ? "gold-gradient text-primary-foreground font-semibold" : "border border-border text-muted-foreground hover:text-foreground hover:border-accent/40"}`}
+                    >
+                      Use this voice →
+                    </button>
+                  </div>
                 );
               })}
             </div>

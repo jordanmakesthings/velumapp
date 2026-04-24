@@ -449,12 +449,14 @@ export default function ProfilePage() {
 }
 
 const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop.mp3";
+const PROGRAM_DAYS = 21;
 
 function CustomTracksSection() {
   const { user } = useAuth();
   const [tracks, setTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [listensByTrack, setListensByTrack] = useState<Record<string, Set<string>>>({});
   const backingRef = useRef<HTMLAudioElement | null>(null);
   const playingCount = useRef(0);
   const [bgVol, setBgVol] = useState<number>(() => {
@@ -512,10 +514,42 @@ function CustomTracksSection() {
           if (s?.signedUrl) urls[t.id] = s.signedUrl;
         }
         setSignedUrls(urls);
+        // Pull all listen records for these tracks
+        const trackIds = (data as any[]).map((t) => t.id);
+        if (trackIds.length > 0) {
+          const { data: listens } = await supabase
+            .from("custom_track_listens" as any)
+            .select("track_id, listened_date")
+            .in("track_id", trackIds);
+          const byTrack: Record<string, Set<string>> = {};
+          (listens || []).forEach((l: any) => {
+            if (!byTrack[l.track_id]) byTrack[l.track_id] = new Set();
+            byTrack[l.track_id].add(l.listened_date);
+          });
+          setListensByTrack(byTrack);
+        }
       }
       setLoading(false);
     })();
   }, [user]);
+
+  // Listen tracking: record when audio plays past 30 sec
+  const recordedRef = useRef<Set<string>>(new Set());
+  const handleVoiceTimeUpdate = async (trackId: string, e: React.SyntheticEvent<HTMLAudioElement>) => {
+    const t = e.currentTarget.currentTime;
+    const todayKey = trackId + ":" + new Date().toISOString().slice(0, 10);
+    if (t < 30 || recordedRef.current.has(todayKey)) return;
+    recordedRef.current.add(todayKey);
+    await supabase.rpc("record_track_listen" as any, { p_track_id: trackId, p_seconds: Math.round(t) });
+    // Update local state so progress dot fills immediately
+    setListensByTrack((prev) => {
+      const cp = { ...prev };
+      const set = new Set(cp[trackId] || []);
+      set.add(new Date().toISOString().slice(0, 10));
+      cp[trackId] = set;
+      return cp;
+    });
+  };
 
   if (loading) return null;
   if (tracks.length === 0) return null;
@@ -528,35 +562,81 @@ function CustomTracksSection() {
       </div>
       <h2 className="text-display text-2xl mb-4">Your Custom Tracks</h2>
       <div className="space-y-3">
-        {tracks.map((t: any) => (
-          <div key={t.id} className="bg-card rounded-xl p-4 border border-accent/20">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1 min-w-0 pr-3">
-                <p className="text-foreground text-base font-serif font-light leading-tight">{t.title}</p>
-                {t.issue_summary && (
-                  <p className="text-muted-foreground text-xs mt-1 italic">{t.issue_summary}</p>
-                )}
+        {tracks.map((t: any) => {
+          const daysListened = listensByTrack[t.id]?.size || 0;
+          const created = t.created_at ? new Date(t.created_at) : new Date();
+          const today = new Date(); today.setHours(0,0,0,0);
+          const cd = new Date(created); cd.setHours(0,0,0,0);
+          const dayInProgram = Math.min(PROGRAM_DAYS, Math.floor((today.getTime() - cd.getTime()) / 86400000) + 1);
+          const todayKey = new Date().toISOString().slice(0, 10);
+          const listenedToday = listensByTrack[t.id]?.has(todayKey);
+          return (
+            <div key={t.id} className="bg-card rounded-xl p-4 border border-accent/20">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 min-w-0 pr-3">
+                  <p className="text-foreground text-base font-serif font-light leading-tight">{t.title}</p>
+                  {t.issue_summary && (
+                    <p className="text-muted-foreground text-xs mt-1 italic">{t.issue_summary}</p>
+                  )}
+                </div>
+                <span className="text-accent text-[10px] uppercase tracking-wider shrink-0 font-sans font-medium">
+                  {t.duration_sec ? `${Math.round(t.duration_sec / 60)} min` : "—"}
+                </span>
               </div>
-              <span className="text-accent text-[10px] uppercase tracking-wider shrink-0 font-sans font-medium">
-                {t.duration_sec ? `${Math.round(t.duration_sec / 60)} min` : "—"}
-              </span>
+              {signedUrls[t.id] ? (
+                <audio
+                  controls
+                  src={signedUrls[t.id]}
+                  className="w-full"
+                  preload="none"
+                  style={{ height: 40 }}
+                  onPlay={handleVoicePlay}
+                  onPause={handleVoicePause}
+                  onEnded={handleVoicePause}
+                  onTimeUpdate={(e) => handleVoiceTimeUpdate(t.id, e)}
+                />
+              ) : (
+                <p className="text-muted-foreground text-xs">Audio unavailable</p>
+              )}
+              {/* 21-day progress meter */}
+              <div className="mt-3 pt-3 border-t border-accent/10">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-muted-foreground text-[10px] uppercase tracking-wider">
+                    Day {Math.min(dayInProgram, PROGRAM_DAYS)} of {PROGRAM_DAYS}
+                  </span>
+                  <span className={`text-[10px] uppercase tracking-wider font-medium ${listenedToday ? "text-accent" : "text-muted-foreground"}`}>
+                    {listenedToday ? "✓ Listened today" : daysListened > 0 ? `${daysListened} day${daysListened === 1 ? "" : "s"} listened` : "Start today"}
+                  </span>
+                </div>
+                <div className="flex gap-[3px]">
+                  {Array.from({ length: PROGRAM_DAYS }).map((_, i) => {
+                    const dayDate = new Date(cd);
+                    dayDate.setDate(cd.getDate() + i);
+                    const dayKey = dayDate.toISOString().slice(0, 10);
+                    const listened = listensByTrack[t.id]?.has(dayKey);
+                    const isPast = dayDate < today;
+                    const isToday = dayKey === todayKey;
+                    return (
+                      <div
+                        key={i}
+                        className={`flex-1 h-1.5 rounded-full transition-colors ${
+                          listened
+                            ? "bg-accent"
+                            : isToday
+                              ? "bg-accent/30 ring-1 ring-accent/40"
+                              : isPast
+                                ? "bg-destructive/20"
+                                : "bg-muted-foreground/15"
+                        }`}
+                        title={`${dayKey}${listened ? " · listened" : isToday ? " · today" : isPast ? " · missed" : ""}`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-            {signedUrls[t.id] ? (
-              <audio
-                controls
-                src={signedUrls[t.id]}
-                className="w-full"
-                preload="none"
-                style={{ height: 40 }}
-                onPlay={handleVoicePlay}
-                onPause={handleVoicePause}
-                onEnded={handleVoicePause}
-              />
-            ) : (
-              <p className="text-muted-foreground text-xs">Audio unavailable</p>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="flex items-center gap-3 mt-4 pt-4 border-t border-accent/15">
         <span className="text-muted-foreground text-[10px] uppercase tracking-wider min-w-[80px]">Background</span>
