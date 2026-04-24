@@ -47,7 +47,8 @@ function AppLayoutInner() {
         <Outlet />
       </main>
 
-      {!hideFab && <SessionFinderFAB />}
+      {/* Session Finder FAB hidden — Custom Track tile is the new Today anchor */}
+      {false && !hideFab && <SessionFinderFAB />}
       <SessionFinderModal open={open} onClose={() => setOpen(false)} />
 
       {showGate && <TermsGateModal onAccept={acceptTerms} />}
