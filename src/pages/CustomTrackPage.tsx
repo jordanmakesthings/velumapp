@@ -70,8 +70,8 @@ interface VoiceOption {
 }
 
 const VOICES: VoiceOption[] = [
-  { key: "theo",  name: "Theo",  gender: "M", blurb: "Soft, conversational" },
-  { key: "almee", name: "Almee", gender: "F", blurb: "Warm, gentle" },
+  { key: "theo",   name: "Male Voice",   gender: "M", blurb: "Soft, grounded" },
+  { key: "nicole", name: "Female Voice", gender: "F", blurb: "Calm, measured" },
 ];
 
 const COOLDOWN_DAYS = 30;
@@ -410,12 +410,12 @@ export default function CustomTrackPage() {
         )}
 
         {phase === "voice" && (
-          <div className="w-full">
-            <div className="text-center mb-8">
-              <h1 className="text-display text-3xl mb-2">Pick your voice</h1>
-              <p className="text-muted-foreground text-sm">This is who'll guide you. You can change it anytime.</p>
+          <div className="w-full max-w-xl mx-auto">
+            <div className="text-center mb-10">
+              <h1 className="text-display text-3xl md:text-4xl mb-3">Pick your voice</h1>
+              <p className="text-muted-foreground text-sm">Tap the play button to preview. You can change it anytime.</p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {VOICES.map((v) => {
                 const sel = voice === v.key;
                 const isPlaying = previewing === v.key;
@@ -423,29 +423,27 @@ export default function CustomTrackPage() {
                 return (
                   <div
                     key={v.key}
-                    className={`velum-card p-4 transition-all flex flex-col ${sel ? "border-accent/60 bg-accent/5" : "hover:border-accent/30"}`}
+                    className={`velum-card p-6 transition-all flex flex-col items-center text-center ${sel ? "border-accent/60 bg-accent/5" : "hover:border-accent/30"}`}
                   >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] tracking-wider uppercase text-accent">{v.gender}</span>
-                        {v.key === "jordan" && (
-                          <span className="text-[9px] tracking-wider uppercase text-muted-foreground bg-muted-foreground/15 px-1.5 py-0.5 rounded">Founder</span>
-                        )}
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); playPreview(v.key); }}
-                        className="w-7 h-7 rounded-full border border-accent/30 bg-accent/10 flex items-center justify-center text-accent hover:bg-accent/20 transition-colors"
-                        title={isPlaying ? "Pause preview" : "Play preview"}
-                        disabled={isLoading}
-                      >
-                        {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 ml-0.5" />}
-                      </button>
-                    </div>
-                    <div className="text-foreground text-base font-serif font-light">{v.name}</div>
-                    <div className="text-muted-foreground text-[11px] mt-1 italic mb-3">{v.blurb}</div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); playPreview(v.key); }}
+                      className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center shadow-lg shadow-accent/30 active:scale-95 transition-transform mb-4"
+                      title={isPlaying ? "Pause preview" : "Play preview"}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="w-6 h-6 text-primary-foreground animate-spin" />
+                      ) : isPlaying ? (
+                        <Pause className="w-6 h-6 text-primary-foreground" fill="currentColor" />
+                      ) : (
+                        <Play className="w-6 h-6 text-primary-foreground ml-0.5" fill="currentColor" />
+                      )}
+                    </button>
+                    <div className="text-foreground text-xl font-serif font-light mb-1">{v.name}</div>
+                    <div className="text-muted-foreground text-xs italic mb-5">{v.blurb}</div>
                     <button
                       onClick={() => pickVoiceAndContinue(v.key)}
-                      className={`mt-auto text-[10px] tracking-[2px] uppercase rounded-md py-2 transition-all ${sel ? "gold-gradient text-primary-foreground font-semibold" : "border border-border text-muted-foreground hover:text-foreground hover:border-accent/40"}`}
+                      className={`w-full text-[10px] tracking-[2px] uppercase rounded-lg py-2.5 transition-all ${sel ? "gold-gradient text-primary-foreground font-semibold" : "border border-border text-muted-foreground hover:text-foreground hover:border-accent/40"}`}
                     >
                       Use this voice →
                     </button>
