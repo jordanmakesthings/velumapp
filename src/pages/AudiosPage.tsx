@@ -59,9 +59,12 @@ export default function AudiosPage() {
     }
   }, [searchParams, setSearchParams]);
 
-  // Backing audio
-  const backingRef = useRef<HTMLAudioElement | null>(null);
-  const watchdogRef = useRef<number | null>(null);
+  // Backing audio (Web Audio API — sample-accurate seamless loop)
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const backingBufferRef = useRef<AudioBuffer | null>(null);
+  const backingSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const backingGainRef = useRef<GainNode | null>(null);
+  const backingLoadingRef = useRef<Promise<void> | null>(null);
   const playingCount = useRef(0);
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const recordedRef = useRef<Set<string>>(new Set());
@@ -116,65 +119,62 @@ export default function AudiosPage() {
     })();
   }, [user]);
 
-  const ensureBackingEl = () => {
-    if (backingRef.current) return backingRef.current;
-    const a = new Audio(BACKING_TRACK_URL);
-    a.loop = true;
-    a.preload = "auto";
-    a.volume = bgVol;
-    a.crossOrigin = "anonymous";
-    // Belt 1: ended event fallback if loop attr drops
-    a.addEventListener("ended", () => { try { a.currentTime = 0; a.play().catch(() => {}); } catch {} });
-    // Belt 2: rewind 0.15s before end on every timeupdate (fires ~4x/sec).
-    // This avoids the perceptible gap where some browsers stall between loop iterations.
-    a.addEventListener("timeupdate", () => {
-      if (!a.duration || a.duration === Infinity) return;
-      if (a.duration - a.currentTime < 0.15) {
-        try { a.currentTime = 0; } catch {}
+  // Lazy-load + decode the backing buffer once.
+  const ensureBacking = async () => {
+    if (backingBufferRef.current) return;
+    if (backingLoadingRef.current) return backingLoadingRef.current;
+    backingLoadingRef.current = (async () => {
+      try {
+        const Ctx: typeof AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = audioCtxRef.current ?? new Ctx();
+        audioCtxRef.current = ctx;
+        const gain = ctx.createGain();
+        gain.gain.value = bgVol;
+        gain.connect(ctx.destination);
+        backingGainRef.current = gain;
+        const res = await fetch(BACKING_TRACK_URL);
+        const arr = await res.arrayBuffer();
+        const buf = await ctx.decodeAudioData(arr);
+        backingBufferRef.current = buf;
+      } catch (e) {
+        console.warn("backing buffer load failed", e);
       }
-    });
-    // Belt 3: if it pauses unexpectedly while voice is playing, restart it
-    a.addEventListener("pause", () => {
-      if (playingCount.current > 0 && !a.ended) {
-        // Brief defer to avoid fighting a user-initiated pause race
-        setTimeout(() => {
-          if (playingCount.current > 0 && a.paused) {
-            a.play().catch(() => {});
-          }
-        }, 100);
-      }
-    });
-    backingRef.current = a;
-    return a;
+    })();
+    return backingLoadingRef.current;
   };
   const startBacking = async () => {
-    const a = ensureBackingEl();
-    try { await a.play(); } catch (e) { console.warn("backing play failed", e); }
-    // Coarse watchdog as a last resort (2s instead of 4s)
-    if (watchdogRef.current == null) {
-      watchdogRef.current = window.setInterval(() => {
-        const b = backingRef.current;
-        if (!b || playingCount.current === 0) return;
-        if (b.paused || b.ended) {
-          try { b.currentTime = 0; b.play().catch(() => {}); } catch {}
-        }
-      }, 2000);
-    }
+    await ensureBacking();
+    const ctx = audioCtxRef.current; const buf = backingBufferRef.current; const gain = backingGainRef.current;
+    if (!ctx || !buf || !gain) return;
+    if (ctx.state === "suspended") await ctx.resume();
+    if (backingSourceRef.current) return; // already running
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;            // sample-accurate seamless loop at the buffer level
+    src.loopStart = 0;
+    src.loopEnd = buf.duration; // explicit, in case browser defaults differ
+    src.connect(gain);
+    src.start(0);
+    backingSourceRef.current = src;
   };
   const stopBacking = () => {
-    if (backingRef.current) backingRef.current.pause();
-    if (watchdogRef.current != null) {
-      window.clearInterval(watchdogRef.current);
-      watchdogRef.current = null;
+    const src = backingSourceRef.current;
+    if (src) {
+      try { src.stop(); src.disconnect(); } catch {}
+      backingSourceRef.current = null;
     }
   };
   useEffect(() => () => {
     stopBacking();
-    if (backingRef.current) { backingRef.current.src = ""; backingRef.current = null; }
+    audioCtxRef.current?.close().catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (backingRef.current) backingRef.current.volume = bgVol;
+    if (backingGainRef.current && audioCtxRef.current) {
+      // smooth ramp to avoid click on slider drag
+      backingGainRef.current.gain.setTargetAtTime(bgVol, audioCtxRef.current.currentTime, 0.05);
+    }
     localStorage.setItem("velum_bg_vol", String(bgVol));
   }, [bgVol]);
   useEffect(() => {

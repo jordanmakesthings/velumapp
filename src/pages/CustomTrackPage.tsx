@@ -70,11 +70,8 @@ interface VoiceOption {
 }
 
 const VOICES: VoiceOption[] = [
-  { key: "theo",    name: "Theo",    gender: "M", blurb: "Soft, conversational" },
-  { key: "solomon", name: "Solomon", gender: "M", blurb: "Deep, grounding" },
-  { key: "almee",   name: "Almee",   gender: "F", blurb: "Warm, gentle" },
-  { key: "rhythm",  name: "Rhythm",  gender: "F", blurb: "Smooth, steady" },
-  { key: "nicole",  name: "Nicole",  gender: "F", blurb: "Calm, measured" },
+  { key: "theo",  name: "Theo",  gender: "M", blurb: "Soft, conversational" },
+  { key: "almee", name: "Almee", gender: "F", blurb: "Warm, gentle" },
 ];
 
 const COOLDOWN_DAYS = 30;
