@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Plus, Check, Edit2, X } from "lucide-react";
+import { Sparkles, Plus, Check, Edit2, X, Play, Pause, Rewind, FastForward } from "lucide-react";
 import { toast } from "sonner";
 
 const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop.mp3";
@@ -306,17 +306,15 @@ export default function AudiosPage() {
                     </div>
 
                     {signedUrls[t.id] ? (
-                      <audio
-                        ref={(el) => { audioRefs.current[t.id] = el; if (el) el.playbackRate = voiceRate; }}
-                        controls
+                      <CustomPlayer
+                        trackId={t.id}
                         src={signedUrls[t.id]}
-                        className="w-full mt-3"
-                        preload="metadata"
-                        style={{ height: 40 }}
+                        durationHint={t.duration_sec}
+                        voiceRate={voiceRate}
                         onPlay={() => handleVoicePlay(t.id)}
                         onPause={handleVoicePause}
-                        onEnded={handleVoicePause}
                         onTimeUpdate={(e) => handleVoiceTimeUpdate(t.id, e)}
+                        registerRef={(el) => { audioRefs.current[t.id] = el; }}
                       />
                     ) : (
                       <p className="text-muted-foreground text-xs">Audio unavailable</p>
@@ -365,6 +363,130 @@ export default function AudiosPage() {
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ────────────── Custom Audio Player ──────────────
+function CustomPlayer({
+  trackId,
+  src,
+  durationHint,
+  voiceRate,
+  onPlay,
+  onPause,
+  onTimeUpdate,
+  registerRef,
+}: {
+  trackId: string;
+  src: string;
+  durationHint?: number;
+  voiceRate: number;
+  onPlay: () => void;
+  onPause: () => void;
+  onTimeUpdate: (e: React.SyntheticEvent<HTMLAudioElement>) => void;
+  registerRef: (el: HTMLAudioElement | null) => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [duration, setDuration] = useState(durationHint || 0);
+  const [scrubbing, setScrubbing] = useState(false);
+
+  const fmt = (s: number) => {
+    if (!isFinite(s) || s < 0) return "0:00";
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${String(sec).padStart(2, "0")}`;
+  };
+
+  const toggle = async () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (a.paused) {
+      a.playbackRate = voiceRate;
+      try { await a.play(); setPlaying(true); } catch {}
+    } else {
+      a.pause();
+      setPlaying(false);
+    }
+  };
+
+  const skip = (delta: number) => {
+    const a = audioRef.current;
+    if (!a) return;
+    a.currentTime = Math.max(0, Math.min((a.duration || 0) - 0.1, a.currentTime + delta));
+  };
+
+  const onSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const a = audioRef.current;
+    if (!a || !a.duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    a.currentTime = pct * a.duration;
+  };
+
+  const progress = duration > 0 ? (current / duration) * 100 : 0;
+
+  return (
+    <div className="mt-4 bg-gradient-to-br from-accent/8 via-accent/3 to-transparent border border-accent/20 rounded-2xl p-5">
+      <audio
+        ref={(el) => { audioRef.current = el; registerRef(el); if (el) el.playbackRate = voiceRate; }}
+        src={src}
+        preload="metadata"
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || durationHint || 0)}
+        onPlay={() => { setPlaying(true); onPlay(); }}
+        onPause={() => { setPlaying(false); onPause(); }}
+        onEnded={() => { setPlaying(false); setCurrent(0); onPause(); }}
+        onTimeUpdate={(e) => { if (!scrubbing) setCurrent(e.currentTarget.currentTime); onTimeUpdate(e); }}
+        className="hidden"
+      />
+
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => skip(-15)}
+          className="w-10 h-10 rounded-full border border-accent/25 flex items-center justify-center text-accent/70 hover:text-accent hover:border-accent/50 transition-colors shrink-0"
+          aria-label="Back 15 seconds"
+        >
+          <Rewind className="w-4 h-4" fill="currentColor" />
+        </button>
+
+        <button
+          onClick={toggle}
+          className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center shadow-lg shadow-accent/30 active:scale-95 transition-transform shrink-0"
+          aria-label={playing ? "Pause" : "Play"}
+        >
+          {playing ? (
+            <Pause className="w-7 h-7 text-primary-foreground" fill="currentColor" />
+          ) : (
+            <Play className="w-7 h-7 text-primary-foreground ml-1" fill="currentColor" />
+          )}
+        </button>
+
+        <button
+          onClick={() => skip(15)}
+          className="w-10 h-10 rounded-full border border-accent/25 flex items-center justify-center text-accent/70 hover:text-accent hover:border-accent/50 transition-colors shrink-0"
+          aria-label="Forward 15 seconds"
+        >
+          <FastForward className="w-4 h-4" fill="currentColor" />
+        </button>
+
+        <div className="flex-1 min-w-0">
+          <div
+            className="h-2 bg-foreground/10 rounded-full overflow-hidden cursor-pointer group"
+            onClick={onSeek}
+          >
+            <div
+              className="h-full gold-gradient rounded-full transition-all"
+              style={{ width: `${progress}%`, transitionDuration: scrubbing ? "0ms" : "120ms" }}
+            />
+          </div>
+          <div className="flex items-center justify-between mt-1.5 text-[10px] font-sans tracking-wider text-muted-foreground/70">
+            <span>{fmt(current)}</span>
+            <span>{fmt(duration)}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
