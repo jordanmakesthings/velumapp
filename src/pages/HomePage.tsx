@@ -574,17 +574,6 @@ export default function HomePage() {
         </Link>
       )}
 
-      {/* Session Finder — secondary "what do I need right now" tool */}
-      <button onClick={() => setFinderOpen(true)} className="velum-card mb-3 w-full p-4 flex items-center gap-4 text-left hover:border-accent/30 transition-colors">
-        <div className="w-10 h-10 rounded-xl bg-surface-light flex items-center justify-center shrink-0">
-          <Sparkles className="w-4 h-4 text-accent" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-foreground text-sm font-sans font-medium">Need something right now?</p>
-          <p className="text-muted-foreground text-[11px]">60-second check-in · matches a tool to how you feel</p>
-        </div>
-        <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
-      </button>
 
 {/* Daily check-in card (only if not done today) */}
       {!todayCheckin && (

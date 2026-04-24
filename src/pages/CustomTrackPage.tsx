@@ -144,14 +144,15 @@ export default function CustomTrackPage() {
         .maybeSingle();
       const { data: prof } = await supabase
         .from("profiles")
-        .select("voice_preference, extra_track_credits")
+        .select("voice_preference, extra_track_credits, unlimited_tracks")
         .eq("id", user.id)
         .maybeSingle();
       const credits = ((prof as any)?.extra_track_credits as number | null) ?? 0;
+      const unlimited = !!((prof as any)?.unlimited_tracks);
       setExtraCredits(credits);
       const pref = ((prof as any)?.voice_preference as string | null) || "jordan";
       setVoice(pref);
-      if (lastTrack) {
+      if (!unlimited && lastTrack) {
         const ageDays = (Date.now() - new Date((lastTrack as any).created_at).getTime()) / 86400000;
         if (ageDays < COOLDOWN_DAYS && credits <= 0) {
           setUnlocksIn(Math.ceil(COOLDOWN_DAYS - ageDays));
