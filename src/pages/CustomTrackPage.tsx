@@ -464,6 +464,20 @@ export default function CustomTrackPage() {
 
         {phase === "chat" && (
           <div className="w-full flex flex-col h-[78vh]">
+            <div className="flex items-center justify-between mb-3 text-[10px] tracking-[2px] uppercase">
+              <span className="text-muted-foreground">
+                Voice: <span className="text-accent">{VOICES.find(v => v.key === voice)?.name || voice}</span>
+              </span>
+              <button
+                onClick={() => {
+                  if (previewAudioRef.current) { previewAudioRef.current.pause(); previewAudioRef.current = null; setPreviewing(""); }
+                  setPhase("voice");
+                }}
+                className="text-muted-foreground hover:text-accent transition-colors"
+              >
+                Change voice →
+              </button>
+            </div>
             <div className="flex-1 overflow-y-auto pr-2 flex flex-col justify-end space-y-4 mb-4">
               {chat.map((m, i) => (
                 <div

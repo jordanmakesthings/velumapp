@@ -185,25 +185,56 @@ Deno.serve(async (req) => {
     };
     const chunks = chunkScript(scriptText);
     const audioParts: Uint8Array[] = [];
-    for (const chunk of chunks) {
+    const chunkSizes: number[] = [];
+    // Synthesize each chunk with retry-on-empty + validation
+    const MIN_AUDIO_BYTES = 5000; // a real ~10-30s MP3 is 50-300 KB. Anything under 5KB is a failure.
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
       const ssmlChunk = scriptToSsml(chunk);
-      const ttsRes = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`,
-        {
-          method: "POST",
-          headers: { "xi-api-key": elevenKey, "Content-Type": "application/json", Accept: "audio/mpeg" },
-          body: JSON.stringify({
-            text: ssmlChunk,
-            model_id: "eleven_multilingual_v2", // most consistent on slow trance content
-            voice_settings: { stability: 0.55, similarity_boost: 0.78, style: 0.15, use_speaker_boost: true, speed: 0.88 },
-          }),
-        },
-      );
-      if (!ttsRes.ok) {
-        const t = await ttsRes.text();
-        return json({ error: "Audio synthesis failed", detail: t.slice(0, 400), failed_chunk: chunks.indexOf(chunk) }, 502);
+      let lastError = "";
+      let buf: Uint8Array | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const ttsRes = await fetch(
+          `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`,
+          {
+            method: "POST",
+            headers: { "xi-api-key": elevenKey, "Content-Type": "application/json", Accept: "audio/mpeg" },
+            body: JSON.stringify({
+              text: ssmlChunk,
+              model_id: "eleven_multilingual_v2",
+              voice_settings: { stability: 0.55, similarity_boost: 0.78, style: 0.15, use_speaker_boost: true, speed: 0.88 },
+            }),
+          },
+        );
+        const contentType = ttsRes.headers.get("content-type") || "";
+        if (!ttsRes.ok) {
+          lastError = `HTTP ${ttsRes.status}: ${(await ttsRes.text()).slice(0, 200)}`;
+        } else if (!contentType.includes("audio")) {
+          // ElevenLabs sometimes returns 200 OK with JSON error body
+          lastError = `Non-audio response (${contentType}): ${(await ttsRes.text()).slice(0, 200)}`;
+        } else {
+          const candidate = new Uint8Array(await ttsRes.arrayBuffer());
+          if (candidate.byteLength < MIN_AUDIO_BYTES) {
+            lastError = `Empty/truncated audio (${candidate.byteLength} bytes)`;
+          } else {
+            buf = candidate;
+            break;
+          }
+        }
+        // Brief backoff before retry
+        await new Promise(r => setTimeout(r, 600));
       }
-      audioParts.push(new Uint8Array(await ttsRes.arrayBuffer()));
+      if (!buf) {
+        return json({
+          error: "Audio synthesis failed after 3 retries",
+          detail: lastError,
+          failed_chunk_index: i,
+          chunk_count: chunks.length,
+          chunk_text_preview: chunk.slice(0, 200),
+        }, 502);
+      }
+      chunkSizes.push(buf.byteLength);
+      audioParts.push(buf);
     }
     // Concat all MP3 buffers — works for ElevenLabs constant-bitrate MP3 output
     const totalLen = audioParts.reduce((s, b) => s + b.byteLength, 0);
