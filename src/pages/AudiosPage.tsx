@@ -13,6 +13,9 @@ const PROGRAM_DAYS = 21;
 const STRIPE_BUY_1_URL = "https://buy.stripe.com/REPLACE_SINGLE_LINK";
 const STRIPE_BUY_3_URL = "https://buy.stripe.com/REPLACE_THREEPACK_LINK";
 
+// Set to true once Stripe Payment Links are created and pasted above.
+const ADDON_PURCHASE_ENABLED = false;
+
 export default function AudiosPage() {
   const navigate = useNavigate();
   const { user, hasAccess } = useAuth();
@@ -237,8 +240,10 @@ export default function AudiosPage() {
               </div>
             </div>
 
-            {/* Buy more / credits */}
-            <BuyMoreCard credits={credits} userId={user?.id} userEmail={user?.email} />
+            {/* Buy more / credits — hidden until Stripe is wired */}
+            {ADDON_PURCHASE_ENABLED && (
+              <BuyMoreCard credits={credits} userId={user?.id} userEmail={user?.email} />
+            )}
 
             {/* Tracks */}
             <div className="space-y-4">

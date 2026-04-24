@@ -307,35 +307,14 @@ export default function CustomTrackPage() {
           <div className="text-center max-w-md">
             <Lock className="w-8 h-8 text-accent mx-auto mb-4 opacity-70" />
             <h1 className="text-display text-3xl mb-3">Your next track is on its way.</h1>
-            <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+            <p className="text-muted-foreground text-sm leading-relaxed mb-8">
               You unlock one custom track every 30 days. Yours unlocks in <span className="text-accent font-medium">{unlocksIn} days</span>.
             </p>
-            <p className="text-muted-foreground text-xs italic mb-6">
-              Want one sooner? Pick up an extra.
-            </p>
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <a
-                href={buildStripeLink("https://buy.stripe.com/REPLACE_SINGLE_LINK", user?.id, user?.email)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="border border-accent/40 rounded-xl px-4 py-3 text-center text-foreground hover:bg-accent/5 transition-colors"
-              >
-                <div className="text-foreground font-sans font-semibold">Buy 1</div>
-                <div className="text-muted-foreground text-xs mt-0.5">$14</div>
-              </a>
-              <a
-                href={buildStripeLink("https://buy.stripe.com/REPLACE_THREEPACK_LINK", user?.id, user?.email)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="gold-gradient rounded-xl px-4 py-3 text-center text-primary-foreground relative"
-              >
-                <span className="absolute top-1 right-2 text-[9px] tracking-wider uppercase font-bold opacity-80">Save $6</span>
-                <div className="font-sans font-bold">Buy 3</div>
-                <div className="text-xs mt-0.5 opacity-90">$36 · $12 each</div>
-              </a>
-            </div>
-            <Link to="/audios" className="text-muted-foreground text-xs hover:text-accent transition-colors">
-              ← View my library
+            <Link
+              to="/audios"
+              className="inline-block gold-gradient text-primary-foreground rounded-xl px-6 py-3 text-sm font-sans font-bold tracking-wide"
+            >
+              Listen to your tracks
             </Link>
           </div>
         )}
