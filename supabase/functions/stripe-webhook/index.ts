@@ -108,8 +108,10 @@ Deno.serve(async (req) => {
             session.metadata?.plan === "custom_track_addon");
         if (isAddon) {
           const targetUserId = userId || session.client_reference_id;
+          // metadata.quantity is set on the Payment Link (1 for single, 3 for the 3-pack)
+          const qty = parseInt(session.metadata?.quantity || "1", 10) || 1;
           if (targetUserId) {
-            await supabaseAdmin.rpc("increment_extra_track_credits", { uid: targetUserId, add: 1 });
+            await supabaseAdmin.rpc("increment_extra_track_credits", { uid: targetUserId, add: qty });
           }
           break;
         }

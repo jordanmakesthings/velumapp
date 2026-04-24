@@ -1,19 +1,39 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Plus, Play, Pause, Check } from "lucide-react";
+import { Sparkles, Plus, Check, ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
 
 const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop.mp3";
 const PROGRAM_DAYS = 21;
 
+// Stripe Payment Links — REPLACE with your actual links once created in Stripe dashboard.
+// Both links must have metadata: product=custom_track_addon, quantity=1 (single) or quantity=3 (3-pack).
+const STRIPE_BUY_1_URL = "https://buy.stripe.com/REPLACE_SINGLE_LINK";
+const STRIPE_BUY_3_URL = "https://buy.stripe.com/REPLACE_THREEPACK_LINK";
+
 export default function AudiosPage() {
   const navigate = useNavigate();
   const { user, hasAccess } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tracks, setTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [listensByTrack, setListensByTrack] = useState<Record<string, Set<string>>>({});
+  const [credits, setCredits] = useState<number>(0);
+
+  // Stripe success redirect handling: ?credit_added=N appended to success_url
+  useEffect(() => {
+    const added = parseInt(searchParams.get("credit_added") || "0", 10);
+    if (added > 0) {
+      toast.success(`✓ ${added} extra track${added === 1 ? "" : "s"} added — generate a new track now`, { duration: 5000 });
+      // Clean the param so refresh doesn't re-toast
+      const next = new URLSearchParams(searchParams);
+      next.delete("credit_added");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Backing audio (Web Audio API for reliable looping)
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -40,6 +60,14 @@ export default function AudiosPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
+      // Fetch profile credits
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("extra_track_credits")
+        .eq("id", user.id)
+        .maybeSingle();
+      setCredits(((prof as any)?.extra_track_credits as number | null) ?? 0);
+
       const { data } = await supabase
         .from("custom_tracks" as any)
         .select("*")
@@ -209,6 +237,9 @@ export default function AudiosPage() {
               </div>
             </div>
 
+            {/* Buy more / credits */}
+            <BuyMoreCard credits={credits} userId={user?.id} userEmail={user?.email} />
+
             {/* Tracks */}
             <div className="space-y-4">
               {tracks.map((t: any) => {
@@ -291,6 +322,61 @@ export default function AudiosPage() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function BuyMoreCard({ credits, userId, userEmail }: { credits: number; userId?: string; userEmail?: string }) {
+  // Append client_reference_id (Supabase user id) and prefilled_email to the Stripe link.
+  // Webhook reads client_reference_id to credit the right user.
+  const buildLink = (base: string) => {
+    if (!userId) return base;
+    const params = new URLSearchParams();
+    params.set("client_reference_id", userId);
+    if (userEmail) params.set("prefilled_email", userEmail);
+    return `${base}?${params.toString()}`;
+  };
+  const isPlaceholder = STRIPE_BUY_1_URL.includes("REPLACE");
+  return (
+    <div className="velum-card-flat p-4 mb-5 border border-accent/20">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-accent" />
+          <p className="text-eyebrow text-accent">Need more this month?</p>
+        </div>
+        {credits > 0 && (
+          <span className="text-accent text-[11px] font-sans font-medium tracking-wide">
+            ✓ {credits} extra {credits === 1 ? "track" : "tracks"} ready
+          </span>
+        )}
+      </div>
+      <p className="text-muted-foreground text-xs leading-relaxed mb-3">
+        Skip the 30-day wait. Generate another custom track right now — same script + voice flow, lands in this library.
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        <a
+          href={buildLink(STRIPE_BUY_1_URL)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="border border-accent/40 rounded-lg px-3 py-2.5 text-center text-foreground text-sm font-sans hover:bg-accent/5 transition-colors"
+        >
+          <div className="text-foreground font-semibold">Buy 1</div>
+          <div className="text-muted-foreground text-[11px] mt-0.5">$14</div>
+        </a>
+        <a
+          href={buildLink(STRIPE_BUY_3_URL)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="gold-gradient rounded-lg px-3 py-2.5 text-center text-primary-foreground text-sm font-sans relative"
+        >
+          <span className="absolute top-1 right-2 text-[9px] tracking-wider uppercase font-bold opacity-80">Save $6</span>
+          <div className="font-bold">Buy 3</div>
+          <div className="text-[11px] mt-0.5 opacity-90">$36 · $12 each</div>
+        </a>
+      </div>
+      {isPlaceholder && (
+        <p className="text-destructive text-[10px] mt-2 italic">Stripe links not configured yet — replace REPLACE_SINGLE_LINK / REPLACE_THREEPACK_LINK in AudiosPage.tsx</p>
+      )}
     </div>
   );
 }
