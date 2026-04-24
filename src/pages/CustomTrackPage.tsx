@@ -7,6 +7,37 @@ import { toast } from "sonner";
 
 type Phase = "loading" | "voice" | "chat" | "confirm" | "generating" | "done" | "cooldown" | "error";
 
+function GeneratingScreen() {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  // Phases as honest status, not fake progress
+  let stage = "Writing your script…";
+  if (elapsed > 25) stage = "Voicing it now…";
+  if (elapsed > 75) stage = "Almost ready…";
+  if (elapsed > 150) stage = "Just a little longer — the longer takes are usually the best ones.";
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  return (
+    <div className="text-center max-w-md">
+      <Sparkles className="w-8 h-8 text-accent mx-auto mb-5 animate-pulse" />
+      <h1 className="text-display text-2xl mb-3">{stage}</h1>
+      <p className="text-muted-foreground text-sm leading-relaxed mb-1">
+        This usually takes 1–3 minutes. Stay on this screen.
+      </p>
+      <p className="text-muted-foreground/60 text-xs leading-relaxed">
+        We're crafting the words first, then voicing them. Don't refresh.
+      </p>
+      <Loader2 className="w-6 h-6 animate-spin text-accent mx-auto mt-8" />
+      <p className="text-muted-foreground/50 text-[11px] tracking-wider uppercase mt-4 font-sans">
+        {m > 0 ? `${m}:${String(s).padStart(2, "0")}` : `${s}s`} elapsed
+      </p>
+    </div>
+  );
+}
+
 interface VoiceOption {
   key: string;
   name: string;
@@ -409,16 +440,7 @@ export default function CustomTrackPage() {
           </div>
         )}
 
-        {phase === "generating" && (
-          <div className="text-center max-w-md">
-            <Sparkles className="w-8 h-8 text-accent mx-auto mb-4 animate-pulse" />
-            <h1 className="text-display text-2xl mb-3">Writing your track…</h1>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              This takes about a minute. We're writing the script, then voicing it. Stay on this screen.
-            </p>
-            <Loader2 className="w-6 h-6 animate-spin text-accent mx-auto mt-8" />
-          </div>
-        )}
+        {phase === "generating" && <GeneratingScreen />}
 
         {phase === "done" && (
           <div className="text-center max-w-md">
