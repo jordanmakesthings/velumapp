@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Plus, Check, ShoppingCart } from "lucide-react";
+import { Sparkles, Plus, Check, Edit2, X } from "lucide-react";
 import { toast } from "sonner";
 
 const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop.mp3";
@@ -25,6 +25,21 @@ export default function AudiosPage() {
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [listensByTrack, setListensByTrack] = useState<Record<string, Set<string>>>({});
   const [credits, setCredits] = useState<number>(0);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+
+  const saveTitle = async (trackId: string) => {
+    const newTitle = editTitle.trim();
+    if (!newTitle) { setEditingId(null); return; }
+    const { error } = await supabase.from("custom_tracks" as any).update({ title: newTitle } as any).eq("id", trackId);
+    if (error) {
+      toast.error("Couldn't rename: " + error.message);
+    } else {
+      setTracks((prev) => prev.map((t) => t.id === trackId ? { ...t, title: newTitle } : t));
+      toast.success("Renamed");
+    }
+    setEditingId(null);
+  };
 
   // Stripe success redirect handling: ?credit_added=N appended to success_url
   useEffect(() => {
@@ -256,7 +271,37 @@ export default function AudiosPage() {
                   <div key={t.id} className="velum-card p-5 border border-accent/25">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-foreground text-xl font-serif font-light leading-tight">{t.title}</p>
+                        {editingId === t.id ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              autoFocus
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveTitle(t.id);
+                                if (e.key === "Escape") setEditingId(null);
+                              }}
+                              onBlur={() => saveTitle(t.id)}
+                              className="bg-card border border-accent/40 rounded-lg px-3 py-1 text-foreground text-xl font-serif font-light focus:outline-none flex-1 min-w-0"
+                              maxLength={80}
+                              style={{ fontSize: "16px" }}
+                            />
+                            <button onClick={() => setEditingId(null)} className="text-muted-foreground p-1">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <p className="text-foreground text-xl font-serif font-light leading-tight truncate">{t.title}</p>
+                            <button
+                              onClick={() => { setEditingId(t.id); setEditTitle(t.title); }}
+                              className="text-muted-foreground hover:text-accent transition-colors p-1 shrink-0"
+                              title="Rename"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
                         {t.issue_summary && (
                           <p className="text-muted-foreground text-xs italic mt-1 line-clamp-2">{t.issue_summary}</p>
                         )}
