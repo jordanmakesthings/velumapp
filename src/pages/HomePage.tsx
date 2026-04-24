@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo } from "react";
-import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Clock, Hand, Fingerprint } from "lucide-react";
+import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Clock, Hand, Fingerprint, Play } from "lucide-react";
 import { useState } from "react";
 import { getTodayCheckin } from "@/lib/velumStorage";
 import { useQuery } from "@tanstack/react-query";
@@ -149,40 +149,85 @@ function CustomTrackHomeTile() {
 
   if (state.phase === "active" && state.track) {
     const t = state.track;
+    const dayInProgram = state.dayInProgram || 1;
+    const todayKey = new Date().toISOString().slice(0, 10);
     return (
-      <Link to="/profile" className="velum-card mb-4 w-full p-5 flex items-center gap-4 border border-accent/40 bg-gradient-to-br from-accent/15 via-accent/8 to-transparent shadow-lg shadow-accent/5">
-        <div className="w-12 h-12 rounded-xl gold-gradient flex items-center justify-center shrink-0">
-          <Sparkles className="w-5 h-5 text-primary-foreground" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-eyebrow text-accent mb-0.5">{state.listenedToday ? "Today's session · ✓ done" : "Today's listen"}</p>
-          <p className="text-foreground text-base font-serif font-light truncate">{t.title}</p>
-          <div className="flex items-center gap-2 mt-1">
-            <p className="text-muted-foreground text-[11px]">Day {state.dayInProgram} of 21</p>
-            <span className="text-muted-foreground/40">·</span>
-            <p className="text-muted-foreground text-[11px]">{state.daysListened || 0} listened</p>
+      <Link
+        to="/profile"
+        className="velum-card mb-6 w-full p-6 block border border-accent/50 bg-gradient-to-br from-accent/20 via-accent/10 to-transparent shadow-xl shadow-accent/10 relative overflow-hidden"
+      >
+        {/* Decorative orb */}
+        <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
+        <div className="relative">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-3.5 h-3.5 text-accent" />
+                <p className="text-eyebrow text-accent">
+                  {state.listenedToday ? "✓ Done · Day " + dayInProgram + " of 21" : "Today's session · Day " + dayInProgram + " of 21"}
+                </p>
+              </div>
+              <p className="text-foreground text-2xl font-serif font-light leading-tight mb-1.5">{t.title}</p>
+              {t.issue_summary && (
+                <p className="text-muted-foreground text-xs italic line-clamp-2 max-w-[320px]">{t.issue_summary}</p>
+              )}
+            </div>
+            <div className="w-14 h-14 rounded-full gold-gradient flex items-center justify-center shrink-0 shadow-lg shadow-accent/20">
+              <Play className="w-6 h-6 text-primary-foreground ml-0.5" fill="currentColor" />
+            </div>
+          </div>
+          {/* 21-day progress meter */}
+          <div className="flex gap-[3px] mt-4">
+            {Array.from({ length: 21 }).map((_, i) => {
+              const dayDate = new Date(t.created_at); dayDate.setHours(0,0,0,0);
+              dayDate.setDate(dayDate.getDate() + i);
+              const dayKey = dayDate.toISOString().slice(0, 10);
+              const isPast = dayDate < new Date(new Date().setHours(0,0,0,0));
+              const isToday = dayKey === todayKey;
+              // We don't have full listen data in the home tile state — use daysListened approximate via order
+              const listenedApprox = i < (state.daysListened || 0);
+              return (
+                <div
+                  key={i}
+                  className={`flex-1 h-1.5 rounded-full ${
+                    listenedApprox
+                      ? "bg-accent"
+                      : isToday
+                        ? "bg-accent/40 ring-1 ring-accent/50"
+                        : isPast
+                          ? "bg-destructive/20"
+                          : "bg-foreground/10"
+                  }`}
+                />
+              );
+            })}
           </div>
         </div>
-        <ArrowRight className="w-4 h-4 text-accent shrink-0" />
       </Link>
     );
   }
 
-  // No track yet — strong promotional copy
+  // No track yet — strong promotional hero
   return (
-    <Link to="/custom-track" className="velum-card mb-4 w-full p-6 block border border-accent/40 bg-gradient-to-br from-accent/12 via-accent/5 to-transparent shadow-lg shadow-accent/5">
-      <div className="flex items-center gap-2 mb-2">
-        <Sparkles className="w-4 h-4 text-accent" />
-        <p className="text-eyebrow text-accent">Built for you</p>
-      </div>
-      <p className="text-foreground text-xl font-serif font-light leading-tight mb-2">
-        12 minutes a day for 21 days, written for the exact thing keeping you stuck.
-      </p>
-      <p className="text-muted-foreground text-xs leading-relaxed mb-4">
-        A 5-minute conversation. A custom Ericksonian hypnosis track in your chosen voice. Listen daily — your nervous system rewires itself.
-      </p>
-      <div className="inline-flex items-center gap-2 text-accent text-sm font-sans font-semibold">
-        Begin <ArrowRight className="w-4 h-4" />
+    <Link
+      to="/custom-track"
+      className="velum-card mb-6 w-full p-7 block border border-accent/45 bg-gradient-to-br from-accent/15 via-accent/8 to-transparent shadow-xl shadow-accent/10 relative overflow-hidden"
+    >
+      <div className="absolute -top-16 -right-16 w-52 h-52 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
+      <div className="relative">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="w-4 h-4 text-accent" />
+          <p className="text-eyebrow text-accent">Built for you · Included</p>
+        </div>
+        <p className="text-foreground text-[1.7rem] md:text-[2rem] font-serif font-light leading-[1.15] mb-3 max-w-[440px]">
+          12 minutes a day for 21 days, written for the exact thing keeping you stuck.
+        </p>
+        <p className="text-muted-foreground text-sm leading-relaxed mb-5 max-w-[440px]">
+          A five-minute conversation. A custom Ericksonian hypnosis track in your chosen voice. Listen daily — your nervous system rewires itself.
+        </p>
+        <span className="inline-flex items-center gap-2 rounded-full gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-semibold tracking-wide">
+          Begin your track <ArrowRight className="w-3.5 h-3.5" />
+        </span>
       </div>
     </Link>
   );
@@ -333,18 +378,8 @@ export default function HomePage() {
         <p className="text-muted-foreground text-xs font-sans tracking-wide">— {todayQuote.author}</p>
       </div>
 
-      {/* ⭐ TODAY — promoted Session Finder is the anchor */}
-      <button onClick={() => setFinderOpen(true)} className="velum-card-accent group mb-6 w-full min-w-0 p-6 text-left relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-green/30 via-transparent to-transparent pointer-events-none" />
-        <div className="relative">
-          <p className="text-eyebrow mb-3">Today · 60 seconds</p>
-          <p className="text-display text-[1.9rem] leading-tight mb-2">Tell me how you<br /><span className="text-accent italic">feel right now.</span></p>
-          <p className="text-muted-foreground text-sm mb-5 max-w-[380px]">Four questions. One tool that matches what your nervous system actually needs today.</p>
-          <span className="inline-flex items-center gap-2 rounded-full gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-semibold tracking-wide">
-            Find my session <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </span>
-        </div>
-      </button>
+      {/* HERO — Custom Track is the anchor of Today */}
+      <CustomTrackHomeTile />
 
       {/* Trial countdown banner */}
       {isInTrial && (
@@ -361,6 +396,18 @@ export default function HomePage() {
         </Link>
       )}
 
+      {/* Session Finder — secondary "what do I need right now" tool */}
+      <button onClick={() => setFinderOpen(true)} className="velum-card mb-3 w-full p-4 flex items-center gap-4 text-left hover:border-accent/30 transition-colors">
+        <div className="w-10 h-10 rounded-xl bg-surface-light flex items-center justify-center shrink-0">
+          <Sparkles className="w-4 h-4 text-accent" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-foreground text-sm font-sans font-medium">Need something right now?</p>
+          <p className="text-muted-foreground text-[11px]">60-second check-in · matches a tool to how you feel</p>
+        </div>
+        <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+      </button>
+
 {/* Daily check-in card (only if not done today) */}
       {!todayCheckin && (
         <Link to="/checkin" className="velum-card mb-4 w-full p-4 flex items-center gap-4">
@@ -374,9 +421,6 @@ export default function HomePage() {
           <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
         </Link>
       )}
-
-      {/* Custom Track hero tile — the most important thing on the page */}
-      <CustomTrackHomeTile />
 
 
       {/* Stats — show aspirational empty state instead of "0 streak" */}
