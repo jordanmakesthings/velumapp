@@ -422,7 +422,7 @@ export default function TappingGeneratorPage() {
   );
 
   const Generating = ({ msg = "Building your session…" }: { msg?: string }) => (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-6">
+    <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center gap-6 px-6">
       <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center">
         <Sparkles className="w-6 h-6 text-primary-foreground animate-pulse" />
       </div>
@@ -437,7 +437,7 @@ export default function TappingGeneratorPage() {
 
   // INTENT
   if (phase === "intent") return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
       <BackBar onBack={() => navigate(-1)} />
       <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full pb-8">
         <div className="w-12 h-12 rounded-2xl gold-gradient flex items-center justify-center mb-5">
@@ -509,7 +509,7 @@ export default function TappingGeneratorPage() {
 
   // INPUT
   if (phase === "input") return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
       <BackBar onBack={() => setPhase("intent")} />
       <div className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-32">
         <AnimatePresence mode="wait">
@@ -560,7 +560,7 @@ export default function TappingGeneratorPage() {
 
   // BODY YES/NO
   if (phase === "body_yn") return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
       <BackBar onBack={() => setPhase("input")} />
       <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full pb-8">
         <AnimatePresence mode="wait">
@@ -589,7 +589,7 @@ export default function TappingGeneratorPage() {
 
   // BODY WHERE
   if (phase === "body_where") return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
       <BackBar onBack={() => setPhase("body_yn")} />
       <div className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-32">
         <AnimatePresence mode="wait">
@@ -635,7 +635,7 @@ export default function TappingGeneratorPage() {
 
   // SUDS
   if (phase === "suds") return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
       <BackBar onBack={() => hasBodyLocation ? setPhase("body_where") : setPhase("body_yn")} />
       <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full pb-32">
         <AnimatePresence mode="wait">
@@ -663,7 +663,7 @@ export default function TappingGeneratorPage() {
 
   // ASPECTS
   if (phase === "aspects") return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
       <BackBar onBack={() => setPhase("suds")} />
       <div className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-32">
         <AnimatePresence mode="wait">
@@ -700,7 +700,7 @@ export default function TappingGeneratorPage() {
 
   // SETUP (karate chop) — single statement, repeated 3x, one tap to begin
   if (phase === "setup" && setupStatements.length > 0) return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
       <div className="flex items-center justify-between px-4 pt-4 mb-4 flex-shrink-0">
         <button onClick={restart} className="flex items-center gap-1 text-sm font-sans text-muted-foreground min-h-10">
           <ArrowLeft className="w-4 h-4" /> New session
@@ -756,7 +756,7 @@ export default function TappingGeneratorPage() {
       }
     };
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="px-4 flex-shrink-0" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)", paddingBottom: "8px" }}>
           <div className="flex items-center justify-between mb-3">
             <button onClick={handleExit} className="flex items-center gap-1 text-sm font-sans text-muted-foreground hover:text-foreground min-h-10 -ml-1 px-1" aria-label="Exit session">
@@ -813,7 +813,7 @@ export default function TappingGeneratorPage() {
 
   // BREATH PAUSE
   if (phase === "breath_pause") return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center px-6">
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-sm w-full text-center">
         <div className="w-16 h-16 rounded-full bg-accent/10 border border-accent/25 flex items-center justify-center mx-auto mb-6">
           <Wind className="w-6 h-6 text-accent" />
@@ -834,7 +834,7 @@ export default function TappingGeneratorPage() {
 
   // REASSESS
   if (phase === "reassess") return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
       <div className="px-4 pt-4 mb-6 flex-shrink-0">
         <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase text-center">Check In</p>
       </div>
@@ -883,7 +883,7 @@ export default function TappingGeneratorPage() {
 
   // SHIFT INPUT
   if (phase === "shift_input") return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
       <div className="px-4 pt-4 mb-6 flex-shrink-0">
         <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase text-center">Positive Shift</p>
       </div>
@@ -931,7 +931,7 @@ export default function TappingGeneratorPage() {
   if (phase === "shift_round" && shiftPhrases.length > 0) {
     const point = shiftPhrases[shiftPointIdx];
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="px-4 pt-4 pb-2 flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
             <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Positive · Round {shiftRound}</p>
@@ -979,7 +979,7 @@ export default function TappingGeneratorPage() {
 
   // SHIFT REASSESS
   if (phase === "shift_reassess") return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
       <div className="px-4 pt-4 mb-6">
         <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase text-center">Check In</p>
       </div>
@@ -1013,7 +1013,7 @@ export default function TappingGeneratorPage() {
 
   // COMPLETE
   if (phase === "complete") return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center px-6">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full text-center">
         <div className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6">
           <Hand className="w-8 h-8 text-primary-foreground" />

@@ -107,7 +107,7 @@ export default function OnboardingPage() {
   const next = () => setStep(s => s + 1);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative">
+    <div className="min-h-screen bg-radial-subtle flex flex-col relative">
       {/* Ambient green glow */}
       <div className="fixed inset-0 pointer-events-none -z-10">
         <div className="absolute top-[8%] left-[-10%] w-[600px] h-[600px] rounded-full"

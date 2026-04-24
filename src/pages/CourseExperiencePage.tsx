@@ -175,7 +175,7 @@ export default function CourseExperiencePage() {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-radial-subtle flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -187,7 +187,7 @@ export default function CourseExperiencePage() {
   const courseType = (course as any).course_type || "audio";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
       {showPaywall && <PaywallModal open={showPaywall} onClose={() => setShowPaywall(false)} />}
 
       {/* Top bar */}

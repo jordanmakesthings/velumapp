@@ -120,7 +120,7 @@ export default function CheckinPage() {
   // --- Rating ---
   if (phase === "rating") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="px-4 pt-4">
           <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -170,7 +170,7 @@ export default function CheckinPage() {
   // --- Sensations ---
   if (phase === "sensations") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="px-4 pt-4">
           <button onClick={() => setPhase("rating")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -221,7 +221,7 @@ export default function CheckinPage() {
   if (phase === "recommendation" && rec) {
     const Icon = rec.icon;
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center px-6">
         <AnimatePresence mode="wait">
           <motion.div key="rec" {...slide} className="max-w-sm w-full">
             <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-6 text-center">

@@ -70,7 +70,6 @@ interface VoiceOption {
 }
 
 const VOICES: VoiceOption[] = [
-  { key: "jordan",  name: "Jordan",  gender: "M", blurb: "The founder's voice" },
   { key: "theo",    name: "Theo",    gender: "M", blurb: "Soft, conversational" },
   { key: "solomon", name: "Solomon", gender: "M", blurb: "Deep, grounding" },
   { key: "almee",   name: "Almee",   gender: "F", blurb: "Warm, gentle" },
@@ -212,8 +211,9 @@ export default function CustomTrackPage() {
       const credits = ((prof as any)?.extra_track_credits as number | null) ?? 0;
       const unlimited = !!((prof as any)?.unlimited_tracks);
       setExtraCredits(credits);
-      const pref = ((prof as any)?.voice_preference as string | null) || "jordan";
-      setVoice(pref);
+      const prefRaw = ((prof as any)?.voice_preference as string | null) || "";
+      const pref = VOICES.some(v => v.key === prefRaw) ? prefRaw : "";
+      if (pref) setVoice(pref);
       if (!unlimited && lastTrack) {
         const ageDays = (Date.now() - new Date((lastTrack as any).created_at).getTime()) / 86400000;
         if (ageDays < COOLDOWN_DAYS && credits <= 0) {
@@ -468,15 +468,35 @@ export default function CustomTrackPage() {
               <span className="text-muted-foreground">
                 Voice: <span className="text-accent">{VOICES.find(v => v.key === voice)?.name || voice}</span>
               </span>
-              <button
-                onClick={() => {
-                  if (previewAudioRef.current) { previewAudioRef.current.pause(); previewAudioRef.current = null; setPreviewing(""); }
-                  setPhase("voice");
-                }}
-                className="text-muted-foreground hover:text-accent transition-colors"
-              >
-                Change voice →
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    if (previewAudioRef.current) { previewAudioRef.current.pause(); previewAudioRef.current = null; setPreviewing(""); }
+                    setPhase("voice");
+                  }}
+                  className="text-muted-foreground hover:text-accent transition-colors"
+                >
+                  Change voice →
+                </button>
+                <button
+                  onClick={() => {
+                    if (!window.confirm("Start over? Your current conversation will be cleared.")) return;
+                    try {
+                      localStorage.removeItem("velum_pending_diagnosis");
+                      localStorage.removeItem("velum_pending_chat");
+                      localStorage.removeItem("velum_pending_voice");
+                    } catch {}
+                    setDiagnosis(null);
+                    setChat([]);
+                    setVoice("");
+                    setChatInput("");
+                    setPhase("voice");
+                  }}
+                  className="text-muted-foreground/70 hover:text-destructive transition-colors"
+                >
+                  Start over
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto pr-2 flex flex-col justify-end space-y-4 mb-4">
               {chat.map((m, i) => (

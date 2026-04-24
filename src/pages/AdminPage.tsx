@@ -1077,7 +1077,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-radial-subtle">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-accent/10">
         <button onClick={() => navigate("/")} className="p-2 text-muted-foreground hover:text-foreground transition-colors">

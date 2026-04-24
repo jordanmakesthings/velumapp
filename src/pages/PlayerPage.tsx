@@ -244,7 +244,7 @@ export default function PlayerPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-radial-subtle flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -252,7 +252,7 @@ export default function PlayerPage() {
 
   if (!track) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center gap-4">
         <p className="text-ui text-sm">Session not found.</p>
         <Link to="/library" className="text-sm text-accent underline">Back to Library</Link>
       </div>
@@ -308,7 +308,7 @@ export default function PlayerPage() {
   // Done state
   if (step === "done") {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center px-6">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }}
           className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center mb-6">
           <CheckCircle2 className="w-8 h-8 text-primary-foreground" />

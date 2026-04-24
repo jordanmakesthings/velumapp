@@ -349,7 +349,7 @@ export default function BilateralPage() {
   // =========================================================================
   if (phase === "what") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
           <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -399,7 +399,7 @@ export default function BilateralPage() {
   if (phase === "describe") {
     const cat = CATEGORIES.find((c) => c.label === category);
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
           <button onClick={() => setPhase("what")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -446,7 +446,7 @@ export default function BilateralPage() {
   if (phase === "belief") {
     const suggestions = NC_SUGGESTIONS[category] ?? [];
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
           <button onClick={() => setPhase("describe")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -511,7 +511,7 @@ export default function BilateralPage() {
   if (phase === "pc") {
     const suggestions = PC_SUGGESTIONS[category] ?? [];
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
           <button onClick={() => setPhase("belief")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -578,7 +578,7 @@ export default function BilateralPage() {
     const toggleBody = (loc: string) => setBodyLocations((prev) => prev.includes(loc) ? prev.filter((l) => l !== loc) : [...prev, loc]);
 
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
           <button onClick={() => setPhase("pc")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -642,7 +642,7 @@ export default function BilateralPage() {
   // =========================================================================
   if (phase === "setup") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-4">
           <button onClick={() => setPhase("rate")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -736,7 +736,7 @@ export default function BilateralPage() {
   // =========================================================================
   if (phase === "notice") {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center px-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full">
           <h2 className="text-display text-3xl mb-10 text-center">What do you notice?</h2>
 
@@ -801,7 +801,7 @@ export default function BilateralPage() {
     const stillActive  = suds >= 4;
 
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center px-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full">
           <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-4 text-center">Check in</p>
 
@@ -915,7 +915,7 @@ export default function BilateralPage() {
     const needsWork   = voc < 5;
 
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center px-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full">
           <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase mb-4 text-center">VOC</p>
 
@@ -993,7 +993,7 @@ export default function BilateralPage() {
   // =========================================================================
   if (phase === "body-close") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
           <button onClick={() => setPhase("voc")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -1077,7 +1077,7 @@ export default function BilateralPage() {
     const shift     = startSuds - finalSuds;
 
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center px-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full text-center">
           <div className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6">
             <span className="text-2xl">✦</span>
@@ -1158,7 +1158,7 @@ export default function BilateralPage() {
   const sessionLabel   = isInstallMode ? "Hold this belief" : "Bring this to mind";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-radial-subtle flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
         <button

@@ -187,7 +187,7 @@ export default function SOSPage() {
   // --- Intro ---
   if (phase === "intro") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="px-4 pt-4">
           <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -239,7 +239,7 @@ export default function SOSPage() {
   // --- Physiological Sigh ---
   if (phase === "sigh") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <button onClick={() => setPhase("intro")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" />
@@ -269,7 +269,7 @@ export default function SOSPage() {
     const isLast = groundingStep >= GROUNDING_STEPS.length - 1;
 
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <button onClick={() => setPhase("sigh")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" />
@@ -319,7 +319,7 @@ export default function SOSPage() {
   // --- Anchor Breathing ---
   if (phase === "breathing") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <button onClick={() => setPhase("grounding")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" />
@@ -344,7 +344,7 @@ export default function SOSPage() {
 
   // --- Done ---
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center px-6">
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-sm w-full text-center">
         <div className="w-20 h-20 rounded-full bg-surface-light flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="w-9 h-9 text-accent" strokeWidth={1.5} />

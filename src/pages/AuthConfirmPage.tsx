@@ -39,7 +39,7 @@ export default function AuthConfirmPage() {
   }, [params, navigate]);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-6">
+    <div className="min-h-screen bg-radial-subtle flex items-center justify-center px-6">
       <div className="text-center max-w-sm">
         {error ? (
           <>

@@ -123,7 +123,7 @@ export default function MasteryPlayerPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-radial-subtle flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -131,7 +131,7 @@ export default function MasteryPlayerPage() {
 
   if (!mc) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-radial-subtle flex items-center justify-center">
         <p className="text-ui text-sm">Mastery class not found.</p>
       </div>
     );

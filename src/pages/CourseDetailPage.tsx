@@ -65,7 +65,7 @@ export default function CourseDetailPage() {
 
   if (courseLoading || !course) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-radial-subtle flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -74,7 +74,7 @@ export default function CourseDetailPage() {
   const completedCount = tracks.filter((t: any) => completedTrackIds.has(t.id)).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-radial-subtle">
       {/* Hero */}
       <div className="relative h-48 bg-surface-light overflow-hidden">
         {(course as any).cover_image_url ? (

@@ -259,7 +259,7 @@ export default function SomaticTouchPage() {
   // ---------------------------------------------------------------------------
   if (phase === "intake-sensation") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
           <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -328,7 +328,7 @@ export default function SomaticTouchPage() {
   // ---------------------------------------------------------------------------
   if (phase === "intake-intensity") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
           <button onClick={() => setPhase("intake-sensation")} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -386,7 +386,7 @@ export default function SomaticTouchPage() {
   // ---------------------------------------------------------------------------
   if (phase === "session") {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-radial-subtle flex flex-col">
         {/* Header + progress */}
         <div className="px-4 pt-4 pb-2 shrink-0">
           <div className="flex items-center justify-between mb-3">
@@ -474,7 +474,7 @@ export default function SomaticTouchPage() {
   // Done
   // ---------------------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center px-6">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm w-full text-center">
         <div className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6">
           <span className="text-2xl">✦</span>

@@ -104,14 +104,7 @@ export default function PremiumPage() {
   // Already subscribed view
   if (isPremium) {
     return (
-      <div className="min-h-screen bg-background flex flex-col relative">
-        {/* Ambient green glow */}
-        <div className="fixed inset-0 pointer-events-none -z-10">
-          <div className="absolute top-[15%] left-[-10%] w-[550px] h-[550px] rounded-full"
-               style={{ background: "radial-gradient(circle, hsla(156,51%,16%,0.55) 0%, transparent 60%)", filter: "blur(50px)" }} />
-          <div className="absolute bottom-[5%] right-[-10%] w-[400px] h-[400px] rounded-full"
-               style={{ background: "radial-gradient(circle, hsla(42,53%,32%,0.1) 0%, transparent 60%)", filter: "blur(50px)" }} />
-        </div>
+      <div className="min-h-screen bg-radial-subtle flex flex-col relative">
 
         <div className="fixed top-0 inset-x-0 z-50 flex items-center px-4 py-4">
           <button onClick={() => navigate("/home")} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -176,16 +169,7 @@ export default function PremiumPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative">
-      {/* Ambient green glow — stronger */}
-      <div className="fixed inset-0 pointer-events-none -z-10">
-        <div className="absolute top-[-5%] left-[-15%] w-[700px] h-[700px] rounded-full"
-             style={{ background: "radial-gradient(circle, hsla(156,51%,18%,0.85) 0%, transparent 65%)", filter: "blur(40px)" }} />
-        <div className="absolute top-[30%] right-[-20%] w-[600px] h-[600px] rounded-full"
-             style={{ background: "radial-gradient(circle, hsla(156,51%,15%,0.75) 0%, transparent 65%)", filter: "blur(40px)" }} />
-        <div className="absolute bottom-[0%] left-[-10%] w-[500px] h-[500px] rounded-full"
-             style={{ background: "radial-gradient(circle, hsla(42,53%,32%,0.15) 0%, transparent 65%)", filter: "blur(40px)" }} />
-      </div>
+    <div className="min-h-screen bg-radial-subtle relative">
 
       <div className="px-6 pt-12 pb-12 max-w-lg mx-auto relative">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
