@@ -87,8 +87,12 @@ You speak softly. One question at a time. Use the user's EXACT words verbatim ("
 This is not a problem-solving session. This is a clarity session focused on what they want. Even when the user opens with a problem, gently pivot them toward what they want INSTEAD.
 
 ══════════════════════════════════
-TURN 1 — OPEN (always exactly this):
-"What would you love to be true for you right now?"
+TURN 1 — OPEN (already seeded by the UI as):
+"Welcome to the Custom Audio Generator. Let's get started by asking the most important question…
+
+What do you want to create right now?"
+
+You begin from TURN 2. Take the user's reply to the opener and proceed through the layers below.
 
 If they answer with a problem ("I'm stuck", "I'm anxious", "I keep procrastinating"), reflect once and pivot to the outcome:
 
@@ -263,7 +267,7 @@ export default function CustomTrackPage() {
     if (user) {
       await supabase.from("profiles").update({ voice_preference: k } as any).eq("id", user.id);
     }
-    setChat([{ role: "assistant", content: "What would you love to be true for you right now?" }]);
+    setChat([{ role: "assistant", content: "Welcome to the Custom Audio Generator. Let's get started by asking the most important question…\n\nWhat do you want to create right now?" }]);
     setPhase("chat");
   };
 
@@ -432,7 +436,7 @@ export default function CustomTrackPage() {
               {chat.map((m, i) => (
                 <div
                   key={i}
-                  className={`max-w-[92%] p-5 rounded-2xl leading-relaxed ${
+                  className={`max-w-[92%] p-5 rounded-2xl leading-relaxed whitespace-pre-wrap ${
                     m.role === "assistant"
                       ? "bg-card border border-border text-foreground font-serif italic text-[20px]"
                       : "bg-accent/15 border border-accent/30 text-foreground ml-auto text-[17px]"
@@ -541,7 +545,7 @@ export default function CustomTrackPage() {
                 onClick={() => {
                   try { localStorage.removeItem("velum_pending_diagnosis"); } catch {}
                   setDiagnosis(null);
-                  setChat([{ role: "assistant", content: "What would you love to be true for you right now?" }]);
+                  setChat([{ role: "assistant", content: "Welcome to the Custom Audio Generator. Let's get started by asking the most important question…\n\nWhat do you want to create right now?" }]);
                   setPhase("chat");
                 }}
                 className="border border-border rounded-xl px-5 py-2.5 text-foreground text-sm hover:border-accent/40"
