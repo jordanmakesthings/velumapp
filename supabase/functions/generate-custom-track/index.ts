@@ -159,8 +159,9 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           text: ssml,
-          model_id: "eleven_multilingual_v2",
-          voice_settings: { stability: 0.75, similarity_boost: 0.7, style: 0, use_speaker_boost: true, speed: 0.85 },
+          // turbo_v2_5 is more consistent on long content (multilingual_v2 was drifting/speeding up)
+          model_id: "eleven_turbo_v2_5",
+          voice_settings: { stability: 0.85, similarity_boost: 0.75, style: 0, use_speaker_boost: true, speed: 0.8 },
         }),
       },
     );

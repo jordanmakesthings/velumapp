@@ -469,19 +469,23 @@ function CustomTracksSection() {
     a.loop = true;
     a.volume = bgVol;
     a.preload = "auto";
-    a.crossOrigin = "anonymous";
-    // Belt-and-suspenders: some browsers ignore loop=true for streamed audio.
-    // Explicit restart on 'ended' guarantees the loop continues.
+    // Strongest possible looping: combination of loop attr + ended handler + timeupdate seek.
+    // Some browsers (esp. Safari mobile) drop the loop attr on streamed mp3s.
     const onEnded = () => {
-      try {
-        a.currentTime = 0;
-        a.play().catch(() => {});
-      } catch {}
+      try { a.currentTime = 0; a.play().catch(() => {}); } catch {}
+    };
+    const onTimeUpdate = () => {
+      // Seek back to start when within 0.25s of the end — prevents the brief gap
+      if (a.duration && a.duration - a.currentTime < 0.25 && !a.paused) {
+        try { a.currentTime = 0; } catch {}
+      }
     };
     a.addEventListener("ended", onEnded);
+    a.addEventListener("timeupdate", onTimeUpdate);
     backingRef.current = a;
     return () => {
       a.removeEventListener("ended", onEnded);
+      a.removeEventListener("timeupdate", onTimeUpdate);
       a.pause();
       backingRef.current = null;
     };
