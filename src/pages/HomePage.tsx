@@ -165,6 +165,10 @@ function CustomTrackHomeTile() {
   const [playing, setPlaying] = useState(false);
   const [curTime, setCurTime] = useState(0);
   const [dur, setDur] = useState(0);
+  const [voiceRate] = useState<number>(() => {
+    const v = parseFloat(localStorage.getItem("velum_voice_rate") || "0.95");
+    return isNaN(v) ? 0.95 : v;
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -295,6 +299,7 @@ function CustomTrackHomeTile() {
     const v = voiceRef.current;
     if (!v) return;
     if (v.paused) {
+      v.playbackRate = voiceRate;
       await v.play();
       await startBacking();
       setPlaying(true);
@@ -423,6 +428,17 @@ function CustomTrackHomeTile() {
               </div>
             );
           })}
+        </div>
+
+        {/* Footer links */}
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-accent/10">
+          <Link to="/audios" className="text-muted-foreground text-[11px] hover:text-accent transition-colors flex items-center gap-1">
+            View Audio Library
+            <ArrowRight className="w-3 h-3" />
+          </Link>
+          <Link to="/custom-track" className="text-accent text-[11px] hover:underline">
+            + New track
+          </Link>
         </div>
 
         {/* Hidden audio element driving playback */}
@@ -575,7 +591,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen w-full max-w-full bg-radial-subtle overflow-x-hidden">
-    <div className="mx-auto w-full max-w-3xl overflow-x-hidden px-4 pt-14 pb-8 lg:px-8">
+    <div className="mx-auto w-full max-w-3xl overflow-x-hidden px-4 pt-8 pb-8 lg:px-8">
       {/* Header */}
       <div className="mb-8 min-w-0 w-full max-w-full">
         <h1 className="text-display text-3xl md:text-4xl leading-[1.1] text-foreground mb-5">

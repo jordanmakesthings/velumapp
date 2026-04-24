@@ -50,7 +50,14 @@ Hard rules:
 Output ONLY the script text. No title. No preamble. No notes after.`;
 
 function scriptToSsml(text: string): string {
-  return text.replace(/\[pause:\s*(\d+(?:\.\d+)?)\s*seconds?\]/gi, (_, n) => `<break time="${n}s"/>`);
+  // Convert explicit [pause: N seconds] markers
+  let s = text.replace(/\[pause:\s*(\d+(?:\.\d+)?)\s*seconds?\]/gi, (_, n) => `<break time="${n}s"/>`);
+  // Insert a small micro-pause after sentence-ending punctuation to slow pacing.
+  // Doesn't add meaningful length but breaks ElevenLabs' rush-through behavior.
+  s = s.replace(/([.!?])(\s+)/g, '$1<break time="0.6s"/>$2');
+  // Slightly longer pause after commas at the end of clauses
+  s = s.replace(/(,)(\s+)/g, '$1<break time="0.25s"/>$2');
+  return s;
 }
 
 function slugify(s: string): string {
@@ -182,7 +189,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             text: ssmlChunk,
             model_id: "eleven_multilingual_v2", // most consistent on slow trance content
-            voice_settings: { stability: 0.9, similarity_boost: 0.75, style: 0, use_speaker_boost: true, speed: 0.78 },
+            voice_settings: { stability: 0.92, similarity_boost: 0.78, style: 0, use_speaker_boost: true, speed: 0.72 },
           }),
         },
       );

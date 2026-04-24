@@ -458,6 +458,10 @@ function CustomTracksSection() {
     const v = parseFloat(localStorage.getItem("velum_bg_vol") || "0.22");
     return isNaN(v) ? 0.22 : v;
   });
+  const [voiceRate] = useState<number>(() => {
+    const v = parseFloat(localStorage.getItem("velum_voice_rate") || "0.95");
+    return isNaN(v) ? 0.95 : v;
+  });
 
   // Web Audio API for the backing loop — decoded into memory once, loops perfectly.
   // HTMLAudioElement loop attribute is unreliable for streamed MP3s.
@@ -527,9 +531,10 @@ function CustomTracksSection() {
     localStorage.setItem("velum_bg_vol", String(bgVol));
   }, [bgVol]);
 
-  const handleVoicePlay = () => {
+  const handleVoicePlay = (e?: React.SyntheticEvent<HTMLAudioElement>) => {
     playingCount.current += 1;
     startBacking();
+    if (e?.currentTarget) e.currentTarget.playbackRate = voiceRate;
   };
   const handleVoicePause = () => {
     playingCount.current = Math.max(0, playingCount.current - 1);

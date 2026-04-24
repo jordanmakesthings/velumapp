@@ -33,6 +33,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AuthConfirmPage from "./pages/AuthConfirmPage";
 import SubcategoryPage from "./pages/SubcategoryPage";
 import CustomTrackPage from "./pages/CustomTrackPage";
+import AudiosPage from "./pages/AudiosPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/journal" element={<JournalPage />} />
               <Route path="/custom-track" element={<CustomTrackPage />} />
+              <Route path="/audios" element={<AudiosPage />} />
             </Route>
 
             {/* Full-screen protected pages (no nav) */}

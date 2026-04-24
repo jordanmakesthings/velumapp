@@ -1,14 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
-import { Sparkles, Compass, User } from "lucide-react";
+import { Sparkles, Compass, Headphones, User } from "lucide-react";
 
-// Three-tab simplified navigation
-// - Today: the anchor (home + session finder)
-// - Discover: library, tools, courses, mastery, journal all live here
+// Four-tab navigation
+// - Home: today's anchor (custom track hero + check-in)
+// - Discover: library, tools, courses, mastery, journal
+// - Audios: dedicated home for the user's custom hypnosis tracks
 // - Me: profile + premium + settings
 const navItems = [
-  { path: "/home",    icon: Sparkles, label: "Home",     match: ["/home", "/"] },
-  { path: "/library", icon: Compass,  label: "Discover", match: ["/library", "/tools", "/courses", "/course", "/subcategory", "/journal", "/breathe", "/bilateral", "/tapping", "/somatic-touch", "/sos"] },
-  { path: "/profile", icon: User,     label: "Me",       match: ["/profile", "/premium"] },
+  { path: "/home",    icon: Sparkles,   label: "Home",     match: ["/home", "/"] },
+  { path: "/library", icon: Compass,    label: "Discover", match: ["/library", "/tools", "/courses", "/course", "/subcategory", "/journal", "/breathe", "/bilateral", "/tapping", "/somatic-touch", "/sos"] },
+  { path: "/audios",  icon: Headphones, label: "Audios",   match: ["/audios", "/custom-track"] },
+  { path: "/profile", icon: User,       label: "Me",       match: ["/profile", "/premium"] },
 ];
 
 export function BottomNav() {
