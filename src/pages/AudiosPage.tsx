@@ -302,9 +302,6 @@ export default function AudiosPage() {
                             </button>
                           </div>
                         )}
-                        {t.issue_summary && (
-                          <p className="text-muted-foreground text-xs italic mt-1 line-clamp-2">{t.issue_summary}</p>
-                        )}
                       </div>
                       <span className="text-accent text-[10px] uppercase tracking-wider shrink-0 font-sans font-medium">
                         {t.duration_sec ? `${Math.round(t.duration_sec / 60)} min` : "—"}
