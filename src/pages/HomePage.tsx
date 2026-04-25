@@ -337,50 +337,42 @@ function CustomTrackHomeTile() {
   };
 
   return (
-    <div className="mb-6 w-full rounded-3xl overflow-hidden border border-accent/45 shadow-2xl shadow-accent/10 relative">
-      {/* Full-bleed artwork hero (Calm-style atmospheric image) */}
-      <div className="relative">
-        <TrackArtwork trackId={t.id} title={t.title} size="hero" rounded="lg" className="!rounded-none !border-0" />
-        {/* Dark gradient overlay so text on top reads well */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(156,52%,9%)] via-[hsl(156,52%,9%)]/40 to-transparent" />
-        {/* Top eyebrow + carousel */}
-        <div className="absolute top-0 left-0 right-0 p-5 flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-accent" />
-            <p className="text-eyebrow text-accent">
-              {trackListens.has(todayKey) ? `✓ Done · Day ${dayInProgram} of 21` : `Today · Day ${dayInProgram} of 21`}
-            </p>
+    <div className="velum-card-accent mb-6 w-full p-6 relative overflow-hidden">
+      {/* Top eyebrow + carousel */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-accent" />
+          <p className="text-eyebrow text-accent">
+            {trackListens.has(todayKey) ? `✓ Done · Day ${dayInProgram} of 21` : `Today · Day ${dayInProgram} of 21`}
+          </p>
+        </div>
+        {tracks.length > 1 && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => switchTo((idx - 1 + tracks.length) % tracks.length)}
+              className="w-7 h-7 rounded-full border border-accent/30 flex items-center justify-center text-accent hover:bg-accent/10"
+              title="Previous"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-muted-foreground text-[10px] font-sans tracking-wider min-w-[28px] text-center">
+              {idx + 1}/{tracks.length}
+            </span>
+            <button
+              onClick={() => switchTo((idx + 1) % tracks.length)}
+              className="w-7 h-7 rounded-full border border-accent/30 flex items-center justify-center text-accent hover:bg-accent/10"
+              title="Next"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
-          {tracks.length > 1 && (
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                onClick={() => switchTo((idx - 1 + tracks.length) % tracks.length)}
-                className="w-7 h-7 rounded-full bg-black/30 backdrop-blur border border-white/10 flex items-center justify-center text-accent hover:bg-black/50"
-                title="Previous"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-foreground/80 text-[10px] font-sans tracking-wider min-w-[28px] text-center">
-                {idx + 1}/{tracks.length}
-              </span>
-              <button
-                onClick={() => switchTo((idx + 1) % tracks.length)}
-                className="w-7 h-7 rounded-full bg-black/30 backdrop-blur border border-white/10 flex items-center justify-center text-accent hover:bg-black/50"
-                title="Next"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </div>
-        {/* Title sits over the bottom of the artwork */}
-        <div className="absolute bottom-0 left-0 right-0 p-5 pb-4">
-          <p className="text-foreground text-display text-2xl md:text-3xl font-light leading-tight drop-shadow-lg">{t.title}</p>
-        </div>
+        )}
       </div>
 
-      {/* Player + day strip — solid card body below artwork */}
-      <div className="bg-[hsl(156,52%,9%)] p-5 pt-4 relative">
+      {/* Title */}
+      <p className="text-foreground font-serif text-2xl md:text-3xl font-normal leading-tight mb-5">{t.title}</p>
+
+      <div className="relative">
         {/* Inline player */}
         <div className="flex items-center gap-3 mb-4">
           <button

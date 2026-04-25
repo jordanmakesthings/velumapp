@@ -252,7 +252,7 @@ export default function AudiosPage() {
             if (e.key === "Escape") setEditingId(null);
           }}
           onBlur={() => saveTitle(t.id)}
-          className={`bg-card border border-accent/40 rounded-lg px-3 py-1 text-foreground font-serif font-light focus:outline-none flex-1 min-w-0 ${size === "hero" ? "text-2xl" : "text-base"}`}
+          className={`bg-card border border-accent/40 rounded-lg px-3 py-1 text-foreground font-serif focus:outline-none flex-1 min-w-0 ${size === "hero" ? "text-2xl" : "text-base"}`}
           maxLength={80}
           style={{ fontSize: size === "hero" ? "24px" : "16px" }}
         />
@@ -262,7 +262,7 @@ export default function AudiosPage() {
       </div>
     ) : (
       <div className="flex items-center gap-2 min-w-0">
-        <p className={`text-foreground font-serif font-light leading-tight truncate ${size === "hero" ? "text-display text-3xl md:text-4xl" : "text-lg"}`}>{t.title}</p>
+        <p className={`text-foreground font-serif leading-tight truncate ${size === "hero" ? "text-3xl md:text-4xl font-normal" : "text-lg font-normal"}`}>{t.title}</p>
         <button
           onClick={() => { setEditingId(t.id); setEditTitle(t.title); }}
           className="text-muted-foreground/60 hover:text-accent transition-colors p-1 shrink-0"
@@ -439,16 +439,13 @@ function HeroTrackCard({
       </div>
 
       <div className="relative velum-card-accent p-7 md:p-9">
-        <div className="flex items-start gap-5 mb-6">
-          <TrackArtwork trackId={track.id} title={track.title} size="lg" rounded="2xl" />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-end mb-2">
-              <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
-                {track.duration_sec ? `${Math.round(track.duration_sec / 60)} min` : "—"}
-              </span>
-            </div>
-            {titleNode}
+        <div className="mb-6">
+          <div className="flex items-center justify-end mb-2">
+            <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
+              {track.duration_sec ? `${Math.round(track.duration_sec / 60)} min` : "—"}
+            </span>
           </div>
+          {titleNode}
         </div>
 
         {signedUrl ? (
@@ -527,12 +524,8 @@ function BigPlayer({
   const [scrubbing, setScrubbing] = useState(false);
   const [scrubPct, setScrubPct] = useState(0);
 
-  // Multi-chunk MP3s often have wrong header durations. Trust the DB value (durationHint)
-  // when it's meaningfully higher than what the browser reports.
-  const duration = (() => {
-    if (durationHint && audioDuration && durationHint > audioDuration + 5) return durationHint;
-    return audioDuration || durationHint || 0;
-  })();
+  // Always trust the audio file's actual duration — seeking past it fails.
+  const duration = audioDuration || durationHint || 0;
 
   const toggle = async () => {
     const a = audioRef.current;
@@ -686,11 +679,8 @@ function ArchiveTrackRow({
       className="velum-card w-full p-4 text-left transition-all hover:border-accent/40 group"
     >
       <div className="flex items-center gap-4">
-        <div className="relative shrink-0">
-          <TrackArtwork trackId={track.id} title={track.title} size="md" rounded="xl" />
-          <div className="absolute inset-0 rounded-xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <Play className="w-6 h-6 text-accent" fill="currentColor" />
-          </div>
+        <div className="w-12 h-12 shrink-0 rounded-full border border-accent/30 flex items-center justify-center group-hover:bg-accent/10 transition-colors">
+          <Play className="w-5 h-5 text-accent ml-0.5" fill="currentColor" />
         </div>
         <div className="flex-1 min-w-0">
           {titleNode}
