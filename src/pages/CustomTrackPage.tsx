@@ -380,7 +380,7 @@ export default function CustomTrackPage() {
   return (
     <div className="min-h-screen bg-radial-subtle font-sans flex flex-col">
       <header className="px-5 pt-6 pb-3 flex items-center justify-between max-w-2xl mx-auto w-full">
-        <Link to="/profile" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 text-sm">
+        <Link to="/audios" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 text-sm">
           <ArrowLeft className="w-4 h-4" /> Back
         </Link>
         <div className="flex items-center gap-2 text-accent">
