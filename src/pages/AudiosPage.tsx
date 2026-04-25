@@ -70,8 +70,8 @@ export default function AudiosPage() {
   const recordedRef = useRef<Set<string>>(new Set());
 
   const [bgVol, setBgVol] = useState<number>(() => {
-    const v = parseFloat(localStorage.getItem("velum_bg_vol") || "0.22");
-    return isNaN(v) ? 0.22 : v;
+    const v = parseFloat(localStorage.getItem("velum_bg_vol") || "0.14");
+    return isNaN(v) ? 0.14 : v;
   });
   const [voiceRate, setVoiceRate] = useState<number>(() => {
     const v = parseFloat(localStorage.getItem("velum_voice_rate") || "0.95");
@@ -449,6 +449,7 @@ function HeroTrackCard({
 
         {signedUrl ? (
           <BigPlayer
+            trackId={track.id}
             src={signedUrl}
             durationHint={track.duration_sec}
             voiceRate={voiceRate}
@@ -503,10 +504,14 @@ function HeroTrackCard({
 }
 
 // ────────────── Big Player (hero) ──────────────
+const POS_KEY = (id: string) => `velum_track_pos_${id}`;
+
 function BigPlayer({
+  trackId,
   src, durationHint, voiceRate,
   onPlay, onPause, onTimeUpdate, registerRef,
 }: {
+  trackId: string;
   src: string;
   durationHint?: number;
   voiceRate: number;
@@ -523,7 +528,12 @@ function BigPlayer({
   const [audioDuration, setAudioDuration] = useState(0);
   const [scrubPct, setScrubPct] = useState<number | null>(null);
 
-  const duration = audioDuration || durationHint || 0;
+  // For DISPLAY: trust the DB duration when it's meaningfully larger than what the browser reports
+  // (broken MP3 chunked-concat headers report only the first chunk's length).
+  // For SEEK: always clamp to the browser's audio.duration since seeks past it silently reset.
+  const duration = (durationHint && audioDuration && durationHint > audioDuration + 5)
+    ? durationHint
+    : (audioDuration || durationHint || 0);
 
   const seekTo = (sec: number) => {
     const a = audioRef.current;
@@ -532,6 +542,15 @@ function BigPlayer({
     const clamped = Math.max(0, Math.min(realMax, sec));
     try { a.currentTime = clamped; } catch {}
     setCurrent(clamped);
+  };
+
+  // When the user drags the scrubber, map the percentage to a SEEK-SAFE position
+  // (clamped to audio.duration), even though the bar itself reflects the larger DB duration.
+  const seekFromScrubPct = (pct: number) => {
+    const a = audioRef.current;
+    if (!a) return;
+    const seekMax = (a.duration && isFinite(a.duration) && a.duration > 0) ? a.duration : duration;
+    seekTo(pct * seekMax);
   };
 
   const toggle = async () => {
@@ -573,7 +592,7 @@ function BigPlayer({
     const pct = pctFromClientX(e.clientX);
     scrubbingRef.current = false;
     setScrubPct(null);
-    if (duration > 0) seekTo(pct * duration);
+    if (duration > 0) seekFromScrubPct(pct);
     try { (e.currentTarget as HTMLDivElement).releasePointerCapture?.(e.pointerId); } catch {}
   };
 
@@ -586,12 +605,34 @@ function BigPlayer({
         ref={(el) => { audioRef.current = el; registerRef(el); if (el) el.playbackRate = voiceRate; }}
         src={src}
         preload="metadata"
-        onLoadedMetadata={(e) => setAudioDuration(e.currentTarget.duration || 0)}
+        onLoadedMetadata={(e) => {
+          setAudioDuration(e.currentTarget.duration || 0);
+          // Restore last known position if we have one (and it's > 5s in)
+          try {
+            const saved = parseFloat(localStorage.getItem(POS_KEY(trackId)) || "0");
+            if (saved > 5 && saved < (e.currentTarget.duration || 0) - 2) {
+              e.currentTarget.currentTime = saved;
+              setCurrent(saved);
+            }
+          } catch {}
+        }}
         onDurationChange={(e) => setAudioDuration(e.currentTarget.duration || 0)}
         onPlay={() => { setPlaying(true); onPlay(); }}
         onPause={() => { setPlaying(false); onPause(); }}
-        onEnded={() => { setPlaying(false); setCurrent(0); onPause(); }}
-        onTimeUpdate={(e) => { if (!scrubbingRef.current) setCurrent(e.currentTarget.currentTime); onTimeUpdate(e); }}
+        onEnded={() => {
+          setPlaying(false); setCurrent(0); onPause();
+          try { localStorage.removeItem(POS_KEY(trackId)); } catch {}
+        }}
+        onTimeUpdate={(e) => {
+          const t = e.currentTarget.currentTime;
+          if (!scrubbingRef.current) setCurrent(t);
+          // Persist position every ~2s so background-kill restores cleanly
+          try {
+            const last = parseFloat(localStorage.getItem(POS_KEY(trackId)) || "0");
+            if (Math.abs(t - last) > 2) localStorage.setItem(POS_KEY(trackId), String(t));
+          } catch {}
+          onTimeUpdate(e);
+        }}
         className="hidden"
       />
 

@@ -151,8 +151,8 @@ function CustomTrackHomeTile() {
   const [loading, setLoading] = useState(true);
   const [idx, setIdx] = useState(0);
   const [bgVol] = useState<number>(() => {
-    const v = parseFloat(localStorage.getItem("velum_bg_vol") || "0.22");
-    return isNaN(v) ? 0.22 : v;
+    const v = parseFloat(localStorage.getItem("velum_bg_vol") || "0.14");
+    return isNaN(v) ? 0.14 : v;
   });
 
   // Audio refs

@@ -184,10 +184,12 @@ Deno.serve(async (req) => {
       return chunks;
     };
     const chunks = chunkScript(scriptText);
+    // Use PCM output so we can concat chunks losslessly (MP3 concat causes browsers to
+    // stop at the first chunk's end-of-stream header → truncated playback).
+    const SAMPLE_RATE = 44100;
     const audioParts: Uint8Array[] = [];
     const chunkSizes: number[] = [];
-    // Synthesize each chunk with retry-on-empty + validation
-    const MIN_AUDIO_BYTES = 5000; // a real ~10-30s MP3 is 50-300 KB. Anything under 5KB is a failure.
+    const MIN_AUDIO_BYTES = 8000; // raw PCM ~10s @ 44.1kHz mono 16-bit = 880KB; anything under 8KB is a failure
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
       const ssmlChunk = scriptToSsml(chunk);
@@ -195,10 +197,10 @@ Deno.serve(async (req) => {
       let buf: Uint8Array | null = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         const ttsRes = await fetch(
-          `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`,
+          `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=pcm_44100`,
           {
             method: "POST",
-            headers: { "xi-api-key": elevenKey, "Content-Type": "application/json", Accept: "audio/mpeg" },
+            headers: { "xi-api-key": elevenKey, "Content-Type": "application/json", Accept: "audio/pcm" },
             body: JSON.stringify({
               text: ssmlChunk,
               model_id: "eleven_multilingual_v2",
@@ -209,8 +211,7 @@ Deno.serve(async (req) => {
         const contentType = ttsRes.headers.get("content-type") || "";
         if (!ttsRes.ok) {
           lastError = `HTTP ${ttsRes.status}: ${(await ttsRes.text()).slice(0, 200)}`;
-        } else if (!contentType.includes("audio")) {
-          // ElevenLabs sometimes returns 200 OK with JSON error body
+        } else if (!contentType.includes("audio") && !contentType.includes("octet-stream")) {
           lastError = `Non-audio response (${contentType}): ${(await ttsRes.text()).slice(0, 200)}`;
         } else {
           const candidate = new Uint8Array(await ttsRes.arrayBuffer());
@@ -221,7 +222,6 @@ Deno.serve(async (req) => {
             break;
           }
         }
-        // Brief backoff before retry
         await new Promise(r => setTimeout(r, 600));
       }
       if (!buf) {
@@ -236,17 +236,47 @@ Deno.serve(async (req) => {
       chunkSizes.push(buf.byteLength);
       audioParts.push(buf);
     }
-    // Concat all MP3 buffers — works for ElevenLabs constant-bitrate MP3 output
-    const totalLen = audioParts.reduce((s, b) => s + b.byteLength, 0);
-    const audioBuf = new Uint8Array(totalLen);
-    let off = 0;
-    for (const part of audioParts) { audioBuf.set(part, off); off += part.byteLength; }
+    // Concat all PCM chunks — straight byte concatenation, then wrap in a WAV header.
+    const pcmLen = audioParts.reduce((s, b) => s + b.byteLength, 0);
+    const pcm = new Uint8Array(pcmLen);
+    {
+      let off = 0;
+      for (const part of audioParts) { pcm.set(part, off); off += part.byteLength; }
+    }
+    // Build WAV header (PCM 16-bit mono @ 44.1kHz)
+    const wav = (() => {
+      const numChannels = 1;
+      const bitsPerSample = 16;
+      const byteRate = SAMPLE_RATE * numChannels * (bitsPerSample / 8);
+      const blockAlign = numChannels * (bitsPerSample / 8);
+      const header = new ArrayBuffer(44);
+      const view = new DataView(header);
+      const writeStr = (offset: number, s: string) => { for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i)); };
+      writeStr(0, "RIFF");
+      view.setUint32(4, 36 + pcm.byteLength, true);
+      writeStr(8, "WAVE");
+      writeStr(12, "fmt ");
+      view.setUint32(16, 16, true);              // PCM chunk size
+      view.setUint16(20, 1, true);               // PCM format
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, SAMPLE_RATE, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, bitsPerSample, true);
+      writeStr(36, "data");
+      view.setUint32(40, pcm.byteLength, true);
+      const out = new Uint8Array(44 + pcm.byteLength);
+      out.set(new Uint8Array(header), 0);
+      out.set(pcm, 44);
+      return out;
+    })();
+    const audioBuf = wav;
 
-    // 3. Upload to storage at <user_id>/<timestamp>-<title-slug>.mp3
+    // 3. Upload to storage at <user_id>/<timestamp>-<title-slug>.wav
     const finalTitle = (title && String(title).trim()) || (diagnosis.issue ? String(diagnosis.issue).slice(0, 60) : "Custom track");
-    const fname = `${user.id}/${Date.now()}-${slugify(finalTitle)}.mp3`;
+    const fname = `${user.id}/${Date.now()}-${slugify(finalTitle)}.wav`;
     const { error: upErr } = await admin.storage.from("custom-tracks").upload(fname, audioBuf, {
-      contentType: "audio/mpeg",
+      contentType: "audio/wav",
       upsert: false,
     });
     if (upErr) return json({ error: "Upload failed", detail: upErr.message }, 502);
