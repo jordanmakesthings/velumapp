@@ -443,7 +443,7 @@ export default function ProfilePage() {
   );
 }
 
-const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop.mp3";
+const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop%201.wav";
 const PROGRAM_DAYS = 21;
 
 function CustomTracksSection() {
