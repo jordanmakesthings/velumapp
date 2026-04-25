@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Plus, Check, Edit2, X, Play, Pause, Rewind, FastForward, Settings2, Flame, Clock, Library } from "lucide-react";
 import { toast } from "sonner";
+import { TrackCover } from "@/components/TrackCover";
 
 const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop%201.wav";
 const PROGRAM_DAYS = 21;
@@ -437,15 +438,29 @@ function HeroTrackCard({
              style={{ background: "radial-gradient(ellipse, hsla(42, 53%, 45%, 0.10) 0%, transparent 65%)", filter: "blur(40px)" }} />
       </div>
 
-      <div className="relative velum-card-accent p-7 md:p-9">
-        <div className="mb-6">
-          <div className="flex items-center justify-end mb-2">
-            <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
-              {track.duration_sec ? `${Math.round(track.duration_sec / 60)} min` : "—"}
-            </span>
-          </div>
-          {titleNode}
+      <div className="relative velum-card-accent overflow-hidden p-0">
+        {/* Full-bleed cover with title overlay */}
+        <TrackCover
+          trackId={track.id}
+          title={track.title}
+          size="hero"
+          rounded="lg"
+          showTitle
+          className="!rounded-none !border-0 !border-b border-accent/15"
+        />
+        <div className="px-7 md:px-9 py-7">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
+            {track.duration_sec ? `${Math.round(track.duration_sec / 60)} min` : "—"}
+          </span>
+          <button
+            onClick={() => { setEditingId(track.id); setEditTitle(track.title); }}
+            className="text-muted-foreground/60 hover:text-accent transition-colors text-[10px] tracking-wider uppercase"
+          >
+            Rename
+          </button>
         </div>
+        {editingId === track.id && (<div className="mb-4">{titleNode}</div>)}
 
         {signedUrl ? (
           <BigPlayer
@@ -497,6 +512,7 @@ function HeroTrackCard({
               );
             })}
           </div>
+        </div>
         </div>
       </div>
     </div>
@@ -706,8 +722,11 @@ function ArchiveTrackRow({
       className="velum-card w-full p-4 text-left transition-all hover:border-accent/40 group"
     >
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 shrink-0 rounded-full border border-accent/30 flex items-center justify-center group-hover:bg-accent/10 transition-colors">
-          <Play className="w-5 h-5 text-accent ml-0.5" fill="currentColor" />
+        <div className="relative shrink-0">
+          <TrackCover trackId={track.id} size="md" rounded="xl" />
+          <div className="absolute inset-0 rounded-xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <Play className="w-6 h-6 text-accent" fill="currentColor" />
+          </div>
         </div>
         <div className="flex-1 min-w-0">
           {titleNode}

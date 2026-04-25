@@ -3,6 +3,7 @@ import React, { useEffect, useMemo } from "react";
 import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Clock, Hand, Fingerprint, Play, Pause, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useRef } from "react";
 import { getTodayCheckin } from "@/lib/velumStorage";
+import { TrackCover } from "@/components/TrackCover";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionFinder } from "@/contexts/SessionFinderContext";
@@ -336,42 +337,44 @@ function CustomTrackHomeTile() {
   };
 
   return (
-    <div className="velum-card-accent mb-6 w-full p-6 relative overflow-hidden">
-      {/* Top eyebrow + carousel */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-3.5 h-3.5 text-accent" />
-          <p className="text-eyebrow text-accent">
-            {trackListens.has(todayKey) ? `✓ Done · Day ${dayInProgram} of 21` : `Today · Day ${dayInProgram} of 21`}
-          </p>
-        </div>
-        {tracks.length > 1 && (
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => switchTo((idx - 1 + tracks.length) % tracks.length)}
-              className="w-7 h-7 rounded-full border border-accent/30 flex items-center justify-center text-accent hover:bg-accent/10"
-              title="Previous"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="text-muted-foreground text-[10px] font-sans tracking-wider min-w-[28px] text-center">
-              {idx + 1}/{tracks.length}
-            </span>
-            <button
-              onClick={() => switchTo((idx + 1) % tracks.length)}
-              className="w-7 h-7 rounded-full border border-accent/30 flex items-center justify-center text-accent hover:bg-accent/10"
-              title="Next"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+    <div className="mb-6 w-full rounded-3xl overflow-hidden border border-accent/45 shadow-2xl shadow-accent/10 relative">
+      {/* Full-bleed cover with title overlay */}
+      <div className="relative">
+        <TrackCover trackId={t.id} title={t.title} size="hero" rounded="lg" showTitle className="!rounded-none !border-0" />
+        {/* Top eyebrow + carousel sit over the cover */}
+        <div className="absolute top-0 left-0 right-0 p-5 flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-accent" />
+            <p className="text-eyebrow text-accent drop-shadow-lg">
+              {trackListens.has(todayKey) ? `✓ Done · Day ${dayInProgram} of 21` : `Today · Day ${dayInProgram} of 21`}
+            </p>
           </div>
-        )}
+          {tracks.length > 1 && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => switchTo((idx - 1 + tracks.length) % tracks.length)}
+                className="w-7 h-7 rounded-full bg-black/30 backdrop-blur border border-white/10 flex items-center justify-center text-accent hover:bg-black/50"
+                title="Previous"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-foreground/80 text-[10px] font-sans tracking-wider min-w-[28px] text-center drop-shadow-lg">
+                {idx + 1}/{tracks.length}
+              </span>
+              <button
+                onClick={() => switchTo((idx + 1) % tracks.length)}
+                className="w-7 h-7 rounded-full bg-black/30 backdrop-blur border border-white/10 flex items-center justify-center text-accent hover:bg-black/50"
+                title="Next"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Title */}
-      <p className="text-foreground font-serif text-2xl md:text-3xl font-normal leading-tight mb-5">{t.title}</p>
-
-      <div className="relative">
+      {/* Player + day strip — solid card body below cover */}
+      <div className="bg-[hsl(156,52%,9%)] p-5 pt-4 relative">
         {/* Inline player */}
         <div className="flex items-center gap-3 mb-4">
           <button
