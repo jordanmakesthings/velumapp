@@ -340,7 +340,7 @@ function CustomTrackHomeTile() {
     <div className="mb-6 w-full rounded-3xl overflow-hidden border border-accent/45 shadow-2xl shadow-accent/10 relative">
       {/* Full-bleed artwork hero (Calm-style atmospheric image) */}
       <div className="relative">
-        <TrackArtwork trackId={t.id} size="hero" rounded="lg" className="!rounded-none !border-0" />
+        <TrackArtwork trackId={t.id} title={t.title} size="hero" rounded="lg" className="!rounded-none !border-0" />
         {/* Dark gradient overlay so text on top reads well */}
         <div className="absolute inset-0 bg-gradient-to-t from-[hsl(156,52%,9%)] via-[hsl(156,52%,9%)]/40 to-transparent" />
         {/* Top eyebrow + carousel */}

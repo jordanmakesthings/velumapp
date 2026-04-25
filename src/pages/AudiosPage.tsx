@@ -440,7 +440,7 @@ function HeroTrackCard({
 
       <div className="relative velum-card-accent p-7 md:p-9">
         <div className="flex items-start gap-5 mb-6">
-          <TrackArtwork trackId={track.id} size="lg" rounded="2xl" />
+          <TrackArtwork trackId={track.id} title={track.title} size="lg" rounded="2xl" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-end mb-2">
               <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
@@ -625,7 +625,7 @@ function ArchiveTrackRow({
     >
       <div className="flex items-center gap-4">
         <div className="relative shrink-0">
-          <TrackArtwork trackId={track.id} size="md" rounded="xl" />
+          <TrackArtwork trackId={track.id} title={track.title} size="md" rounded="xl" />
           <div className="absolute inset-0 rounded-xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <Play className="w-6 h-6 text-accent" fill="currentColor" />
           </div>
