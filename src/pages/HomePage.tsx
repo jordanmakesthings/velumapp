@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useEffect, useMemo } from "react";
 import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Clock, Hand, Fingerprint, Play, Pause, Check, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { getTodayCheckin } from "@/lib/velumStorage";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

@@ -12,11 +12,7 @@ const corsHeaders = {
 };
 
 const VOICE_ROSTER: Record<string, string> = {
-  jordan: "ZsKLSeq0zeFC3Yye7BrH",
   theo: "UmQN7jS1Ee8B1czsUtQh",
-  solomon: "PTX7PgQRJRPEzGT9exN9",
-  almee: "zA6D7RyKdc2EClouEMkP",
-  rhythm: "7AvtJrjTNyBhBxEvNPIZ",
   nicole: "gc5LArFpEOmYx9nYmK9l",
 };
 
