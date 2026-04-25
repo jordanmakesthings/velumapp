@@ -137,7 +137,7 @@ WHEN READY, send ONLY this JSON (no preamble, no markdown fences):
 
 {
   "ready": true,
-  "title": "2-4 word evocative track name hinting at the desired outcome — NOT a description of any problem (examples: 'The Open Door', 'Already Enough', 'Coming Home', 'Worthy of Receiving', 'The Steady Yes')",
+  "title": "EXACTLY 2-3 words. Title Case. Evocative noun-phrase pointing at the desired outcome (NEVER the problem). No 'The' prefix. Concrete > abstract. Echo their already_true language when possible. Examples: 'Open Door', 'Already Enough', 'Coming Home', 'Steady Yes', 'Quiet Power', 'Soft Knowing', 'Built In', 'Inner Compass', 'Wide Awake'. NOT: 'My Journey to Confidence', 'The Path of Self-Discovery', 'Healing My Inner Child' — those are too long, too on-the-nose, too generic.",
   "desired_outcome": "1-line summary of what they want, in their exact words",
   "picture": "the vivid scene they painted in D3",
   "sensory": "what they'd see/hear/feel from D4",
