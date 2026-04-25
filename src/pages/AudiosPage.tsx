@@ -520,9 +520,19 @@ function BigPlayer({
   registerRef: (el: HTMLAudioElement | null) => void;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
-  const [duration, setDuration] = useState(durationHint || 0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [scrubbing, setScrubbing] = useState(false);
+  const [scrubPct, setScrubPct] = useState(0);
+
+  // Multi-chunk MP3s often have wrong header durations. Trust the DB value (durationHint)
+  // when it's meaningfully higher than what the browser reports.
+  const duration = (() => {
+    if (durationHint && audioDuration && durationHint > audioDuration + 5) return durationHint;
+    return audioDuration || durationHint || 0;
+  })();
 
   const toggle = async () => {
     const a = audioRef.current;
@@ -538,17 +548,53 @@ function BigPlayer({
   const skip = (delta: number) => {
     const a = audioRef.current;
     if (!a) return;
-    a.currentTime = Math.max(0, Math.min((a.duration || 0) - 0.1, a.currentTime + delta));
-  };
-  const onSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const a = audioRef.current;
-    if (!a || !a.duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    a.currentTime = pct * a.duration;
+    const max = (a.duration && isFinite(a.duration) ? a.duration : duration) - 0.1;
+    a.currentTime = Math.max(0, Math.min(max, a.currentTime + delta));
   };
 
-  const progress = duration > 0 ? (current / duration) * 100 : 0;
+  // ── Drag-to-scrub ──
+  const pctFromEvent = (clientX: number) => {
+    const el = trackRef.current;
+    if (!el) return 0;
+    const rect = el.getBoundingClientRect();
+    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  };
+  const startScrub = (clientX: number) => {
+    setScrubbing(true);
+    setScrubPct(pctFromEvent(clientX));
+  };
+  const moveScrub = (clientX: number) => {
+    if (!scrubbing) return;
+    setScrubPct(pctFromEvent(clientX));
+  };
+  const endScrub = (clientX: number) => {
+    if (!scrubbing) return;
+    const pct = pctFromEvent(clientX);
+    const a = audioRef.current;
+    if (a && duration > 0) {
+      a.currentTime = pct * duration;
+      setCurrent(pct * duration);
+    }
+    setScrubbing(false);
+  };
+
+  useEffect(() => {
+    if (!scrubbing) return;
+    const onMove = (e: PointerEvent) => moveScrub(e.clientX);
+    const onUp = (e: PointerEvent) => endScrub(e.clientX);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrubbing, duration]);
+
+  const displayCurrent = scrubbing ? scrubPct * duration : current;
+  const progress = duration > 0 ? (displayCurrent / duration) * 100 : 0;
 
   return (
     <div>
@@ -556,21 +602,35 @@ function BigPlayer({
         ref={(el) => { audioRef.current = el; registerRef(el); if (el) el.playbackRate = voiceRate; }}
         src={src}
         preload="metadata"
-        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || durationHint || 0)}
+        onLoadedMetadata={(e) => setAudioDuration(e.currentTarget.duration || 0)}
+        onDurationChange={(e) => setAudioDuration(e.currentTarget.duration || 0)}
         onPlay={() => { setPlaying(true); onPlay(); }}
         onPause={() => { setPlaying(false); onPause(); }}
         onEnded={() => { setPlaying(false); setCurrent(0); onPause(); }}
-        onTimeUpdate={(e) => { setCurrent(e.currentTarget.currentTime); onTimeUpdate(e); }}
+        onTimeUpdate={(e) => { if (!scrubbing) setCurrent(e.currentTarget.currentTime); onTimeUpdate(e); }}
         className="hidden"
       />
 
       {/* Progress + times */}
-      <div className="mb-5">
-        <div className="h-1.5 bg-foreground/10 rounded-full overflow-hidden cursor-pointer" onClick={onSeek}>
-          <div className="h-full gold-gradient rounded-full transition-all duration-100" style={{ width: `${progress}%` }} />
+      <div className="mb-5 select-none">
+        <div
+          ref={trackRef}
+          className="py-3 -my-3 cursor-pointer touch-none"
+          onPointerDown={(e) => { (e.target as HTMLElement).setPointerCapture?.(e.pointerId); startScrub(e.clientX); }}
+        >
+          <div className="h-1.5 bg-foreground/10 rounded-full overflow-hidden relative">
+            <div
+              className="absolute left-0 top-0 h-full gold-gradient rounded-full"
+              style={{ width: `${progress}%`, transition: scrubbing ? "none" : "width 100ms linear" }}
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-accent shadow-lg shadow-accent/40 border-2 border-[hsl(156,52%,9%)]"
+              style={{ left: `calc(${progress}% - 7px)`, transition: scrubbing ? "none" : "left 100ms linear" }}
+            />
+          </div>
         </div>
         <div className="flex items-center justify-between mt-2 text-[11px] tracking-wider font-sans text-muted-foreground/80 tabular-nums">
-          <span>{fmtTime(current)}</span>
+          <span>{fmtTime(displayCurrent)}</span>
           <span>{fmtTime(duration)}</span>
         </div>
       </div>
@@ -579,10 +639,11 @@ function BigPlayer({
       <div className="flex items-center justify-center gap-6">
         <button
           onClick={() => skip(-15)}
-          className="w-12 h-12 rounded-full border border-accent/25 flex items-center justify-center text-accent/80 hover:text-accent hover:border-accent/50 transition-colors"
+          className="w-12 h-12 rounded-full border border-accent/25 flex items-center justify-center text-accent/80 hover:text-accent hover:border-accent/50 transition-colors relative"
           aria-label="Back 15 seconds"
         >
           <Rewind className="w-5 h-5" fill="currentColor" />
+          <span className="absolute -bottom-1.5 right-1 text-[8px] font-bold tracking-tight bg-[hsl(156,52%,9%)] px-1 rounded text-accent">15</span>
         </button>
         <button
           onClick={toggle}
@@ -597,10 +658,11 @@ function BigPlayer({
         </button>
         <button
           onClick={() => skip(15)}
-          className="w-12 h-12 rounded-full border border-accent/25 flex items-center justify-center text-accent/80 hover:text-accent hover:border-accent/50 transition-colors"
+          className="w-12 h-12 rounded-full border border-accent/25 flex items-center justify-center text-accent/80 hover:text-accent hover:border-accent/50 transition-colors relative"
           aria-label="Forward 15 seconds"
         >
           <FastForward className="w-5 h-5" fill="currentColor" />
+          <span className="absolute -bottom-1.5 left-1 text-[8px] font-bold tracking-tight bg-[hsl(156,52%,9%)] px-1 rounded text-accent">15</span>
         </button>
       </div>
     </div>
