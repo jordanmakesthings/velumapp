@@ -32,13 +32,23 @@ Use frequent paragraph breaks (every 50-100 words). Use SHORT sentences — peri
 Structure (do NOT label sections in the output, just write the flowing script):
 
 1. ARRIVAL (~10%) — invite settling. Body cues. Eye fixation or closure. Notice the breath without changing it.
-2. INDUCTION (~20%) — pick ONE proven technique and execute it deeply (don't rush): (a) progressive relaxation head-to-toe naming each region with a [pause: 3 seconds] after each; (b) eye fixation with permissive eyelid heaviness ("the more you try to keep them open, the heavier they want to become"); or (c) Elman-style "open and close eyes, doubling the relaxation" sequence. Embed the user's first name 1-2 times if known. Include 4-5 silent pauses inline using this exact format: [pause: 5 seconds]. The induction should feel UNHURRIED — over half this section is silence.
+2. INDUCTION (~20%) — pick ONE proven technique and execute it deeply (don't rush). Available induction techniques (rotate across sessions; never use the same one twice in a row when modality_notes hint at recent history):
+   (a) Progressive relaxation head-to-toe — name each region (forehead, jaw, shoulders, chest, hands, hips, thighs, calves, feet) with [pause: 3 seconds] between each
+   (b) Eye fixation with permissive eyelid heaviness — "the more you try to keep them open, the heavier they want to become"
+   (c) Elman-style "open and close eyes, doubling the relaxation each time" sequence — 5-7 cycles
+   (d) Breath counting — count breaths from one to ten, with [pause: 4 seconds] between numbers, the body softening on each exhale
+   (e) Body scan with weight — feel the weight of each body region sinking into the surface beneath
+   (f) Confusion technique (Erickson) — "and as you wonder which hand is heavier, the left or the right, or perhaps neither, or perhaps both…"
+   (g) Visualization journey — descending a soft path / floating down a gentle stream / walking down stone steps
+   (h) Yes-set — string 5-7 obviously-true statements ("you are sitting… you are breathing… you can hear my voice… and as you read this you may notice…") to build response readiness
+Embed the user's first name 1-2 times if known. Include 4-5 silent pauses inline using this exact format: [pause: 5 seconds]. The induction should feel UNHURRIED — over half this section is silence.
 3. DEEPENING (~15%) — choose ONE deepening image and stay with it: a staircase, a descending elevator, drifting downward, OR a slow countdown. If you do a countdown, you MUST insert [pause: 2 seconds] between each number to prevent the voice from accelerating, like this: "ten… [pause: 2 seconds] going deeper… [pause: 2 seconds] nine… [pause: 2 seconds] softer still… [pause: 2 seconds] eight…" — never write a bare numeric sequence. Reference somatic_pull naturally between numbers.
 4. CORE WORK (~35%) — build the central metaphor from already_true. Story them INTO the picture and identity they described. Embed indirect suggestions inside the metaphor: "and as the river finds its way around the stone, you may begin to notice…" Echo modality_notes verbatim at key moments.
 5. INTEGRATION (~12%) — let the work settle. "And whatever is true for you in this moment can stay with you, in whatever way is right for you."
 6. RETURN (~8%) — gentle re-orient. A simple count up to five — write it as a flowing sentence ("…one, becoming aware of the room… two, the weight of your body…") not a vertical list of numbers. Open eyes at the end.
 
 HARD RULES:
+- ALWAYS 2nd person ("you"). When echoing the user's words verbatim, CONVERT any "I/my/me/mine" to "you/your/yours" so the script never slips into 1st person. Example: user said "I want to feel free" → script says "you want to feel free" or "this wanting to feel free."
 - ONE deepening image only. Don't stack multiple counts.
 - Numbers ONLY appear in the deepening countdown and the return count-up. NEVER scatter numbers elsewhere.
 - NEVER use "deep sleep" or "unconscious."
@@ -49,6 +59,7 @@ HARD RULES:
 - Include 8-12 silent pauses across the script in this exact form: [pause: N seconds] where N is 2-10. Concentrate them in induction + deepening.
 - Mark 4-8 embedded commands across the script with *asterisks*.
 - Use SHORT sentences for natural pacing.
+- VARY sentence length and structure — don't string together repetitive parallel constructions, which causes the voice synthesis to accelerate. Break similar phrasings with ellipses or pause markers.
 
 Output ONLY the script text. No title. No preamble. No notes after. No section labels.`;
 
@@ -201,7 +212,7 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               text: ssmlChunk,
               model_id: "eleven_multilingual_v2",
-              voice_settings: { stability: 0.55, similarity_boost: 0.78, style: 0.15, use_speaker_boost: true, speed: 0.88 },
+              voice_settings: { stability: 0.65, similarity_boost: 0.78, style: 0.10, use_speaker_boost: true, speed: 0.82 },
             }),
           },
         );

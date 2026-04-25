@@ -223,10 +223,11 @@ export default function AudiosPage() {
   }, [voiceRate]);
 
   const handleVoicePlay = (id: string) => {
-    startBacking();
+    // Backing track disabled for now — was causing too many playback bugs.
+    // TODO: bake the backing into the voice WAV at generation time (server-side mix).
+    // startBacking();
     const a = audioRefs.current[id];
     if (a) a.playbackRate = voiceRate;
-    // Pause every other voice track (one at a time)
     Object.entries(audioRefs.current).forEach(([k, el]) => {
       if (k !== id && el && !el.paused) el.pause();
     });
@@ -351,13 +352,16 @@ export default function AudiosPage() {
                 className="flex-1 accent-yellow-600" />
               <span className="text-muted-foreground text-[11px] min-w-[36px] text-right">{voiceRate.toFixed(2)}x</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-muted-foreground text-[10px] uppercase tracking-wider min-w-[80px]">Background</span>
-              <input type="range" min={0} max={0.5} step={0.01} value={bgVol}
-                onChange={(e) => setBgVol(parseFloat(e.target.value))}
-                className="flex-1 accent-yellow-600" />
-              <span className="text-muted-foreground text-[11px] min-w-[36px] text-right">{Math.round(bgVol * 200)}%</span>
-            </div>
+            {/* Background slider hidden — backing track is disabled until we mix it server-side */}
+            {false && (
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground text-[10px] uppercase tracking-wider min-w-[80px]">Background</span>
+                <input type="range" min={0} max={0.5} step={0.01} value={bgVol}
+                  onChange={(e) => setBgVol(parseFloat(e.target.value))}
+                  className="flex-1 accent-yellow-600" />
+                <span className="text-muted-foreground text-[11px] min-w-[36px] text-right">{Math.round(bgVol * 200)}%</span>
+              </div>
+            )}
           </div>
         )}
 
