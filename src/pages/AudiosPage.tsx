@@ -99,7 +99,7 @@ export default function AudiosPage() {
         const urls: Record<string, string> = {};
         for (const t of list) {
           if (!t.audio_url) continue;
-          const { data: s } = await supabase.storage.from("custom-tracks").createSignedUrl(t.audio_url, 3600);
+          const { data: s } = await supabase.storage.from("custom-tracks").createSignedUrl(t.audio_url, 86400);
           if (s?.signedUrl) urls[t.id] = s.signedUrl;
         }
         setSignedUrls(urls);
@@ -118,6 +118,17 @@ export default function AudiosPage() {
       setLoading(false);
     })();
   }, [user]);
+
+  // Lazy-resolve a signed URL on demand if missing for any reason
+  // (initial fetch failed, race, etc.). Keeps the player from showing
+  // "Audio unavailable" when the file actually exists in storage.
+  const resolveSignedUrl = async (track: any) => {
+    if (!track || signedUrls[track.id] || !track.audio_url) return;
+    const { data: s } = await supabase.storage.from("custom-tracks").createSignedUrl(track.audio_url, 86400);
+    if (s?.signedUrl) {
+      setSignedUrls((prev) => ({ ...prev, [track.id]: s.signedUrl }));
+    }
+  };
 
   // Lazy-load + decode the backing buffer once.
   const ensureBacking = async () => {
