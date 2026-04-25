@@ -154,6 +154,7 @@ export default function AudiosPage() {
     })();
     return backingLoadingRef.current;
   };
+  const backingWatchdogRef = useRef<number | null>(null);
   const startBacking = async () => {
     await ensureBacking();
     const ctx = audioCtxRef.current; const buf = backingBufferRef.current; const gain = backingGainRef.current;
@@ -168,12 +169,40 @@ export default function AudiosPage() {
     src.connect(gain);
     src.start(0);
     backingSourceRef.current = src;
+
+    // Heartbeat: every 1s, if voice is still playing but audio context got
+    // suspended by the browser (Chrome/iOS throttle after focus loss or CPU
+    // pressure), resume it. Also restart the source if it somehow died.
+    if (backingWatchdogRef.current == null) {
+      backingWatchdogRef.current = window.setInterval(async () => {
+        const c = audioCtxRef.current; const b = backingBufferRef.current; const g = backingGainRef.current;
+        const anyVoicePlaying = Object.values(audioRefs.current).some((el) => el && !el.paused && !el.ended);
+        if (!anyVoicePlaying) return;
+        if (!c || !b || !g) return;
+        if (c.state === "suspended" || c.state === "interrupted" as any) {
+          try { await c.resume(); } catch {}
+        }
+        if (!backingSourceRef.current) {
+          // source died — recreate
+          try {
+            const ns = c.createBufferSource();
+            ns.buffer = b; ns.loop = true; ns.loopStart = 0; ns.loopEnd = b.duration;
+            ns.connect(g); ns.start(0);
+            backingSourceRef.current = ns;
+          } catch {}
+        }
+      }, 1000);
+    }
   };
   const stopBacking = () => {
     const src = backingSourceRef.current;
     if (src) {
       try { src.stop(); src.disconnect(); } catch {}
       backingSourceRef.current = null;
+    }
+    if (backingWatchdogRef.current != null) {
+      window.clearInterval(backingWatchdogRef.current);
+      backingWatchdogRef.current = null;
     }
   };
   useEffect(() => () => {
