@@ -65,7 +65,6 @@ export default function AudiosPage() {
   const backingSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const backingGainRef = useRef<GainNode | null>(null);
   const backingLoadingRef = useRef<Promise<void> | null>(null);
-  const playingCount = useRef(0);
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const recordedRef = useRef<Set<string>>(new Set());
 
@@ -183,7 +182,6 @@ export default function AudiosPage() {
   }, [voiceRate]);
 
   const handleVoicePlay = (id: string) => {
-    playingCount.current += 1;
     startBacking();
     const a = audioRefs.current[id];
     if (a) a.playbackRate = voiceRate;
@@ -192,9 +190,11 @@ export default function AudiosPage() {
       if (k !== id && el && !el.paused) el.pause();
     });
   };
+  // Stop backing whenever NO voice element is currently playing.
+  // Counter-free — checks live state so we can't get stuck.
   const handleVoicePause = () => {
-    playingCount.current = Math.max(0, playingCount.current - 1);
-    if (playingCount.current === 0) stopBacking();
+    const anyPlaying = Object.values(audioRefs.current).some((el) => el && !el.paused && !el.ended);
+    if (!anyPlaying) stopBacking();
   };
   const handleVoiceTimeUpdate = async (trackId: string, e: React.SyntheticEvent<HTMLAudioElement>) => {
     const t = e.currentTarget.currentTime;
