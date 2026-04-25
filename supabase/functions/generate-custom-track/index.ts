@@ -180,12 +180,13 @@ Deno.serve(async (req) => {
       return chunks;
     };
     const chunks = chunkScript(scriptText);
-    // Use PCM output so we can concat chunks losslessly (MP3 concat causes browsers to
-    // stop at the first chunk's end-of-stream header → truncated playback).
-    const SAMPLE_RATE = 44100;
+    // PCM output for lossless concat (MP3 chunk-concat truncates in browsers).
+    // 22050Hz mono is plenty for spoken hypnosis and ~1/2 the bytes of 44.1kHz
+    // → faster downloads, no timeouts.
+    const SAMPLE_RATE = 22050;
     const audioParts: Uint8Array[] = [];
     const chunkSizes: number[] = [];
-    const MIN_AUDIO_BYTES = 8000; // raw PCM ~10s @ 44.1kHz mono 16-bit = 880KB; anything under 8KB is a failure
+    const MIN_AUDIO_BYTES = 4000;
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
       const ssmlChunk = scriptToSsml(chunk);
@@ -193,7 +194,7 @@ Deno.serve(async (req) => {
       let buf: Uint8Array | null = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         const ttsRes = await fetch(
-          `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=pcm_44100`,
+          `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=pcm_22050`,
           {
             method: "POST",
             headers: { "xi-api-key": elevenKey, "Content-Type": "application/json", Accept: "audio/pcm" },
