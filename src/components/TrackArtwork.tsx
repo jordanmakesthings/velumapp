@@ -69,11 +69,10 @@ export function TrackArtwork({ trackId, size = "md", rounded = "2xl", className 
       className={`${cfg.wh} ${radiusMap[rounded]} relative overflow-hidden shrink-0 border border-accent/20 ${className}`}
       style={{
         background: `
-          radial-gradient(ellipse at ${ax}% ${ay}%, hsla(${hueA}, 0.85) 0%, transparent 55%),
-          radial-gradient(ellipse at ${bx}% ${by}%, hsla(${hueB}, 0.7) 0%, transparent 60%),
-          linear-gradient(135deg, hsl(156, 52%, 9%), hsl(156, 52%, 6%))
+          radial-gradient(ellipse at ${ax}% ${ay}%, hsl(${hueA} / 0.9) 0%, transparent 55%),
+          radial-gradient(ellipse at ${bx}% ${by}%, hsl(${hueB} / 0.75) 0%, transparent 60%),
+          linear-gradient(135deg, hsl(156 52% 9%), hsl(156 52% 6%))
         `,
-        filter: `blur(0px)`,
       }}
       aria-hidden="true"
     >
@@ -95,7 +94,7 @@ export function TrackArtwork({ trackId, size = "md", rounded = "2xl", className 
       <div
         className="absolute w-[40%] h-[40%] rounded-full"
         style={{
-          background: `radial-gradient(circle, hsla(42, 53%, 55%, 0.3) 0%, transparent 70%)`,
+          background: `radial-gradient(circle, hsl(42 53% 55% / 0.35) 0%, transparent 70%)`,
           top: `${(rotation % 60) - 20}%`,
           right: `${(rotation % 50) - 15}%`,
           filter: `blur(${cfg.blur}px)`,
