@@ -343,6 +343,8 @@ export default function AudiosPage() {
                 today={today}
                 todayKey={todayKey}
                 voiceRate={voiceRate}
+                editingId={editingId}
+                onStartEdit={() => { setEditingId(activeTrack.id); setEditTitle(activeTrack.title); }}
                 onPlay={() => handleVoicePlay(activeTrack.id)}
                 onPause={handleVoicePause}
                 onTimeUpdate={(e) => handleVoiceTimeUpdate(activeTrack.id, e)}
@@ -411,6 +413,7 @@ function StatsStrip({ streak, totalListens, trackCount }: { streak: number; tota
 // ────────────── Hero Track Card (active 21-day program) ──────────────
 function HeroTrackCard({
   track, titleNode, signedUrl, listens, today, todayKey, voiceRate,
+  editingId, onStartEdit,
   onPlay, onPause, onTimeUpdate, registerRef,
 }: {
   track: any;
@@ -420,6 +423,8 @@ function HeroTrackCard({
   today: Date;
   todayKey: string;
   voiceRate: number;
+  editingId: string | null;
+  onStartEdit: () => void;
   onPlay: () => void;
   onPause: () => void;
   onTimeUpdate: (e: React.SyntheticEvent<HTMLAudioElement>) => void;
@@ -454,7 +459,7 @@ function HeroTrackCard({
             {track.duration_sec ? `${Math.round(track.duration_sec / 60)} min` : "—"}
           </span>
           <button
-            onClick={() => { setEditingId(track.id); setEditTitle(track.title); }}
+            onClick={onStartEdit}
             className="text-muted-foreground/60 hover:text-accent transition-colors text-[10px] tracking-wider uppercase"
           >
             Rename
