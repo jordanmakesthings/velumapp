@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Plus, Check, Edit2, X, Play, Pause, Rewind, FastForward, Settings2, Flame, Clock, Library } from "lucide-react";
 import { toast } from "sonner";
 
-const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop%201.wav";
 const PROGRAM_DAYS = 21;
 
 const STRIPE_BUY_1_URL = "https://buy.stripe.com/REPLACE_SINGLE_LINK";
@@ -59,20 +58,9 @@ export default function AudiosPage() {
     }
   }, [searchParams, setSearchParams]);
 
-  // Backing audio (Web Audio API — sample-accurate seamless loop)
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const backingBufferRef = useRef<AudioBuffer | null>(null);
-  const backingSourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const backingGainRef = useRef<GainNode | null>(null);
-  const backingLoadingRef = useRef<Promise<void> | null>(null);
-  const playingCount = useRef(0);
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const recordedRef = useRef<Set<string>>(new Set());
 
-  const [bgVol, setBgVol] = useState<number>(() => {
-    const v = parseFloat(localStorage.getItem("velum_bg_vol") || "0.22");
-    return isNaN(v) ? 0.22 : v;
-  });
   const [voiceRate, setVoiceRate] = useState<number>(() => {
     const v = parseFloat(localStorage.getItem("velum_voice_rate") || "0.95");
     return isNaN(v) ? 0.95 : v;
@@ -119,72 +107,12 @@ export default function AudiosPage() {
     })();
   }, [user]);
 
-  // Lazy-load + decode the backing buffer once.
-  const ensureBacking = async () => {
-    if (backingBufferRef.current) return;
-    if (backingLoadingRef.current) return backingLoadingRef.current;
-    backingLoadingRef.current = (async () => {
-      try {
-        const Ctx: typeof AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
-        if (!Ctx) return;
-        const ctx = audioCtxRef.current ?? new Ctx();
-        audioCtxRef.current = ctx;
-        const gain = ctx.createGain();
-        gain.gain.value = bgVol;
-        gain.connect(ctx.destination);
-        backingGainRef.current = gain;
-        const res = await fetch(BACKING_TRACK_URL);
-        const arr = await res.arrayBuffer();
-        const buf = await ctx.decodeAudioData(arr);
-        backingBufferRef.current = buf;
-      } catch (e) {
-        console.warn("backing buffer load failed", e);
-      }
-    })();
-    return backingLoadingRef.current;
-  };
-  const startBacking = async () => {
-    await ensureBacking();
-    const ctx = audioCtxRef.current; const buf = backingBufferRef.current; const gain = backingGainRef.current;
-    if (!ctx || !buf || !gain) return;
-    if (ctx.state === "suspended") await ctx.resume();
-    if (backingSourceRef.current) return; // already running
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    src.loopStart = 0;
-    src.loopEnd = buf.duration;
-    src.connect(gain);
-    src.start(0);
-    backingSourceRef.current = src;
-  };
-  const stopBacking = () => {
-    const src = backingSourceRef.current;
-    if (src) {
-      try { src.stop(); src.disconnect(); } catch {}
-      backingSourceRef.current = null;
-    }
-  };
-  useEffect(() => () => {
-    stopBacking();
-    audioCtxRef.current?.close().catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (backingGainRef.current && audioCtxRef.current) {
-      // smooth ramp to avoid click on slider drag
-      backingGainRef.current.gain.setTargetAtTime(bgVol, audioCtxRef.current.currentTime, 0.05);
-    }
-    localStorage.setItem("velum_bg_vol", String(bgVol));
-  }, [bgVol]);
   useEffect(() => {
     localStorage.setItem("velum_voice_rate", String(voiceRate));
     Object.values(audioRefs.current).forEach((a) => { if (a) a.playbackRate = voiceRate; });
   }, [voiceRate]);
 
   const handleVoicePlay = (id: string) => {
-    playingCount.current += 1;
-    startBacking();
     const a = audioRefs.current[id];
     if (a) a.playbackRate = voiceRate;
     // Pause every other voice track (one at a time)
@@ -192,10 +120,7 @@ export default function AudiosPage() {
       if (k !== id && el && !el.paused) el.pause();
     });
   };
-  const handleVoicePause = () => {
-    playingCount.current = Math.max(0, playingCount.current - 1);
-    if (playingCount.current === 0) stopBacking();
-  };
+  const handleVoicePause = () => {};
   const handleVoiceTimeUpdate = async (trackId: string, e: React.SyntheticEvent<HTMLAudioElement>) => {
     const t = e.currentTarget.currentTime;
     const todayK = trackId + ":" + todayKey;
@@ -303,19 +228,12 @@ export default function AudiosPage() {
         {/* ── Settings drawer ── */}
         {showSettings && tracks.length > 0 && (
           <div className="velum-card-flat p-4 mb-6 border border-accent/15">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3">
               <span className="text-muted-foreground text-[10px] uppercase tracking-wider min-w-[80px]">Voice speed</span>
               <input type="range" min={0.7} max={1.1} step={0.05} value={voiceRate}
                 onChange={(e) => setVoiceRate(parseFloat(e.target.value))}
                 className="flex-1 accent-yellow-600" />
               <span className="text-muted-foreground text-[11px] min-w-[36px] text-right">{voiceRate.toFixed(2)}x</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-muted-foreground text-[10px] uppercase tracking-wider min-w-[80px]">Background</span>
-              <input type="range" min={0} max={0.5} step={0.01} value={bgVol}
-                onChange={(e) => setBgVol(parseFloat(e.target.value))}
-                className="flex-1 accent-yellow-600" />
-              <span className="text-muted-foreground text-[11px] min-w-[36px] text-right">{Math.round(bgVol * 200)}%</span>
             </div>
           </div>
         )}
