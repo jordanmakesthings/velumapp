@@ -6,7 +6,7 @@ import { Sparkles, Plus, Check, Edit2, X, Play, Pause, Rewind, FastForward, Sett
 import { toast } from "sonner";
 import { TrackArtwork } from "@/components/TrackArtwork";
 
-const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop.mp3";
+const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop%201.wav";
 const PROGRAM_DAYS = 21;
 
 const STRIPE_BUY_1_URL = "https://buy.stripe.com/REPLACE_SINGLE_LINK";
@@ -152,9 +152,9 @@ export default function AudiosPage() {
     if (backingSourceRef.current) return; // already running
     const src = ctx.createBufferSource();
     src.buffer = buf;
-    src.loop = true;            // sample-accurate seamless loop at the buffer level
+    src.loop = true;
     src.loopStart = 0;
-    src.loopEnd = buf.duration; // explicit, in case browser defaults differ
+    src.loopEnd = buf.duration;
     src.connect(gain);
     src.start(0);
     backingSourceRef.current = src;

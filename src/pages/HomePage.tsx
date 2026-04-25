@@ -109,7 +109,7 @@ function getDayOfYear() {
   );
 }
 
-const HOME_BACKING_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop.mp3";
+const HOME_BACKING_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop%201.wav";
 
 // Defensive wrapper — if anything inside CustomTrackHomeTile throws, the rest of Home still renders
 class TileErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -238,7 +238,7 @@ function CustomTrackHomeTile() {
     if (ctx.state === "suspended") await ctx.resume();
     if (sourceRef.current) return;
     const src = ctx.createBufferSource();
-    src.buffer = buf; src.loop = true; src.connect(gain); src.start();
+    src.buffer = buf; src.loop = true; src.loopStart = 0; src.loopEnd = buf.duration; src.connect(gain); src.start();
     sourceRef.current = src;
   };
   const stopBacking = () => {
