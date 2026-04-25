@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const [canceling, setCanceling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelSuccess, setCancelSuccess] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(profile?.full_name || "");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -101,6 +102,27 @@ export default function ProfilePage() {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleManageBilling = async () => {
+    setOpeningPortal(true);
+    setCancelError(null);
+    try {
+      const res = await fetch("/api/billing-portal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ returnUrl: window.location.href }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not open portal");
+      if (data?.url) window.location.href = data.url;
+    } catch (err: any) {
+      setCancelError(err.message || "Could not open billing portal.");
+      setOpeningPortal(false);
+    }
   };
 
   // Not logged in
@@ -243,13 +265,13 @@ export default function ProfilePage() {
               }
             </p>
           </div>
-          {hasAccess && !isLifetime && !cancelSuccess && !isCanceling && (
+          {hasAccess && !isLifetime && (
             <button
-              onClick={handleCancelSubscription}
-              disabled={canceling}
-              className="text-xs text-muted-foreground border border-border rounded-lg px-3 py-1.5 hover:text-foreground transition-colors"
+              onClick={handleManageBilling}
+              disabled={openingPortal}
+              className="text-xs text-accent border border-accent/30 rounded-lg px-3 py-1.5 hover:bg-accent/10 transition-colors disabled:opacity-50"
             >
-              {canceling ? "Canceling..." : "Cancel plan"}
+              {openingPortal ? "Opening…" : "Manage"}
             </button>
           )}
           {!hasAccess && (
@@ -261,6 +283,11 @@ export default function ProfilePage() {
             </Link>
           )}
         </div>
+        {hasAccess && !isLifetime && (
+          <p className="text-muted-foreground text-[10px] mt-3 leading-snug">
+            Update card · switch plan · view invoices · pause or cancel — all in your Stripe portal.
+          </p>
+        )}
       </div>
       {cancelError && (
         <div className="flex items-center gap-2 mb-4 text-destructive text-xs">
