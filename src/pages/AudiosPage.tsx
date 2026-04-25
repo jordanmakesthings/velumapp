@@ -528,12 +528,9 @@ function BigPlayer({
   const [audioDuration, setAudioDuration] = useState(0);
   const [scrubPct, setScrubPct] = useState<number | null>(null);
 
-  // For DISPLAY: trust the DB duration when it's meaningfully larger than what the browser reports
-  // (broken MP3 chunked-concat headers report only the first chunk's length).
-  // For SEEK: always clamp to the browser's audio.duration since seeks past it silently reset.
-  const duration = (durationHint && audioDuration && durationHint > audioDuration + 5)
-    ? durationHint
-    : (audioDuration || durationHint || 0);
+  // Always use the actual audio duration for both display and seek.
+  // The DB hint is only used as a placeholder until metadata loads.
+  const duration = audioDuration || durationHint || 0;
 
   const seekTo = (sec: number) => {
     const a = audioRef.current;
@@ -544,13 +541,8 @@ function BigPlayer({
     setCurrent(clamped);
   };
 
-  // When the user drags the scrubber, map the percentage to a SEEK-SAFE position
-  // (clamped to audio.duration), even though the bar itself reflects the larger DB duration.
   const seekFromScrubPct = (pct: number) => {
-    const a = audioRef.current;
-    if (!a) return;
-    const seekMax = (a.duration && isFinite(a.duration) && a.duration > 0) ? a.duration : duration;
-    seekTo(pct * seekMax);
+    if (duration > 0) seekTo(pct * duration);
   };
 
   const toggle = async () => {
