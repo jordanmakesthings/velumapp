@@ -66,7 +66,7 @@ export function TrackCover({ trackId, title, size = "md", rounded = "2xl", showT
         src={url}
         alt=""
         loading="lazy"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover scale-110"
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
       />
       {showTitle && title && (
