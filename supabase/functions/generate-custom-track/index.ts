@@ -70,7 +70,45 @@ function scriptToSsml(text: string): string {
   let s = text.replace(/\[pause:\s*(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)?\s*\]/gi, (_, n) => `<break time="${n}s"/>`);
   // Catch other common silence directives the model sometimes invents
   s = s.replace(/\[(?:breath|breathe|silence|long pause|short pause)[^\]]*\]/gi, '<break time="3s"/>');
+  // Countdown / count-up safety net — even if Claude forgot the [pause] markers,
+  // detect number clusters (3+ within 200 chars = countdown) and force slow prosody +
+  // a 2s break after each. Outside countdowns ("after seven days") nothing changes.
+  s = protectNumberClusters(s);
   return s;
+}
+
+function protectNumberClusters(text: string): string {
+  const tokenRegex = /\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\b/gi;
+  const matches: { idx: number; len: number; word: string }[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = tokenRegex.exec(text)) !== null) {
+    matches.push({ idx: m.index, len: m[0].length, word: m[0] });
+  }
+  // A number is "in a cluster" if it has at least 2 other numbers within 200 chars
+  // (so a real countdown — at least 3 numbers — gets protected; "five years ago" doesn't).
+  const inCluster = new Set<number>();
+  for (let i = 0; i < matches.length; i++) {
+    let neighbors = 0;
+    for (let j = 0; j < matches.length; j++) {
+      if (i === j) continue;
+      if (Math.abs(matches[i].idx - matches[j].idx) <= 200) neighbors++;
+      if (neighbors >= 2) { inCluster.add(i); break; }
+    }
+  }
+  // Apply replacements right-to-left so earlier indices stay valid
+  let out = text;
+  for (let i = matches.length - 1; i >= 0; i--) {
+    if (!inCluster.has(i)) continue;
+    const { idx, len, word } = matches[i];
+    const before = out.slice(0, idx);
+    const after = out.slice(idx + len);
+    const hasBreakSoon = /^[^A-Za-z0-9]{0,30}<break/i.test(after);
+    const replacement = hasBreakSoon
+      ? `<prosody rate="80%">${word}</prosody>`
+      : `<prosody rate="80%">${word}</prosody><break time="2s"/>`;
+    out = before + replacement + after;
+  }
+  return out;
 }
 
 function slugify(s: string): string {
