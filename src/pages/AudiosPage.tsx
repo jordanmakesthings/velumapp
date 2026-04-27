@@ -530,7 +530,7 @@ function HeroTrackCard({
             {signedUrl && (
               <button
                 onClick={() => downloadAudio(signedUrl, track.title)}
-                className="text-muted-foreground/60 hover:text-accent transition-colors text-[10px] tracking-wider uppercase flex items-center gap-1.5"
+                className="text-accent hover:text-accent/80 transition-colors text-[10px] tracking-wider uppercase flex items-center gap-1.5 font-medium"
                 title="Download audio"
               >
                 <Download className="w-3 h-3" />
@@ -539,7 +539,7 @@ function HeroTrackCard({
             )}
             <button
               onClick={onStartEdit}
-              className="text-muted-foreground/60 hover:text-accent transition-colors text-[10px] tracking-wider uppercase"
+              className="text-accent hover:text-accent/80 transition-colors text-[10px] tracking-wider uppercase font-medium"
             >
               Rename
             </button>
