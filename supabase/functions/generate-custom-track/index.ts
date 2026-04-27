@@ -198,22 +198,44 @@ Deno.serve(async (req) => {
     const audioParts: Uint8Array[] = [];
     const chunkSizes: number[] = [];
     const MIN_AUDIO_BYTES = 4000;
+    // Cross-chunk prosody continuity. Without these, ElevenLabs treats each
+    // chunk as a fresh start and pacing oscillates at every boundary
+    // (the "speeds up, slows down" symptom). previous_request_ids is the
+    // strongest form of continuity; previous_text/next_text covers boundaries
+    // where a request id wasn't captured.
+    const recentRequestIds: string[] = [];
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
       const ssmlChunk = scriptToSsml(chunk);
+      const prevRaw = i > 0 ? chunks[i - 1] : "";
+      const nextRaw = i < chunks.length - 1 ? chunks[i + 1] : "";
+      // Strip pause markers from the context strings — ElevenLabs uses these
+      // for prosody only and SSML in context can confuse it.
+      const stripPause = (s: string) =>
+        s.replace(/\[pause:[^\]]*\]/gi, "").replace(/\s+/g, " ").trim();
+      const previousText = stripPause(prevRaw).slice(-300);
+      const nextText = stripPause(nextRaw).slice(0, 300);
       let lastError = "";
       let buf: Uint8Array | null = null;
       for (let attempt = 0; attempt < 3; attempt++) {
+        const body: Record<string, unknown> = {
+          text: ssmlChunk,
+          model_id: "eleven_multilingual_v2",
+          // stability ↑ 0.65→0.78 (steadier pacing, less drift between chunks)
+          // style ↓ 0.10→0.0 (style adds expressiveness that varies tempo)
+          // speed: noop on multilingual_v2 but harmless; preserved for forward compat
+          voice_settings: { stability: 0.78, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 0.82 },
+        };
+        if (previousText) body.previous_text = previousText;
+        if (nextText) body.next_text = nextText;
+        // Keep last 3 request ids — gives strong cross-chunk prosody lock
+        if (recentRequestIds.length) body.previous_request_ids = recentRequestIds.slice(-3);
         const ttsRes = await fetch(
           `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=pcm_22050`,
           {
             method: "POST",
             headers: { "xi-api-key": elevenKey, "Content-Type": "application/json", Accept: "audio/pcm" },
-            body: JSON.stringify({
-              text: ssmlChunk,
-              model_id: "eleven_multilingual_v2",
-              voice_settings: { stability: 0.65, similarity_boost: 0.78, style: 0.10, use_speaker_boost: true, speed: 0.82 },
-            }),
+            body: JSON.stringify(body),
           },
         );
         const contentType = ttsRes.headers.get("content-type") || "";
@@ -226,6 +248,8 @@ Deno.serve(async (req) => {
           if (candidate.byteLength < MIN_AUDIO_BYTES) {
             lastError = `Empty/truncated audio (${candidate.byteLength} bytes)`;
           } else {
+            const reqId = ttsRes.headers.get("request-id") || ttsRes.headers.get("x-request-id");
+            if (reqId) recentRequestIds.push(reqId);
             buf = candidate;
             break;
           }
