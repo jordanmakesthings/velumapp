@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Plus, Check, Edit2, X, Play, Pause, Rewind, FastForward, Settings2, Flame, Clock, Library } from "lucide-react";
+import { Sparkles, Plus, Check, Edit2, X, Play, Pause, Rewind, FastForward, Settings2, Flame, Clock, Library, Download } from "lucide-react";
 import { toast } from "sonner";
 import { TrackCover } from "@/components/TrackCover";
 
@@ -15,6 +15,30 @@ const ADDON_PURCHASE_ENABLED = false;
 
 // ── helpers ──
 const dayKey = (d: Date) => d.toISOString().slice(0, 10);
+
+// Fetch the signed URL as a blob and trigger a browser download. Using
+// the download attribute on a cross-origin <a> is unreliable — fetching
+// to a blob and downloading from same-origin object URL works everywhere.
+async function downloadAudio(signedUrl: string, title: string) {
+  try {
+    const res = await fetch(signedUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safeName = (title || "velum-track").replace(/[^a-z0-9-]+/gi, "-").replace(/(^-|-$)/g, "").slice(0, 60) || "velum-track";
+    const ext = signedUrl.toLowerCase().includes(".mp3") ? "mp3" : "wav";
+    a.download = `${safeName}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch (e) {
+    alert("Download failed. Try refreshing and again.");
+  }
+}
+
 const fmtTime = (s: number) => {
   if (!isFinite(s) || s < 0) return "0:00";
   const m = Math.floor(s / 60);
@@ -502,12 +526,24 @@ function HeroTrackCard({
           <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
             {track.duration_sec ? `${Math.round(track.duration_sec / 60)} min` : "—"}
           </span>
-          <button
-            onClick={onStartEdit}
-            className="text-muted-foreground/60 hover:text-accent transition-colors text-[10px] tracking-wider uppercase"
-          >
-            Rename
-          </button>
+          <div className="flex items-center gap-3">
+            {signedUrl && (
+              <button
+                onClick={() => downloadAudio(signedUrl, track.title)}
+                className="text-muted-foreground/60 hover:text-accent transition-colors text-[10px] tracking-wider uppercase flex items-center gap-1.5"
+                title="Download audio"
+              >
+                <Download className="w-3 h-3" />
+                Download
+              </button>
+            )}
+            <button
+              onClick={onStartEdit}
+              className="text-muted-foreground/60 hover:text-accent transition-colors text-[10px] tracking-wider uppercase"
+            >
+              Rename
+            </button>
+          </div>
         </div>
         {editingId === track.id && (<div className="mb-4">{titleNode}</div>)}
 

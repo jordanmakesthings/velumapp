@@ -576,7 +576,7 @@ export default function CustomTrackPage() {
             <div className="text-5xl mb-4 text-accent opacity-80">✦</div>
             <h1 className="text-display text-3xl mb-3">Your track is ready.</h1>
             <p className="text-muted-foreground text-sm leading-relaxed mb-8 italic">
-              A new life awaits.
+              Click below to get started.
             </p>
             <Link
               to="/audios"
