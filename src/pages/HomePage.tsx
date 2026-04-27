@@ -108,8 +108,6 @@ function getDayOfYear() {
   );
 }
 
-const HOME_BACKING_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop%201.wav";
-
 // Defensive wrapper — if anything inside CustomTrackHomeTile throws, the rest of Home still renders
 class TileErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: { children: React.ReactNode }) {
@@ -150,18 +148,8 @@ function CustomTrackHomeTile() {
   const [listens, setListens] = useState<Record<string, Set<string>>>({});
   const [loading, setLoading] = useState(true);
   const [idx, setIdx] = useState(0);
-  const [bgVol] = useState<number>(() => {
-    const v = parseFloat(localStorage.getItem("velum_bg_vol") || "0.22");
-    return isNaN(v) ? 0.22 : v;
-  });
 
-  // Audio refs
   const voiceRef = useRef<HTMLAudioElement | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const bufferRef = useRef<AudioBuffer | null>(null);
-  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const gainRef = useRef<GainNode | null>(null);
-  const loadingRef = useRef<Promise<void> | null>(null);
   const recordedRef = useRef<Set<string>>(new Set());
 
   const [playing, setPlaying] = useState(false);
@@ -208,53 +196,12 @@ function CustomTrackHomeTile() {
     })();
   }, [user]);
 
-  // Lazy-load backing buffer
-  const ensureBacking = async () => {
-    if (bufferRef.current) return;
-    if (loadingRef.current) return loadingRef.current;
-    loadingRef.current = (async () => {
-      try {
-        const Ctx: typeof AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
-        if (!Ctx) return;
-        const ctx = new Ctx();
-        audioCtxRef.current = ctx;
-        const gain = ctx.createGain();
-        gain.gain.value = bgVol;
-        gain.connect(ctx.destination);
-        gainRef.current = gain;
-        const res = await fetch(HOME_BACKING_URL);
-        const arr = await res.arrayBuffer();
-        const buf = await ctx.decodeAudioData(arr);
-        bufferRef.current = buf;
-      } catch {}
-    })();
-    return loadingRef.current;
-  };
-  const startBacking = async () => {
-    await ensureBacking();
-    const ctx = audioCtxRef.current; const buf = bufferRef.current; const gain = gainRef.current;
-    if (!ctx || !buf || !gain) return;
-    if (ctx.state === "suspended") await ctx.resume();
-    if (sourceRef.current) return;
-    const src = ctx.createBufferSource();
-    src.buffer = buf; src.loop = true; src.loopStart = 0; src.loopEnd = buf.duration; src.connect(gain); src.start();
-    sourceRef.current = src;
-  };
-  const stopBacking = () => {
-    if (sourceRef.current) {
-      try { sourceRef.current.stop(); sourceRef.current.disconnect(); } catch {}
-      sourceRef.current = null;
-    }
-  };
-  useEffect(() => () => { stopBacking(); audioCtxRef.current?.close().catch(() => {}); }, []);
-
   // Switch tracks: stop current playback
   const switchTo = (newIdx: number) => {
     if (voiceRef.current) {
       voiceRef.current.pause();
       voiceRef.current.currentTime = 0;
     }
-    stopBacking();
     setPlaying(false);
     setCurTime(0);
     setDur(0);
@@ -303,11 +250,9 @@ function CustomTrackHomeTile() {
     if (v.paused) {
       v.playbackRate = voiceRate;
       await v.play();
-      await startBacking();
       setPlaying(true);
     } else {
       v.pause();
-      stopBacking();
       setPlaying(false);
     }
   };
@@ -447,7 +392,7 @@ function CustomTrackHomeTile() {
             preload="metadata"
             onLoadedMetadata={(e) => setDur(e.currentTarget.duration || 0)}
             onTimeUpdate={onTimeUpdate}
-            onEnded={() => { setPlaying(false); stopBacking(); }}
+            onEnded={() => { setPlaying(false); }}
             className="hidden"
           />
         )}

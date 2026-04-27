@@ -470,7 +470,6 @@ export default function ProfilePage() {
   );
 }
 
-const BACKING_TRACK_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/backing-tracks/Binaural%20Loop%201.wav";
 const PROGRAM_DAYS = 21;
 
 function CustomTracksSection() {
@@ -479,93 +478,15 @@ function CustomTracksSection() {
   const [loading, setLoading] = useState(true);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [listensByTrack, setListensByTrack] = useState<Record<string, Set<string>>>({});
-  const playingCount = useRef(0);
-  const [bgVol, setBgVol] = useState<number>(() => {
-    const v = parseFloat(localStorage.getItem("velum_bg_vol") || "0.22");
-    return isNaN(v) ? 0.22 : v;
-  });
   const [voiceRate] = useState<number>(() => {
     const v = parseFloat(localStorage.getItem("velum_voice_rate") || "0.95");
     return isNaN(v) ? 0.95 : v;
   });
 
-  // Web Audio API for the backing loop — decoded into memory once, loops perfectly.
-  // HTMLAudioElement loop attribute is unreliable for streamed MP3s.
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const bufferRef = useRef<AudioBuffer | null>(null);
-  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const gainRef = useRef<GainNode | null>(null);
-  const loadingRef = useRef<Promise<void> | null>(null);
-
-  const ensureBackingLoaded = async () => {
-    if (bufferRef.current) return;
-    if (loadingRef.current) return loadingRef.current;
-    loadingRef.current = (async () => {
-      try {
-        const Ctx: typeof AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
-        if (!Ctx) return;
-        const ctx = new Ctx();
-        audioCtxRef.current = ctx;
-        const gain = ctx.createGain();
-        gain.gain.value = bgVol;
-        gain.connect(ctx.destination);
-        gainRef.current = gain;
-        const res = await fetch(BACKING_TRACK_URL);
-        const arr = await res.arrayBuffer();
-        const buf = await ctx.decodeAudioData(arr);
-        bufferRef.current = buf;
-      } catch (e) {
-        console.warn("backing load failed", e);
-      }
-    })();
-    return loadingRef.current;
-  };
-
-  const startBacking = async () => {
-    await ensureBackingLoaded();
-    const ctx = audioCtxRef.current;
-    const buf = bufferRef.current;
-    const gain = gainRef.current;
-    if (!ctx || !buf || !gain) return;
-    if (ctx.state === "suspended") await ctx.resume();
-    if (sourceRef.current) return;
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    src.connect(gain);
-    src.start();
-    sourceRef.current = src;
-  };
-
-  const stopBacking = () => {
-    if (sourceRef.current) {
-      try { sourceRef.current.stop(); } catch {}
-      try { sourceRef.current.disconnect(); } catch {}
-      sourceRef.current = null;
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      stopBacking();
-      audioCtxRef.current?.close().catch(() => {});
-    };
-  }, []);
-
-  useEffect(() => {
-    if (gainRef.current) gainRef.current.gain.value = bgVol;
-    localStorage.setItem("velum_bg_vol", String(bgVol));
-  }, [bgVol]);
-
   const handleVoicePlay = (e?: React.SyntheticEvent<HTMLAudioElement>) => {
-    playingCount.current += 1;
-    startBacking();
     if (e?.currentTarget) e.currentTarget.playbackRate = voiceRate;
   };
-  const handleVoicePause = () => {
-    playingCount.current = Math.max(0, playingCount.current - 1);
-    if (playingCount.current === 0) stopBacking();
-  };
+  const handleVoicePause = () => {};
 
   useEffect(() => {
     if (!user) return;
@@ -710,20 +631,7 @@ function CustomTracksSection() {
           );
         })}
       </div>
-      <div className="flex items-center gap-3 mt-4 pt-4 border-t border-accent/15">
-        <span className="text-muted-foreground text-[10px] uppercase tracking-wider min-w-[80px]">Background</span>
-        <input
-          type="range"
-          min={0}
-          max={0.5}
-          step={0.01}
-          value={bgVol}
-          onChange={(e) => setBgVol(parseFloat(e.target.value))}
-          className="flex-1 accent-yellow-600"
-        />
-        <span className="text-muted-foreground text-[10px] min-w-[30px] text-right">{Math.round(bgVol * 200)}%</span>
-      </div>
-      <p className="text-muted-foreground text-[10px] tracking-wide mt-3 text-center italic">
+      <p className="text-muted-foreground text-[10px] tracking-wide mt-4 pt-4 border-t border-accent/15 text-center italic">
         Listen daily for 21 days for the full effect.
       </p>
     </div>

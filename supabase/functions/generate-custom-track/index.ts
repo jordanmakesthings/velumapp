@@ -56,6 +56,19 @@ HARD RULES:
 
 Output ONLY the script text. No title. No preamble. No notes after. No section labels.`;
 
+// Word-form numbers used in countdowns ("ten… nine… eight…") and count-ups ("one… two…").
+// ElevenLabs rushes through these repetitive patterns, so we force an explicit break
+// after each number to keep the cadence slow and trance-appropriate.
+const NUMBER_WORDS = ["zero","one","two","three","four","five","six","seven","eight","nine","ten"];
+const COUNT_RE = new RegExp(
+  `\\b(${NUMBER_WORDS.join("|")})\\b[\\s,]*(?:\\.{3,}|…+|—+)\\s*`,
+  "gi",
+);
+
+function expandCounts(text: string): string {
+  return text.replace(COUNT_RE, (_, word) => `${word}.<break time="1.2s"/> `);
+}
+
 function scriptToSsml(text: string): string {
   // Convert pause markers in any common form Claude might write:
   // [pause: 5 seconds], [pause: 5 second], [pause: 5 sec], [pause: 5s], [pause: 5]
@@ -63,6 +76,8 @@ function scriptToSsml(text: string): string {
   let s = text.replace(/\[pause:\s*(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)?\s*\]/gi, (_, n) => `<break time="${n}s"/>`);
   // Catch other common silence directives the model sometimes invents
   s = s.replace(/\[(?:breath|breathe|silence|long pause|short pause)[^\]]*\]/gi, '<break time="3s"/>');
+  // Force slow cadence on countdowns / count-ups
+  s = expandCounts(s);
   return s;
 }
 
@@ -167,10 +182,12 @@ Deno.serve(async (req) => {
     // Synthesizing in chunks of 1-2 min each avoids the drift entirely.
     const chunkScript = (txt: string): string[] => {
       // Split at double newlines (paragraph breaks). Then group small paragraphs.
+      // Smaller chunks = less ElevenLabs intra-chunk drift. ~700 chars ≈ 45 sec audio,
+      // which sits well below the threshold where the model starts accelerating.
       const paras = txt.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
       const chunks: string[] = [];
       let cur = "";
-      const TARGET = 1500; // bigger chunks = fewer API calls = under timeout // ~30-50 sec of audio per chunk
+      const TARGET = 700;
       for (const p of paras) {
         if (!cur) { cur = p; continue; }
         if ((cur.length + p.length + 2) <= TARGET) {
@@ -202,7 +219,8 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               text: ssmlChunk,
               model_id: "eleven_multilingual_v2",
-              voice_settings: { stability: 0.55, similarity_boost: 0.78, style: 0.15, use_speaker_boost: true, speed: 0.88 },
+              // Higher stability locks in pacing — drops the random rushed bursts.
+              voice_settings: { stability: 0.7, similarity_boost: 0.78, style: 0.1, use_speaker_boost: true, speed: 0.88 },
             }),
           },
         );
