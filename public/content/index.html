@@ -681,6 +681,13 @@ select option{background:#1e1e1e}
           <span id="reel-cta-y-val" style="font-size:10px;color:var(--sg);min-width:28px;text-align:right">90%</span>
         </div>
       </div>
+      <div>
+        <label>Caption style</label>
+        <div class="sw"><select id="reel-caption-style" onchange="onReelSettingChange()">
+          <option value="subtle">Subtle — cream/gold (default)</option>
+          <option value="bold">Bold IG — white with black outline</option>
+        </select></div>
+      </div>
       <hr>
       <button class="reel-btn primary" id="reel-play-btn" onclick="toggleReelPlayback()">▶ Play Preview</button>
       <button class="reel-btn record" id="reel-record-btn" onclick="exportReel()">● Record &amp; Download</button>
@@ -2484,6 +2491,7 @@ const reel={
   cta:'',
   hookY:12,  // percent of canvas height
   ctaY:90,
+  captionStyle:'subtle', // 'subtle' | 'bold'
   playing:false,
   recording:false,
   phaseIdx:0,
@@ -2522,6 +2530,8 @@ function onReelSettingChange(){
   const cy=document.getElementById('reel-cta-y');
   if(hy){reel.hookY=parseInt(hy.value,10)||12;document.getElementById('reel-hook-y-val').textContent=reel.hookY+'%';}
   if(cy){reel.ctaY=parseInt(cy.value,10)||90;document.getElementById('reel-cta-y-val').textContent=reel.ctaY+'%';}
+  const cs=document.getElementById('reel-caption-style');
+  if(cs)reel.captionStyle=cs.value||'subtle';
 }
 
 function resetReelPlayhead(){
@@ -2604,24 +2614,46 @@ function drawReelFrame(ts){
   const remaining=Math.max(0,Math.ceil(phase.duration-phaseElapsed));
   ctx.fillText(String(remaining),W/2,countY);
 
+  const isBold=reel.captionStyle==='bold';
+
   if(reel.hook){
-    ctx.fillStyle=REEL_CREAM;
-    ctx.font='700 64px "DM Sans", system-ui, sans-serif';
+    const hookText=isBold?reel.hook.toUpperCase():reel.hook;
+    ctx.font=(isBold?'800 86px':'700 64px')+' "DM Sans", system-ui, sans-serif';
     ctx.textAlign='center';
-    const lines=wrapReelText(ctx,reel.hook,W*0.82);
+    const lines=wrapReelText(ctx,hookText,W*0.82);
+    const lineH=isBold?100:78;
     const hY=(reel.hookY||12)*0.01*H;
     let y=hY;
-    lines.forEach(ln=>{ctx.fillText(ln,W/2,y);y+=78;});
+    lines.forEach(ln=>{
+      if(isBold){
+        ctx.lineWidth=18;ctx.strokeStyle='#000';ctx.lineJoin='round';
+        ctx.strokeText(ln,W/2,y);
+        ctx.fillStyle='#fff';
+      }else{
+        ctx.fillStyle=REEL_CREAM;
+      }
+      ctx.fillText(ln,W/2,y);y+=lineH;
+    });
   }
 
   if(reel.cta){
-    ctx.fillStyle=REEL_GOLD;
-    ctx.font='500 46px "DM Sans", system-ui, sans-serif';
+    const ctaText=isBold?reel.cta.toUpperCase():reel.cta;
+    ctx.font=(isBold?'800 64px':'500 46px')+' "DM Sans", system-ui, sans-serif';
     ctx.textAlign='center';
-    const lines=wrapReelText(ctx,reel.cta,W*0.82);
+    const lines=wrapReelText(ctx,ctaText,W*0.82);
+    const lineH=isBold?74:56;
     const cY=(reel.ctaY||90)*0.01*H;
-    let y=cY-(lines.length-1)*56;
-    lines.forEach(ln=>{ctx.fillText(ln,W/2,y);y+=56;});
+    let y=cY-(lines.length-1)*lineH;
+    lines.forEach(ln=>{
+      if(isBold){
+        ctx.lineWidth=14;ctx.strokeStyle='#000';ctx.lineJoin='round';
+        ctx.strokeText(ln,W/2,y);
+        ctx.fillStyle='#fff';
+      }else{
+        ctx.fillStyle=REEL_GOLD;
+      }
+      ctx.fillText(ln,W/2,y);y+=lineH;
+    });
   }
 
   ctx.fillStyle='rgba(111,138,126,0.45)';
