@@ -459,6 +459,39 @@ function CustomTrackHomeTile() {
   );
 }
 
+const TESTIMONIALS = [
+  {
+    name: "Erica R.",
+    quote:
+      "After just one day of the audio I feel an absolute shift inside of me in a positive, profound way. I felt every word — and I woke up today with much more optimism than I have in a long time. The app is pretty incredible, honestly.",
+  },
+  {
+    name: "Ryan R.",
+    quote:
+      "This app has been the one that has connected me most with meditation. It's such a natural flow and helps get into states where I want to be. Thank you!!",
+  },
+];
+
+function TestimonialsStrip() {
+  return (
+    <div className="mb-6 -mx-4 lg:mx-0">
+      <div className="flex gap-3 overflow-x-auto px-4 lg:px-0 pb-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {TESTIMONIALS.map((t, i) => (
+          <div
+            key={i}
+            className="velum-card shrink-0 w-[82%] sm:w-[340px] p-5 snap-start border border-accent/15 bg-gradient-to-br from-accent/5 via-transparent to-transparent"
+          >
+            <p className="text-foreground/90 text-[13px] leading-relaxed font-sans italic">
+              "{t.quote}"
+            </p>
+            <p className="text-accent text-[11px] font-sans tracking-wider mt-3">— {t.name}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { setOpen: setFinderOpen } = useSessionFinder();
@@ -608,6 +641,9 @@ export default function HomePage() {
       <TileErrorBoundary>
         <CustomTrackHomeTile />
       </TileErrorBoundary>
+
+      {/* Social proof — testimonials strip */}
+      <TestimonialsStrip />
 
       {/* Trial countdown banner */}
       {isInTrial && (
