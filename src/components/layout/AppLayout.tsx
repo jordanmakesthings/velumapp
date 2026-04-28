@@ -1,27 +1,19 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
-import { SessionFinderFAB } from "./SessionFinderFAB";
-import { SessionFinderProvider, useSessionFinder } from "@/contexts/SessionFinderContext";
-import { SessionFinderModal } from "@/components/home/SessionFinderModal";
 import TermsGateModal from "@/components/TermsGateModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const HIDDEN_NAV_PATHS = ["/onboarding", "/premium", "/welcome", "/player", "/mastery-player", "/auth", "/signup", "/reset-password", "/course-v2", "/home-setup"];
 
-// Pages where the FAB should stay hidden (anywhere you're already in a session, or paywall/onboarding)
-const HIDDEN_FAB_PATHS = [...HIDDEN_NAV_PATHS, "/breathe", "/bilateral", "/tapping", "/somatic-touch", "/sos", "/checkin"];
-
 // Where to block the T&C gate from appearing. It should fire only once inside the authenticated experience.
 const GATE_BLOCK_PATHS = ["/onboarding", "/auth", "/signup", "/reset-password", "/welcome", "/home-setup"];
 
-function AppLayoutInner() {
+export function AppLayout() {
   const location = useLocation();
   const { user, profile, refreshProfile } = useAuth();
   const hideNav = HIDDEN_NAV_PATHS.some(p => location.pathname.startsWith(p));
-  const hideFab = HIDDEN_FAB_PATHS.some(p => location.pathname.startsWith(p));
-  const { open, setOpen } = useSessionFinder();
 
   // Show the T&C gate once, after onboarding is complete, anywhere in the authed app.
   const showGate = !!user
@@ -47,10 +39,6 @@ function AppLayoutInner() {
         <Outlet />
       </main>
 
-      {/* Session Finder FAB hidden — Custom Track tile is the new Today anchor */}
-      {false && !hideFab && <SessionFinderFAB />}
-      <SessionFinderModal open={open} onClose={() => setOpen(false)} />
-
       {showGate && <TermsGateModal onAccept={acceptTerms} />}
 
       {!hideNav && (
@@ -59,13 +47,5 @@ function AppLayoutInner() {
         </nav>
       )}
     </div>
-  );
-}
-
-export function AppLayout() {
-  return (
-    <SessionFinderProvider>
-      <AppLayoutInner />
-    </SessionFinderProvider>
   );
 }

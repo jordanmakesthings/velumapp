@@ -215,79 +215,16 @@ export default function LibraryPage() {
             />
           </div>
 
-          {!selectedCategory ? (
-            <div className="grid grid-cols-2 gap-3">
-              {categoryCounts.map(({ key, label, icon: Icon, count }) => (
-                <button key={key} onClick={() => {
-                  if (key === "mastery") {
-                    setActiveTab("mastery");
-                    setSelectedCategory(null);
-                  } else {
-                    setSelectedCategory(key);
-                    setShowAllSessions(false);
-                  }
-                }}
-                  className="velum-card p-5 flex flex-col gap-3 text-left group">
-                  <Icon className="w-5 h-5 text-accent" />
-                  <div>
-                    <p className="text-foreground text-sm font-sans font-medium">{label}</p>
-                    <p className="text-ui text-xs">{count} sessions</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <>
-              {/* Back button */}
-              <button onClick={() => { setSelectedCategory(null); setShowAllSessions(false); }}
-                className="flex items-center gap-1 text-foreground font-sans text-sm mb-4">
-                <ChevronLeft className="w-4 h-4" />
-                Back
-              </button>
-
-              {/* Subcategory grid or all sessions */}
-              {!showAllSessions && categorySubcats.length > 0 ? (
-                <>
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-accent text-[10px] font-sans font-medium tracking-[2.5px] uppercase">Categories</p>
-                    <button onClick={() => setShowAllSessions(true)}
-                      className="text-accent text-xs font-sans">
-                      See All →
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {categorySubcats.map((sc: any) => (
-                      <Link
-                        key={sc.id}
-                        to={`/subcategory?category=${selectedCategory}&subcategory=${sc.id}`}
-                        className="velum-card overflow-hidden"
-                      >
-                        <div className="aspect-video bg-surface-light relative overflow-hidden">
-                          {sc.thumbnail_url ? (
-                            <img src={sc.thumbnail_url} alt={sc.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
-                          )}
-                        </div>
-                        <div className="p-3">
-                          <p className="text-foreground text-xs font-sans font-medium">{sc.name}</p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {filteredTracks.map((track: any) => (
-                    <TrackCard key={track.id} track={track} />
-                  ))}
-                  {filteredTracks.length === 0 && (
-                    <p className="text-muted-foreground text-sm col-span-2 text-center py-8">No sessions in this category yet.</p>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+          <div className="grid grid-cols-2 gap-3">
+            {filteredTracks.map((track: any) => (
+              <TrackCard key={track.id} track={track} />
+            ))}
+            {filteredTracks.length === 0 && (
+              <p className="text-muted-foreground text-sm col-span-2 text-center py-8">
+                {search ? "No sessions match your search." : "No sessions yet."}
+              </p>
+            )}
+          </div>
         </>
       )}
 

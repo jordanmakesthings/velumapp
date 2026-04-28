@@ -6,7 +6,6 @@ import { getTodayCheckin } from "@/lib/velumStorage";
 import { TrackCover } from "@/components/TrackCover";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSessionFinder } from "@/contexts/SessionFinderContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOneSignalInit } from "@/hooks/useOneSignal";
 import { format } from "date-fns";
@@ -494,7 +493,6 @@ function TestimonialsStrip() {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { setOpen: setFinderOpen } = useSessionFinder();
   const [reflectionText, setReflectionText] = useState("");
   const [savingReflection, setSavingReflection] = useState(false);
   const todayCheckin = getTodayCheckin();
