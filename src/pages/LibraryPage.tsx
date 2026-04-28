@@ -215,16 +215,45 @@ export default function LibraryPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {filteredTracks.map((track: any) => (
-              <TrackCard key={track.id} track={track} />
-            ))}
-            {filteredTracks.length === 0 && (
-              <p className="text-muted-foreground text-sm col-span-2 text-center py-8">
-                {search ? "No sessions match your search." : "No sessions yet."}
-              </p>
-            )}
-          </div>
+          {!selectedCategory ? (
+            <div className="grid grid-cols-2 gap-3">
+              {categoryCounts.map(({ key, label, icon: Icon, count }) => (
+                <button key={key} onClick={() => {
+                  if (key === "mastery") {
+                    setActiveTab("mastery");
+                    setSelectedCategory(null);
+                  } else {
+                    setSelectedCategory(key);
+                  }
+                }}
+                  className="velum-card p-5 flex flex-col gap-3 text-left group">
+                  <Icon className="w-5 h-5 text-accent" />
+                  <div>
+                    <p className="text-foreground text-sm font-sans font-medium">{label}</p>
+                    <p className="text-ui text-xs">{count} sessions</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <>
+              <button onClick={() => setSelectedCategory(null)}
+                className="flex items-center gap-1 text-foreground font-sans text-sm mb-4">
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+              <div className="grid grid-cols-2 gap-3">
+                {filteredTracks.map((track: any) => (
+                  <TrackCard key={track.id} track={track} />
+                ))}
+                {filteredTracks.length === 0 && (
+                  <p className="text-muted-foreground text-sm col-span-2 text-center py-8">
+                    {search ? "No sessions match your search." : "No sessions in this category yet."}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </>
       )}
 
