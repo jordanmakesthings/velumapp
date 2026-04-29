@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  DESIGN TOKENS — KEEP IN SYNC WITH public/landing/index.html
+  Source of truth: DESIGN_TOKENS.md (repo root).
+  When changing any color below, also update the matching :root block
+  in public/landing/index.html (hex equivalents) and the table in
+  DESIGN_TOKENS.md.
+*/
 @layer base {
   :root {
     /* Deep forest-night emerald — NOT black. Cards + inputs sit on top of this. */

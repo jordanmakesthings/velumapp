@@ -10,6 +10,9 @@
     { "src": "/hypnosis-lab$", "dest": "/hypnosis-lab/index.html" },
     { "src": "/hypnosis-lab/", "dest": "/hypnosis-lab/index.html" },
     { "src": "/hypnosis-lab/(.*)", "dest": "/hypnosis-lab/$1" },
+    { "src": "/landing$", "dest": "/landing/index.html" },
+    { "src": "/landing/", "dest": "/landing/index.html" },
+    { "src": "/landing/(.*)", "dest": "/landing/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
