@@ -889,7 +889,7 @@ function ArchiveTrackRow({
     >
       <div className="flex items-center gap-4">
         <div className="relative shrink-0">
-          <TrackCover trackId={track.id} size="md" rounded="xl" />
+          <TrackCover trackId={track.id} title={track.title} size="md" rounded="xl" />
           <div className="absolute inset-0 rounded-xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <Play className="w-6 h-6 text-accent" fill="currentColor" />
           </div>

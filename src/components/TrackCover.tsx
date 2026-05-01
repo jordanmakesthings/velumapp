@@ -16,11 +16,25 @@ const COVER_BASE = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/p
 
 // Match the slugs uploaded by scripts/generate-covers.ts.
 // Add/remove slugs here if you change the pool.
+// 05-horizon and 13-window currently have artist watermarks — exclude from the
+// random pool until regenerated.
 const COVER_SLUGS = [
-  "01-doorway", "02-water", "03-candle", "04-forest", "05-horizon",
+  "01-doorway", "02-water", "03-candle", "04-forest",
   "06-cloth", "07-sky", "08-stone", "09-flame", "10-mist",
-  "11-leaves", "12-cosmic", "13-window", "14-path", "15-feather",
+  "11-leaves", "12-cosmic", "14-path", "15-feather",
   "16-mountains", "17-orb", "18-rain", "19-cave", "20-moon",
+];
+
+// Title-based overrides for curated tracks (Quest pillars, signature pieces).
+// The title is matched against the regex; first match wins. Falls through to
+// hash-based assignment if nothing matches.
+const TITLE_OVERRIDES: { match: RegExp; slug: string }[] = [
+  { match: /pillars?\b.*\b1\b|\bearn\b/i,                  slug: "02-water" },
+  { match: /pillars?\b.*\b2\b|\bkeep\b|\bmanage\b/i,       slug: "06-cloth" },
+  { match: /pillars?\b.*\b3\b|\bspend\b/i,                 slug: "01-doorway" },
+  { match: /pillars?\b.*\b4\b|\bmultiply\b/i,              slug: "04-forest" },
+  { match: /pillars?\b.*\b5\b|\benjoy\b/i,                 slug: "20-moon" },
+  { match: /pillars?\b.*\b6\b|\bcirculate\b|\bgive\b/i,    slug: "12-cosmic" },
 ];
 
 // FNV-1a 32-bit hash — fast + good distribution
@@ -33,7 +47,12 @@ function hash(str: string): number {
   return h >>> 0;
 }
 
-export function coverUrlFor(trackId: string): string {
+export function coverUrlFor(trackId: string, title?: string): string {
+  if (title) {
+    for (const { match, slug } of TITLE_OVERRIDES) {
+      if (match.test(title)) return `${COVER_BASE}/${slug}.jpg`;
+    }
+  }
   const slug = COVER_SLUGS[hash(trackId) % COVER_SLUGS.length];
   return `${COVER_BASE}/${slug}.jpg`;
 }
@@ -55,7 +74,7 @@ const radiusMap = {
 
 export function TrackCover({ trackId, title, size = "md", rounded = "2xl", showTitle = false, className = "" }: Props) {
   const cfg = sizeMap[size];
-  const url = coverUrlFor(trackId);
+  const url = coverUrlFor(trackId, title);
 
   return (
     <div
