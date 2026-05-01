@@ -692,6 +692,30 @@ function BigPlayer({
   const displayCurrent = scrubPct !== null ? scrubPct * duration : current;
   const progress = duration > 0 ? (displayCurrent / duration) * 100 : 0;
 
+  // iOS Safari (and sometimes Chrome) suspends a backgrounded <audio> element:
+  // the underlying decoder is killed, audio.paused flips true silently, and
+  // currentTime can clamp to 0 on the reload, so the user returns to "pause
+  // icon visible, no sound, scrubber at zero." Re-sync on visibility return:
+  // (1) reset `playing` to mirror the element's actual paused state,
+  // (2) if currentTime got nuked but we have a saved position, seek back.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      const a = audioRef.current;
+      if (!a) return;
+      if (a.paused && playing) setPlaying(false);
+      try {
+        const saved = parseFloat(localStorage.getItem(POS_KEY(trackId)) || "0");
+        if (saved > 5 && a.currentTime < 1 && saved < (a.duration || Infinity) - 2) {
+          a.currentTime = saved;
+          setCurrent(saved);
+        }
+      } catch {}
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [trackId, playing]);
+
   return (
     <div>
       <audio

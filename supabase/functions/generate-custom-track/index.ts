@@ -18,6 +18,47 @@ const VOICE_ROSTER: Record<string, string> = {
 
 const COOLDOWN_DAYS = 30;
 const TARGET_WORDS = 1300;
+const SAMPLE_RATE = 22050;
+
+// True when a raw chunk contains 3+ number tokens within a 200-char window —
+// i.e. a real countdown / count-up, not "five years ago." Mirrors the heuristic
+// in protectNumberClusters() so we route the same paragraphs to the silence-splice path.
+function isCountdownChunk(raw: string): boolean {
+  const re = /\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\b/gi;
+  const positions: number[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(raw)) !== null) positions.push(m.index);
+  for (let i = 0; i < positions.length; i++) {
+    let neighbors = 0;
+    for (let j = 0; j < positions.length; j++) {
+      if (i !== j && Math.abs(positions[i] - positions[j]) <= 200) neighbors++;
+      if (neighbors >= 2) return true;
+    }
+  }
+  return false;
+}
+
+// Split a countdown chunk on [pause: N seconds] markers into [text, pauseAfterSec][].
+function splitCountdownChunk(raw: string): { text: string; pauseAfter: number }[] {
+  const re = /\[pause:\s*(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)?\s*\]/gi;
+  const out: { text: string; pauseAfter: number }[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(raw)) !== null) {
+    const text = raw.slice(last, m.index).trim();
+    if (text) out.push({ text, pauseAfter: parseFloat(m[1]) });
+    last = m.index + m[0].length;
+  }
+  const tail = raw.slice(last).trim();
+  if (tail) out.push({ text: tail, pauseAfter: 0 });
+  return out;
+}
+
+// N seconds of digital silence at 22050Hz mono 16-bit PCM.
+function silencePcm(seconds: number): Uint8Array {
+  const samples = Math.max(0, Math.round(SAMPLE_RATE * seconds));
+  return new Uint8Array(samples * 2);
+}
 
 const SCRIPT_SYSTEM = `You write Ericksonian hypnosis scripts for Velum.
 
@@ -139,9 +180,13 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userErr } = await userClient.auth.getUser(authHeader.replace("Bearer ", ""));
     if (userErr || !user) return json({ error: "Unauthorized" }, 401);
 
-    // Parse body
-    const { diagnosis, voice, title } = await req.json();
-    if (!diagnosis || typeof diagnosis !== "object") return json({ error: "diagnosis JSON required" }, 400);
+    // Parse body. `script_text` is optional — when provided, we skip Claude and
+    // synthesize the supplied script directly. Used for hand-crafted Quest tracks
+    // where word-level control matters more than per-user personalization.
+    const { diagnosis, voice, title, script_text } = await req.json();
+    if (!script_text && (!diagnosis || typeof diagnosis !== "object")) {
+      return json({ error: "diagnosis JSON or script_text required" }, 400);
+    }
     if (!voice || !VOICE_ROSTER[voice as string]) return json({ error: "Invalid voice" }, 400);
     const voiceId = VOICE_ROSTER[voice as string];
 
@@ -182,29 +227,34 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 1. Generate script via Claude
-    const userMsg = `Diagnosis JSON:\n${JSON.stringify(diagnosis, null, 2)}\n\nUser first name to embed: ${diagnosis.first_name || "(none — use no name)"}\n\nWrite the full Ericksonian hypnosis script now.`;
-    const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": anthropicKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 4000,
-        system: SCRIPT_SYSTEM,
-        messages: [{ role: "user", content: userMsg }],
-      }),
-    });
-    if (!claudeRes.ok) {
-      const t = await claudeRes.text();
-      return json({ error: "Script generation failed", detail: t.slice(0, 400) }, 502);
+    // 1. Generate script via Claude (or use the pre-written one if provided)
+    let scriptText: string;
+    if (script_text && typeof script_text === "string" && script_text.trim().length > 100) {
+      scriptText = script_text.trim();
+    } else {
+      const userMsg = `Diagnosis JSON:\n${JSON.stringify(diagnosis, null, 2)}\n\nUser first name to embed: ${diagnosis.first_name || "(none — use no name)"}\n\nWrite the full Ericksonian hypnosis script now.`;
+      const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 4000,
+          system: SCRIPT_SYSTEM,
+          messages: [{ role: "user", content: userMsg }],
+        }),
+      });
+      if (!claudeRes.ok) {
+        const t = await claudeRes.text();
+        return json({ error: "Script generation failed", detail: t.slice(0, 400) }, 502);
+      }
+      const claudeData = await claudeRes.json();
+      scriptText = (claudeData.content?.[0]?.text || "").trim();
+      if (!scriptText) return json({ error: "Empty script returned" }, 502);
     }
-    const claudeData = await claudeRes.json();
-    const scriptText = (claudeData.content?.[0]?.text || "").trim();
-    if (!scriptText) return json({ error: "Empty script returned" }, 502);
 
     // 2. Synthesize audio via ElevenLabs
     // Chunk the script at paragraph breaks for consistent pacing.
@@ -232,7 +282,6 @@ Deno.serve(async (req) => {
     // PCM output for lossless concat (MP3 chunk-concat truncates in browsers).
     // 22050Hz mono is plenty for spoken hypnosis and ~1/2 the bytes of 44.1kHz
     // → faster downloads, no timeouts.
-    const SAMPLE_RATE = 22050;
     const audioParts: Uint8Array[] = [];
     const chunkSizes: number[] = [];
     const MIN_AUDIO_BYTES = 4000;
@@ -244,6 +293,71 @@ Deno.serve(async (req) => {
     const recentRequestIds: string[] = [];
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
+
+      // Countdown chunks get a different path: ElevenLabs multilingual_v2 ignores
+      // <prosody> tags and previous_request_ids carries list-rhythm conditioning
+      // forward, which is why numbers race even when <break> tags space them out.
+      // Split at [pause:] markers, synthesize each segment in isolation (no
+      // continuity hints at all), and stitch real PCM silence between them.
+      // Don't push these request IDs into recentRequestIds either — keeps the
+      // post-countdown chunks inheriting only the slow Ericksonian prose cadence.
+      if (isCountdownChunk(chunk)) {
+        const segments = splitCountdownChunk(chunk);
+        const segPcms: Uint8Array[] = [];
+        for (let s = 0; s < segments.length; s++) {
+          const seg = segments[s];
+          let segBuf: Uint8Array | null = null;
+          let lastError = "";
+          for (let attempt = 0; attempt < 3; attempt++) {
+            const ttsRes = await fetch(
+              `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=pcm_22050`,
+              {
+                method: "POST",
+                headers: { "xi-api-key": elevenKey, "Content-Type": "application/json", Accept: "audio/pcm" },
+                body: JSON.stringify({
+                  text: seg.text,
+                  model_id: "eleven_multilingual_v2",
+                  voice_settings: { stability: 0.78, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 0.82 },
+                }),
+              },
+            );
+            const ct = ttsRes.headers.get("content-type") || "";
+            if (!ttsRes.ok) {
+              lastError = `HTTP ${ttsRes.status}: ${(await ttsRes.text()).slice(0, 200)}`;
+            } else if (!ct.includes("audio") && !ct.includes("octet-stream")) {
+              lastError = `Non-audio response (${ct})`;
+            } else {
+              const candidate = new Uint8Array(await ttsRes.arrayBuffer());
+              if (candidate.byteLength < MIN_AUDIO_BYTES) {
+                lastError = `Truncated (${candidate.byteLength} bytes)`;
+              } else {
+                segBuf = candidate;
+                break;
+              }
+            }
+            await new Promise(r => setTimeout(r, 600));
+          }
+          if (!segBuf) {
+            return json({
+              error: "Audio synthesis failed (countdown segment) after 3 retries",
+              detail: lastError,
+              failed_chunk_index: i,
+              failed_segment_index: s,
+              segment_text_preview: seg.text.slice(0, 120),
+            }, 502);
+          }
+          segPcms.push(segBuf);
+          if (seg.pauseAfter > 0) segPcms.push(silencePcm(seg.pauseAfter));
+        }
+        const totalLen = segPcms.reduce((s, b) => s + b.byteLength, 0);
+        const merged = new Uint8Array(totalLen);
+        let off = 0;
+        for (const part of segPcms) { merged.set(part, off); off += part.byteLength; }
+        chunkSizes.push(merged.byteLength);
+        audioParts.push(merged);
+        continue;
+      }
+
       const ssmlChunk = scriptToSsml(chunk);
       const prevRaw = i > 0 ? chunks[i - 1] : "";
       const nextRaw = i < chunks.length - 1 ? chunks[i + 1] : "";
@@ -343,7 +457,7 @@ Deno.serve(async (req) => {
     const audioBuf = wav;
 
     // 3. Upload to storage at <user_id>/<timestamp>-<title-slug>.wav
-    const finalTitle = (title && String(title).trim()) || (diagnosis.issue ? String(diagnosis.issue).slice(0, 60) : "Custom track");
+    const finalTitle = (title && String(title).trim()) || (diagnosis?.issue ? String(diagnosis.issue).slice(0, 60) : "Custom track");
     const fname = `${user.id}/${Date.now()}-${slugify(finalTitle)}.wav`;
     const { error: upErr } = await admin.storage.from("custom-tracks").upload(fname, audioBuf, {
       contentType: "audio/wav",
@@ -360,7 +474,7 @@ Deno.serve(async (req) => {
         user_id: user.id,
         title: finalTitle,
         modality: "hypnosis",
-        issue_summary: diagnosis.issue || null,
+        issue_summary: diagnosis?.issue || null,
         script_text: scriptText,
         audio_url: fname,
         duration_sec: durSec,

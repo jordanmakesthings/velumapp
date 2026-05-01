@@ -16,8 +16,8 @@ const INCLUDED_FEATURES = [
     desc: "A custom guided breathwork tool for real-time regulation and a nervous system reset. Rapid state changes in under 10 minutes.",
   },
   {
-    title: "Courses",
-    desc: "Entry-level courses including Meditation Made Easy and EFT Essentials to advanced journeys designed to rewrite reality and unlock unseen levels of potential and emotional mastery.",
+    title: "Quests",
+    desc: "Themed multi-day journeys — from the Wealth Quest to deep nervous-system rewiring — designed to soak in the subconscious one day at a time and end somewhere different from where you started.",
   },
   {
     title: "MasteryClasses",

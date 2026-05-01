@@ -180,6 +180,7 @@ export default function CustomTrackPage() {
   const [previewLoading, setPreviewLoading] = useState<string>("");
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const generateInFlightRef = useRef(false);
 
   // ── Initial load: check cooldown + voice preference ──
   useEffect(() => {
@@ -337,6 +338,8 @@ export default function CustomTrackPage() {
   // ── Confirm diagnosis → call generate-custom-track edge function ──
   const generate = async () => {
     if (!diagnosis || !voice) return;
+    if (generateInFlightRef.current) return;
+    generateInFlightRef.current = true;
     setPhase("generating");
     try {
       const { data, error } = await supabase.functions.invoke("generate-custom-track", {
@@ -359,6 +362,8 @@ export default function CustomTrackPage() {
     } catch (e: any) {
       setErrorMsg(e.message || String(e));
       setPhase("error");
+    } finally {
+      generateInFlightRef.current = false;
     }
   };
 

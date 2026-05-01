@@ -10,7 +10,7 @@ type Tab = "sessions" | "favorites" | "courses" | "mastery" | "journal";
 const TABS: { key: Tab; label: string }[] = [
   { key: "sessions", label: "Sessions" },
   { key: "favorites", label: "Favorites" },
-  { key: "courses", label: "Courses" },
+  { key: "courses", label: "Quests" },
   { key: "mastery", label: "MasteryClasses" },
   { key: "journal", label: "Journal" },
 ];

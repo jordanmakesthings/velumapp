@@ -707,7 +707,7 @@ export default function HomePage() {
             { label: "Meditation", count: categoryCounts["meditation"] || 0, to: "/library?category=meditation" },
             { label: "Rapid Resets", count: categoryCounts["rapid_resets"] || 0, to: "/library?category=rapid_resets" },
             { label: "Mastery Classes", count: masteryCount, to: "/library?tab=mastery" },
-            { label: "Courses", count: courses.length, to: "/courses" },
+            { label: "Quests", count: courses.length, to: "/courses" },
           ].map(({ label, count, to }) => (
             <Link key={to} to={to} className="velum-card-flat flex items-center justify-between px-4 py-3.5 group hover:border-accent/25 transition-colors">
               <p className="text-foreground text-sm font-medium">{label}</p>
