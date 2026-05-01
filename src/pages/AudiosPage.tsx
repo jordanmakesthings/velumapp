@@ -692,18 +692,26 @@ function BigPlayer({
   const displayCurrent = scrubPct !== null ? scrubPct * duration : current;
   const progress = duration > 0 ? (displayCurrent / duration) * 100 : 0;
 
-  // iOS Safari (and sometimes Chrome) suspends a backgrounded <audio> element:
-  // the underlying decoder is killed, audio.paused flips true silently, and
-  // currentTime can clamp to 0 on the reload, so the user returns to "pause
-  // icon visible, no sound, scrubber at zero." Re-sync on visibility return:
-  // (1) reset `playing` to mirror the element's actual paused state,
-  // (2) if currentTime got nuked but we have a saved position, seek back.
+  // Track whether the user had this playing right before the tab lost focus.
+  // Browsers will sometimes suspend the <audio> element on hidden tabs (Chrome's
+  // media-throttling heuristics, iOS Safari's aggressive pausing). When the tab
+  // returns we want to resume from the saved position — not just sync UI state.
+  const wasPlayingBeforeHideRef = useRef(false);
+
   useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState !== "visible") return;
+    const onVisChange = async () => {
       const a = audioRef.current;
       if (!a) return;
-      if (a.paused && playing) setPlaying(false);
+
+      if (document.visibilityState === "hidden") {
+        // Snapshot intent at hide-time. If the user had it playing, we want to
+        // recover that state on return.
+        wasPlayingBeforeHideRef.current = !a.paused || playing;
+        return;
+      }
+
+      // Tab is back. If currentTime got clamped to 0 but we have a saved
+      // position, seek back. Then if the user was playing before, resume.
       try {
         const saved = parseFloat(localStorage.getItem(POS_KEY(trackId)) || "0");
         if (saved > 5 && a.currentTime < 1 && saved < (a.duration || Infinity) - 2) {
@@ -711,10 +719,59 @@ function BigPlayer({
           setCurrent(saved);
         }
       } catch {}
+
+      if (wasPlayingBeforeHideRef.current && a.paused) {
+        try {
+          await a.play();
+          setPlaying(true);
+        } catch {
+          // Autoplay-after-suspend can be blocked. Reflect reality in the UI
+          // so the user sees a paused button and can tap to resume manually.
+          setPlaying(false);
+        }
+      } else if (a.paused && playing) {
+        // Stale "playing" UI without an actually-playing element — sync down.
+        setPlaying(false);
+      }
     };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+
+    document.addEventListener("visibilitychange", onVisChange);
+    return () => document.removeEventListener("visibilitychange", onVisChange);
   }, [trackId, playing]);
+
+  // MediaSession API: signals to the browser that this is a real media app,
+  // which (a) raises the bar before Chrome will throttle/suspend the audio in
+  // a backgrounded tab and (b) wires up OS-level media controls (lock screen,
+  // headphone buttons, hardware play/pause keys) for free.
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: trackId ? "Velum" : "Velum",
+      artist: "Velum",
+      album: "Custom Track",
+    });
+    const a = audioRef.current;
+    navigator.mediaSession.setActionHandler("play", async () => {
+      if (!a) return;
+      try { await a.play(); setPlaying(true); } catch {}
+    });
+    navigator.mediaSession.setActionHandler("pause", () => {
+      if (!a) return;
+      a.pause(); setPlaying(false);
+    });
+    navigator.mediaSession.setActionHandler("seekto", (details) => {
+      if (!a || details.seekTime == null) return;
+      a.currentTime = details.seekTime;
+      setCurrent(details.seekTime);
+    });
+    return () => {
+      try {
+        navigator.mediaSession.setActionHandler("play", null);
+        navigator.mediaSession.setActionHandler("pause", null);
+        navigator.mediaSession.setActionHandler("seekto", null);
+      } catch {}
+    };
+  }, [trackId]);
 
   return (
     <div>
