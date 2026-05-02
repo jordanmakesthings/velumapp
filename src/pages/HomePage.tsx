@@ -447,9 +447,15 @@ function CustomTrackHomeTile() {
             ref={voiceRef}
             src={signedUrls[t.id]}
             preload="metadata"
+            loop={false}
             onLoadedMetadata={(e) => setDur(e.currentTarget.duration || 0)}
             onTimeUpdate={onTimeUpdate}
-            onEnded={() => { setPlaying(false); stopBacking(); }}
+            onEnded={(e) => {
+              setPlaying(false);
+              stopBacking();
+              e.currentTarget.currentTime = 0;
+              setCurTime(0);
+            }}
             className="hidden"
           />
         )}
@@ -591,7 +597,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen w-full max-w-full bg-radial-subtle overflow-x-hidden">
-    <div className="mx-auto w-full max-w-3xl overflow-x-hidden px-4 pt-8 pb-8 lg:px-8">
+    <div className="mx-auto w-full max-w-3xl overflow-x-hidden px-4 pb-8 lg:px-8" style={{ paddingTop: "calc(env(safe-area-inset-top) + 32px)" }}>
       {/* Header */}
       <div className="mb-8 min-w-0 w-full max-w-full">
         <h1 className="text-display text-3xl md:text-4xl leading-[1.1] text-foreground mb-5">
