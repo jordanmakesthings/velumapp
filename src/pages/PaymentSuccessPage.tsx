@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import VelumMark from "@/components/VelumMark";
+import { rdtTrack } from "@/lib/reddit-pixel";
 
 const MAX_POLL_MS = 12000;
 const POLL_INTERVAL_MS = 1500;
@@ -35,12 +36,31 @@ export default function PaymentSuccessPage() {
     return () => { cancelled = true; clearInterval(interval); clearTimeout(timeout); };
   }, [user?.id]);
 
+  // Fire Reddit Pixel Purchase event exactly once when access is confirmed.
+  // Plan price is inferred from profile.subscription_plan when available;
+  // falls back to the annual sticker price for attribution.
+  const purchaseFiredRef = useRef(false);
   useEffect(() => {
-    if (!hasAccess) return;
+    if (!hasAccess || purchaseFiredRef.current) return;
+    purchaseFiredRef.current = true;
     setMessage("You're in. Welcome.");
+    (async () => {
+      let value = 99; // default annual
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("subscription_plan")
+          .eq("id", user?.id ?? "")
+          .maybeSingle();
+        const plan = (data as { subscription_plan?: string } | null)?.subscription_plan;
+        if (plan === "monthly") value = 19;
+        else if (plan === "lifetime") value = 199;
+      } catch {}
+      rdtTrack("Purchase", { value, currency: "USD" });
+    })();
     const t = setTimeout(() => navigate("/home-setup", { replace: true }), 1200);
     return () => clearTimeout(t);
-  }, [hasAccess, navigate]);
+  }, [hasAccess, navigate, user?.id]);
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-6 py-12">

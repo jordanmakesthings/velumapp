@@ -139,6 +139,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       supabase.functions.invoke("loops-signup", {
         body: { email, firstName: fullName || "" },
       });
+      // Fire Reddit Pixel SignUp event for ad attribution
+      try {
+        const { rdtTrack } = await import("@/lib/reddit-pixel");
+        rdtTrack("SignUp");
+      } catch {}
     }
     return { error: error as Error | null };
   };
