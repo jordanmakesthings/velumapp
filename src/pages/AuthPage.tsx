@@ -100,18 +100,18 @@ export default function AuthPage() {
 
           {/* Eyebrow */}
           {mode === "signup" && !referrerCode && (
-            <p className="text-eyebrow text-center mb-5">Regulate your body in 60 seconds</p>
+            <p className="text-eyebrow text-center mb-5">Free 7-day trial · No card required</p>
           )}
 
           {/* Headline — Cormorant editorial */}
           <h2 className="text-display text-4xl md:text-[2.6rem] leading-[1.05] text-center mb-3">
-            {mode === "signup" && <>Regulate your<br /><span className="italic text-accent">nervous system.</span></>}
+            {mode === "signup" && <>Generate your first<br /><span className="italic text-accent">custom hypnosis.</span></>}
             {mode === "login" && <>Welcome<br /><span className="italic text-accent">back.</span></>}
             {mode === "forgot" && <>Reset your<br /><span className="italic text-accent">password.</span></>}
           </h2>
 
-          <p className="text-muted-foreground text-sm font-sans text-center mb-7 max-w-[320px] mx-auto leading-relaxed">
-            {mode === "signup" && "Real-time tools to move your body out of survival mode — in under 60 seconds."}
+          <p className="text-muted-foreground text-sm font-sans text-center mb-7 max-w-[340px] mx-auto leading-relaxed">
+            {mode === "signup" && "60 seconds of conversation. A personalized 10-minute Ericksonian rewiring audio, in your chosen voice. Yours tonight."}
             {mode === "login" && "Return to where you left off."}
             {mode === "forgot" && "We'll send you a reset link."}
           </p>
@@ -155,7 +155,7 @@ export default function AuthPage() {
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                   <>
-                    {mode === "signup" && "Begin →"}
+                    {mode === "signup" && "Start free trial →"}
                     {mode === "login" && "Sign in →"}
                     {mode === "forgot" && "Send reset link"}
                   </>
