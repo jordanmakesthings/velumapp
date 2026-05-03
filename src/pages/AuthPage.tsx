@@ -106,13 +106,16 @@ export default function AuthPage() {
           {/* Eyebrow */}
           {mode === "signup" && !referrerCode && (
             <p className="text-eyebrow text-center mb-5">
-              {freeTrial ? "Free 7-day trial · No credit card required" : "Free 7-day trial · Cancel anytime"}
+              {freeTrial ? "Free 7-day trial · No credit card required" : "Regulate your body in 60 seconds"}
             </p>
           )}
 
           {/* Headline — Cormorant editorial */}
           <h2 className="text-display text-4xl md:text-[2.6rem] leading-[1.05] text-center mb-3">
-            {mode === "signup" && <>Generate your first<br /><span className="italic text-accent">custom hypnosis.</span></>}
+            {mode === "signup" && (freeTrial
+              ? <>Generate your first<br /><span className="italic text-accent">custom hypnosis.</span></>
+              : <>Regulate your<br /><span className="italic text-accent">nervous system.</span></>
+            )}
             {mode === "login" && <>Welcome<br /><span className="italic text-accent">back.</span></>}
             {mode === "forgot" && <>Reset your<br /><span className="italic text-accent">password.</span></>}
           </h2>
@@ -120,7 +123,7 @@ export default function AuthPage() {
           <p className="text-muted-foreground text-sm font-sans text-center mb-7 max-w-[340px] mx-auto leading-relaxed">
             {mode === "signup" && (freeTrial
               ? "60 seconds of conversation. A personalized 10-minute Ericksonian rewiring audio, in your chosen voice. No card needed to start."
-              : "60 seconds of conversation. A personalized 10-minute Ericksonian rewiring audio, in your chosen voice. Yours tonight."
+              : "Real-time tools to move your body out of survival mode — in under 60 seconds."
             )}
             {mode === "login" && "Return to where you left off."}
             {mode === "forgot" && "We'll send you a reset link."}
@@ -165,7 +168,7 @@ export default function AuthPage() {
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                   <>
-                    {mode === "signup" && "Start free trial →"}
+                    {mode === "signup" && (freeTrial ? "Start free trial →" : "Begin →")}
                     {mode === "login" && "Sign in →"}
                     {mode === "forgot" && "Send reset link"}
                   </>
