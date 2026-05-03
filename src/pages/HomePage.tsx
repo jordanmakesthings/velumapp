@@ -277,13 +277,13 @@ function CustomTrackHomeTile() {
             <p className="text-eyebrow text-accent">Built for you · Included</p>
           </div>
           <p className="text-foreground text-[1.7rem] md:text-[2rem] font-serif font-light leading-[1.15] mb-3 max-w-[440px]">
-            10 minutes a day for 21 days, written for the exact thing keeping you stuck.
+            It's time to build your first<br /><span className="italic">custom rewiring audio.</span>
           </p>
           <p className="text-muted-foreground text-sm leading-relaxed mb-5 max-w-[440px]">
-            A short conversation. A custom rewiring audio in your chosen voice. Listen daily — your nervous system rewires itself.
+            A 60-second conversation. A 10-minute Ericksonian rewiring audio, written for your exact pattern, in your chosen voice. Yours tonight.
           </p>
           <span className="inline-flex items-center gap-2 rounded-full gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-semibold tracking-wide">
-            Begin your track <ArrowRight className="w-3.5 h-3.5" />
+            Generate your audio <ArrowRight className="w-3.5 h-3.5" />
           </span>
         </div>
       </Link>
