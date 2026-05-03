@@ -26,7 +26,7 @@ interface AuthContextType {
   hasAccess: boolean;
   isInTrial: boolean;
   trialDaysLeft: number;
-  signUp: (email: string, password: string, fullName?: string, phone?: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName?: string, phone?: string, options?: { grantFreeTrial?: boolean }) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -110,7 +110,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string, phone?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName?: string,
+    phone?: string,
+    options?: { grantFreeTrial?: boolean },
+  ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -120,21 +126,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     if (!error && data.user) {
-      const trialEnd = new Date();
-      trialEnd.setDate(trialEnd.getDate() + 7);
-      // Attribute referral if stored from ?ref= param
+      // Profile updates: phone (always), and trial dates (only when this signup
+      // came from the no-card-trial funnel — Funnel B / /trial-free). Card-trial
+      // signups don't get app-level trial; their trial is created by Stripe at
+      // checkout via trial_period_days on the annual price.
+      const grantFreeTrial = !!options?.grantFreeTrial;
+      const profileUpdates: Record<string, unknown> = {};
+      if (phone) profileUpdates.phone = phone;
+      if (grantFreeTrial) {
+        const trialEnd = new Date();
+        trialEnd.setDate(trialEnd.getDate() + 7);
+        profileUpdates.trial_started_at = new Date().toISOString();
+        profileUpdates.trial_ends_at = trialEnd.toISOString();
+      }
+      if (Object.keys(profileUpdates).length > 0) {
+        // Awaited so the write actually fires before navigation can unmount us.
+        // The previous implementation used a fire-and-forget builder which the
+        // Supabase JS client never executes.
+        const { error: upErr } = await supabase
+          .from("profiles")
+          .update(profileUpdates)
+          .eq("id", data.user.id);
+        if (upErr) console.error("[signUp] profile update failed", upErr.message);
+      }
+      // Attribute referral if stored from ?ref= param (separate concern from trial)
       const refCode = localStorage.getItem("velum_ref") || "";
-      setTimeout(() => {
-        supabase.from("profiles").update({
-          ...(phone ? { phone } : {}),
-          trial_started_at: new Date().toISOString(),
-          trial_ends_at: trialEnd.toISOString(),
-        }).eq("id", data.user!.id);
-        if (refCode) {
-          supabase.rpc("attribute_referral", { p_referral_code: refCode })
-            .then(() => { localStorage.removeItem("velum_ref"); });
-        }
-      }, 1500);
+      if (refCode) {
+        supabase.rpc("attribute_referral", { p_referral_code: refCode })
+          .then(() => { try { localStorage.removeItem("velum_ref"); } catch {} });
+      }
       // Fire-and-forget: add contact to Loops
       supabase.functions.invoke("loops-signup", {
         body: { email, firstName: fullName || "" },

@@ -9,11 +9,15 @@ type Mode = "signup" | "login" | "forgot";
 
 function resolveInitialMode(pathname: string): Mode {
   if (pathname.startsWith("/login") || pathname.startsWith("/signin")) return "login";
-  if (pathname.startsWith("/signup")) return "signup";
+  if (pathname.startsWith("/signup") || pathname.startsWith("/trial-free")) return "signup";
   try {
     if (localStorage.getItem("velum_has_account") === "1") return "login";
   } catch {}
   return "signup";
+}
+
+function isFreeTrialFunnel(pathname: string): boolean {
+  return pathname.startsWith("/trial-free");
 }
 
 export default function AuthPage() {
@@ -21,6 +25,7 @@ export default function AuthPage() {
   const location = useLocation();
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<Mode>(() => resolveInitialMode(location.pathname));
+  const freeTrial = isFreeTrialFunnel(location.pathname);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,7 +51,7 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await signUp(email, password);
+        const { error } = await signUp(email, password, undefined, undefined, { grantFreeTrial: freeTrial });
         if (error) throw error;
         try { localStorage.setItem("velum_has_account", "1"); } catch {}
         navigate("/onboarding");
@@ -100,7 +105,9 @@ export default function AuthPage() {
 
           {/* Eyebrow */}
           {mode === "signup" && !referrerCode && (
-            <p className="text-eyebrow text-center mb-5">Free 7-day trial · Cancel anytime</p>
+            <p className="text-eyebrow text-center mb-5">
+              {freeTrial ? "Free 7-day trial · No credit card required" : "Free 7-day trial · Cancel anytime"}
+            </p>
           )}
 
           {/* Headline — Cormorant editorial */}
@@ -111,7 +118,10 @@ export default function AuthPage() {
           </h2>
 
           <p className="text-muted-foreground text-sm font-sans text-center mb-7 max-w-[340px] mx-auto leading-relaxed">
-            {mode === "signup" && "60 seconds of conversation. A personalized 10-minute Ericksonian rewiring audio, in your chosen voice. Yours tonight."}
+            {mode === "signup" && (freeTrial
+              ? "60 seconds of conversation. A personalized 10-minute Ericksonian rewiring audio, in your chosen voice. No card needed to start."
+              : "60 seconds of conversation. A personalized 10-minute Ericksonian rewiring audio, in your chosen voice. Yours tonight."
+            )}
             {mode === "login" && "Return to where you left off."}
             {mode === "forgot" && "We'll send you a reset link."}
           </p>

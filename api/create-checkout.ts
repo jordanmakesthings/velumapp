@@ -69,11 +69,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("stripe_customer_id")
+    .select("stripe_customer_id, trial_started_at")
     .eq("id", userId)
     .single();
 
   let customerId = profile?.stripe_customer_id as string | null | undefined;
+  // If they already used the no-card trial granted at signup (Funnel B / /trial-free),
+  // don't give them a second Stripe trial when they enter card here. They've had their 7 days.
+  const alreadyTrialedFree = !!(profile as { trial_started_at?: string | null } | null)?.trial_started_at;
 
   if (customerId) {
     try {
@@ -112,7 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ? {}
         : {
             subscription_data: {
-              ...(plan === "annual" ? { trial_period_days: 7 } : {}),
+              ...(plan === "annual" && !alreadyTrialedFree ? { trial_period_days: 7 } : {}),
               metadata: { supabase_user_id: userId, plan },
             },
             ...(plan === "annual" ? { payment_method_collection: "always" } : {}),
