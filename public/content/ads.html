@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velum · Ad Creative Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--forest:#0F2F26;--fl:#1a4a3a;--ch:#111111;--cr:#F2EFE7;--sg:#6F8A7E;--gd:#C9A84C;--mt:#c8c4bb;--dm:#9aaea3;--br:#2a2a2a;--sf:#181818;--s2:#1e1e1e;--red:#c97c5c;--green:#7ac97c}
+html,body{height:100%;background:#0d0d0d;color:var(--cr);font-family:'DM Sans',sans-serif;font-weight:300}
+
+/* AUTH GATE */
+#auth{position:fixed;inset:0;background:#0d0d0d;display:flex;align-items:center;justify-content:center;z-index:999}
+.auth-box{text-align:center;width:340px}
+.auth-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:.4em;color:var(--cr);opacity:.8;margin-bottom:6px}
+.auth-logo span{color:var(--gd)}
+.auth-sub{font-size:10px;letter-spacing:.2em;color:var(--sg);text-transform:uppercase;margin-bottom:32px}
+.auth-box label{display:block;font-size:9px;letter-spacing:.2em;color:var(--sg);text-transform:uppercase;text-align:left;margin-bottom:6px;margin-top:14px}
+.auth-box input{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:4px;color:var(--cr);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:300;padding:12px 14px;outline:none;text-align:left;letter-spacing:.04em;transition:border-color .2s}
+.auth-box input:focus{border-color:var(--gd)}
+.auth-box button{width:100%;background:var(--gd);color:var(--ch);border:none;border-radius:3px;padding:12px;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;margin-top:18px}
+.auth-err{font-size:11px;color:var(--red);margin-top:8px;min-height:16px}
+.auth-hint{font-size:10px;color:var(--sg);margin-top:14px;line-height:1.5}
+.auth-hint a{color:var(--gd);text-decoration:none}
+
+/* APP LAYOUT */
+.app{display:grid;grid-template-columns:340px 1fr;grid-template-rows:52px 1fr;height:100vh;overflow:hidden}
+header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--br);background:#0d0d0d;gap:14px}
+.logo{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:300;letter-spacing:.35em;color:var(--cr);opacity:.8}
+.logo span{color:var(--gd)}
+.htag{font-size:9px;font-weight:400;letter-spacing:.2em;color:var(--sg);text-transform:uppercase}
+header .links{display:flex;gap:8px;margin-left:auto}
+header .links a{font-size:9px;letter-spacing:.15em;color:var(--sg);text-transform:uppercase;text-decoration:none;border:1px solid var(--br);border-radius:2px;padding:5px 10px;transition:all .2s}
+header .links a:hover{border-color:var(--gd);color:var(--gd)}
+header .links a.active{border-color:var(--gd);color:var(--gd)}
+
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--br);display:flex;flex-direction:column;overflow:hidden;background:var(--sf)}
+.si{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:16px}
+.si::-webkit-scrollbar{width:3px}
+.si::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px}
+label{display:block;font-size:9px;font-weight:400;letter-spacing:.2em;color:var(--sg);text-transform:uppercase;margin-bottom:6px}
+textarea,select,input[type=text],input[type=password],input[type=file]{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:4px;color:var(--cr);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;padding:10px 12px;outline:none;resize:none;transition:border-color .2s}
+textarea:focus,select:focus,input:focus{border-color:var(--gd)}
+textarea{line-height:1.6;min-height:90px}
+select{cursor:pointer;appearance:none}
+select option{background:#1e1e1e}
+.sw{position:relative}
+.sw::after{content:'▾';position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--sg);font-size:10px;pointer-events:none}
+
+/* MODE TABS */
+.modes{display:flex;border:1px solid var(--br);border-radius:4px;overflow:hidden}
+.mode{flex:1;padding:9px 0;font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;border:none;cursor:pointer;transition:all .2s;background:var(--s2);color:var(--sg)}
+.mode.on{background:var(--gd);color:var(--ch);font-weight:500}
+
+/* GENERATE BUTTON */
+.gbtn{width:100%;background:var(--gd);color:var(--ch);border:none;border-radius:3px;padding:12px;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;transition:opacity .2s;margin-top:8px}
+.gbtn:hover{opacity:.88}
+.gbtn:disabled{opacity:.35;cursor:default}
+.gbtn.gen{background:linear-gradient(135deg,#c9a84c,#a8842d)}
+
+/* COST CHIP */
+.cost{font-size:10px;color:var(--sg);text-align:center;margin-top:-4px;letter-spacing:.04em}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;overflow:hidden;background:#0a0a0a}
+.status-bar{padding:10px 24px;border-bottom:1px solid var(--br);font-size:11px;color:var(--sg);letter-spacing:.04em;display:flex;align-items:center;gap:10px;min-height:38px}
+.status-bar.active{color:var(--gd)}
+.status-bar.error{color:var(--red)}
+.status-bar.success{color:var(--green)}
+.spinner{width:10px;height:10px;border:1.5px solid var(--gd);border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.preview{flex:1;display:flex;align-items:center;justify-content:center;padding:32px;overflow:auto;position:relative}
+.preview-empty{color:var(--sg);font-size:12px;letter-spacing:.05em;text-align:center;font-style:italic}
+.preview-empty span{display:block;font-family:'Cormorant Garamond',serif;font-size:24px;font-style:italic;color:var(--mt);margin-bottom:8px;letter-spacing:.02em}
+.preview img,.preview video{max-width:100%;max-height:75vh;border:1px solid var(--br);border-radius:4px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.preview-actions{position:absolute;top:16px;right:24px;display:flex;gap:8px}
+.preview-actions a{font-size:9px;letter-spacing:.18em;color:var(--cr);text-transform:uppercase;text-decoration:none;border:1px solid var(--br);border-radius:2px;padding:6px 12px;background:rgba(0,0,0,.4);transition:all .2s}
+.preview-actions a:hover{border-color:var(--gd);color:var(--gd)}
+
+/* REFERENCE PREVIEW */
+.ref-thumb{width:100%;aspect-ratio:1;border:1px dashed var(--br);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--sg);font-size:10px;letter-spacing:.1em;text-transform:uppercase;background:var(--s2);overflow:hidden}
+.ref-thumb img{width:100%;height:100%;object-fit:cover}
+.ref-thumb.has{border-style:solid;border-color:var(--gd)}
+
+.divider{height:1px;background:var(--br);margin:4px 0}
+.section-label{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--gd);letter-spacing:.05em;margin-bottom:-6px}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div id="auth">
+  <div class="auth-box">
+    <div class="auth-logo">V E L U M <span>·</span> ADS</div>
+    <div class="auth-sub">Ad Creative Studio</div>
+
+    <label>fal.ai Key</label>
+    <input id="falKeyInput" type="password" placeholder="Required" autocomplete="off">
+
+    <label>Anthropic Key (optional)</label>
+    <input id="claudeKeyInput" type="password" placeholder="For Claude-assisted prompt writing" autocomplete="off">
+
+    <button onclick="saveKeys()">Enter Studio</button>
+    <div class="auth-err" id="authErr"></div>
+    <div class="auth-hint">
+      Keys live in your browser only. Never sent to any server other than the model provider.<br>
+      Get fal key at <a href="https://fal.ai/dashboard/keys" target="_blank">fal.ai/dashboard/keys</a>
+    </div>
+  </div>
+</div>
+
+<div class="app hidden" id="app">
+  <header>
+    <div class="logo">V E L U M <span>·</span> ADS</div>
+    <div class="htag">Ad Creative Studio</div>
+    <div class="links">
+      <a href="index.html">Carousels</a>
+      <a href="tiktok-cta.html">TikTok CTA</a>
+      <a href="ads.html" class="active">Ads ←</a>
+      <a href="#" onclick="logout();return false">Sign out</a>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <div class="si">
+
+      <div>
+        <label>Mode</label>
+        <div class="modes">
+          <button class="mode on" data-mode="image" onclick="setMode('image')">Image</button>
+          <button class="mode" data-mode="video" onclick="setMode('video')">Video</button>
+        </div>
+      </div>
+
+      <!-- IMAGE MODE -->
+      <div id="image-panel">
+        <p class="section-label">Editorial image</p>
+
+        <div>
+          <label>Prompt</label>
+          <textarea id="imgPrompt" placeholder="Painterly editorial photograph, top-down flat-lay, soft late-morning light through linen curtains, a single iPhone resting on cream linen showing a minimal hypnosis app interface in deep emerald and gold..."></textarea>
+        </div>
+
+        <div>
+          <label>Aspect Ratio</label>
+          <div class="sw">
+            <select id="imgRatio">
+              <option value="1:1">1:1 (Reddit, IG square)</option>
+              <option value="4:5">4:5 (IG portrait)</option>
+              <option value="9:16">9:16 (Stories, Reels)</option>
+              <option value="16:9">16:9 (FB landscape, YT)</option>
+              <option value="3:4">3:4</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <button class="gbtn gen" id="imgBtn" onclick="runImage()">Generate Image</button>
+        <div class="cost">~$0.06 · Flux Pro v1.1 Ultra</div>
+      </div>
+
+      <!-- VIDEO MODE -->
+      <div id="video-panel" class="hidden">
+        <p class="section-label">Short video (image → video)</p>
+
+        <div>
+          <label>Source Image</label>
+          <div class="ref-thumb" id="vidRefThumb">Drop or pick a still image</div>
+          <input id="vidRef" type="file" accept="image/*" style="margin-top:8px">
+        </div>
+
+        <div>
+          <label>Motion Prompt</label>
+          <textarea id="vidPrompt" placeholder="Slow contemplative push-in toward the phone screen. The phone screen brightens almost imperceptibly. Curtains drift slightly. Warm bedside lamp glow flickers. Hold the still, atmospheric, contemplative quiet. No fast motion. No cuts."></textarea>
+        </div>
+
+        <div>
+          <label>Duration</label>
+          <div class="sw">
+            <select id="vidDur">
+              <option value="5">5 seconds</option>
+              <option value="10">10 seconds</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label>Resolution</label>
+          <div class="sw">
+            <select id="vidRes">
+              <option value="720p">720p (cheaper)</option>
+              <option value="1080p">1080p</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <button class="gbtn gen" id="vidBtn" onclick="runVideo()">Generate Video</button>
+        <div class="cost">~$0.50–$1.50 · Seedance v1 Lite</div>
+      </div>
+
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="status-bar" id="status">Ready. Pick a mode, write a prompt, generate.</div>
+    <div class="preview" id="preview">
+      <div class="preview-empty">
+        <span>Quiet hour. Real work.</span>
+        Your generated creative will appear here.
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const FAL_BASE='https://queue.fal.run';
+let falKey='', claudeKey='', mode='image', vidRefUrl=null, vidRefBlob=null;
+
+// ──── KEY HANDLING ────
+function loadKeys(){
+  try{
+    falKey=localStorage.getItem('velum_fal_key')||'';
+    claudeKey=localStorage.getItem('velum_anthropic_key')||'';
+  }catch(e){}
+  if(falKey){enterApp();}
+}
+function saveKeys(){
+  const fk=document.getElementById('falKeyInput').value.trim();
+  const ck=document.getElementById('claudeKeyInput').value.trim();
+  if(!fk){document.getElementById('authErr').textContent='fal.ai key is required';return;}
+  falKey=fk;claudeKey=ck;
+  try{
+    localStorage.setItem('velum_fal_key',fk);
+    if(ck)localStorage.setItem('velum_anthropic_key',ck);
+  }catch(e){}
+  enterApp();
+}
+function enterApp(){
+  document.getElementById('auth').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+}
+function logout(){
+  try{localStorage.removeItem('velum_fal_key');localStorage.removeItem('velum_anthropic_key');}catch(e){}
+  location.reload();
+}
+
+// ──── MODE SWITCH ────
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+  document.getElementById('image-panel').classList.toggle('hidden',m!=='image');
+  document.getElementById('video-panel').classList.toggle('hidden',m!=='video');
+}
+
+// ──── STATUS ────
+function setStatus(txt,kind=''){
+  const el=document.getElementById('status');
+  el.className='status-bar '+(kind||'');
+  if(kind==='active'){el.innerHTML=`<div class="spinner"></div><span>${txt}</span>`;}
+  else{el.textContent=txt;}
+}
+
+// ──── FAL HELPERS ────
+async function falSubmit(endpoint,body){
+  const r=await fetch(`${FAL_BASE}/${endpoint}`,{
+    method:'POST',
+    headers:{'Authorization':`Key ${falKey}`,'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok)throw new Error(`fal submit ${r.status}: ${(await r.text()).slice(0,300)}`);
+  return r.json();
+}
+async function falPoll(statusUrl,maxSec=600){
+  const t0=Date.now();
+  while((Date.now()-t0)/1000<maxSec){
+    const r=await fetch(statusUrl,{headers:{'Authorization':`Key ${falKey}`}});
+    const d=await r.json();
+    if(d.status==='COMPLETED')return;
+    if(d.status==='FAILED'||d.status==='ERROR')throw new Error(`fal failed: ${JSON.stringify(d).slice(0,300)}`);
+    setStatus(`${d.status||'queued'}… ${((Date.now()-t0)/1000).toFixed(0)}s elapsed`,'active');
+    await new Promise(rs=>setTimeout(rs,4000));
+  }
+  throw new Error(`fal timed out after ${maxSec}s`);
+}
+async function falResult(responseUrl){
+  const r=await fetch(responseUrl,{headers:{'Authorization':`Key ${falKey}`}});
+  if(!r.ok)throw new Error(`fal result ${r.status}`);
+  return r.json();
+}
+
+// Upload a local file to fal storage; returns hosted URL
+async function falUpload(file){
+  const initR=await fetch('https://rest.alpha.fal.ai/storage/upload/initiate',{
+    method:'POST',
+    headers:{'Authorization':`Key ${falKey}`,'Content-Type':'application/json'},
+    body:JSON.stringify({file_name:file.name,content_type:file.type})
+  });
+  if(!initR.ok)throw new Error(`fal upload initiate ${initR.status}: ${(await initR.text()).slice(0,200)}`);
+  const init=await initR.json();
+  const putR=await fetch(init.upload_url,{method:'PUT',body:file,headers:{'Content-Type':file.type}});
+  if(!putR.ok)throw new Error(`fal upload PUT ${putR.status}`);
+  return init.file_url;
+}
+
+// ──── IMAGE GEN ────
+async function runImage(){
+  const btn=document.getElementById('imgBtn');
+  const prompt=document.getElementById('imgPrompt').value.trim();
+  const ratio=document.getElementById('imgRatio').value;
+  if(!prompt){setStatus('Write a prompt first.','error');return;}
+  btn.disabled=true;
+  setStatus('Submitting to Flux Pro Ultra…','active');
+  try{
+    const sub=await falSubmit('fal-ai/flux-pro/v1.1-ultra',{
+      prompt,
+      negative_prompt:'text, letters, words, watermark, logo, signature, faces of specific people, brand logos, oversaturated, neon, busy, cluttered, low quality, blurry',
+      aspect_ratio:ratio,
+      num_images:1,
+      output_format:'jpeg',
+      safety_tolerance:'5',
+      enable_safety_checker:false,
+    });
+    await falPoll(sub.status_url,180);
+    const result=await falResult(sub.response_url);
+    const url=result?.images?.[0]?.url;
+    if(!url)throw new Error('no image url returned');
+    showImage(url,'velum-ad-image-'+Date.now()+'.jpg');
+    setStatus('Image generated. Right-click → Save, or use the Download button.','success');
+  }catch(e){
+    setStatus('Error: '+e.message,'error');
+    console.error(e);
+  }
+  btn.disabled=false;
+}
+
+// ──── VIDEO GEN ────
+document.addEventListener('DOMContentLoaded',()=>{
+  const refInput=document.getElementById('vidRef');
+  refInput?.addEventListener('change',(ev)=>{
+    const file=ev.target.files[0];
+    if(!file)return;
+    vidRefBlob=file;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const t=document.getElementById('vidRefThumb');
+      t.innerHTML=`<img src="${e.target.result}" alt="">`;
+      t.classList.add('has');
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+async function runVideo(){
+  const btn=document.getElementById('vidBtn');
+  const prompt=document.getElementById('vidPrompt').value.trim();
+  const duration=parseInt(document.getElementById('vidDur').value,10);
+  const resolution=document.getElementById('vidRes').value;
+  if(!vidRefBlob){setStatus('Pick a source image first.','error');return;}
+  if(!prompt){setStatus('Write a motion prompt.','error');return;}
+  btn.disabled=true;
+  try{
+    setStatus('Uploading source image to fal…','active');
+    const imageUrl=await falUpload(vidRefBlob);
+    setStatus('Submitting to Seedance Lite…','active');
+    const sub=await falSubmit('fal-ai/bytedance/seedance/v1/lite/image-to-video',{
+      prompt,image_url:imageUrl,duration,resolution
+    });
+    await falPoll(sub.status_url,600);
+    const result=await falResult(sub.response_url);
+    const url=result?.video?.url;
+    if(!url)throw new Error('no video url returned');
+    showVideo(url,'velum-ad-video-'+Date.now()+'.mp4');
+    setStatus('Video generated. Use Download to save locally.','success');
+  }catch(e){
+    setStatus('Error: '+e.message,'error');
+    console.error(e);
+  }
+  btn.disabled=false;
+}
+
+// ──── DISPLAY ────
+function showImage(url,filename){
+  const p=document.getElementById('preview');
+  p.innerHTML=`
+    <div class="preview-actions">
+      <a href="${url}" download="${filename}" target="_blank">Download</a>
+      <a href="${url}" target="_blank">Open</a>
+    </div>
+    <img src="${url}" alt="">
+  `;
+}
+function showVideo(url,filename){
+  const p=document.getElementById('preview');
+  p.innerHTML=`
+    <div class="preview-actions">
+      <a href="${url}" download="${filename}" target="_blank">Download</a>
+      <a href="${url}" target="_blank">Open</a>
+    </div>
+    <video src="${url}" controls autoplay loop muted playsinline></video>
+  `;
+}
+
+loadKeys();
+</script>
+
+</body>
+</html>
