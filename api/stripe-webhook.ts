@@ -87,13 +87,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     else console.log("[stripe-webhook] profile updated", { userId, updates });
   };
 
+  // Push userGroup changes to Loops so email segmentation stays in sync with
+  // Stripe state. Fire-and-forget — never block the webhook on a Loops failure.
+  // Skips silently if LOOPS_API_KEY isn't configured (e.g. local dev).
+  const loopsKey = process.env.LOOPS_API_KEY;
+  const syncToLoops = async (email: string | null, userGroup: string) => {
+    if (!loopsKey || !email) return;
+    try {
+      const res = await fetch("https://app.loops.so/api/v1/contacts/update", {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${loopsKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ email, userGroup, source: "stripe-webhook" }),
+      });
+      if (!res.ok) console.error("[stripe-webhook] Loops sync failed", email, res.status, (await res.text()).slice(0, 200));
+      else console.log("[stripe-webhook] Loops synced", { email, userGroup });
+    } catch (e: any) {
+      console.error("[stripe-webhook] Loops sync error", e?.message);
+    }
+  };
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const metaUserId = session.metadata?.supabase_user_id;
-        const email = session.customer_email || session.customer_details?.email || null;
-        const { userId } = await resolveUserId(metaUserId, session.customer as string, email);
+        const sessionEmail = session.customer_email || session.customer_details?.email || null;
+        const { userId, email } = await resolveUserId(metaUserId, session.customer as string, sessionEmail);
         if (!userId) { console.warn("[stripe-webhook] no user found for checkout session", session.id); break; }
 
         const plan = session.metadata?.plan ?? (session.mode === "payment" ? "lifetime" : "monthly");
@@ -103,13 +122,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           subscription_expires_at: null,
           stripe_customer_id: session.customer as string,
         });
+        // Lifetime users are confirmed paid here; subscription users will be
+        // updated by the subscription.* webhook with the correct trial/active
+        // status, so we only sync to Loops here for one-time payments.
+        if (session.mode === "payment") await syncToLoops(email ?? sessionEmail, "lifetime");
         break;
       }
 
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
-        const { userId } = await resolveUserId(sub.metadata?.supabase_user_id, sub.customer as string, null);
+        const { userId, email } = await resolveUserId(sub.metadata?.supabase_user_id, sub.customer as string, null);
         if (!userId) break;
 
         const plan =
@@ -125,20 +148,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           subscription_plan: plan,
           subscription_expires_at: expiresAt,
         });
+
+        // Map Stripe status → Loops userGroup
+        const userGroup =
+          status === "trialing" ? "trial-paid" :
+          status === "active"   ? "active" :
+          status === "past_due" ? "past-due" :
+          status === "canceled" ? "cancelled" :
+          status === "incomplete" || status === "incomplete_expired" ? "free" :
+          "active";
+        await syncToLoops(email, userGroup);
         break;
       }
 
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
-        const { userId } = await resolveUserId(sub.metadata?.supabase_user_id, sub.customer as string, null);
-        if (userId) await updateProfile(userId, { subscription_status: "canceled", subscription_plan: null });
+        const { userId, email } = await resolveUserId(sub.metadata?.supabase_user_id, sub.customer as string, null);
+        if (userId) {
+          await updateProfile(userId, { subscription_status: "canceled", subscription_plan: null });
+          await syncToLoops(email, "cancelled");
+        }
         break;
       }
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
-        const { userId } = await resolveUserId(undefined, invoice.customer as string, invoice.customer_email);
-        if (userId) await updateProfile(userId, { subscription_status: "past_due" });
+        const { userId, email } = await resolveUserId(undefined, invoice.customer as string, invoice.customer_email);
+        if (userId) {
+          await updateProfile(userId, { subscription_status: "past_due" });
+          await syncToLoops(email, "past-due");
+        }
         break;
       }
 
