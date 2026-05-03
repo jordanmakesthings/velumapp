@@ -100,7 +100,7 @@ export default function AuthPage() {
 
           {/* Eyebrow */}
           {mode === "signup" && !referrerCode && (
-            <p className="text-eyebrow text-center mb-5">Free 7-day trial · No card required</p>
+            <p className="text-eyebrow text-center mb-5">Free 7-day trial · Cancel anytime</p>
           )}
 
           {/* Headline — Cormorant editorial */}
