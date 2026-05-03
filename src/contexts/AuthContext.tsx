@@ -48,8 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const trialDaysLeft = profile?.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / 86_400_000))
     : 0;
+  // Stripe sets subscription_status to "trialing" during the 7-day trial period
+  // on the annual plan. Without including it here, paid trial users get bounced
+  // back to /premium right after they enter their card. "active" + "trialing"
+  // both grant access; "past_due" / "canceled" / "incomplete" do not.
   const hasAccess =
     profile?.subscription_status === "active" ||
+    profile?.subscription_status === "trialing" ||
     profile?.subscription_plan === "lifetime" ||
     isInTrial;
 
