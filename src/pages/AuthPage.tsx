@@ -43,6 +43,8 @@ export default function AuthPage() {
       const stored = localStorage.getItem("velum_ref");
       if (stored) setReferrerCode(stored);
     }
+    const prefill = params.get("email");
+    if (prefill) setEmail(prefill.trim());
   }, []);
 
   const handle = async (e: React.FormEvent) => {
