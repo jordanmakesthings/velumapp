@@ -2,10 +2,12 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
+// Trim whitespace defensively — Vercel env-var paste regularly leaves a
+// trailing newline that Stripe rejects with "No such price: 'price_xxx\n'"
 const PRICE_IDS: Record<string, string | undefined> = {
-  monthly:  process.env.STRIPE_PRICE_MONTHLY,
-  annual:   process.env.STRIPE_PRICE_ANNUAL,
-  lifetime: process.env.STRIPE_PRICE_LIFETIME,
+  monthly:  process.env.STRIPE_PRICE_MONTHLY?.trim(),
+  annual:   process.env.STRIPE_PRICE_ANNUAL?.trim(),
+  lifetime: process.env.STRIPE_PRICE_LIFETIME?.trim(),
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

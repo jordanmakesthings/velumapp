@@ -50,7 +50,7 @@ const DATA_STEPS = 3;
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, hasAccess } = useAuth();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
 
@@ -101,7 +101,10 @@ export default function OnboardingPage() {
       },
     }).eq("id", user.id);
     await refreshProfile();
-    navigate("/premium");
+    // No-card trial users have hasAccess=true — drop them straight into the app
+    // so they hit the wedge (custom track generator) before they ever see pricing.
+    // Card-trial / no-trial users still go to /premium to convert.
+    navigate(hasAccess ? "/home" : "/premium");
   };
 
   const next = () => setStep(s => s + 1);
