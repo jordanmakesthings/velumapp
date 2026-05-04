@@ -210,11 +210,32 @@ select option{background:#1e1e1e}
           <label>Person</label>
           <div class="sw">
             <select id="signPerson">
-              <option value="late twenties woman, neutral oversized grey hoodie, no logos, calm expression, partially visible face">Woman, late 20s, hoodie</option>
-              <option value="early thirties man, plain black t-shirt, slight stubble, neutral expression, partially visible face">Man, early 30s, plain tee</option>
-              <option value="mid twenties androgynous person, oversized cream linen shirt, calm expression">Androgynous, 20s, linen</option>
-              <option value="late thirties woman, simple black turtleneck, minimal styling, focused expression">Woman, late 30s, turtleneck</option>
-              <option value="early twenties man, vintage washed grey sweatshirt, longer hair, contemplative">Man, early 20s, sweatshirt</option>
+              <optgroup label="Weathered / authentic">
+                <option value="weathered older man in his sixties with long grey beard and tangled grey hair, deeply lined face, wearing a worn brown overcoat over layered ragged clothing, intense knowing eyes locked on camera, like a street prophet or modern oracle, character actor face">Street prophet, 60s, grey beard</option>
+                <option value="older Black man in his late sixties with cropped white hair and full white beard, tired but knowing eyes, wearing a navy work jacket and faded tee, deeply lined face, gravitas, Morgan-Freeman energy">Older Black man, 60s, gravitas</option>
+                <option value="aging hippie woman in her seventies, long grey braided hair, weathered tan face, layered earth-tone clothing and a Mexican blanket shawl, piercing blue eyes, looks like she's seen things">Older hippie woman, 70s</option>
+                <option value="rough-looking man in his fifties with a buzzcut and broken-nose face, tattoos on neck and hands, plain white tee, skeptical hardened expression">Hardened man, 50s, tattoos</option>
+                <option value="weary middle-aged construction worker, dust on his face and hands, faded high-vis vest, deeply tired eyes, baseball cap">Construction worker, weary</option>
+              </optgroup>
+              <optgroup label="Everyman / relatable">
+                <option value="exhausted woman in her thirties, no makeup, hair pulled back, oversized cardigan over a tee, dark circles under her eyes, holding the sign with both hands">Exhausted woman, 30s, no makeup</option>
+                <option value="suburban dad in his forties, plain blue t-shirt and jeans, slight gut, balding, tired eyes, holding the sign awkwardly">Suburban dad, 40s, tired</option>
+                <option value="middle-aged woman in her fifties with greying hair pulled back, simple black sweater, plain face, looking dead serious into the camera">Woman, 50s, no-nonsense</option>
+                <option value="young man in his twenties wearing a stained mechanic shirt with name patch, oil on his hands, tired eyes">Mechanic, 20s, dirty shirt</option>
+                <option value="exhausted office worker in his thirties, loosened tie, untucked white shirt, dark bags under eyes, holding sign by his desk">Office worker, burned out</option>
+              </optgroup>
+              <optgroup label="Subculture / character">
+                <option value="punk woman in her late twenties with bleached buzzcut and septum piercing, oversized vintage band tee, defiant expression">Punk woman, late 20s</option>
+                <option value="skater man in his early twenties with shaggy hair, baggy worn-out tee and chain wallet, bored skeptical expression, holding sign while sitting on a curb">Skater, early 20s</option>
+                <option value="tattooed barista woman in her thirties, sleeve tattoos, septum piercing, vintage band tee, smirking slightly">Tattooed barista, 30s</option>
+                <option value="biker man in his fifties with long grey ponytail, leather vest, big grey beard, weathered face, intimidating but tired">Biker, 50s, grey ponytail</option>
+                <option value="goth woman in her twenties with long black hair, all-black clothing, pale face, deadpan expression">Goth woman, 20s</option>
+              </optgroup>
+              <optgroup label="Clean-cut (original)">
+                <option value="late twenties woman, neutral oversized grey hoodie, no logos, calm expression, partially visible face">Woman, late 20s, hoodie</option>
+                <option value="early thirties man, plain black t-shirt, slight stubble, neutral expression, partially visible face">Man, early 30s, plain tee</option>
+                <option value="mid twenties androgynous person, oversized cream linen shirt, calm expression">Androgynous, 20s, linen</option>
+              </optgroup>
             </select>
           </div>
         </div>
@@ -223,11 +244,42 @@ select option{background:#1e1e1e}
           <label>Setting</label>
           <div class="sw">
             <select id="signSetting">
-              <option value="generic urban sidewalk with grey concrete and out-of-focus storefronts">Urban sidewalk</option>
-              <option value="empty side street with brick wall behind, soft daylight">Side street, brick wall</option>
-              <option value="quiet park path, green out of focus, overcast">Park path, overcast</option>
-              <option value="subway platform, soft fluorescent light, mostly empty">Subway platform</option>
-              <option value="industrial alley, concrete and metal, neutral palette">Industrial alley</option>
+              <optgroup label="Street / urban">
+                <option value="generic urban sidewalk with grey concrete and out-of-focus storefronts">Urban sidewalk</option>
+                <option value="empty side street with brick wall behind, soft daylight">Side street, brick wall</option>
+                <option value="busy street corner with traffic blurred behind, soft daylight">Street corner with traffic</option>
+                <option value="under a highway overpass with concrete pillars, urban grit">Highway underpass</option>
+                <option value="industrial alley, concrete and metal, neutral palette">Industrial alley</option>
+                <option value="downtown sidewalk with steam rising from a manhole, late afternoon">Downtown sidewalk, steam</option>
+              </optgroup>
+              <optgroup label="Mundane / everyday">
+                <option value="grocery store parking lot, shopping carts in background, overcast">Grocery store parking lot</option>
+                <option value="laundromat exterior with neon sign, evening light">Laundromat exterior</option>
+                <option value="gas station forecourt, fluorescent lights, dusk">Gas station, dusk</option>
+                <option value="bus stop bench with city traffic blurred behind">Bus stop</option>
+                <option value="dive bar exterior with neon beer sign in window, evening">Dive bar exterior</option>
+                <option value="suburban driveway in front of a beige two-car garage, overcast">Suburban driveway</option>
+              </optgroup>
+              <optgroup label="Atmospheric / quiet">
+                <option value="quiet park path, green out of focus, overcast">Park path, overcast</option>
+                <option value="subway platform, soft fluorescent light, mostly empty">Subway platform</option>
+                <option value="empty parking garage, fluorescent strip lights, concrete">Parking garage</option>
+                <option value="rooftop with city skyline blurred behind, dusk">Rooftop, dusk</option>
+                <option value="church steps with stone wall behind, soft daylight">Church steps</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label>Framing</label>
+          <div class="sw">
+            <select id="signFraming">
+              <option value="medium-wide shot from about ten feet away, full upper body and most of legs visible, sign clearly readable, plenty of environmental context">Medium-wide (recommended)</option>
+              <option value="wide environmental shot from across the street or a distance, person small in frame holding sign visible, the setting dominates">Wide / environmental</option>
+              <option value="medium shot from about six feet away, upper body framed, sign is the focal point">Medium (closer)</option>
+              <option value="full-body shot from low angle, person standing on a curb, sign held up high, sky or building tops visible behind">Full body, low angle</option>
+              <option value="three-quarter shot from slightly above eye level, person and sign both clearly visible, lots of background context">Three-quarter, slightly above</option>
             </select>
           </div>
         </div>
@@ -428,12 +480,13 @@ async function runImage(){
 }
 
 // ──── SIGN AD GEN ────
-function buildSignPrompt(text, person, setting, ratio){
+function buildSignPrompt(text, person, setting, ratio, framing){
   const blank = !text || text.trim()==='';
   const signClause = blank
     ? `holding up a piece of brown corrugated cardboard as a blank sign, no text on the sign, completely empty cardboard surface, sign clearly visible and well-lit so text can be added later`
     : `holding up a piece of brown corrugated cardboard with the words "${text}" written across it in thick black sharpie marker, hand-lettered, slightly imperfect spacing, all caps if appropriate, sign is the focal point of the composition and clearly readable`;
-  return `Editorial street photograph in documentary photojournalism style. Slightly overcast natural daylight. Setting: ${setting}. A ${person}, standing facing the camera, ${signClause}. Medium shot, shot on 35mm film, natural muted color palette, candid not staged, slight grain, no additional text or signage anywhere else in the frame.`;
+  const framingClause = framing || 'medium-wide shot from about ten feet away, full upper body and most of legs visible, sign clearly readable, plenty of environmental context';
+  return `Editorial street photograph in documentary photojournalism style, candid not staged. Slightly overcast natural daylight. Setting: ${setting}. A ${person}, standing facing the camera, ${signClause}. ${framingClause}. Shot on 35mm film, natural muted color palette, slight grain, ample negative space around the subject, no additional text or signage anywhere else in the frame.`;
 }
 
 async function runSign(){
@@ -442,10 +495,11 @@ async function runSign(){
   const person=document.getElementById('signPerson').value;
   const setting=document.getElementById('signSetting').value;
   const ratio=document.getElementById('signRatio').value;
+  const framing=document.getElementById('signFraming').value;
   const useOverlay=document.getElementById('signOverlay').checked;
   // If overlay is on, generate blank sign regardless of typed text — text gets rendered in canvas
   const blank = useOverlay || text==='';
-  const prompt=buildSignPrompt(blank?'':text, person, setting, ratio);
+  const prompt=buildSignPrompt(blank?'':text, person, setting, ratio, framing);
   btn.disabled=true;
   setStatus(useOverlay?'Generating blank sign — text will render in-browser, perfectly spelled, every time.':'Generating sign with AI text. Re-roll if it comes out wrong.','active');
   try{
