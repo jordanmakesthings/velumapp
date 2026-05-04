@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velum · Ad Creative Studio</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Permanent+Marker&family=Caveat:wght@600;700&family=Architects+Daughter&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--forest:#0F2F26;--fl:#1a4a3a;--ch:#111111;--cr:#F2EFE7;--sg:#6F8A7E;--gd:#C9A84C;--mt:#c8c4bb;--dm:#9aaea3;--br:#2a2a2a;--sf:#181818;--s2:#1e1e1e;--red:#c97c5c;--green:#7ac97c}
@@ -92,6 +92,18 @@ select option{background:#1e1e1e}
 .hidden{display:none!important}
 
 /* RESPONSIVE — stack the sidebar above the preview on narrow screens */
+/* SIGN EDITOR */
+.sign-editor{display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--sf);border:1px solid var(--br);border-radius:6px;margin-bottom:12px}
+.sign-editor label{font-size:10px;font-weight:600;letter-spacing:.18em;color:var(--mt);text-transform:uppercase;margin-bottom:4px}
+.sign-editor input[type=text]{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:4px;color:var(--cr);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 12px}
+.sign-editor input[type=range]{width:100%}
+.sign-editor select{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:4px;color:var(--cr);font-size:13px;padding:8px 10px}
+.sign-editor .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sign-editor .hint{font-size:11px;color:var(--dm);line-height:1.5}
+.sign-editor button{background:var(--gd);color:var(--ch);border:none;border-radius:3px;padding:11px;font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;cursor:pointer}
+.sign-canvas-wrap{position:relative;display:flex;justify-content:center;background:#000;padding:16px;border-radius:6px}
+#signCanvas{max-width:100%;max-height:70vh;cursor:crosshair;display:block}
+
 @media (max-width: 820px) {
   .app{grid-template-columns:1fr;grid-template-rows:56px auto 1fr;height:auto;min-height:100vh;overflow:visible}
   .sidebar{border-right:none;border-bottom:1px solid var(--br);max-height:none}
@@ -441,8 +453,13 @@ async function runSign(){
     const result=await falResult(sub.response_url);
     const url=result?.images?.[0]?.url;
     if(!url)throw new Error('no image url returned');
-    showImage(url,'velum-sign-ad-'+Date.now()+'.jpg');
-    setStatus(blank?'Blank sign ready. Drop into Canva, add your headline in a marker font.':'Sign ad generated. Check the text — re-roll if it’s off.','success');
+    if(blank){
+      showSignEditor(url);
+      setStatus('Blank sign ready. Click on the sign to place your text, then download.','success');
+    } else {
+      showImage(url,'velum-sign-ad-'+Date.now()+'.jpg');
+      setStatus('Sign ad generated. Check the text — re-roll if it’s off.','success');
+    }
   }catch(e){
     setStatus('Error: '+e.message,'error');
     console.error(e);
@@ -506,6 +523,183 @@ function showImage(url,filename){
     <img src="${url}" alt="">
   `;
 }
+// ──── SIGN TEXT OVERLAY EDITOR ────
+let signState=null;
+function showSignEditor(imgUrl){
+  const p=document.getElementById('preview');
+  p.innerHTML=`
+    <div class="sign-editor">
+      <div>
+        <label>Sign Text</label>
+        <input id="sigText" type="text" placeholder="other apps calm your mind. velum rewires it." value="other apps calm your mind. velum rewires it.">
+      </div>
+      <div class="row">
+        <div>
+          <label>Font</label>
+          <select id="sigFont">
+            <option value="'Permanent Marker', cursive">Permanent Marker</option>
+            <option value="'Caveat', cursive">Caveat (lighter)</option>
+            <option value="'Architects Daughter', cursive">Architects Daughter</option>
+          </select>
+        </div>
+        <div>
+          <label>Color</label>
+          <select id="sigColor">
+            <option value="#111111">Black sharpie</option>
+            <option value="#1a1a1a">Charcoal</option>
+            <option value="#3a2a1a">Dark brown</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label>Size <span id="sigSizeVal">64</span>px</label>
+        <input id="sigSize" type="range" min="20" max="160" value="64">
+      </div>
+      <div>
+        <label>Rotation <span id="sigRotVal">0</span>°</label>
+        <input id="sigRot" type="range" min="-15" max="15" value="0">
+      </div>
+      <div>
+        <label>Line Height <span id="sigLhVal">1.1</span></label>
+        <input id="sigLh" type="range" min="0.9" max="1.6" step="0.05" value="1.1">
+      </div>
+      <div class="hint">Click on the sign to position the text. Drag the text to fine-tune. Width auto-wraps.</div>
+      <button onclick="downloadSignComposite()">Download Composited Image</button>
+    </div>
+    <div class="sign-canvas-wrap">
+      <canvas id="signCanvas"></canvas>
+    </div>
+  `;
+  const img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=()=>{
+    const c=document.getElementById('signCanvas');
+    c.width=img.naturalWidth;
+    c.height=img.naturalHeight;
+    signState={img,x:img.naturalWidth/2,y:img.naturalHeight*0.55,maxWidth:img.naturalWidth*0.6};
+    redrawSign();
+    bindSignEvents();
+  };
+  img.onerror=()=>{
+    setStatus('Couldn’t load image into editor. Try Download instead.','error');
+    showImage(imgUrl,'velum-sign-blank-'+Date.now()+'.jpg');
+  };
+  img.src=imgUrl;
+  signState={imgUrl};
+}
+
+function bindSignEvents(){
+  const c=document.getElementById('signCanvas');
+  ['sigText','sigFont','sigColor'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',redrawSign);
+  });
+  ['sigSize','sigRot','sigLh'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',(e)=>{
+      const valEl=document.getElementById(id+'Val');
+      if(valEl)valEl.textContent=e.target.value;
+      redrawSign();
+    });
+  });
+
+  let dragging=false;
+  const toCanvasCoords=(ev)=>{
+    const rect=c.getBoundingClientRect();
+    const scaleX=c.width/rect.width;
+    const scaleY=c.height/rect.height;
+    return {x:(ev.clientX-rect.left)*scaleX, y:(ev.clientY-rect.top)*scaleY};
+  };
+  c.addEventListener('mousedown',(ev)=>{
+    dragging=true;
+    const p=toCanvasCoords(ev);
+    signState.x=p.x;signState.y=p.y;
+    redrawSign();
+  });
+  c.addEventListener('mousemove',(ev)=>{
+    if(!dragging)return;
+    const p=toCanvasCoords(ev);
+    signState.x=p.x;signState.y=p.y;
+    redrawSign();
+  });
+  window.addEventListener('mouseup',()=>{dragging=false});
+  c.addEventListener('touchstart',(ev)=>{
+    ev.preventDefault();
+    dragging=true;
+    const t=ev.touches[0];
+    const p=toCanvasCoords(t);
+    signState.x=p.x;signState.y=p.y;
+    redrawSign();
+  },{passive:false});
+  c.addEventListener('touchmove',(ev)=>{
+    ev.preventDefault();
+    if(!dragging)return;
+    const t=ev.touches[0];
+    const p=toCanvasCoords(t);
+    signState.x=p.x;signState.y=p.y;
+    redrawSign();
+  },{passive:false});
+  c.addEventListener('touchend',()=>{dragging=false});
+}
+
+function wrapTextLines(ctx,text,maxWidth){
+  const words=text.split(' ');
+  const lines=[];
+  let cur='';
+  for(const w of words){
+    const test=cur?cur+' '+w:w;
+    if(ctx.measureText(test).width>maxWidth && cur){
+      lines.push(cur);
+      cur=w;
+    } else cur=test;
+  }
+  if(cur)lines.push(cur);
+  return lines;
+}
+
+function redrawSign(){
+  if(!signState||!signState.img)return;
+  const c=document.getElementById('signCanvas');
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.drawImage(signState.img,0,0);
+  const text=document.getElementById('sigText').value||'';
+  const font=document.getElementById('sigFont').value;
+  const color=document.getElementById('sigColor').value;
+  const size=parseInt(document.getElementById('sigSize').value,10);
+  const rot=parseInt(document.getElementById('sigRot').value,10)*Math.PI/180;
+  const lh=parseFloat(document.getElementById('sigLh').value);
+  if(!text)return;
+  ctx.save();
+  ctx.translate(signState.x,signState.y);
+  ctx.rotate(rot);
+  ctx.font=`${size}px ${font}`;
+  ctx.fillStyle=color;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  const lines=wrapTextLines(ctx,text,signState.maxWidth);
+  const lineH=size*lh;
+  const totalH=lineH*lines.length;
+  const startY=-totalH/2+lineH/2;
+  lines.forEach((ln,i)=>{
+    ctx.fillText(ln,0,startY+i*lineH);
+  });
+  ctx.restore();
+}
+
+function downloadSignComposite(){
+  const c=document.getElementById('signCanvas');
+  if(!c)return;
+  c.toBlob((blob)=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='velum-sign-ad-'+Date.now()+'.jpg';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  },'image/jpeg',0.95);
+}
+
 function showVideo(url,filename){
   const p=document.getElementById('preview');
   p.innerHTML=`
