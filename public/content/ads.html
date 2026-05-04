@@ -142,6 +142,7 @@ select option{background:#1e1e1e}
         <label>Mode</label>
         <div class="modes">
           <button class="mode on" data-mode="image" onclick="setMode('image')">Image</button>
+          <button class="mode" data-mode="sign" onclick="setMode('sign')">Sign</button>
           <button class="mode" data-mode="video" onclick="setMode('video')">Video</button>
         </div>
       </div>
@@ -172,6 +173,60 @@ select option{background:#1e1e1e}
 
         <button class="gbtn gen" id="imgBtn" onclick="runImage()">Generate Image</button>
         <div class="cost">~$0.06 · Flux Pro v1.1 Ultra</div>
+      </div>
+
+      <!-- SIGN MODE -->
+      <div id="sign-panel" class="hidden">
+        <p class="section-label">Street sign ad</p>
+
+        <div>
+          <label>Sign Text</label>
+          <textarea id="signText" placeholder="there's a reason your meditation app stopped working after 10 days" style="min-height:80px"></textarea>
+          <div style="font-size:10px;color:var(--dm);margin-top:6px;line-height:1.5">Keep under ~60 chars for cleanest text rendering. Lowercase reads more authentic. Leave blank to generate a blank cardboard sign you can text in Canva.</div>
+        </div>
+
+        <div>
+          <label>Person</label>
+          <div class="sw">
+            <select id="signPerson">
+              <option value="late twenties woman, neutral oversized grey hoodie, no logos, calm expression, partially visible face">Woman, late 20s, hoodie</option>
+              <option value="early thirties man, plain black t-shirt, slight stubble, neutral expression, partially visible face">Man, early 30s, plain tee</option>
+              <option value="mid twenties androgynous person, oversized cream linen shirt, calm expression">Androgynous, 20s, linen</option>
+              <option value="late thirties woman, simple black turtleneck, minimal styling, focused expression">Woman, late 30s, turtleneck</option>
+              <option value="early twenties man, vintage washed grey sweatshirt, longer hair, contemplative">Man, early 20s, sweatshirt</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label>Setting</label>
+          <div class="sw">
+            <select id="signSetting">
+              <option value="generic urban sidewalk with grey concrete and out-of-focus storefronts">Urban sidewalk</option>
+              <option value="empty side street with brick wall behind, soft daylight">Side street, brick wall</option>
+              <option value="quiet park path, green out of focus, overcast">Park path, overcast</option>
+              <option value="subway platform, soft fluorescent light, mostly empty">Subway platform</option>
+              <option value="industrial alley, concrete and metal, neutral palette">Industrial alley</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label>Aspect Ratio</label>
+          <div class="sw">
+            <select id="signRatio">
+              <option value="4:5">4:5 (IG / Reddit feed)</option>
+              <option value="1:1">1:1 (square)</option>
+              <option value="9:16">9:16 (Stories, Reels)</option>
+              <option value="16:9">16:9 (FB landscape)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <button class="gbtn gen" id="signBtn" onclick="runSign()">Generate Sign Ad</button>
+        <div class="cost">~$0.06 · Flux Pro v1.1 Ultra · re-roll if text is off</div>
       </div>
 
       <!-- VIDEO MODE -->
@@ -266,6 +321,7 @@ function setMode(m){
   mode=m;
   document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
   document.getElementById('image-panel').classList.toggle('hidden',m!=='image');
+  document.getElementById('sign-panel').classList.toggle('hidden',m!=='sign');
   document.getElementById('video-panel').classList.toggle('hidden',m!=='video');
 }
 
@@ -343,6 +399,50 @@ async function runImage(){
     if(!url)throw new Error('no image url returned');
     showImage(url,'velum-ad-image-'+Date.now()+'.jpg');
     setStatus('Image generated. Right-click → Save, or use the Download button.','success');
+  }catch(e){
+    setStatus('Error: '+e.message,'error');
+    console.error(e);
+  }
+  btn.disabled=false;
+}
+
+// ──── SIGN AD GEN ────
+function buildSignPrompt(text, person, setting, ratio){
+  const blank = !text || text.trim()==='';
+  const signClause = blank
+    ? `holding up a piece of brown corrugated cardboard as a blank sign, no text on the sign, completely empty cardboard surface, sign clearly visible and well-lit so text can be added later`
+    : `holding up a piece of brown corrugated cardboard with the words "${text}" written across it in thick black sharpie marker, hand-lettered, slightly imperfect spacing, all caps if appropriate, sign is the focal point of the composition and clearly readable`;
+  return `Editorial street photograph in documentary photojournalism style. Slightly overcast natural daylight. Setting: ${setting}. A ${person}, standing facing the camera, ${signClause}. Medium shot, shot on 35mm film, natural muted color palette, candid not staged, slight grain, no additional text or signage anywhere else in the frame.`;
+}
+
+async function runSign(){
+  const btn=document.getElementById('signBtn');
+  const text=document.getElementById('signText').value.trim();
+  const person=document.getElementById('signPerson').value;
+  const setting=document.getElementById('signSetting').value;
+  const ratio=document.getElementById('signRatio').value;
+  const prompt=buildSignPrompt(text, person, setting, ratio);
+  const blank = text==='';
+  btn.disabled=true;
+  setStatus(blank?'Generating blank sign (you’ll add text in Canva)…':'Generating sign with text. Re-roll if text comes out wrong.','active');
+  try{
+    const sub=await falSubmit('fal-ai/flux-pro/v1.1-ultra',{
+      prompt,
+      negative_prompt: blank
+        ? 'any text on the sign, letters on cardboard, words on cardboard, watermark, logo, brand logos, oversaturated, neon, low quality, blurry'
+        : 'misspelled text, garbled text, extra text, watermark, logo, brand logos, additional signage, oversaturated, neon, low quality, blurry',
+      aspect_ratio:ratio,
+      num_images:1,
+      output_format:'jpeg',
+      safety_tolerance:'5',
+      enable_safety_checker:false,
+    });
+    await falPoll(sub.status_url,180);
+    const result=await falResult(sub.response_url);
+    const url=result?.images?.[0]?.url;
+    if(!url)throw new Error('no image url returned');
+    showImage(url,'velum-sign-ad-'+Date.now()+'.jpg');
+    setStatus(blank?'Blank sign ready. Drop into Canva, add your headline in a marker font.':'Sign ad generated. Check the text — re-roll if it’s off.','success');
   }catch(e){
     setStatus('Error: '+e.message,'error');
     console.error(e);
