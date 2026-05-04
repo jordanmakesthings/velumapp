@@ -411,6 +411,22 @@ export default function TappingGeneratorPage() {
     setError("");
   };
 
+  const exitToHome = () => {
+    if (confirm("Exit this tapping session? Your progress will not be saved.")) {
+      navigate("/home");
+    }
+  };
+
+  const SessionHeader = ({ label, right }: { label: string; right?: React.ReactNode }) => (
+    <div className="flex items-center justify-between px-4 pt-4 mb-4 flex-shrink-0" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
+      <button onClick={exitToHome} className="flex items-center gap-1 text-sm font-sans text-muted-foreground hover:text-foreground min-h-10 -ml-1 px-1" aria-label="Exit to home">
+        <ArrowLeft className="w-4 h-4" /> Home
+      </button>
+      <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">{label}</p>
+      <div className="min-w-[40px] text-right">{right || null}</div>
+    </div>
+  );
+
   // ─── Shared UI pieces ─────────────────────────────────────────────────────
 
   const BackBar = ({ onBack, label = "Back" }: { onBack: () => void; label?: string }) => (
@@ -701,13 +717,7 @@ export default function TappingGeneratorPage() {
   // SETUP (karate chop) — single statement, repeated 3x, one tap to begin
   if (phase === "setup" && setupStatements.length > 0) return (
     <div className="min-h-screen bg-radial-subtle flex flex-col">
-      <div className="flex items-center justify-between px-4 pt-4 mb-4 flex-shrink-0">
-        <button onClick={restart} className="flex items-center gap-1 text-sm font-sans text-muted-foreground min-h-10">
-          <ArrowLeft className="w-4 h-4" /> New session
-        </button>
-        <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Setup</p>
-        <div className="w-20" />
-      </div>
+      <SessionHeader label="Setup" />
       <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-lg mx-auto w-full pb-8">
         <AnimatePresence mode="wait">
           <motion.div key="setup" {...slide} className="w-full text-center flex flex-col items-center">
@@ -750,17 +760,12 @@ export default function TappingGeneratorPage() {
   if (phase === "round" && roundPhrases.length > 0) {
     const point = roundPhrases[pointIdx];
     const progress = (pointIdx / POINTS.length) * 100;
-    const handleExit = () => {
-      if (confirm("Exit this tapping session? Your progress will not be saved.")) {
-        navigate("/tools");
-      }
-    };
     return (
       <div className="min-h-screen bg-radial-subtle flex flex-col">
         <div className="px-4 flex-shrink-0" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)", paddingBottom: "8px" }}>
           <div className="flex items-center justify-between mb-3">
-            <button onClick={handleExit} className="flex items-center gap-1 text-sm font-sans text-muted-foreground hover:text-foreground min-h-10 -ml-1 px-1" aria-label="Exit session">
-              <ArrowLeft className="w-4 h-4" /> Exit
+            <button onClick={exitToHome} className="flex items-center gap-1 text-sm font-sans text-muted-foreground hover:text-foreground min-h-10 -ml-1 px-1" aria-label="Exit to home">
+              <ArrowLeft className="w-4 h-4" /> Home
             </button>
             <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Round {roundNumber}</p>
             <p className="text-muted-foreground text-xs font-sans tabular-nums">{pointIdx + 1} / {POINTS.length}</p>
@@ -813,8 +818,9 @@ export default function TappingGeneratorPage() {
 
   // BREATH PAUSE
   if (phase === "breath_pause") return (
-    <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center px-6">
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-sm w-full text-center">
+    <div className="min-h-screen bg-radial-subtle flex flex-col">
+      <SessionHeader label="Pause" />
+      <div className="flex-1 flex flex-col items-center justify-center px-6"><motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-sm w-full text-center">
         <div className="w-16 h-16 rounded-full bg-accent/10 border border-accent/25 flex items-center justify-center mx-auto mb-6">
           <Wind className="w-6 h-6 text-accent" />
         </div>
@@ -828,16 +834,14 @@ export default function TappingGeneratorPage() {
         >
           I've taken my breath
         </button>
-      </motion.div>
+      </motion.div></div>
     </div>
   );
 
   // REASSESS
   if (phase === "reassess") return (
     <div className="min-h-screen bg-radial-subtle flex flex-col">
-      <div className="px-4 pt-4 mb-6 flex-shrink-0">
-        <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase text-center">Check In</p>
-      </div>
+      <SessionHeader label="Check In" />
       <div className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-32">
         <AnimatePresence mode="wait">
           <motion.div key="reassess" {...slide} className="w-full">
@@ -932,10 +936,13 @@ export default function TappingGeneratorPage() {
     const point = shiftPhrases[shiftPointIdx];
     return (
       <div className="min-h-screen bg-radial-subtle flex flex-col">
-        <div className="px-4 pt-4 pb-2 flex-shrink-0">
+        <div className="px-4 flex-shrink-0" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)", paddingBottom: "8px" }}>
           <div className="flex items-center justify-between mb-3">
+            <button onClick={exitToHome} className="flex items-center gap-1 text-sm font-sans text-muted-foreground hover:text-foreground min-h-10 -ml-1 px-1" aria-label="Exit to home">
+              <ArrowLeft className="w-4 h-4" /> Home
+            </button>
             <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase">Positive · Round {shiftRound}</p>
-            <p className="text-muted-foreground text-xs font-sans">{shiftPointIdx + 1} / {POINTS.length}</p>
+            <p className="text-muted-foreground text-xs font-sans tabular-nums">{shiftPointIdx + 1} / {POINTS.length}</p>
           </div>
           <div className="h-1 bg-surface-light rounded-full overflow-hidden">
             <div className="h-full bg-accent/60 rounded-full transition-all duration-300" style={{ width: `${(shiftPointIdx / POINTS.length) * 100}%` }} />
@@ -980,9 +987,7 @@ export default function TappingGeneratorPage() {
   // SHIFT REASSESS
   if (phase === "shift_reassess") return (
     <div className="min-h-screen bg-radial-subtle flex flex-col">
-      <div className="px-4 pt-4 mb-6">
-        <p className="text-accent text-[10px] font-sans font-medium tracking-[3px] uppercase text-center">Check In</p>
-      </div>
+      <SessionHeader label="Check In" />
       <div className="flex-1 flex flex-col px-6 max-w-lg mx-auto w-full pb-32">
         <AnimatePresence mode="wait">
           <motion.div key="shift-reassess" {...slide} className="w-full">
