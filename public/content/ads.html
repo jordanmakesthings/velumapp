@@ -193,8 +193,17 @@ select option{background:#1e1e1e}
 
         <div>
           <label>Sign Text</label>
-          <textarea id="signText" placeholder="there's a reason your meditation app stopped working after 10 days" style="min-height:80px"></textarea>
-          <div style="font-size:10px;color:var(--dm);margin-top:6px;line-height:1.5">Keep under ~60 chars for cleanest text rendering. Lowercase reads more authentic. Leave blank to generate a blank cardboard sign you can text in Canva.</div>
+          <textarea id="signText" placeholder="your subconscious mind doesn't care what you want" style="min-height:80px"></textarea>
+          <div style="font-size:10px;color:var(--dm);margin-top:6px;line-height:1.5">Type any headline. Spelled perfectly every time — no Flux roulette.</div>
+        </div>
+
+        <div style="background:var(--s2);border:1px solid var(--br);border-radius:4px;padding:10px 12px;display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="signOverlay" checked style="width:auto;margin:0;cursor:pointer">
+          <label for="signOverlay" style="margin:0;font-size:11px;color:var(--mt);cursor:pointer;letter-spacing:.1em">Render text in browser (recommended)</label>
+        </div>
+        <div style="font-size:10px;color:var(--dm);line-height:1.5;margin-top:-4px">
+          <strong style="color:var(--mt)">ON:</strong> AI generates a blank cardboard sign, then your text is rendered crisply in marker font in-browser. 100% reliable spelling. Editor opens after generation so you can position/resize.<br><br>
+          <strong style="color:var(--mt)">OFF:</strong> AI tries to write the text on the sign itself. Looks more "real" when it works, but ~35% need re-rolls. Worth it only for short common-word headlines.
         </div>
 
         <div>
@@ -433,10 +442,12 @@ async function runSign(){
   const person=document.getElementById('signPerson').value;
   const setting=document.getElementById('signSetting').value;
   const ratio=document.getElementById('signRatio').value;
-  const prompt=buildSignPrompt(text, person, setting, ratio);
-  const blank = text==='';
+  const useOverlay=document.getElementById('signOverlay').checked;
+  // If overlay is on, generate blank sign regardless of typed text — text gets rendered in canvas
+  const blank = useOverlay || text==='';
+  const prompt=buildSignPrompt(blank?'':text, person, setting, ratio);
   btn.disabled=true;
-  setStatus(blank?'Generating blank sign (you’ll add text in Canva)…':'Generating sign with text. Re-roll if text comes out wrong.','active');
+  setStatus(useOverlay?'Generating blank sign — text will render in-browser, perfectly spelled, every time.':'Generating sign with AI text. Re-roll if it comes out wrong.','active');
   try{
     const sub=await falSubmit('fal-ai/flux-pro/v1.1-ultra',{
       prompt,
@@ -454,8 +465,8 @@ async function runSign(){
     const url=result?.images?.[0]?.url;
     if(!url)throw new Error('no image url returned');
     if(blank){
-      showSignEditor(url);
-      setStatus('Blank sign ready. Click on the sign to place your text, then download.','success');
+      showSignEditor(url, text);
+      setStatus(useOverlay?'Blank sign ready — your text is auto-rendered. Drag to reposition, adjust size/font, then download.':'Blank sign ready. Type your headline in the editor, position, and download.','success');
     } else {
       showImage(url,'velum-sign-ad-'+Date.now()+'.jpg');
       setStatus('Sign ad generated. Check the text — re-roll if it’s off.','success');
@@ -525,13 +536,14 @@ function showImage(url,filename){
 }
 // ──── SIGN TEXT OVERLAY EDITOR ────
 let signState=null;
-function showSignEditor(imgUrl){
+function showSignEditor(imgUrl, prefillText){
   const p=document.getElementById('preview');
+  const initial = (prefillText && prefillText.trim()) || 'other apps calm your mind. velum rewires it.';
   p.innerHTML=`
     <div class="sign-editor">
       <div>
         <label>Sign Text</label>
-        <input id="sigText" type="text" placeholder="other apps calm your mind. velum rewires it." value="other apps calm your mind. velum rewires it.">
+        <input id="sigText" type="text" placeholder="other apps calm your mind. velum rewires it." value="${initial.replace(/"/g,'&quot;')}">
       </div>
       <div class="row">
         <div>
