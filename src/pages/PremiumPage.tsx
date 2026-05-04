@@ -208,7 +208,7 @@ export default function PremiumPage() {
 
             {/* ANNUAL — 7-day trial */}
             <div className="relative">
-              <span className="absolute -top-2.5 left-4 bg-foreground/10 text-foreground text-[10px] font-sans font-semibold px-2.5 py-0.5 rounded-full tracking-wide z-10 border border-foreground/15">
+              <span className="absolute -top-2.5 left-4 bg-accent text-background text-[10px] font-sans font-semibold px-2.5 py-0.5 rounded-full tracking-wide z-10">
                 7-day free trial
               </span>
               <button
