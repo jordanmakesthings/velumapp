@@ -177,7 +177,7 @@ export default function AuthPage() {
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                   <>
-                    {mode === "signup" && (freeTrial ? "Start free trial →" : "Begin →")}
+                    {mode === "signup" && (freeTrial ? "Start Rewiring →" : "Begin →")}
                     {mode === "login" && "Sign in →"}
                     {mode === "forgot" && "Send reset link"}
                   </>
