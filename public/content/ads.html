@@ -638,13 +638,25 @@ function showSignEditor(imgUrl, prefillText){
   `;
   const img=new Image();
   img.crossOrigin='anonymous';
-  img.onload=()=>{
+  img.onload=async ()=>{
     const c=document.getElementById('signCanvas');
     c.width=img.naturalWidth;
     c.height=img.naturalHeight;
-    signState={img,x:img.naturalWidth/2,y:img.naturalHeight*0.55,maxWidth:img.naturalWidth*0.6};
-    redrawSign();
+    signState={img,x:img.naturalWidth/2,y:img.naturalHeight*0.62,maxWidth:img.naturalWidth*0.62};
+    // Preload all three marker fonts before drawing so text actually renders
+    try {
+      await Promise.all([
+        document.fonts.load('64px "Permanent Marker"'),
+        document.fonts.load('64px "Caveat"'),
+        document.fonts.load('64px "Architects Daughter"'),
+      ]);
+      await document.fonts.ready;
+    } catch {}
     bindSignEvents();
+    redrawSign();
+    // Belt-and-suspenders: redraw again after fonts are 100% guaranteed loaded
+    setTimeout(redrawSign, 400);
+    setTimeout(redrawSign, 1200);
   };
   img.onerror=()=>{
     setStatus('Couldn’t load image into editor. Try Download instead.','error');
@@ -749,6 +761,21 @@ function redrawSign(){
     ctx.fillText(ln,0,startY+i*lineH);
   });
   ctx.restore();
+  // Verification: if for some reason measureText returned 0 width (font race),
+  // we draw a fallback in a system cursive so the user always sees something.
+  if (lines.length && ctx.measureText(lines[0]).width === 0) {
+    ctx.save();
+    ctx.translate(signState.x,signState.y);
+    ctx.rotate(rot);
+    ctx.font=`bold ${size}px cursive`;
+    ctx.fillStyle=color;
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    lines.forEach((ln,i)=>{
+      ctx.fillText(ln,0,startY+i*lineH);
+    });
+    ctx.restore();
+  }
 }
 
 function downloadSignComposite(){
