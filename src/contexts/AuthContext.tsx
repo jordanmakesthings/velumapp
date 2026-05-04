@@ -182,6 +182,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { rdtTrack } = await import("@/lib/reddit-pixel");
         rdtTrack("SignUp");
       } catch {}
+      // Fire Meta Pixel CompleteRegistration event
+      try {
+        const { fbqTrack } = await import("@/lib/meta-pixel");
+        fbqTrack("CompleteRegistration");
+      } catch {}
     }
     return { error: error as Error | null };
   };

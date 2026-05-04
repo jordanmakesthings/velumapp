@@ -47,6 +47,7 @@ export default function AuthPage() {
     if (prefill) setEmail(prefill.trim());
     if (freeTrial) {
       import("@/lib/reddit-pixel").then(({ rdtTrack }) => rdtTrack("ViewContent")).catch(() => {});
+      import("@/lib/meta-pixel").then(({ fbqTrack }) => fbqTrack("ViewContent")).catch(() => {});
     }
   }, [freeTrial]);
 
@@ -59,6 +60,10 @@ export default function AuthPage() {
         try {
           const { rdtTrack } = await import("@/lib/reddit-pixel");
           rdtTrack("Lead", { email });
+        } catch {}
+        try {
+          const { fbqTrack } = await import("@/lib/meta-pixel");
+          fbqTrack("Lead");
         } catch {}
         const { error } = await signUp(email, password, undefined, undefined, { grantFreeTrial: freeTrial });
         if (error) throw error;

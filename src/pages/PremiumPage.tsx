@@ -44,6 +44,7 @@ export default function PremiumPage() {
       if (typeof data === "number") setFoundingLeft(data);
     })();
     import("@/lib/reddit-pixel").then(({ rdtTrack }) => rdtTrack("ViewContent")).catch(() => {});
+    import("@/lib/meta-pixel").then(({ fbqTrack }) => fbqTrack("ViewContent")).catch(() => {});
   }, []);
 
   const isPremium = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";

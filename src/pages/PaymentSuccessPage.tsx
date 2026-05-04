@@ -57,6 +57,10 @@ export default function PaymentSuccessPage() {
         else if (plan === "lifetime") value = 199;
       } catch {}
       rdtTrack("Purchase", { value, currency: "USD" });
+      try {
+        const { fbqTrack } = await import("@/lib/meta-pixel");
+        fbqTrack("Purchase", { value, currency: "USD" });
+      } catch {}
     })();
     const t = setTimeout(() => navigate("/home-setup", { replace: true }), 1200);
     return () => clearTimeout(t);
