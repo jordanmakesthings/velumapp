@@ -144,6 +144,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profileUpdates.trial_started_at = new Date().toISOString();
         profileUpdates.trial_ends_at = trialEnd.toISOString();
       }
+      // Attribution: persist captured UTMs + referrer so we know where each signup came from
+      try {
+        const { readAttribution, clearAttribution } = await import("@/lib/attribution");
+        const attr = readAttribution();
+        if (attr.utm_source) profileUpdates.utm_source = attr.utm_source;
+        if (attr.utm_medium) profileUpdates.utm_medium = attr.utm_medium;
+        if (attr.utm_campaign) profileUpdates.utm_campaign = attr.utm_campaign;
+        if (attr.utm_content) profileUpdates.utm_content = attr.utm_content;
+        if (attr.utm_term) profileUpdates.utm_term = attr.utm_term;
+        if (attr.referrer) profileUpdates.referrer = attr.referrer;
+        if (attr.landing_page) profileUpdates.landing_page = attr.landing_page;
+        clearAttribution();
+      } catch {}
       if (Object.keys(profileUpdates).length > 0) {
         // Awaited so the write actually fires before navigation can unmount us.
         // The previous implementation used a fire-and-forget builder which the

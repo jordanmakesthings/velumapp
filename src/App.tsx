@@ -35,8 +35,12 @@ import SubcategoryPage from "./pages/SubcategoryPage";
 import CustomTrackPage from "./pages/CustomTrackPage";
 import AudiosPage from "./pages/AudiosPage";
 import NotFound from "./pages/NotFound";
+import { captureAttribution } from "@/lib/attribution";
 
 const queryClient = new QueryClient();
+
+// Fire on first module load so UTMs are captured before any route renders.
+captureAttribution();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
