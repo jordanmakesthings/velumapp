@@ -115,7 +115,62 @@ function scriptToSsml(text: string): string {
   // detect number clusters (3+ within 200 chars = countdown) and force slow prosody +
   // a 2s break after each. Outside countdowns ("after seven days") nothing changes.
   s = protectNumberClusters(s);
+  // Cadence racing safety net — when 3+ consecutive short sentences appear without
+  // any [pause] marker between them, ElevenLabs multilingual_v2 starts accelerating
+  // ("speeds up for 10 seconds then returns to normal" — the racing window between
+  // two paragraph breaks). Force a 1.2s break between each to anchor pacing.
+  s = breakRepetitiveCadence(s);
   return s;
+}
+
+// Detect runs of 3+ consecutive short sentences (under 90 chars each) without
+// intervening <break> tags, and inject a small break between them. This is the
+// pattern that makes ElevenLabs race.
+function breakRepetitiveCadence(text: string): string {
+  // Split on existing breaks to process each "speech segment" independently
+  const segments = text.split(/(<break[^>]*\/>)/);
+  return segments.map(seg => {
+    if (seg.startsWith('<break')) return seg;
+    // Within this segment, find runs of short sentences
+    // Match each sentence ending with . ! ? … and capture the trailing whitespace
+    const sentenceRe = /([^.!?…]*[.!?…]+)(\s*)/g;
+    const sentences: { text: string; trail: string }[] = [];
+    let m: RegExpExecArray | null;
+    let lastIdx = 0;
+    while ((m = sentenceRe.exec(seg)) !== null) {
+      sentences.push({ text: m[1], trail: m[2] });
+      lastIdx = m.index + m[0].length;
+    }
+    const remainder = seg.slice(lastIdx);
+    if (sentences.length < 3) return seg;
+
+    // Walk sentences and detect runs of 3+ short ones
+    let out = "";
+    let runStart = -1;
+    for (let i = 0; i < sentences.length; i++) {
+      const s = sentences[i];
+      const isShort = s.text.trim().length < 90;
+      if (isShort && runStart < 0) runStart = i;
+      if (!isShort && runStart >= 0) {
+        // Close the run
+        flushRun(sentences, runStart, i - 1);
+        runStart = -1;
+      }
+    }
+    if (runStart >= 0) flushRun(sentences, runStart, sentences.length - 1);
+
+    function flushRun(arr: { text: string; trail: string }[], start: number, end: number) {
+      if (end - start + 1 < 3) return;
+      // Inject a small break between every short sentence in the run
+      for (let i = start; i < end; i++) {
+        arr[i].trail = ' <break time="1.2s"/> ';
+      }
+    }
+
+    for (const s of sentences) out += s.text + s.trail;
+    out += remainder;
+    return out;
+  }).join('');
 }
 
 function protectNumberClusters(text: string): string {
@@ -317,7 +372,7 @@ Deno.serve(async (req) => {
                 body: JSON.stringify({
                   text: seg.text,
                   model_id: "eleven_multilingual_v2",
-                  voice_settings: { stability: 0.78, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 0.82 },
+                  voice_settings: { stability: 0.85, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 0.82 },
                 }),
               },
             );
@@ -376,7 +431,7 @@ Deno.serve(async (req) => {
           // stability ↑ 0.65→0.78 (steadier pacing, less drift between chunks)
           // style ↓ 0.10→0.0 (style adds expressiveness that varies tempo)
           // speed: noop on multilingual_v2 but harmless; preserved for forward compat
-          voice_settings: { stability: 0.78, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 0.82 },
+          voice_settings: { stability: 0.85, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 0.82 },
         };
         if (previousText) body.previous_text = previousText;
         if (nextText) body.next_text = nextText;
