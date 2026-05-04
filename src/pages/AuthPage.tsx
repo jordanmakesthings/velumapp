@@ -45,7 +45,10 @@ export default function AuthPage() {
     }
     const prefill = params.get("email");
     if (prefill) setEmail(prefill.trim());
-  }, []);
+    if (freeTrial) {
+      import("@/lib/reddit-pixel").then(({ rdtTrack }) => rdtTrack("ViewContent")).catch(() => {});
+    }
+  }, [freeTrial]);
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +56,10 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        try {
+          const { rdtTrack } = await import("@/lib/reddit-pixel");
+          rdtTrack("Lead", { email });
+        } catch {}
         const { error } = await signUp(email, password, undefined, undefined, { grantFreeTrial: freeTrial });
         if (error) throw error;
         try { localStorage.setItem("velum_has_account", "1"); } catch {}

@@ -43,6 +43,7 @@ export default function PremiumPage() {
       const { data } = await supabase.rpc("founding_lifetime_remaining");
       if (typeof data === "number") setFoundingLeft(data);
     })();
+    import("@/lib/reddit-pixel").then(({ rdtTrack }) => rdtTrack("ViewContent")).catch(() => {});
   }, []);
 
   const isPremium = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
