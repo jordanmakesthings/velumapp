@@ -68,7 +68,15 @@ export default function AuthPage() {
         const { error } = await signUp(email, password, undefined, undefined, { grantFreeTrial: freeTrial });
         if (error) throw error;
         try { localStorage.setItem("velum_has_account", "1"); } catch {}
-        navigate("/onboarding");
+        // If they came from a lead-magnet OTO with ?plan= preselected, jump
+        // straight to /premium with the plan param so it auto-triggers checkout.
+        // Otherwise standard onboarding.
+        const planParam = new URLSearchParams(window.location.search).get("plan");
+        if (planParam && ["monthly","annual","lifetime"].includes(planParam)) {
+          navigate(`/premium?plan=${planParam}`);
+        } else {
+          navigate("/onboarding");
+        }
       } else if (mode === "login") {
         const { error } = await signIn(email, password);
         if (error) throw error;

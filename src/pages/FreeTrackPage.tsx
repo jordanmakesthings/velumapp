@@ -152,55 +152,98 @@ export default function FreeTrackPage() {
                   )}
                 </button>
                 <p className="text-[11px] text-[#7a8a82] leading-relaxed text-center font-sans">
-                  We'll email it to you and you can listen here right after. No
-                  spam — just occasional notes from Jordan, the founder.
+                  You'll be listening in 5 seconds. No spam — just occasional
+                  notes from Jordan, the founder.
                 </p>
               </form>
             </>
           ) : (
             <>
               <p className="text-[10px] tracking-[0.3em] uppercase text-[#C9A84C] mb-5 font-sans font-medium">
-                Yours · Headphones in
+                Welcome · Headphones in
               </p>
               <h1 className="font-serif text-3xl md:text-4xl leading-tight mb-3 text-[#F2EFE7]">
                 {TRACK_TITLE}
               </h1>
               <p className="text-sm text-[#c8c4bb] leading-relaxed mb-8 font-sans">
-                10 minutes. Eyes closed if you can. Don't try to "do" anything —
-                Ericksonian hypnosis is permissive, not directive. Just listen.
+                Press play below. About 7-10 minutes. Eyes closed if you can.
+                Don't try to "do" anything — just listen.
               </p>
 
-              <div className="bg-[#181818] border border-[#2a2a2a] rounded-xl p-6 mb-8" ref={audioRef}>
+              <div className="bg-[#181818] border border-[#2a2a2a] rounded-xl p-6 mb-10" ref={audioRef}>
                 <audio src={FREE_TRACK_URL} controls preload="auto" className="w-full" />
                 <a
                   href={FREE_TRACK_URL}
-                  download="velum-money-pillars-1-earn.wav"
+                  download="velum-morning-activation.wav"
                   className="text-[11px] tracking-[0.2em] uppercase text-[#9aaea3] hover:text-[#C9A84C] mt-4 inline-block font-sans"
                 >
                   Download the file →
                 </a>
               </div>
 
-              <div className="bg-gradient-to-br from-[#0F2F26] to-[#1a4a3a] border border-[#C9A84C]/20 rounded-xl p-6">
+              {/* OTO BLOCK — self-liquidating offer */}
+              <div className="border-t border-[#2a2a2a] pt-10 mb-2">
                 <p className="text-[10px] tracking-[0.3em] uppercase text-[#C9A84C] mb-3 font-sans font-medium">
-                  When you're ready for more
+                  When you're ready for the rest
                 </p>
-                <h2 className="font-serif text-2xl mb-3 text-[#F2EFE7] leading-tight">
-                  Generate your own custom hypnosis track for whatever's
-                  actually stuck.
+                <h2 className="font-serif text-3xl md:text-4xl mb-4 text-[#F2EFE7] leading-tight">
+                  Generate a custom track for whatever's <em className="text-[#C9A84C] not-italic">actually</em> stuck.
                 </h2>
-                <p className="text-sm text-[#c8c4bb] leading-relaxed mb-5 font-sans">
-                  Money guilt, sleep, anxiety, relationship spirals, whatever.
-                  Tell us, and an AI writes you a personalized Ericksonian
-                  hypnosis script and renders it to audio in 90 seconds. Free
-                  7-day trial. No card required.
+                <p className="text-base text-[#c8c4bb] leading-relaxed mb-8 font-sans">
+                  Tell Velum what you want to rewire — sleep, money guilt,
+                  anxiety, identity, whatever — and an AI writes you a
+                  personalized Ericksonian hypnosis script and renders it to
+                  audio in 90 seconds. Yours forever. Plus the full library —
+                  Money Pillars Collection, breathwork, daily resets, new
+                  Collections monthly.
                 </p>
+
+                {/* Lifetime — primary OTO */}
                 <a
-                  href={`/trial-free?email=${encodeURIComponent(email)}&utm_source=lead-magnet&utm_medium=referral&utm_campaign=free-track`}
-                  className="inline-flex items-center gap-2 bg-[#C9A84C] text-[#0d0d0d] rounded px-5 py-3 font-sans font-semibold tracking-[0.18em] uppercase text-xs hover:opacity-90 transition-opacity"
+                  href={`/signup?email=${encodeURIComponent(email)}&plan=lifetime&utm_source=lead-magnet&utm_medium=oto&utm_campaign=free-track`}
+                  className="block bg-[#C9A84C] text-[#0d0d0d] rounded-xl p-5 mb-3 hover:opacity-90 transition-opacity group"
                 >
-                  Start your free trial →
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] tracking-[0.25em] uppercase font-sans font-bold mb-1.5">
+                        Lifetime · One time
+                      </p>
+                      <p className="font-serif text-2xl leading-tight">
+                        Velum forever — $199
+                      </p>
+                      <p className="text-[12px] mt-1.5 opacity-80 font-sans">
+                        Pay once. Every Collection, every feature, ever.
+                      </p>
+                    </div>
+                    <div className="text-2xl font-serif group-hover:translate-x-1 transition-transform">→</div>
+                  </div>
                 </a>
+
+                {/* Annual with trial — secondary */}
+                <a
+                  href={`/trial-free?email=${encodeURIComponent(email)}&utm_source=lead-magnet&utm_medium=oto&utm_campaign=free-track`}
+                  className="block bg-[#181818] border border-[#2a2a2a] hover:border-[#C9A84C]/40 rounded-xl p-5 transition-colors group"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] tracking-[0.25em] uppercase font-sans font-medium text-[#9aaea3] mb-1.5">
+                        Annual · 7 days free
+                      </p>
+                      <p className="font-serif text-xl text-[#F2EFE7] leading-tight">
+                        Try free for 7 days
+                      </p>
+                      <p className="text-[12px] mt-1.5 text-[#7a8a82] font-sans">
+                        $99/year after. Cancel anytime. No card today.
+                      </p>
+                    </div>
+                    <div className="text-2xl font-serif text-[#9aaea3] group-hover:translate-x-1 transition-transform">→</div>
+                  </div>
+                </a>
+
+                <p className="text-[11px] text-[#7a8a82] mt-6 text-center font-sans leading-relaxed">
+                  This page is yours for now — but the offer above is for new
+                  members only. Once you close it, you'll see standard pricing.
+                </p>
               </div>
             </>
           )}
