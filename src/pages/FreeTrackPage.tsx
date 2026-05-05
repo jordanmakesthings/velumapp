@@ -181,45 +181,106 @@ export default function FreeTrackPage() {
                 </a>
               </div>
 
-              {/* OTO BLOCK — self-liquidating offer */}
-              <div className="border-t border-[#2a2a2a] pt-10 mb-2">
-                <p className="text-[10px] tracking-[0.3em] uppercase text-[#C9A84C] mb-3 font-sans font-medium">
-                  When you're ready for the rest
-                </p>
-                <h2 className="font-serif text-3xl md:text-4xl mb-4 text-[#F2EFE7] leading-tight">
-                  Generate a custom track for whatever's <em className="text-[#C9A84C] not-italic">actually</em> stuck.
-                </h2>
-                <p className="text-base text-[#c8c4bb] leading-relaxed mb-8 font-sans">
-                  Tell Velum what you want to rewire — sleep, money guilt,
-                  anxiety, identity, whatever — and an AI writes you a
-                  personalized Ericksonian hypnosis script and renders it to
-                  audio in 90 seconds. Yours forever. Plus the full library —
-                  Money Pillars Collection, breathwork, daily resets, new
-                  Collections monthly.
-                </p>
+              {/* ═══ OTO BLOCK — Grand Slam Offer architecture ═══ */}
+              <div className="border-t border-[#2a2a2a] pt-12 mb-2">
 
-                {/* Lifetime — primary OTO */}
+                {/* HOOK */}
+                <p className="text-[10px] tracking-[0.3em] uppercase text-[#C9A84C] mb-3 font-sans font-medium">
+                  If that just landed for you · keep reading
+                </p>
+                <h2 className="font-serif text-3xl md:text-4xl mb-5 text-[#F2EFE7] leading-tight">
+                  That track took 7 minutes. Imagine what
+                  <em className="text-[#C9A84C] not-italic"> a track built specifically for what's stuck </em>
+                  could do.
+                </h2>
+
+                {/* AGITATION + STORY */}
+                <div className="text-base text-[#c8c4bb] leading-relaxed mb-8 font-sans space-y-4">
+                  <p>
+                    Most people who try meditation, breathwork, journaling — and feel
+                    "almost there" but never quite arrive — are missing one piece. The
+                    work has to reach the <em className="text-[#F2EFE7] not-italic">subconscious</em>,
+                    the 95% of the brain that's actually running the show. Conscious
+                    affirmations don't get there. Generic guided meditations don't get there.
+                  </p>
+                  <p>
+                    Velum is the first app that writes you a personalized Ericksonian
+                    hypnosis track for the <em className="text-[#F2EFE7] not-italic">specific</em> pattern
+                    you want to break. You tell it what's stuck. 90 seconds later you have
+                    audio in your voice's frequency, built around your exact words, designed
+                    for the layer that needs to change.
+                  </p>
+                </div>
+
+                {/* THE STACK */}
+                <div className="bg-[#0F2F26]/40 border border-[#C9A84C]/15 rounded-xl p-6 mb-8">
+                  <p className="text-[10px] tracking-[0.3em] uppercase text-[#C9A84C] mb-5 font-sans font-medium">
+                    What you get when you join
+                  </p>
+                  <ul className="space-y-3.5 mb-6">
+                    {[
+                      ["Custom track generator","Unlimited personalized hypnosis tracks. 90-second turnaround. Yours forever.","$228/yr"],
+                      ["The Money Pillars Collection","Six sequenced tracks rewiring your relationship with earning, keeping, spending, multiplying, enjoying, and circulating money.","$79"],
+                      ["All future Collections","Sleep · Anxiety · Confidence · Identity. New ones added monthly — all included.","$79+/each"],
+                      ["The Velum library","Breathwork (including the Breath Ladder), daily resets, journaling tools.","$49"],
+                      ["Locked-in price","Today's price is your price forever — no future increases.","$0"],
+                    ].map(([title, desc, value], i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <span className="text-[#C9A84C] mt-0.5 flex-shrink-0">✓</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-sans font-semibold text-sm text-[#F2EFE7]">
+                            {title}
+                            <span className="text-[#9aaea3] font-normal ml-2">· {value} value</span>
+                          </p>
+                          <p className="text-[13px] text-[#c8c4bb] mt-0.5 leading-snug">{desc}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="border-t border-[#C9A84C]/15 pt-4 flex items-baseline justify-between">
+                    <p className="text-sm text-[#9aaea3] font-sans">Total stacked value</p>
+                    <p className="font-serif text-2xl text-[#C9A84C] line-through opacity-70">$1,000+</p>
+                  </div>
+                  <div className="flex items-baseline justify-between mt-1">
+                    <p className="text-sm text-[#F2EFE7] font-sans font-semibold">Today, one time</p>
+                    <p className="font-serif text-3xl text-[#C9A84C]">$199</p>
+                  </div>
+                </div>
+
+                {/* GUARANTEE */}
+                <div className="bg-[#181818] border border-[#2a2a2a] rounded-xl p-5 mb-8 flex items-start gap-4">
+                  <div className="text-[#C9A84C] text-2xl flex-shrink-0">⌖</div>
+                  <div>
+                    <p className="font-serif text-lg text-[#F2EFE7] mb-1.5 leading-tight">
+                      30-day full refund. No questions, no hoops.
+                    </p>
+                    <p className="text-[13px] text-[#c8c4bb] leading-relaxed">
+                      Listen for 30 days. Generate as many custom tracks as you want.
+                      If your nervous system doesn't feel different, email
+                      jordan@govelum.com and we refund every cent. The risk is on us.
+                    </p>
+                  </div>
+                </div>
+
+                {/* PRIMARY CTA — LIFETIME */}
                 <a
                   href={`/signup?email=${encodeURIComponent(email)}&plan=lifetime&utm_source=lead-magnet&utm_medium=oto&utm_campaign=free-track`}
-                  className="block bg-[#C9A84C] text-[#0d0d0d] rounded-xl p-5 mb-3 hover:opacity-90 transition-opacity group"
+                  className="block bg-[#C9A84C] text-[#0d0d0d] rounded-xl p-5 mb-3 hover:opacity-95 active:scale-[0.99] transition-all group"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-[10px] tracking-[0.25em] uppercase font-sans font-bold mb-1.5">
-                        Lifetime · One time
+                        Yes — Velum forever
                       </p>
                       <p className="font-serif text-2xl leading-tight">
-                        Velum forever — $199
-                      </p>
-                      <p className="text-[12px] mt-1.5 opacity-80 font-sans">
-                        Pay once. Every Collection, every feature, ever.
+                        $199 · One time · 30-day guarantee
                       </p>
                     </div>
                     <div className="text-2xl font-serif group-hover:translate-x-1 transition-transform">→</div>
                   </div>
                 </a>
 
-                {/* Annual with trial — secondary */}
+                {/* SECONDARY CTA — TRIAL */}
                 <a
                   href={`/trial-free?email=${encodeURIComponent(email)}&utm_source=lead-magnet&utm_medium=oto&utm_campaign=free-track`}
                   className="block bg-[#181818] border border-[#2a2a2a] hover:border-[#C9A84C]/40 rounded-xl p-5 transition-colors group"
@@ -227,23 +288,30 @@ export default function FreeTrackPage() {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-[10px] tracking-[0.25em] uppercase font-sans font-medium text-[#9aaea3] mb-1.5">
-                        Annual · 7 days free
+                        Or — try it first, no card
                       </p>
-                      <p className="font-serif text-xl text-[#F2EFE7] leading-tight">
-                        Try free for 7 days
-                      </p>
-                      <p className="text-[12px] mt-1.5 text-[#7a8a82] font-sans">
-                        $99/year after. Cancel anytime. No card today.
+                      <p className="font-serif text-lg text-[#F2EFE7] leading-tight">
+                        7 days free · $99/yr after
                       </p>
                     </div>
                     <div className="text-2xl font-serif text-[#9aaea3] group-hover:translate-x-1 transition-transform">→</div>
                   </div>
                 </a>
 
-                <p className="text-[11px] text-[#7a8a82] mt-6 text-center font-sans leading-relaxed">
-                  This page is yours for now — but the offer above is for new
-                  members only. Once you close it, you'll see standard pricing.
-                </p>
+                {/* P.S. */}
+                <div className="mt-10 border-t border-[#2a2a2a] pt-8">
+                  <p className="text-[11px] tracking-[0.25em] uppercase text-[#9aaea3] mb-3 font-sans font-medium">
+                    P.S.
+                  </p>
+                  <p className="text-sm text-[#c8c4bb] leading-relaxed font-sans">
+                    The track you just listened to is one piece. The actual product
+                    is the custom-track generator — when you tell Velum what's stuck
+                    and it writes you a track built specifically for that. Most people
+                    feel the shift on the first one. The 30-day guarantee means trying
+                    it costs you nothing. The only thing you're risking is staying
+                    where you are.
+                  </p>
+                </div>
               </div>
             </>
           )}
