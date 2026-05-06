@@ -26,12 +26,15 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to={hasAccount ? "/login" : "/signup"} replace />;
   }
 
-  // Redirect TO onboarding if not completed
+  // Redirect TO onboarding if not completed.
+  // Whitelist: /onboarding (target), /paymentsuccess (post-Stripe redirect),
+  // /premium (so users can pay before doing onboarding — critical for OTO
+  // and recovery flows), /profile (so they can sign out if stuck).
+  const ONBOARDING_WHITELIST = ["/onboarding", "/paymentsuccess", "/premium", "/profile"];
   if (
     profile &&
     !profile.onboarding_completed &&
-    location.pathname !== "/onboarding" &&
-    location.pathname !== "/paymentsuccess"
+    !ONBOARDING_WHITELIST.some(p => location.pathname.startsWith(p))
   ) {
     return <Navigate to="/onboarding" replace />;
   }
