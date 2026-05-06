@@ -38,6 +38,11 @@ export default function PremiumPage() {
   const [cancelSuccess, setCancelSuccess] = useState(false);
   const [foundingLeft, setFoundingLeft] = useState<number | null>(null);
 
+  const isPremium = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
+  const isLifetime = profile?.subscription_plan === "lifetime";
+  const isCanceling = profile?.subscription_status === "canceling";
+  const isFounding = foundingLeft !== null && foundingLeft > 0;
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase.rpc("founding_lifetime_remaining");
@@ -46,27 +51,6 @@ export default function PremiumPage() {
     import("@/lib/reddit-pixel").then(({ rdtTrack }) => rdtTrack("ViewContent")).catch(() => {});
     import("@/lib/meta-pixel").then(({ fbqTrack }) => fbqTrack("ViewContent")).catch(() => {});
   }, []);
-
-  // OTO auto-trigger: if /premium?plan=lifetime|annual|monthly and user is logged in
-  // and not already a paying member, jump straight to Stripe checkout. This makes
-  // the lead-magnet OTO flow seamless: free-track opt-in → audio → click "Lifetime $199"
-  // → /signup pre-fills email → after signup, lands here → instant Stripe.
-  useEffect(() => {
-    if (!session) return;
-    if (isPremium) return;
-    const planParam = new URLSearchParams(window.location.search).get("plan");
-    if (planParam && ["monthly","annual","lifetime"].includes(planParam)) {
-      // Strip the param from the URL so a refresh doesn't re-trigger
-      window.history.replaceState({}, "", "/premium");
-      handleSubscribe(planParam as "monthly" | "annual" | "lifetime");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, isPremium]);
-
-  const isPremium = profile?.subscription_status === "active" || profile?.subscription_plan === "lifetime";
-  const isLifetime = profile?.subscription_plan === "lifetime";
-  const isCanceling = profile?.subscription_status === "canceling";
-  const isFounding = foundingLeft !== null && foundingLeft > 0;
 
   const handleSubscribe = async (plan: "monthly" | "annual" | "lifetime") => {
     if (!session) { navigate("/signup"); return; }
@@ -118,6 +102,20 @@ export default function PremiumPage() {
       setCanceling(false);
     }
   };
+
+  // OTO auto-trigger: if /premium?plan=lifetime|annual|monthly and user is
+  // logged in + not already paying, jump straight to Stripe. Safe because
+  // handleSubscribe is now declared above this effect (no TDZ risk).
+  useEffect(() => {
+    if (!session) return;
+    if (isPremium) return;
+    const planParam = new URLSearchParams(window.location.search).get("plan");
+    if (planParam && ["monthly","annual","lifetime"].includes(planParam)) {
+      window.history.replaceState({}, "", "/premium");
+      handleSubscribe(planParam as "monthly" | "annual" | "lifetime");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, isPremium]);
 
   // Already subscribed view
   if (isPremium) {
