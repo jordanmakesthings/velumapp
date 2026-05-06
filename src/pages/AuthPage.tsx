@@ -70,10 +70,14 @@ export default function AuthPage() {
         try { localStorage.setItem("velum_has_account", "1"); } catch {}
         // If they came from a lead-magnet OTO with ?plan= preselected, jump
         // straight to /premium with the plan param so it auto-triggers checkout.
-        // Otherwise standard onboarding.
-        const planParam = new URLSearchParams(window.location.search).get("plan");
+        // Otherwise honor ?next= (set by ProtectedRoute redirect), else onboarding.
+        const params = new URLSearchParams(window.location.search);
+        const planParam = params.get("plan");
+        const nextParam = params.get("next");
         if (planParam && ["monthly","annual","lifetime"].includes(planParam)) {
           navigate(`/premium?plan=${planParam}`);
+        } else if (nextParam && nextParam.startsWith("/")) {
+          navigate(nextParam);
         } else {
           navigate("/onboarding");
         }
@@ -81,7 +85,10 @@ export default function AuthPage() {
         const { error } = await signIn(email, password);
         if (error) throw error;
         try { localStorage.setItem("velum_has_account", "1"); } catch {}
-        navigate("/home");
+        // Honor ?next= so users redirected from /premium (or any protected
+        // route) land where they were originally trying to go after login.
+        const nextParam = new URLSearchParams(window.location.search).get("next");
+        navigate(nextParam && nextParam.startsWith("/") ? nextParam : "/home");
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,

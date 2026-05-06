@@ -23,7 +23,17 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     // Fresh-to-the-funnel visitors land on /signup.
     let hasAccount = false;
     try { hasAccount = localStorage.getItem("velum_has_account") === "1"; } catch {}
-    return <Navigate to={hasAccount ? "/login" : "/signup"} replace />;
+    // Preserve the original URL + any query params (esp. email) so the auth
+    // page can pre-fill email, and so we can redirect back after login.
+    // Without this, email recovery links lose their email param on bounce.
+    const incomingParams = new URLSearchParams(location.search);
+    const next = location.pathname + location.search;
+    const passthrough = new URLSearchParams();
+    const email = incomingParams.get("email");
+    if (email) passthrough.set("email", email);
+    passthrough.set("next", next);
+    const dest = (hasAccount ? "/login" : "/signup") + "?" + passthrough.toString();
+    return <Navigate to={dest} replace />;
   }
 
   // Redirect TO onboarding if not completed.
