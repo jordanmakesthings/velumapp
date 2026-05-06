@@ -191,8 +191,8 @@ export default function PremiumPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="text-center mb-10">
             <img src={logoCircle} alt="Velum" className="w-20 h-20 object-contain mx-auto mb-2" />
-            <h1 className="text-display text-[2.4rem] leading-[1.05] font-light mb-3 mt-0">Invest in your<br />nervous system.</h1>
-            <p className="text-muted-foreground text-[15px] font-sans font-light">Full access to everything in Velum.</p>
+            <h1 className="text-display text-[2.4rem] leading-[1.05] font-light mb-3 mt-0">Final Step</h1>
+            <p className="text-muted-foreground text-[15px] font-sans font-light">Your First Rewiring Audio Awaits</p>
           </div>
 
           {/* Plans */}
