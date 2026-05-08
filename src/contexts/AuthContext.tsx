@@ -157,6 +157,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (attr.landing_page) profileUpdates.landing_page = attr.landing_page;
         clearAttribution();
       } catch {}
+      // Pull quiz answers (if they came from /quiz) and persist to onboarding_answers
+      // so the existing generate-custom-track flow can use them as the diagnosis.
+      try {
+        const quizRaw = localStorage.getItem("velum_quiz_answers_v1");
+        if (quizRaw) {
+          const quiz = JSON.parse(quizRaw);
+          profileUpdates.onboarding_answers = quiz;
+          // Mark onboarding completed since the quiz IS the new onboarding
+          profileUpdates.onboarding_completed = true;
+          localStorage.removeItem("velum_quiz_answers_v1");
+        }
+      } catch {}
       if (Object.keys(profileUpdates).length > 0) {
         // Awaited so the write actually fires before navigation can unmount us.
         // The previous implementation used a fire-and-forget builder which the
