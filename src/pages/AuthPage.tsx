@@ -28,6 +28,7 @@ export default function AuthPage() {
   const freeTrial = isFreeTrialFunnel(location.pathname);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
@@ -65,7 +66,14 @@ export default function AuthPage() {
           const { fbqTrack } = await import("@/lib/meta-pixel");
           fbqTrack("Lead");
         } catch {}
-        const { error } = await signUp(email, password, undefined, undefined, { grantFreeTrial: freeTrial });
+        // Phone is required at signup so every lead is callable. Validation
+        // mirrors OnboardingPage's threshold (>= 7 chars, country code optional).
+        if (phone.trim().length < 7) {
+          setError("Phone number is required so we can support you if anything breaks.");
+          setLoading(false);
+          return;
+        }
+        const { error } = await signUp(email, password, undefined, phone.trim(), { grantFreeTrial: freeTrial });
         if (error) throw error;
         try { localStorage.setItem("velum_has_account", "1"); } catch {}
         // If they came from a lead-magnet OTO with ?plan= preselected, jump
@@ -184,6 +192,17 @@ export default function AuthPage() {
                   placeholder="Password (min. 6 characters)"
                   required
                   minLength={6}
+                  className="w-full bg-black/30 border border-accent/15 rounded-xl px-4 py-4 text-foreground text-sm font-sans focus:outline-none focus:border-accent/45 transition-colors placeholder:text-muted-foreground/50"
+                />
+              )}
+              {mode === "signup" && (
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  placeholder="Phone number"
+                  required
+                  autoComplete="tel"
                   className="w-full bg-black/30 border border-accent/15 rounded-xl px-4 py-4 text-foreground text-sm font-sans focus:outline-none focus:border-accent/45 transition-colors placeholder:text-muted-foreground/50"
                 />
               )}
