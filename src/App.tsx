@@ -36,7 +36,8 @@ import CustomTrackPage from "./pages/CustomTrackPage";
 import AudiosPage from "./pages/AudiosPage";
 import FreeTrackPage from "./pages/FreeTrackPage";
 import WelcomeBackPage from "./pages/WelcomeBackPage";
-import QuizPage from "./pages/QuizPage";
+// QuizPage import paused — route removed until copy is finalized
+// import QuizPage from "./pages/QuizPage";
 import NotFound from "./pages/NotFound";
 import { captureAttribution } from "@/lib/attribution";
 
@@ -58,7 +59,9 @@ const App = () => (
             <Route path="/trial-free" element={<AuthPage />} />
             <Route path="/free-track" element={<FreeTrackPage />} />
             <Route path="/welcome-back" element={<WelcomeBackPage />} />
-            <Route path="/quiz" element={<QuizPage />} />
+            {/* /quiz removed for now — needs question copy refinement +
+                lead-capture wiring before going live. File stays in
+                src/pages/QuizPage.tsx for when we revisit. */}
             <Route path="/login" element={<AuthPage />} />
             <Route path="/signin" element={<Navigate to="/login" replace />} />
             <Route path="/auth" element={<AuthPage />} />
