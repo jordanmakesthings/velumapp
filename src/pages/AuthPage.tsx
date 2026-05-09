@@ -29,6 +29,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
@@ -58,6 +59,18 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        // Validate required signup fields (passwordless flow — we generate
+        // the password silently below).
+        if (!fullName.trim()) {
+          setError("Please enter your full name.");
+          setLoading(false);
+          return;
+        }
+        if (phone.trim().length < 7) {
+          setError("Phone number is required so we can support you if anything breaks.");
+          setLoading(false);
+          return;
+        }
         try {
           const { rdtTrack } = await import("@/lib/reddit-pixel");
           rdtTrack("Lead", { email });
@@ -66,14 +79,11 @@ export default function AuthPage() {
           const { fbqTrack } = await import("@/lib/meta-pixel");
           fbqTrack("Lead");
         } catch {}
-        // Phone is required at signup so every lead is callable. Validation
-        // mirrors OnboardingPage's threshold (>= 7 chars, country code optional).
-        if (phone.trim().length < 7) {
-          setError("Phone number is required so we can support you if anything breaks.");
-          setLoading(false);
-          return;
-        }
-        const { error } = await signUp(email, password, undefined, phone.trim(), { grantFreeTrial: freeTrial });
+        // Auto-generate a strong password — user never sees it. They can set
+        // one later via "Forgot password" if they want one. Future logins
+        // typically happen via magic link (TODO: add magic link to /login).
+        const autoPassword = crypto.randomUUID() + "Aa1!";
+        const { error } = await signUp(email, autoPassword, fullName.trim(), phone.trim(), { grantFreeTrial: freeTrial });
         if (error) throw error;
         try { localStorage.setItem("velum_has_account", "1"); } catch {}
         // If they came from a lead-magnet OTO with ?plan= preselected, jump
@@ -176,25 +186,27 @@ export default function AuthPage() {
             </div>
           ) : (
             <form onSubmit={handle} className="flex flex-col gap-3">
+              {/* SIGNUP: 3 fields only — full name, email, phone. Passwordless. */}
+              {mode === "signup" && (
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                  placeholder="Full name"
+                  required
+                  autoComplete="name"
+                  className="w-full bg-black/30 border border-accent/15 rounded-xl px-4 py-4 text-foreground text-sm font-sans focus:outline-none focus:border-accent/45 transition-colors placeholder:text-muted-foreground/50"
+                />
+              )}
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="Email"
                 required
+                autoComplete="email"
                 className="w-full bg-black/30 border border-accent/15 rounded-xl px-4 py-4 text-foreground text-sm font-sans focus:outline-none focus:border-accent/45 transition-colors placeholder:text-muted-foreground/50"
               />
-              {mode !== "forgot" && (
-                <input
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Password (min. 6 characters)"
-                  required
-                  minLength={6}
-                  className="w-full bg-black/30 border border-accent/15 rounded-xl px-4 py-4 text-foreground text-sm font-sans focus:outline-none focus:border-accent/45 transition-colors placeholder:text-muted-foreground/50"
-                />
-              )}
               {mode === "signup" && (
                 <input
                   type="tel"
@@ -203,6 +215,19 @@ export default function AuthPage() {
                   placeholder="Phone number"
                   required
                   autoComplete="tel"
+                  className="w-full bg-black/30 border border-accent/15 rounded-xl px-4 py-4 text-foreground text-sm font-sans focus:outline-none focus:border-accent/45 transition-colors placeholder:text-muted-foreground/50"
+                />
+              )}
+              {/* LOGIN / FORGOT: keep password field for existing users.
+                  New signups never see this — they're passwordless. */}
+              {mode === "login" && (
+                <input
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Password"
+                  required
+                  minLength={6}
                   className="w-full bg-black/30 border border-accent/15 rounded-xl px-4 py-4 text-foreground text-sm font-sans focus:outline-none focus:border-accent/45 transition-colors placeholder:text-muted-foreground/50"
                 />
               )}
