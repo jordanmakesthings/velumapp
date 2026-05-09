@@ -38,15 +38,18 @@ interface QuizAnswers {
 
 const STORAGE_KEY = "velum_quiz_answers_v1";
 
+// Q1 reframed around the GAP, not the pattern. Most cold traffic doesn't
+// self-identify with "anxiety patterns" — they just know there's a gap
+// between who they are and who they could be. Lead with what they FEEL.
 const PATTERN_OPTIONS = [
-  { v: "money", label: "Money / financial blocks" },
-  { v: "anxiety", label: "Anxiety / spiraling thoughts" },
-  { v: "sleep", label: "Sleep / racing mind at night" },
-  { v: "worth", label: "Self-worth / imposter feeling" },
-  { v: "relationships", label: "Relationship patterns" },
-  { v: "body", label: "Body / physical tension" },
-  { v: "follow-through", label: "Procrastination / can't follow through" },
-  { v: "identity", label: "Identity — feeling like the wrong version of me" },
+  { v: "money", label: "Money — freedom, abundance, ease around it" },
+  { v: "body", label: "Body — energy, vitality, presence in it" },
+  { v: "mind", label: "Mind — focus, calm, less mental noise" },
+  { v: "identity", label: "Identity — who I am vs. who I know I am" },
+  { v: "work", label: "Work — purpose, output, momentum" },
+  { v: "relationships", label: "Relationships — depth, ease, attraction" },
+  { v: "sleep", label: "Sleep — restorative rest, quiet mind at night" },
+  { v: "anxiety", label: "Anxiety — spiraling thoughts, can't switch off" },
 ];
 const DURATION_OPTIONS = [
   { v: "<1y", label: "Less than a year" },
@@ -84,44 +87,46 @@ function saveAnswers(a: QuizAnswers) {
 function buildDiagnosis(a: QuizAnswers): { headline: string; body: string[] } {
   const name = a.firstName?.trim() || "";
   const patternList = (a.pattern || []).map(v =>
-    PATTERN_OPTIONS.find(p => p.v === v)?.label.toLowerCase() || v
+    PATTERN_OPTIONS.find(p => p.v === v)?.label.toLowerCase().split(" — ")[0] || v
   );
-  const primary = patternList[0] || "the pattern you described";
+  const primary = patternList[0] || "the area you named";
   const triedList = a.tried || [];
   const triedMeditation = triedList.includes("meditation-apps");
   const triedAffirmations = triedList.includes("affirmations");
   const triedNothing = triedList.includes("nothing");
 
-  const headline = name ? `${name}, here's what's running.` : "Here's what's running.";
+  const headline = name
+    ? `${name}, here's why the gap is still there.`
+    : "Here's why the gap is still there.";
 
   const para1 =
-    `The pattern you named — ${primary} — has been with you ${
+    `The gap shows up in ${primary}. It's been with you ${
       a.duration === "<1y" ? "less than a year" :
       a.duration === "1-5y" ? "for years" :
       a.duration === "5+y" ? "for over half a decade" :
       "for as long as you can remember"
     }. ${
-      a.somatic === "chest" ? "It lives in the chest." :
-      a.somatic === "throat-jaw" ? "It lives in the throat and jaw." :
-      a.somatic === "gut" ? "It lives in the gut." :
-      a.somatic === "shoulders-neck" ? "It carries in the shoulders." :
+      a.somatic === "chest" ? "You feel it in the chest." :
+      a.somatic === "throat-jaw" ? "You feel it in the throat and jaw." :
+      a.somatic === "gut" ? "You feel it in the gut." :
+      a.somatic === "shoulders-neck" ? "You carry it in the shoulders." :
       a.somatic === "whole-body" ? "It moves through the whole body." :
       "It lives in the mind, not the body."
-    } That detail matters. The body knows before the mind does, and any work that doesn't reach the body doesn't reach the layer running this.`;
+    } That detail matters. The body knows before the mind does — and the gap is being held in place by something below conscious thought. That's why it hasn't moved yet.`;
 
   const para2 = triedNothing
-    ? `You haven't done structured work on this yet. That's actually ideal — there are no installed patterns from previous attempts to undo. You get to start from a real diagnostic.`
+    ? `You haven't done structured work on this yet. That's actually ideal. There are no installed patterns from previous attempts to undo. The version of you that's already there is closer than you think — you just haven't been shown the door.`
     : triedMeditation || triedAffirmations
-    ? `You've tried ${triedMeditation && triedAffirmations ? "meditation apps and affirmations" : triedMeditation ? "meditation apps" : "affirmations and visualization"}. That work isn't useless — it just operates at the conscious 5%. ${primary} is running on the other 95%, the subconscious. That's the layer Velum is built for.`
-    : `You've already done real work — therapy, breathwork, modalities. Velum isn't a replacement for that work. It's a different angle of attack: Ericksonian hypnosis at the subconscious layer, custom-built for the specific pattern you just described.`;
+    ? `You've tried ${triedMeditation && triedAffirmations ? "meditation apps and affirmations" : triedMeditation ? "meditation apps" : "affirmations and visualization"}. That work isn't useless — it just operates at the conscious 5% of your mind. The gap is being held in place by the other 95%, the subconscious. That's the layer Velum is built for. That's why surface practices haven't closed it.`
+    : `You've already done real work — therapy, breathwork, modalities. Velum isn't a replacement for that work. It's a different angle of attack: Ericksonian hypnosis at the subconscious layer, custom-built for the gap you just described.`;
 
   const para3 = a.desiredOutcome
-    ? `When this dissolves, you said: "${a.desiredOutcome.trim()}." That's the script. That's what your custom track will be built around. Not a generic guided meditation — words and images chosen specifically for that outcome, in your voice's frequency.`
+    ? `When the gap closes, you said: "${a.desiredOutcome.trim()}." That's the script. That's exactly what your custom track will be built around — not a generic guided meditation. Words and images chosen specifically for that outcome, repeated in trance until the subconscious accepts it as true.`
     : `Your first custom track will be built around the specific outcome you wrote. Not generic. Not "be more present." Built for what you actually said.`;
 
   const para4 = a.futureSelf
-    ? `You wrote that the version of you on the other side is: "${a.futureSelf.trim()}." Ericksonian hypnosis works by helping the brain rehearse that identity until the subconscious accepts it as true. Repetition, daily, in trance. That's the mechanism.`
-    : `The work is identity-level. The brain doesn't know the difference between rehearsing and being. So you stop rehearsing and start being.`;
+    ? `You wrote that the version of you on the other side is: "${a.futureSelf.trim()}." That version isn't in the future. They're available now — the brain just hasn't rehearsed them long enough to default to them. That's the mechanism. Repetition, daily, in trance, until the subconscious stops asking permission.`
+    : `The version of you on the other side isn't in the future. They're available now. The brain just hasn't rehearsed them long enough to default to them. That's the work.`;
 
   return { headline, body: [para1, para2, para3, para4] };
 }
@@ -298,18 +303,18 @@ export default function QuizPage() {
 
           {step === "intro" && (
             <div className="velum-card-accent p-8 md:p-10 text-center">
-              <p className="text-eyebrow mb-5">60 seconds · 7 questions</p>
+              <p className="text-eyebrow mb-5">For the version of you that's already there</p>
               <h1 className="text-display text-4xl md:text-[2.6rem] leading-[1.05] mb-5">
-                What's the pattern you<br /><span className="italic text-accent">can't seem to break?</span>
+                There's a gap between who you are<br /><span className="italic text-accent">and who you know you could be.</span>
               </h1>
-              <p className="text-muted-foreground text-sm font-sans leading-relaxed mb-9 max-w-[380px] mx-auto">
-                We'll diagnose the layer your current practice can't reach — then build you a custom rewiring track for that exact pattern. Yours forever.
+              <p className="text-muted-foreground text-sm font-sans leading-relaxed mb-9 max-w-[420px] mx-auto">
+                Most people accept it. Some try meditation. Some try therapy. Some try grinding harder. The gap stays. We diagnose where it's actually stuck — at the layer most practices can't reach — and rewire it. About 60 seconds.
               </p>
               <button
                 onClick={() => setStep("q1")}
                 className="gold-gradient text-primary-foreground rounded-full px-10 py-4 font-sans font-semibold tracking-[2px] uppercase text-xs hover:opacity-95 active:scale-[0.99] transition-all"
               >
-                Begin the diagnostic →
+                Show me where I'm stuck →
               </button>
               <p className="text-[11px] text-muted-foreground/60 mt-6 font-sans">
                 No fluff. No "transform your life." Real diagnostic, real track.
@@ -320,8 +325,8 @@ export default function QuizPage() {
           {step === "q1" && (
             <QuestionCard
               eyebrow="Question 1 of 7"
-              title="Which pattern keeps coming back?"
-              subtitle="The one you've worked on. The one that hasn't moved. Pick one or more."
+              title="Where do you feel the gap most?"
+              subtitle="Where does the current you fall short of who you know you could be? Pick one or more."
               onBack={() => setStep("intro")}
               onNext={() => setStep("q2")}
               nextDisabled={!(answers.pattern && answers.pattern.length > 0)}
@@ -470,19 +475,19 @@ export default function QuizPage() {
                 </div>
 
                 <div className="border-t border-accent/15 pt-8">
-                  <p className="text-eyebrow mb-3">Your first custom track</p>
+                  <p className="text-eyebrow mb-3">How we close the gap</p>
                   <h2 className="text-display text-2xl md:text-[1.8rem] leading-[1.1] mb-4">
-                    Built specifically for what<br /><span className="italic text-accent">you just described.</span>
+                    Built specifically for<br /><span className="italic text-accent">what you just described.</span>
                   </h2>
                   <p className="text-muted-foreground text-sm font-sans leading-relaxed mb-7">
-                    Not a generic guided meditation. A personalized Ericksonian hypnosis track, written for the exact pattern, words, and identity you wrote — rendered to audio in about 90 seconds inside the app. Yours forever, plus the full Velum library and every Collection we've built.
+                    Your first custom rewiring track — written for the exact gap, words, and identity you described above — rendered to audio in about 90 seconds inside the app. Yours forever, plus the full Velum library and every Collection we've built.
                   </p>
 
                   <button
                     onClick={startSignup}
                     className="w-full md:w-auto gold-gradient text-primary-foreground rounded-full px-10 py-4 font-sans font-semibold tracking-[2px] uppercase text-xs hover:opacity-95 active:scale-[0.99] transition-all"
                   >
-                    Start rewiring →
+                    Close the gap →
                   </button>
                   <p className="text-[11px] text-muted-foreground/70 mt-5 font-sans leading-relaxed">
                     7-day annual trial · cancel anytime · 30-day full refund
