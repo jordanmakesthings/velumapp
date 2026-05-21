@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { Download, Upload, Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { listAllCovers, deriveTagsFromText, type TrackCover } from "@/lib/track-covers";
 import { toast } from "sonner";
 
 const LOGO_URL =
@@ -53,18 +54,188 @@ function ensureFonts() {
   document.head.appendChild(link);
 }
 
-function drawBackground(ctx: CanvasRenderingContext2D, W: number, H: number) {
+// Per-category palette — all stay inside the Velum green family. `corner` is the
+// lit bottom-left wash, `deep` the mid-green, `glow` the bright tone used only for
+// the soft aura behind the title, `label` the muted category caption color.
+interface ThemeColors { corner: string; deep: string; glow: string; label: string; }
+const CATEGORY_THEME: Record<string, ThemeColors> = {
+  meditation:   { corner: "#1c4a3a", deep: "#0F2F26", glow: "#2f9e72", label: "#6F8A7E" },
+  breathwork:   { corner: "#15494a", deep: "#0c2b2c", glow: "#26a39a", label: "#6A9690" },
+  rapid_resets: { corner: "#1d5240", deep: "#103126", glow: "#3ab277", label: "#7CA084" },
+  tapping:      { corner: "#3f4a22", deep: "#1d2814", glow: "#8a9a48", label: "#9AA06F" },
+  journaling:   { corner: "#1a484c", deep: "#10282c", glow: "#3a8b97", label: "#6F9298" },
+  _default:     { corner: "#1a4a3a", deep: "#0F2F26", glow: "#2a8a64", label: "#6F8A7E" },
+};
+function getTheme(category: string): ThemeColors {
+  return CATEGORY_THEME[category] || CATEGORY_THEME._default;
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// Cached monochrome noise tile reused across every render for film grain.
+let noiseTile: HTMLCanvasElement | null = null;
+function getNoiseTile(): HTMLCanvasElement {
+  if (noiseTile) return noiseTile;
+  const size = 180;
+  const c = document.createElement("canvas");
+  c.width = size; c.height = size;
+  const nctx = c.getContext("2d")!;
+  const id = nctx.createImageData(size, size);
+  for (let i = 0; i < id.data.length; i += 4) {
+    const v = Math.random() * 255;
+    id.data[i] = id.data[i + 1] = id.data[i + 2] = v;
+    id.data[i + 3] = 255;
+  }
+  nctx.putImageData(id, 0, 0);
+  noiseTile = c;
+  return noiseTile;
+}
+
+function drawBackground(ctx: CanvasRenderingContext2D, W: number, H: number, category: string) {
+  const theme = getTheme(category);
+
+  // Base black + lit bottom-left corner wash.
   ctx.fillStyle = "#111111";
   ctx.fillRect(0, 0, W, H);
   const cx = W * 0.15, cy = H;
   const r = Math.max(W, H) * 0.9;
   const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-  grad.addColorStop(0, "#1a4a3a");
-  grad.addColorStop(0.25, "#0F2F26");
+  grad.addColorStop(0, theme.corner);
+  grad.addColorStop(0.25, theme.deep);
   grad.addColorStop(0.65, "#111111");
   grad.addColorStop(1, "#111111");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
+
+  // Soft aura bloom behind the title (additive so it reads as light, not paint).
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const ax = W / 2, ay = H * 0.46, ar = Math.max(W, H) * 0.5;
+  const aura = ctx.createRadialGradient(ax, ay, 0, ax, ay, ar);
+  aura.addColorStop(0, hexToRgba(theme.glow, 0.26));
+  aura.addColorStop(0.5, hexToRgba(theme.glow, 0.07));
+  aura.addColorStop(1, hexToRgba(theme.glow, 0));
+  ctx.fillStyle = aura;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+
+  // Vignette for depth.
+  ctx.save();
+  const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.2, W / 2, H / 2, Math.max(W, H) * 0.75);
+  vg.addColorStop(0, "rgba(0,0,0,0)");
+  vg.addColorStop(1, "rgba(0,0,0,0.45)");
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+
+  // Film grain.
+  ctx.save();
+  const pattern = ctx.createPattern(getNoiseTile(), "repeat");
+  if (pattern) {
+    ctx.globalAlpha = 0.045;
+    ctx.globalCompositeOperation = "overlay";
+    ctx.fillStyle = pattern;
+    ctx.fillRect(0, 0, W, H);
+  }
+  ctx.restore();
+}
+
+// ── Painterly artwork backgrounds ──────────────────────────────────────────
+// The painterly emerald+gold covers live in the public `track-covers` bucket and
+// are catalogued (with theme tags + mood) in the `track_covers` storehouse table.
+// We pick the cover whose tags best match the track's title/category, so the art
+// reflects the track's meaning (e.g. "sleep" → moon, "grief" → rain). Ties break
+// deterministically on the title hash, so the same track always gets the same art.
+let coversPromise: Promise<TrackCover[]> | null = null;
+function getCovers(): Promise<TrackCover[]> {
+  if (!coversPromise) coversPromise = listAllCovers().catch(() => []);
+  return coversPromise;
+}
+
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+async function pickCoverUrl(title: string, category: string): Promise<string | null> {
+  const covers = await getCovers();
+  if (!covers.length) return null;
+  const wanted = new Set(deriveTagsFromText(title, category.replace(/_/g, " ")));
+  let best: TrackCover[] = [];
+  let bestScore = -1;
+  for (const c of covers) {
+    let score = 0;
+    for (const t of c.tags || []) if (wanted.has(t)) score++;
+    if (score > bestScore) { bestScore = score; best = [c]; }
+    else if (score === bestScore) best.push(c);
+  }
+  const pool = bestScore > 0 ? best : covers; // no thematic hit → stable arbitrary pick
+  const h = hashString((title || "untitled").toLowerCase().trim());
+  return pool[h % pool.length].url;
+}
+
+const coverCache = new Map<string, HTMLImageElement | null>();
+const coverPromises = new Map<string, Promise<HTMLImageElement | null>>();
+function loadCover(url: string): Promise<HTMLImageElement | null> {
+  if (coverCache.has(url)) return Promise.resolve(coverCache.get(url)!);
+  const existing = coverPromises.get(url);
+  if (existing) return existing;
+  const p = new Promise<HTMLImageElement | null>((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // keeps the canvas exportable (toBlob/toDataURL)
+    img.onload = () => { coverCache.set(url, img); resolve(img); };
+    img.onerror = () => { coverCache.set(url, null); resolve(null); };
+    img.src = url;
+  });
+  coverPromises.set(url, p);
+  return p;
+}
+
+// Cover-fit the artwork to fill the whole canvas, centered.
+function drawCoverImage(ctx: CanvasRenderingContext2D, W: number, H: number, img: HTMLImageElement) {
+  const scale = Math.max(W / img.width, H / img.height);
+  const dw = img.width * scale, dh = img.height * scale;
+  ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+}
+
+// Legibility scrim over artwork: a unifying green-black tint, a soft radial
+// darkening behind the centered text, and an edge vignette.
+function drawArtScrim(ctx: CanvasRenderingContext2D, W: number, H: number) {
+  ctx.save();
+  ctx.fillStyle = "rgba(8,20,14,0.30)";
+  ctx.fillRect(0, 0, W, H);
+  const cx = W / 2, cy = H * 0.46;
+  const rad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.52);
+  rad.addColorStop(0, "rgba(0,0,0,0.55)");
+  rad.addColorStop(0.55, "rgba(0,0,0,0.22)");
+  rad.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = rad;
+  ctx.fillRect(0, 0, W, H);
+  const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.25, W / 2, H / 2, Math.max(W, H) * 0.75);
+  vg.addColorStop(0, "rgba(0,0,0,0)");
+  vg.addColorStop(1, "rgba(0,0,0,0.40)");
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
+// Paint the chosen artwork (or fall back to the green gradient if it can't load).
+// `coverOverride` forces a specific cover (used by the studio's manual picker);
+// otherwise the art is auto-matched to the track's meaning.
+async function paintBackdrop(ctx: CanvasRenderingContext2D, W: number, H: number, title: string, category: string, coverOverride?: string) {
+  const url = coverOverride || await pickCoverUrl(title, category);
+  const cover = url ? await loadCover(url) : null;
+  if (cover) {
+    drawCoverImage(ctx, W, H, cover);
+    drawArtScrim(ctx, W, H);
+  } else {
+    drawBackground(ctx, W, H, category);
+  }
 }
 
 function drawGoldLine(ctx: CanvasRenderingContext2D, cx: number, y: number, width: number) {
@@ -105,11 +276,12 @@ function measureSpacedText(ctx: CanvasRenderingContext2D, text: string, spacing:
   return w;
 }
 
-function drawLibrary(canvas: HTMLCanvasElement, title: string, category: string, logo: HTMLCanvasElement | null) {
+async function drawLibrary(canvas: HTMLCanvasElement, title: string, category: string, logo: HTMLCanvasElement | null, coverOverride?: string) {
   const W = 1600, H = 900;
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d")!;
-  drawBackground(ctx, W, H);
+  await paintBackdrop(ctx, W, H, title, category, coverOverride);
+  const theme = getTheme(category);
   const cx = W / 2;
   const catLabel = (CATEGORY_LABELS[category] || category || "Wellness").toUpperCase();
   const catFontSize = 26, catSpacing = catFontSize * 0.28, catLineH = catFontSize * 1.2;
@@ -126,8 +298,13 @@ function drawLibrary(canvas: HTMLCanvasElement, title: string, category: string,
   const lineH = fontSize * 1.2;
   const totalBlockH = catLineH + 22 + 1 + 28 + lines.length * lineH + 28 + 1;
   const blockTop = (H - totalBlockH) / 2;
+  // Soft drop shadow keeps text crisp over any artwork.
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.55)";
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 2;
   ctx.font = `600 ${catFontSize}px 'DM Sans', system-ui, sans-serif`;
-  ctx.fillStyle = "#6F8A7E"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = theme.label; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
   const catY = blockTop + catLineH;
   drawSpacedText(ctx, catLabel, cx - measureSpacedText(ctx, catLabel, catSpacing) / 2, catY, catSpacing);
   drawGoldLine(ctx, cx, catY + 22, W * 0.58);
@@ -137,17 +314,19 @@ function drawLibrary(canvas: HTMLCanvasElement, title: string, category: string,
   lines.forEach((l, i) => ctx.fillText(l, cx, titleStartY + i * lineH));
   const lastY = titleStartY + (lines.length - 1) * lineH;
   drawGoldLine(ctx, cx, lastY + fontSize * 0.22 + 28, W * 0.58);
+  ctx.restore();
   if (logo) {
     const logoH = 72, logoW = logoH * (logo.width / logo.height);
     ctx.drawImage(logo, W - 80 - logoW, H - 80 - logoH, logoW, logoH);
   }
 }
 
-function drawPlayer(canvas: HTMLCanvasElement, title: string, category: string, logo: HTMLCanvasElement | null) {
+async function drawPlayer(canvas: HTMLCanvasElement, title: string, category: string, logo: HTMLCanvasElement | null, coverOverride?: string) {
   const S = 800;
   canvas.width = S; canvas.height = S;
   const ctx = canvas.getContext("2d")!;
-  drawBackground(ctx, S, S);
+  await paintBackdrop(ctx, S, S, title, category, coverOverride);
+  const theme = getTheme(category);
   const cx = S / 2;
   const catLabel = (CATEGORY_LABELS[category] || category || "Wellness").toUpperCase();
   const catFontSize = 24, catSpacing = catFontSize * 0.28, catLineH = catFontSize * 1.2;
@@ -164,8 +343,12 @@ function drawPlayer(canvas: HTMLCanvasElement, title: string, category: string, 
   const lineH = fontSize * 1.2;
   const totalBlockH = catLineH + 18 + 1 + 24 + lines.length * lineH + 24 + 1;
   const blockTop = (S - totalBlockH) / 2;
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.55)";
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = 2;
   ctx.font = `600 ${catFontSize}px 'DM Sans', system-ui, sans-serif`;
-  ctx.fillStyle = "#6F8A7E"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = theme.label; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
   const catY = blockTop + catLineH;
   drawSpacedText(ctx, catLabel, cx - measureSpacedText(ctx, catLabel, catSpacing) / 2, catY, catSpacing);
   drawGoldLine(ctx, cx, catY + 18, S * 0.60);
@@ -175,6 +358,7 @@ function drawPlayer(canvas: HTMLCanvasElement, title: string, category: string, 
   lines.forEach((l, i) => ctx.fillText(l, cx, titleStartY + i * lineH));
   const lastTitleY = titleStartY + (lines.length - 1) * lineH;
   drawGoldLine(ctx, cx, lastTitleY + fontSize * 0.22 + 24, S * 0.60);
+  ctx.restore();
   if (logo) {
     const logoH = 56, logoW = logoH * (logo.width / logo.height);
     ctx.drawImage(logo, cx - logoW / 2, S - 72 - logoH, logoW, logoH);
@@ -203,9 +387,11 @@ interface ThumbnailGeneratorProps {
   showPlayerCanvas?: boolean;
   /** When true, show an "Upload & Apply" button that uploads both thumbnails to storage and calls onGenerated with URLs */
   autoUpload?: boolean;
+  /** Force a specific artwork cover URL instead of auto-matching by title/category. */
+  coverUrlOverride?: string;
 }
 
-export default function ThumbnailGenerator({ title, category, enabled: externalEnabled, onToggle, onLibraryBlob, onPlayerBlob, onGenerated, showPlayerCanvas = true, autoUpload = false }: ThumbnailGeneratorProps) {
+export default function ThumbnailGenerator({ title, category, enabled: externalEnabled, onToggle, onLibraryBlob, onPlayerBlob, onGenerated, showPlayerCanvas = true, autoUpload = false, coverUrlOverride }: ThumbnailGeneratorProps) {
   const [internalEnabled, setInternalEnabled] = useState(false);
   const enabled = externalEnabled !== undefined ? externalEnabled : internalEnabled;
   const handleToggle = onToggle || (() => setInternalEnabled(p => !p));
@@ -220,14 +406,15 @@ export default function ThumbnailGenerator({ title, category, enabled: externalE
   const redrawAndNotify = useCallback(() => {
     if (!enabled) return;
     setUploaded(false);
-    if (libraryRef.current) drawLibrary(libraryRef.current, title, category, logoRef.current);
-    if (playerRef.current) drawPlayer(playerRef.current, title, category, logoRef.current);
+    // Debounce: draw (async — artwork may need to load) then emit blobs.
     if (pendingRef.current) clearTimeout(pendingRef.current);
-    pendingRef.current = setTimeout(() => {
+    pendingRef.current = setTimeout(async () => {
+      if (libraryRef.current) await drawLibrary(libraryRef.current, title, category, logoRef.current, coverUrlOverride);
+      if (playerRef.current) await drawPlayer(playerRef.current, title, category, logoRef.current, coverUrlOverride);
       if (libraryRef.current) libraryRef.current.toBlob(b => onLibraryBlob?.(b), "image/png");
       if (playerRef.current) playerRef.current.toBlob(b => onPlayerBlob?.(b), "image/png");
     }, 400);
-  }, [title, category, enabled, onLibraryBlob, onPlayerBlob]);
+  }, [title, category, enabled, onLibraryBlob, onPlayerBlob, coverUrlOverride]);
 
   useEffect(() => {
     if (!enabled) return;

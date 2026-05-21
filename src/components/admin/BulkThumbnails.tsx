@@ -93,14 +93,14 @@ export default function BulkThumbnails() {
         const title = item[meta.titleField] || "Untitled";
         const category = item[meta.categoryField] || "";
 
-        drawLibrary(libCanvasRef.current!, title, category, logoRef.current);
+        await drawLibrary(libCanvasRef.current!, title, category, logoRef.current);
         const libBlob = await canvasBlob(libCanvasRef.current!);
         if (!libBlob) throw new Error("Landscape render failed");
         const libUrl = await uploadBlob_(libBlob, meta.uploadFolder, "16x9");
 
         let squareUrl: string | null = null;
         if (meta.squareField) {
-          drawPlayer(playerCanvasRef.current!, title, category, logoRef.current);
+          await drawPlayer(playerCanvasRef.current!, title, category, logoRef.current);
           const sqBlob = await canvasBlob(playerCanvasRef.current!);
           if (sqBlob) squareUrl = await uploadBlob_(sqBlob, meta.uploadFolder, "1x1");
         }

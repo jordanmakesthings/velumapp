@@ -5,13 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, Plus, Upload, Trash2, Edit2, X, Check, Music, BookOpen,
-  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown, Users, Tag, SlidersHorizontal, Bell, Sparkles
+  GraduationCap, Feather, Settings, Layers, ChevronUp, ChevronDown, Users, Tag, SlidersHorizontal, Bell, Sparkles, Wand2
 } from "lucide-react";
 import { toast } from "sonner";
 import ThumbnailGenerator from "@/components/admin/ThumbnailGenerator";
 import TrackTagInput from "@/components/admin/TrackTagInput";
 import CourseBuilder from "@/components/admin/CourseBuilder";
 import BulkThumbnails from "@/components/admin/BulkThumbnails";
+import ThumbnailStudio from "@/components/admin/ThumbnailStudio";
 
 const STEP_TYPES = ["intro", "breathe", "write", "reflect", "close"] as const;
 
@@ -162,7 +163,7 @@ function MasteryPromptBuilder({ value, onChange }: { value: string; onChange: (v
   );
 }
 
-type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "thumbnails" | "taxonomy" | "finder" | "settings" | "users" | "notifications";
+type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "studio" | "thumbnails" | "taxonomy" | "finder" | "settings" | "users" | "notifications";
 
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
@@ -170,6 +171,7 @@ const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "courses", label: "Courses", icon: BookOpen },
   { key: "mastery", label: "Mastery", icon: GraduationCap },
   { key: "prompts", label: "Prompts", icon: Feather },
+  { key: "studio", label: "Thumbnail Studio", icon: Wand2 },
   { key: "thumbnails", label: "Bulk Thumbnails", icon: Sparkles },
   { key: "taxonomy", label: "Taxonomy", icon: Tag },
   { key: "finder", label: "Session Finder", icon: SlidersHorizontal },
@@ -1767,6 +1769,8 @@ export default function AdminPage() {
         )}
 
         {/* ============ BULK THUMBNAILS TAB ============ */}
+        {activeTab === "studio" && <ThumbnailStudio />}
+
         {activeTab === "thumbnails" && <BulkThumbnails />}
 
         {/* ============ TAXONOMY TAB ============ */}
