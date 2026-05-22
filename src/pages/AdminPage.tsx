@@ -13,7 +13,8 @@ import TrackTagInput from "@/components/admin/TrackTagInput";
 import CourseBuilder from "@/components/admin/CourseBuilder";
 import BulkThumbnails from "@/components/admin/BulkThumbnails";
 import ThumbnailStudio from "@/components/admin/ThumbnailStudio";
-import { GOALS } from "@/lib/goals";
+import GoalsTab from "@/components/admin/GoalsTab";
+import { useGoals } from "@/lib/goals";
 
 const STEP_TYPES = ["intro", "breathe", "write", "reflect", "close"] as const;
 
@@ -164,18 +165,19 @@ function MasteryPromptBuilder({ value, onChange }: { value: string; onChange: (v
   );
 }
 
-type AdminTab = "tracks" | "subcategories" | "courses" | "mastery" | "prompts" | "studio" | "thumbnails" | "taxonomy" | "finder" | "settings" | "users" | "notifications";
+type AdminTab = "tracks" | "goals" | "subcategories" | "courses" | "mastery" | "prompts" | "studio" | "thumbnails" | "taxonomy" | "finder" | "settings" | "users" | "notifications";
 
+// Curated nav — content first, then design, then config. (Legacy tabs like
+// Subcategories / Session Finder are retired from the nav but their render
+// blocks remain harmless.)
 const ADMIN_TABS: { key: AdminTab; label: string; icon: typeof Music }[] = [
   { key: "tracks", label: "Sessions", icon: Music },
-  { key: "subcategories", label: "Subcategories", icon: Layers },
-  { key: "courses", label: "Courses", icon: BookOpen },
+  { key: "goals", label: "Goals", icon: Tag },
+  { key: "courses", label: "Collections", icon: BookOpen },
   { key: "mastery", label: "Mastery", icon: GraduationCap },
-  { key: "prompts", label: "Prompts", icon: Feather },
   { key: "studio", label: "Thumbnail Studio", icon: Wand2 },
   { key: "thumbnails", label: "Bulk Thumbnails", icon: Sparkles },
-  { key: "taxonomy", label: "Taxonomy", icon: Tag },
-  { key: "finder", label: "Session Finder", icon: SlidersHorizontal },
+  { key: "prompts", label: "Prompts", icon: Feather },
   { key: "notifications", label: "Notifications", icon: Bell },
   { key: "settings", label: "Settings", icon: Settings },
   { key: "users", label: "Users", icon: Users },
@@ -640,6 +642,7 @@ function NotificationsTab() {
 
 export default function AdminPage() {
 
+  const goalOptions = useGoals();
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -1167,7 +1170,7 @@ export default function AdminPage() {
                   <div className="md:col-span-2">
                     <label className={labelClass}>Goals <span className="normal-case opacity-50 ml-1">— what this session helps with</span></label>
                     <div className="flex flex-wrap gap-1.5">
-                      {GOALS.map((g) => {
+                      {goalOptions.map((g) => {
                         const active = trackForm.goals.includes(g.slug);
                         return (
                           <button key={g.slug} type="button" onClick={() => {
@@ -1686,6 +1689,8 @@ export default function AdminPage() {
         )}
 
         {/* ============ BULK THUMBNAILS TAB ============ */}
+        {activeTab === "goals" && <GoalsTab />}
+
         {activeTab === "studio" && <ThumbnailStudio />}
 
         {activeTab === "thumbnails" && <BulkThumbnails />}

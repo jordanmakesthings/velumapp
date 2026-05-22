@@ -27,3 +27,21 @@ export const GOAL_BY_SLUG: Record<string, Goal> = Object.fromEntries(GOALS.map((
 export function goalLabel(slug: string): string {
   return GOAL_BY_SLUG[slug]?.label ?? slug;
 }
+
+// Live goals from the DB (admin-managed), falling back to the static set above
+// so the app still renders if the table is empty or the fetch fails.
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export function useGoals(): Goal[] {
+  const { data } = useQuery({
+    queryKey: ["goals"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("goals" as any).select("*").order("order_index");
+      if (error || !data?.length) return null;
+      return data as unknown as Goal[];
+    },
+    staleTime: 60_000,
+  });
+  return data ?? GOALS;
+}

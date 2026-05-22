@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ChevronLeft, Play, Sparkles, Clock, Wand2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { GOALS, GOAL_BY_SLUG } from "@/lib/goals";
+import { useGoals } from "@/lib/goals";
 
 type TimeBucket = "any" | "short" | "mid" | "long";
 const TIME_OPTIONS: { key: TimeBucket; label: string; hint: string }[] = [
@@ -36,6 +36,9 @@ export default function FinderPage() {
   const [time, setTime] = useState<TimeBucket>("any");
   const [format, setFormat] = useState<string>("any");
 
+  const goalList = useGoals();
+  const goalBySlug = Object.fromEntries(goalList.map((g) => [g.slug, g]));
+
   const { data: tracks = [] } = useQuery({
     queryKey: ["tracks"],
     queryFn: async () => {
@@ -52,7 +55,7 @@ export default function FinderPage() {
     return true;
   });
 
-  const goalObj = GOAL_BY_SLUG[goal];
+  const goalObj = goalBySlug[goal];
   const back = () => setStep((s) => Math.max(0, s - 1));
 
   const StepShell = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -80,7 +83,7 @@ export default function FinderPage() {
       <div className="min-h-screen bg-background">
         <StepShell title="What do you need right now?">
           <div className="grid grid-cols-2 gap-3">
-            {GOALS.map((g) => (
+            {goalList.map((g) => (
               <button
                 key={g.slug}
                 onClick={() => { setGoal(g.slug); setStep(1); }}
