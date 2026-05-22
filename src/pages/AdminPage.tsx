@@ -1023,6 +1023,9 @@ export default function AdminPage() {
       tags: trackTags,
     });
     setShowTrackForm(true);
+    // The edit form renders at the top of the tab — scroll up to it so editing
+    // a track far down the list doesn't feel like the click did nothing.
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const allTags = useMemo(() => {
@@ -1581,7 +1584,7 @@ export default function AdminPage() {
                       className="px-2.5 py-1.5 rounded-lg text-xs font-sans text-accent hover:text-foreground border border-accent/20 hover:border-accent/40 transition-colors">
                       Manage
                     </button>
-                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", thumbnail_url: "", category: "", cover_image_url: course.cover_image_url || "", course_type: course.course_type || "audio", is_premium: course.is_premium ?? true, is_published: course.is_published ?? false }); setShowCourseForm(true); }}
+                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", thumbnail_url: "", category: "", cover_image_url: course.cover_image_url || "", course_type: course.course_type || "audio", is_premium: course.is_premium ?? true, is_published: course.is_published ?? false }); setShowCourseForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => { if (confirm("Delete?")) deleteCourseMutation.mutate(course.id); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
@@ -1702,6 +1705,7 @@ export default function AdminPage() {
                         downloadable_files: Array.isArray((mc as any).downloadable_files) ? (mc as any).downloadable_files : [],
                       });
                       setShowMasteryForm(true);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
                     }} className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => { if (confirm("Delete?")) deleteMasteryMutation.mutate(mc.id); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
