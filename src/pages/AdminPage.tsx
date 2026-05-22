@@ -13,6 +13,7 @@ import TrackTagInput from "@/components/admin/TrackTagInput";
 import CourseBuilder from "@/components/admin/CourseBuilder";
 import BulkThumbnails from "@/components/admin/BulkThumbnails";
 import ThumbnailStudio from "@/components/admin/ThumbnailStudio";
+import { GOALS } from "@/lib/goals";
 
 const STEP_TYPES = ["intro", "breathe", "write", "reflect", "close"] as const;
 
@@ -514,7 +515,7 @@ const emptyTrackForm = {
   title: "", description: "", category: "meditation",
   duration_minutes: 10, is_featured: false,
   audio_url: "", thumbnail_url: "", thumbnail_square_url: "", course_id: "", subcategory_id: "", order_index: 0,
-  content_type: "audio", steps: "", tags: [] as string[],
+  content_type: "audio", steps: "", tags: [] as string[], goals: [] as string[],
 };
 
 function UsersTab() {
@@ -857,7 +858,7 @@ export default function AdminPage() {
         audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
         thumbnail_square_url: (data as any).thumbnail_square_url || null,
         course_id: data.course_id || null, subcategory_id: data.subcategory_id || null, order_index: data.order_index,
-        content_type: data.content_type || "audio", steps: parsedSteps, tags: data.tags,
+        content_type: data.content_type || "audio", steps: parsedSteps, tags: data.tags, goals: data.goals || [],
       };
       if (editingTrack) {
         const { error } = await supabase.from("tracks").update(saveData as any).eq("id", editingTrack.id);
@@ -1020,7 +1021,7 @@ export default function AdminPage() {
       thumbnail_square_url: (track as any).thumbnail_square_url || "",
       course_id: track.course_id || "", subcategory_id: track.subcategory_id || "", order_index: track.order_index,
       content_type: track.content_type || "audio", steps: track.steps ? JSON.stringify(track.steps, null, 2) : "",
-      tags: trackTags,
+      tags: trackTags, goals: Array.isArray(track.goals) ? track.goals : [],
     });
     setShowTrackForm(true);
     // The edit form renders at the top of the tab — scroll up to it so editing
@@ -1153,7 +1154,7 @@ export default function AdminPage() {
                       rows={2} className={inputClass + " resize-none"} placeholder="Brief description" />
                   </div>
                   <div>
-                    <label className={labelClass}>Primary Category</label>
+                    <label className={labelClass}>Format</label>
                     <select value={trackForm.category} onChange={e => setTrackForm(f => ({ ...f, category: e.target.value }))} className={inputClass}>
                       {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
@@ -1164,68 +1165,28 @@ export default function AdminPage() {
                       onChange={e => setTrackForm(f => ({ ...f, duration_minutes: Number(e.target.value) || 0 }))} className={inputClass} />
                   </div>
                   <div className="md:col-span-2">
-                    <label className={labelClass}>Additional Categories</label>
+                    <label className={labelClass}>Goals <span className="normal-case opacity-50 ml-1">— what this session helps with</span></label>
                     <div className="flex flex-wrap gap-1.5">
-                      {Object.entries(CATEGORIES).filter(([k]) => k !== trackForm.category).map(([k, v]) => {
-                        const tagKey = `cat:${k}`;
-                        const active = trackForm.tags.includes(tagKey);
+                      {GOALS.map((g) => {
+                        const active = trackForm.goals.includes(g.slug);
                         return (
-                          <button key={k} type="button" onClick={() => {
-                            const filtered = trackForm.tags.filter(t => t !== tagKey);
-                            if (!active) filtered.push(tagKey);
-                            setTrackForm(f => ({ ...f, tags: filtered }));
+                          <button key={g.slug} type="button" onClick={() => {
+                            setTrackForm(f => ({ ...f, goals: active ? f.goals.filter(x => x !== g.slug) : [...f.goals, g.slug] }));
                           }}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-sans transition-colors ${active ? "bg-accent/20 text-accent" : "bg-card text-muted-foreground hover:text-foreground"}`}>
-                            {v}
+                          className={`px-3 py-1.5 rounded-full text-xs font-sans transition-colors ${active ? "gold-gradient text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground border border-foreground/10"}`}>
+                            {g.label}
                           </button>
                         );
                       })}
                     </div>
-                    <p className="text-[10px] text-muted-foreground/50 mt-1">Session will appear in these categories in addition to the primary one</p>
+                    <p className="text-[10px] text-muted-foreground/50 mt-1">Drives Browse-by-Goal and the session finder. Tick every goal that fits.</p>
                   </div>
                   <div>
-                    <label className={labelClass}>Primary Subcategory</label>
-                    <select value={trackForm.subcategory_id} onChange={e => setTrackForm(f => ({ ...f, subcategory_id: e.target.value }))} className={inputClass}>
-                      <option value="">— None —</option>
-                      {subcategories.map((s: any) => <option key={s.id} value={s.id}>{CATEGORIES[s.category] || s.category}: {s.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className={labelClass}>Additional Subcategories</label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {subcategories.filter((s: any) => s.id !== trackForm.subcategory_id).map((s: any) => {
-                        const tagKey = `subcat:${s.id}`;
-                        const active = trackForm.tags.includes(tagKey);
-                        return (
-                          <button key={s.id} type="button" onClick={() => {
-                            const filtered = trackForm.tags.filter(t => t !== tagKey);
-                            if (!active) filtered.push(tagKey);
-                            setTrackForm(f => ({ ...f, tags: filtered }));
-                          }}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-sans transition-colors ${active ? "bg-accent/20 text-accent" : "bg-card text-muted-foreground hover:text-foreground"}`}>
-                            {CATEGORIES[s.category] || s.category}: {s.name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground/50 mt-1">Session will also appear in these subcategory pages</p>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Course</label>
+                    <label className={labelClass}>Collection</label>
                     <select value={trackForm.course_id} onChange={e => setTrackForm(f => ({ ...f, course_id: e.target.value }))} className={inputClass}>
                       <option value="">— Standalone —</option>
                       {courses.map((c: any) => <option key={c.id} value={c.id}>{c.title}</option>)}
                     </select>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Order Index</label>
-                    <input type="number" value={trackForm.order_index}
-                      onChange={e => setTrackForm(f => ({ ...f, order_index: Number(e.target.value) || 0 }))} className={inputClass} />
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <label className="flex items-center gap-2 text-foreground text-sm font-sans cursor-pointer">
-                      <input type="checkbox" checked={trackForm.is_featured} onChange={e => setTrackForm(f => ({ ...f, is_featured: e.target.checked }))} className="accent-accent" /> Featured
-                    </label>
                   </div>
                   <div>
                     <label className={labelClass}>Content Type</label>
@@ -1234,6 +1195,17 @@ export default function AdminPage() {
                       <option value="video">Video</option>
                       <option value="journaling">Journaling</option>
                     </select>
+                  </div>
+                  <label className="md:col-span-2 flex items-center gap-2 text-foreground text-sm font-sans cursor-pointer">
+                    <input type="checkbox" checked={trackForm.is_featured} onChange={e => setTrackForm(f => ({ ...f, is_featured: e.target.checked }))} className="accent-accent" /> Featured
+                  </label>
+                  <details className="md:col-span-2 border-t border-foreground/5 pt-3">
+                    <summary className="cursor-pointer text-muted-foreground text-[10px] font-sans font-medium tracking-wider uppercase select-none hover:text-foreground">Advanced</summary>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className={labelClass}>Order Index</label>
+                    <input type="number" value={trackForm.order_index}
+                      onChange={e => setTrackForm(f => ({ ...f, order_index: Number(e.target.value) || 0 }))} className={inputClass} />
                   </div>
                   <div className="md:col-span-2">
                     <label className={labelClass}>Tags</label>
@@ -1247,67 +1219,8 @@ export default function AdminPage() {
                       ])}
                     />
                   </div>
-
-                  {/* Session Finder Tags */}
-                  <div className="md:col-span-2 border-t border-foreground/5 pt-4">
-                    <p className="text-accent text-[10px] font-sans font-medium tracking-wider uppercase mb-3">Session Finder Tags</p>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Session Type</label>
-                    <select
-                      value={trackForm.tags.find(t => t.startsWith("type:"))?.replace("type:", "") || ""}
-                      onChange={e => {
-                        const filtered = trackForm.tags.filter(t => !t.startsWith("type:"));
-                        if (e.target.value) filtered.push(`type:${e.target.value}`);
-                        setTrackForm(f => ({ ...f, tags: filtered }));
-                      }}
-                      className={inputClass}
-                    >
-                      <option value="">— None —</option>
-                      {(finderTypes as FinderOption[]).map(opt => (
-                        <option key={opt.key} value={opt.key}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Goal</label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(finderGoals as FinderOption[]).map(opt => {
-                        const tagKey = `goal:${opt.key}`;
-                        const active = trackForm.tags.includes(tagKey);
-                        return (
-                          <button key={opt.key} type="button" onClick={() => {
-                            const filtered = trackForm.tags.filter(t => t !== tagKey);
-                            if (!active) filtered.push(tagKey);
-                            setTrackForm(f => ({ ...f, tags: filtered }));
-                          }}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-sans capitalize transition-colors ${active ? "bg-accent/20 text-accent" : "bg-card text-muted-foreground hover:text-foreground"}`}>
-                            {opt.label}
-                          </button>
-                        );
-                      })}
                     </div>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className={labelClass}>Current State Match</label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(finderStates as FinderOption[]).map(opt => {
-                        const tagKey = `state:${opt.key}`;
-                        const active = trackForm.tags.includes(tagKey);
-                        return (
-                          <button key={opt.key} type="button" onClick={() => {
-                            const filtered = trackForm.tags.filter(t => t !== tagKey);
-                            if (!active) filtered.push(tagKey);
-                            setTrackForm(f => ({ ...f, tags: filtered }));
-                          }}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-sans capitalize transition-colors ${active ? "bg-accent/20 text-accent" : "bg-card text-muted-foreground hover:text-foreground"}`}>
-                            {opt.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
+                  </details>
 
                   {/* Thumbnail Generator */}
                   <div className="md:col-span-2 border-b border-foreground/5 pb-4">
