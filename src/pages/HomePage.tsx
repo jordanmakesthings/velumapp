@@ -699,6 +699,20 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Find your session — guided finder */}
+      <div className="mb-10 min-w-0 w-full">
+        <Link to="/finder" className="velum-card flex items-center gap-4 px-5 py-4 group hover:border-accent/30 transition-colors w-full">
+          <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-foreground text-[15px] font-semibold tracking-tight">Find your session</p>
+            <p className="text-ui text-[11px] mt-0.5 tracking-wide">Tell us how you feel — we'll match the practice</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
+        </Link>
+      </div>
+
       {/* Library quick links */}
       <div className="mb-10 min-w-0 w-full">
         <p className="text-eyebrow mb-4">The Library</p>

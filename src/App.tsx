@@ -8,6 +8,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import HomePage from "./pages/HomePage";
 import LibraryPage from "./pages/LibraryPage";
+import FinderPage from "./pages/FinderPage";
 import BreathePage from "./pages/BreathePage";
 import CoursesPage from "./pages/CoursesPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="/home" element={<HomePage />} />
               <Route path="/library" element={<LibraryPage />} />
+              <Route path="/finder" element={<FinderPage />} />
               <Route path="/breathe" element={<BreathePage />} />
               <Route path="/tools" element={<ToolsPage />} />
               <Route path="/courses" element={<CoursesPage />} />
