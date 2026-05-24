@@ -1513,10 +1513,6 @@ export default function AdminPage() {
                     <textarea value={masteryForm.description} onChange={e => setMasteryForm(f => ({ ...f, description: e.target.value }))} rows={2} className={inputClass + " resize-none"} />
                   </div>
                   <div>
-                    <label className={labelClass}>Theme</label>
-                    <input value={masteryForm.theme} onChange={e => setMasteryForm(f => ({ ...f, theme: e.target.value }))} className={inputClass} placeholder="e.g. Emotional Mastery" />
-                  </div>
-                  <div>
                     <label className={labelClass}>Duration (min)</label>
                     <input type="number" value={masteryForm.duration_minutes} onChange={e => setMasteryForm(f => ({ ...f, duration_minutes: Number(e.target.value) }))} className={inputClass} />
                   </div>
@@ -1524,6 +1520,16 @@ export default function AdminPage() {
 
                   <UploadRow label="Audio File" field="audio_url" folder="audio" value={masteryForm.audio_url}
                     setForm={setMasteryFormWrapped} uploadKey="masteryAudio" accept="audio/*" preview="audio" />
+
+                  <div className="md:col-span-2 border-b border-foreground/5 pb-4">
+                    <ThumbnailGenerator
+                      title={masteryForm.title}
+                      category="mastery"
+                      autoUpload
+                      onGenerated={(landscapeUrl, squareUrl) => setMasteryForm(f => ({ ...f, cover_image_url_16_9: landscapeUrl, player_image_url_1_1: squareUrl || f.player_image_url_1_1, thumbnail_url: landscapeUrl, cover_image_url: f.cover_image_url || landscapeUrl }))}
+                    />
+                  </div>
+
                   <UploadRow label="Thumbnail" field="thumbnail_url" folder="images" value={masteryForm.thumbnail_url}
                     setForm={setMasteryFormWrapped} uploadKey="masteryThumb" />
                   <UploadRow label="Cover Image (Legacy)" field="cover_image_url" folder="images" value={masteryForm.cover_image_url}
