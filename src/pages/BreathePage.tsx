@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaywallModal } from "@/components/PaywallModal";
-import { Headphones, X } from "lucide-react";
+import { Headphones, Mic, X } from "lucide-react";
 
 interface Phase {
   label: string;
@@ -77,7 +77,7 @@ const techniques: Technique[] = [
 
 type Stage = "setup" | "checkin_before" | "session" | "checkin_after" | "done";
 
-const AMBIENT_MUSIC_URL = "https://icwcszaasekfhzpxrxzd.supabase.co/storage/v1/object/public/track-media/audio/ES_Interstice%20of%20Sound%20-%20DEX%201200.mp3";
+const AMBIENT_MUSIC_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/track-media/audio/Binaural%20Loop%201.wav";
 
 const MIN_SCALE = 0.45;
 const MAX_SCALE = 1.4;
@@ -93,6 +93,29 @@ function isExhalePhase(label: string) {
 function isHoldPhase(label: string) {
   const l = label.toLowerCase();
   return l.includes("hold") && !l.includes("inhale") && !l.includes("exhale");
+}
+
+// Voice cues: Jordan's recorded clips, stored at track-media/audio/Cues/.
+// He uploaded 3 (Inhale/Exhale/Hold); the physiological-sigh variants reuse
+// the inhale/exhale clips so the whole session stays in his voice.
+const CUE_AUDIO_BASE = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/track-media/audio/Cues";
+const CUE_FILES: Record<string, string> = {
+  "inhale": "1.%20Inhale.mp3",
+  "exhale": "2.%20Exhale.mp3",
+  "hold": "3.%20Hold.mp3",
+  "inhale-again": "1.%20Inhale.mp3",
+  "long-exhale": "2.%20Exhale.mp3",
+};
+
+// Map a phase label to its cue file key + the word the TTS fallback should speak.
+function cueForLabel(label: string): { key: string; spoken: string } | null {
+  const l = label.toLowerCase();
+  if (l.includes("inhale") && l.includes("again")) return { key: "inhale-again", spoken: "Inhale again" };
+  if (l.includes("exhale") && l.includes("long")) return { key: "long-exhale", spoken: "Long exhale" };
+  if (isHoldPhase(label)) return { key: "hold", spoken: "Hold" };
+  if (isInhalePhase(label)) return { key: "inhale", spoken: "Inhale" };
+  if (isExhalePhase(label)) return { key: "exhale", spoken: "Exhale" };
+  return null;
 }
 
 function StressRating({ label, onSelect }: { label: string; onSelect: (n: number) => void }) {
@@ -134,8 +157,11 @@ export default function BreathePage() {
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [phaseLabel, setPhaseLabel] = useState("");
   const [phaseCountdown, setPhaseCountdown] = useState(0);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const voiceEnabledRef = useRef(false);
+  const cueCacheRef = useRef<Record<string, HTMLAudioElement>>({});
 
   // Animation state managed entirely via refs + rAF
   const animFrameRef = useRef<number>(0);
@@ -204,8 +230,51 @@ export default function BreathePage() {
   useEffect(() => {
     if (step === "done" || step === "checkin_after") {
       if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; setMusicPlaying(false); }
+      try { window.speechSynthesis?.cancel(); } catch { /* no-op */ }
     }
   }, [step]);
+
+  // Keep a ref of voiceEnabled so the rAF loop reads the latest value without
+  // re-creating the animation callback on every toggle. Warm the cue cache on.
+  useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
+    if (!voiceEnabled) { try { window.speechSynthesis?.cancel(); } catch { /* no-op */ } return; }
+    Object.keys(CUE_FILES).forEach(key => {
+      if (!cueCacheRef.current[key]) {
+        const a = new Audio(`${CUE_AUDIO_BASE}/${CUE_FILES[key]}`);
+        a.preload = "auto";
+        a.volume = 1;
+        cueCacheRef.current[key] = a;
+      }
+    });
+  }, [voiceEnabled]);
+
+  // Speak a phase cue. Prefers Jordan's recorded clip; falls back to the device
+  // voice so guidance works even before the clips are uploaded.
+  const playCue = useCallback((label: string) => {
+    const cue = cueForLabel(label);
+    if (!cue) return;
+    const file = CUE_FILES[cue.key];
+    if (!file) return;
+    let audio = cueCacheRef.current[cue.key];
+    if (!audio) {
+      audio = new Audio(`${CUE_AUDIO_BASE}/${file}`);
+      audio.volume = 1;
+      cueCacheRef.current[cue.key] = audio;
+    }
+    try { audio.currentTime = 0; } catch { /* no-op */ }
+    const p = audio.play();
+    if (p) {
+      p.catch(() => {
+        try {
+          window.speechSynthesis?.cancel();
+          const u = new SpeechSynthesisUtterance(cue.spoken);
+          u.rate = 0.9;
+          window.speechSynthesis?.speak(u);
+        } catch { /* no-op */ }
+      });
+    }
+  }, []);
 
   const totalSeconds = selectedDuration * 60;
   const phases = selectedTech.phases;
@@ -237,7 +306,9 @@ export default function BreathePage() {
     setPhaseLabel(phase.label);
     setPhaseCountdown(phase.duration);
     setPhaseIndex(idx % phases.length);
-  }, [phases, getTargetScale]);
+
+    if (voiceEnabledRef.current) playCue(phase.label);
+  }, [phases, getTargetScale, playCue]);
 
   // The main animation loop using rAF
   const animate = useCallback((timestamp: number) => {
@@ -431,6 +502,20 @@ export default function BreathePage() {
                 </button>
               </div>
 
+              <div className={`velum-card-flat p-4 flex items-center justify-between mb-5 border transition-colors duration-200 ${voiceEnabled ? "border-accent/30" : "border-foreground/10"}`}>
+                <div className="flex items-center gap-3">
+                  <Mic className="w-5 h-5 text-accent" />
+                  <div>
+                    <div className="text-[13px] font-semibold text-foreground">Voice Guidance</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">Spoken cues — practice eyes closed</div>
+                  </div>
+                </div>
+                <button onClick={() => setVoiceEnabled(v => !v)}
+                  className={`w-12 h-[26px] rounded-full relative transition-colors duration-250 flex-shrink-0 ${voiceEnabled ? "bg-accent" : "bg-muted-foreground/30"}`}>
+                  <div className={`w-5 h-5 rounded-full bg-white absolute top-[3px] transition-all duration-250 shadow ${voiceEnabled ? "left-[25px]" : "left-[3px]"}`} />
+                </button>
+              </div>
+
               <button onClick={handleStart}
                 className="w-full gold-gradient text-primary-foreground rounded-[14px] py-[19px] text-base font-extrabold font-sans tracking-[0.02em] active:scale-[0.98] transition-transform">
                 Begin · {selectedDuration} min
@@ -452,6 +537,12 @@ export default function BreathePage() {
                 className={`absolute top-6 right-6 p-3 rounded-full transition-all ${musicPlaying ? "text-accent bg-accent/10" : "text-muted-foreground/40 bg-card"}`}
                 title={musicPlaying ? "Mute music" : "Play music"}>
                 <Headphones className="w-5 h-5" />
+              </button>
+
+              <button onClick={() => setVoiceEnabled(v => !v)}
+                className={`absolute top-6 left-6 p-3 rounded-full transition-all ${voiceEnabled ? "text-accent bg-accent/10" : "text-muted-foreground/40 bg-card"}`}
+                title={voiceEnabled ? "Voice cues on" : "Voice cues off"}>
+                <Mic className="w-5 h-5" />
               </button>
 
               <div className="relative w-[280px] h-[280px] lg:w-[340px] lg:h-[340px] mx-auto mb-8 flex items-center justify-center">
