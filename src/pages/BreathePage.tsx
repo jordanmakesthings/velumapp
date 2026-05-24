@@ -77,7 +77,7 @@ const techniques: Technique[] = [
 
 type Stage = "setup" | "checkin_before" | "session" | "checkin_after" | "done";
 
-const AMBIENT_MUSIC_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/track-media/audio/Binaural%20Loop%201.wav";
+const AMBIENT_MUSIC_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/track-media/audio/BreathBacking.mp3";
 
 const MIN_SCALE = 0.45;
 const MAX_SCALE = 1.4;
