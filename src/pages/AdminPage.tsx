@@ -85,7 +85,7 @@ function StepsBuilder({ value, onChange }: { value: string; onChange: (val: stri
 interface MasteryPrompt {
   prompt_id: string;
   text: string;
-  timestamp_seconds: number;
+  timestamp_seconds: number | null;
   post_completion: boolean;
 }
 
@@ -103,7 +103,8 @@ function MasteryPromptBuilder({ value, onChange }: { value: string; onChange: (v
 
   const addPrompt = () => {
     const id = `p${Date.now()}`;
-    update([...prompts, { prompt_id: id, text: "", timestamp_seconds: 0, post_completion: false }]);
+    // Frictionless default: no timestamp, shown when the class finishes.
+    update([...prompts, { prompt_id: id, text: "", timestamp_seconds: null, post_completion: true }]);
   };
 
   const removePrompt = (idx: number) => {
@@ -118,44 +119,18 @@ function MasteryPromptBuilder({ value, onChange }: { value: string; onChange: (v
 
   return (
     <div className="space-y-3">
+      <p className="text-[10px] text-muted-foreground/60">Journal prompts shown when the class finishes. Just write them — no timestamps needed. They appear in order.</p>
       {prompts.map((p, i) => (
-        <div key={p.prompt_id} className="p-4 rounded-xl bg-background border border-foreground/10 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-accent text-[10px] font-sans font-medium tracking-wider uppercase">Prompt {i + 1}</span>
-            <button onClick={() => removePrompt(i)} className="text-muted-foreground hover:text-destructive text-xs font-sans transition-colors">Remove</button>
-          </div>
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">Prompt text</label>
-            <textarea
-              value={p.text}
-              onChange={e => updatePrompt(i, "text", e.target.value)}
-              rows={2}
-              className={inputCls + " resize-none"}
-              placeholder="e.g. What are you noticing right now?"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">Pause at (seconds)</label>
-              <input
-                type="number"
-                min={0}
-                value={p.timestamp_seconds}
-                onChange={e => updatePrompt(i, "timestamp_seconds", parseInt(e.target.value) || 0)}
-                className={inputCls}
-              />
-              <span className="text-[10px] text-muted-foreground/50 mt-0.5 block">e.g. 180 = 3:00</span>
-            </div>
-            <div className="flex items-center gap-2 pt-5">
-              <input
-                type="checkbox"
-                checked={p.post_completion}
-                onChange={e => updatePrompt(i, "post_completion", e.target.checked)}
-                className="w-4 h-4 rounded accent-accent"
-              />
-              <label className="text-xs text-foreground/80 font-sans">Show after completion</label>
-            </div>
-          </div>
+        <div key={p.prompt_id} className="p-3 rounded-xl bg-background border border-foreground/10 flex items-start gap-3">
+          <span className="text-accent text-[11px] font-sans font-medium tabular-nums pt-2.5 shrink-0">{i + 1}.</span>
+          <textarea
+            value={p.text}
+            onChange={e => updatePrompt(i, "text", e.target.value)}
+            rows={2}
+            className={inputCls + " resize-none"}
+            placeholder="e.g. What does the life you're designing actually look like?"
+          />
+          <button onClick={() => removePrompt(i)} className="text-muted-foreground hover:text-destructive text-xs font-sans transition-colors pt-2.5 shrink-0">Remove</button>
         </div>
       ))}
       <button onClick={addPrompt} className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-foreground/15 text-muted-foreground hover:text-foreground hover:border-accent/30 text-sm font-sans w-full justify-center transition-colors">
