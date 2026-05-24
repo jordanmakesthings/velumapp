@@ -162,6 +162,7 @@ export default function BreathePage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const voiceEnabledRef = useRef(false);
   const cueCacheRef = useRef<Record<string, HTMLAudioElement>>({});
+  const wakeLockRef = useRef<any>(null);
 
   // Animation state managed entirely via refs + rAF
   const animFrameRef = useRef<number>(0);
@@ -385,6 +386,30 @@ export default function BreathePage() {
       cancelAnimationFrame(animFrameRef.current);
     }
   }, [step, animate, startPhase, setOrbDom]);
+
+  // Keep the screen awake during a session so auto-lock doesn't freeze the
+  // animation timer that drives the voice cues + phase changes.
+  useEffect(() => {
+    if (step !== "session") return;
+    const request = async () => {
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLockRef.current = await (navigator as any).wakeLock.request("screen");
+        }
+      } catch { /* wake lock unsupported or blocked — no-op */ }
+    };
+    request();
+    // Wake lock is auto-released when the tab is hidden; re-acquire on return.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") request();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      try { wakeLockRef.current?.release?.(); } catch { /* no-op */ }
+      wakeLockRef.current = null;
+    };
+  }, [step]);
 
   const handleStart = () => {
     if (!hasAccess) {
