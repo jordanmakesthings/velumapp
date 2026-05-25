@@ -22,6 +22,26 @@ interface Technique {
 
 const techniques: Technique[] = [
   {
+    id: "breath_ladder", name: "Breath Ladder", desc: "The signature Velum sweep — descend to one breath and climb back", color: "#be9e5e",
+    phases: [
+      { label: "Inhale", duration: 8 }, { label: "Exhale", duration: 8 },
+      { label: "Inhale", duration: 7 }, { label: "Exhale", duration: 7 },
+      { label: "Inhale", duration: 6 }, { label: "Exhale", duration: 6 },
+      { label: "Inhale", duration: 5 }, { label: "Exhale", duration: 5 },
+      { label: "Inhale", duration: 4 }, { label: "Exhale", duration: 4 },
+      { label: "Inhale", duration: 3 }, { label: "Exhale", duration: 3 },
+      { label: "Inhale", duration: 2 }, { label: "Exhale", duration: 2 },
+      { label: "Inhale", duration: 1 }, { label: "Exhale", duration: 1 },
+      { label: "Inhale", duration: 2 }, { label: "Exhale", duration: 2 },
+      { label: "Inhale", duration: 3 }, { label: "Exhale", duration: 3 },
+      { label: "Inhale", duration: 4 }, { label: "Exhale", duration: 4 },
+      { label: "Inhale", duration: 5 }, { label: "Exhale", duration: 5 },
+      { label: "Inhale", duration: 6 }, { label: "Exhale", duration: 6 },
+      { label: "Inhale", duration: 7 }, { label: "Exhale", duration: 7 },
+      { label: "Inhale", duration: 8 }, { label: "Exhale", duration: 8 },
+    ],
+  },
+  {
     id: "box", name: "Box Breathing", desc: "Rapid calm & focus", color: "#4a7a6e",
     phases: [
       { label: "Inhale", duration: 4 }, { label: "Hold", duration: 4 },
@@ -488,11 +508,17 @@ export default function BreathePage() {
                         <div className="text-[13px] font-semibold text-foreground mb-0.5 uppercase">{t.name}</div>
                         <div className="text-[11px] text-muted-foreground">{t.desc}</div>
                         <div className="flex gap-1 mt-2 flex-wrap">
-                          {t.phases.map((p, i) => (
-                            <div key={i} className={`text-[9px] rounded px-1 py-0.5 ${sel ? "text-accent bg-accent/15" : "text-muted-foreground bg-muted-foreground/15"}`}>
-                              {p.duration}s
+                          {t.phases.length > 8 ? (
+                            <div className={`text-[9px] rounded px-1 py-0.5 ${sel ? "text-accent bg-accent/15" : "text-muted-foreground bg-muted-foreground/15"}`}>
+                              {t.phases[0].duration} → {Math.min(...t.phases.map(p => p.duration))} → {t.phases[t.phases.length - 1].duration}s sweep
                             </div>
-                          ))}
+                          ) : (
+                            t.phases.map((p, i) => (
+                              <div key={i} className={`text-[9px] rounded px-1 py-0.5 ${sel ? "text-accent bg-accent/15" : "text-muted-foreground bg-muted-foreground/15"}`}>
+                                {p.duration}s
+                              </div>
+                            ))
+                          )}
                         </div>
                       </button>
                     );
