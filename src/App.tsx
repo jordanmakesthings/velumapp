@@ -41,6 +41,7 @@ import QuizPage from "./pages/QuizPage";
 import ProtocolQuizPage from "./pages/ProtocolQuizPage";
 import RedesigningWorkshopPage from "./pages/RedesigningWorkshopPage";
 import RedesigningWorkshopThanksPage from "./pages/RedesigningWorkshopThanksPage";
+import RedesigningCohortWelcomePage from "./pages/RedesigningCohortWelcomePage";
 import NotFound from "./pages/NotFound";
 import { captureAttribution } from "@/lib/attribution";
 
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/protocol-quiz" element={<ProtocolQuizPage />} />
             <Route path="/redesigning-workshop" element={<RedesigningWorkshopPage />} />
             <Route path="/redesigning-workshop/thanks" element={<RedesigningWorkshopThanksPage />} />
+            <Route path="/redesigning-cohort/welcome" element={<RedesigningCohortWelcomePage />} />
             <Route path="/login" element={<AuthPage />} />
             <Route path="/signin" element={<Navigate to="/login" replace />} />
             <Route path="/auth" element={<AuthPage />} />
