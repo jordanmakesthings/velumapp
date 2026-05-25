@@ -20,12 +20,13 @@ export default function RedesigningCohortPage() {
         </p>
 
         <p className="mb-6">
-          Starting June 18th, I'm working with a small group to redesign their reality from the inside
-          out — to stop being a passenger in their own life and become the architect of it. A life that
-          feels deeply connected, meaningful, and most of all… authentic to you.
+          Starting June 18th, I'm working with a small group to{" "}
+          <strong>redesign their reality from the inside out</strong> — to stop being a passenger in
+          their own life and become the architect of it. A life that feels deeply connected,
+          meaningful, and most of all… authentic to you.
         </p>
 
-        <p className="mb-3">The premise of Redesigning Reality is built on two principles:</p>
+        <p className="mb-3 font-semibold">The premise of Redesigning Reality is built on two principles:</p>
         <ol className="list-decimal pl-5 mb-10 space-y-2">
           <li>Your dream life is built, not stumbled upon.</li>
           <li>
@@ -42,7 +43,7 @@ export default function RedesigningCohortPage() {
           <strong>identity is what you default to under pressure.</strong>
         </p>
 
-        <h2 style={serif} className="text-[30px] mb-5">Here's how we'll do it</h2>
+        <h2 style={serif} className="text-[30px] font-semibold mb-5">Here's how we'll do it</h2>
         <div className="space-y-5 mb-12">
           <p><strong className="text-[#b08d57]">Regulate.</strong> You can't architect from survival. You'll learn a range of techniques to get out of fight-or-flight and switch on your brain's "genius centers" — so calm becomes your baseline, not a place you visit.</p>
           <p><strong className="text-[#b08d57]">Rewire.</strong> What perceptions, beliefs, and self-concepts are anchoring you to the past? We bring them to the surface and start re-writing the script.</p>
