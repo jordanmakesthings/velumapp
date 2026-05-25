@@ -38,6 +38,8 @@ import AudiosPage from "./pages/AudiosPage";
 import FreeTrackPage from "./pages/FreeTrackPage";
 import WelcomeBackPage from "./pages/WelcomeBackPage";
 import QuizPage from "./pages/QuizPage";
+import ProtocolQuizPage from "./pages/ProtocolQuizPage";
+import RedesigningWorkshopPage from "./pages/RedesigningWorkshopPage";
 import NotFound from "./pages/NotFound";
 import { captureAttribution } from "@/lib/attribution";
 
@@ -60,6 +62,8 @@ const App = () => (
             <Route path="/free-track" element={<FreeTrackPage />} />
             <Route path="/welcome-back" element={<WelcomeBackPage />} />
             <Route path="/quiz" element={<QuizPage />} />
+            <Route path="/protocol-quiz" element={<ProtocolQuizPage />} />
+            <Route path="/redesigning-workshop" element={<RedesigningWorkshopPage />} />
             <Route path="/login" element={<AuthPage />} />
             <Route path="/signin" element={<Navigate to="/login" replace />} />
             <Route path="/auth" element={<AuthPage />} />
