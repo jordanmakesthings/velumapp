@@ -1,4 +1,4 @@
-import { Check, Calendar, Mail } from "lucide-react";
+import { Check } from "lucide-react";
 
 export default function RedesigningWorkshopThanksPage() {
   return (
@@ -16,31 +16,15 @@ export default function RedesigningWorkshopThanksPage() {
           <span className="italic text-accent">Redesigning Reality Workshop.</span>
         </h1>
 
-        <p className="text-[17px] text-muted-foreground mb-8">
+        <p className="text-[17px] text-muted-foreground mb-6">
           Thursday, June 11 · 6PM PST · 90 minutes, live on Zoom. Replay included.
         </p>
 
-        <div className="velum-card p-6 text-left space-y-4 mb-8">
-          <div className="flex gap-3 items-start">
-            <Mail className="w-5 h-5 text-accent mt-0.5 shrink-0" />
-            <p className="text-[15px] leading-relaxed">
-              Check your inbox — your confirmation is on its way, and I'll send the Zoom link plus a
-              reminder before we go live. (Peek in spam/promotions just in case.)
-            </p>
-          </div>
-          <div className="flex gap-3 items-start">
-            <Calendar className="w-5 h-5 text-accent mt-0.5 shrink-0" />
-            <p className="text-[15px] leading-relaxed">
-              Block it now: <strong>Thursday, June 11 · 6:00 PM PST.</strong> Come ready to be honest
-              with yourself — that's where the work happens.
-            </p>
-          </div>
-        </div>
-
-        <p className="text-[15px] text-muted-foreground/80 italic mb-2">
-          You just did the hardest part — you decided to stop being the passenger.
+        <p className="text-[16px] text-foreground/80 mb-10">
+          You'll receive all the details as we get closer to the date.
         </p>
-        <p className="text-sm text-muted-foreground/70">See you June 11. — Jordan</p>
+
+        <p className="text-sm text-muted-foreground/70">— Jordan</p>
 
       </div>
     </div>
