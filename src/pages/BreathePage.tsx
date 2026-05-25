@@ -49,12 +49,6 @@ const techniques: Technique[] = [
     ],
   },
   {
-    id: "belly", name: "Belly Breathing", desc: "Diaphragmatic breathing — the foundational reset", color: "#4e8a82",
-    phases: [
-      { label: "Inhale", duration: 4 }, { label: "Exhale", duration: 6 },
-    ],
-  },
-  {
     id: "478", name: "4-7-8", desc: "Parasympathetic activation and relaxation", color: "#6f8a7e",
     phases: [
       { label: "Inhale", duration: 4 }, { label: "Hold", duration: 7 },
@@ -87,16 +81,9 @@ const techniques: Technique[] = [
     ],
   },
   {
-    id: "sleep_onset", name: "Sleep Onset", desc: "Slow your mind and body for sleep", color: "#3a4a6e",
+    id: "triangle", name: "Triangle Breathing", desc: "Three equal sides — inhale, hold, exhale", color: "#5e7a8a",
     phases: [
-      { label: "Inhale", duration: 4 }, { label: "Hold", duration: 2 },
-      { label: "Exhale", duration: 8 }, { label: "Hold", duration: 2 },
-    ],
-  },
-  {
-    id: "nsdr", name: "NSDR / Deep Rest", desc: "Non-sleep deep rest — restore alertness without caffeine", color: "#2a3a5e",
-    phases: [
-      { label: "Inhale", duration: 2 }, { label: "Exhale", duration: 10 },
+      { label: "Inhale", duration: 4 }, { label: "Hold", duration: 4 }, { label: "Exhale", duration: 4 },
     ],
   },
 ];
