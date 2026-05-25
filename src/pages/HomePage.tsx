@@ -677,7 +677,7 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { to: "/breathe", icon: Wind, name: "Breathwork", sub: "6 techniques · live pacing", primary: true },
+            { to: "/breathe", icon: Wind, name: "Breathwork", sub: "Breath Ladder + 8 more · voice-guided", primary: true },
             { to: "/bilateral", icon: Zap, name: "Bilateral", sub: "Visual + stereo audio" },
             { to: "/tapping", icon: Heart, name: "Tapping", sub: "EFT · Guided sequences" },
             { to: "/somatic-touch", icon: Fingerprint, name: "Somatic", sub: "Grounding sequences" },

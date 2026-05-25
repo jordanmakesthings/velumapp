@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaywallModal } from "@/components/PaywallModal";
-import { Headphones, Mic, X } from "lucide-react";
+import { Headphones, Mic, X, ChevronLeft } from "lucide-react";
 
 interface Phase {
   label: string;
@@ -181,7 +181,8 @@ export default function BreathePage() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const voiceEnabledRef = useRef(false);
-  const cueCacheRef = useRef<Record<string, HTMLAudioElement>>({});
+  const cueCtxRef = useRef<AudioContext | null>(null);
+  const cueBuffersRef = useRef<Record<string, AudioBuffer>>({});
   const wakeLockRef = useRef<any>(null);
 
   // Animation state managed entirely via refs + rAF
@@ -234,6 +235,8 @@ export default function BreathePage() {
     }
     return () => {
       if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+      try { cueCtxRef.current?.close(); } catch { /* no-op */ }
+      cueCtxRef.current = null;
     };
   }, []);
 
@@ -256,45 +259,54 @@ export default function BreathePage() {
   }, [step]);
 
   // Keep a ref of voiceEnabled so the rAF loop reads the latest value without
-  // re-creating the animation callback on every toggle. Warm the cue cache on.
+  // re-creating the animation callback on every toggle. When on, spin up a Web
+  // Audio context and decode the cue clips into buffers — Web Audio fires short,
+  // rapid, overlapping cues reliably where HTMLAudio drops them (the fast rungs
+  // of the Breath Ladder, and iOS in general).
   useEffect(() => {
     voiceEnabledRef.current = voiceEnabled;
     if (!voiceEnabled) { try { window.speechSynthesis?.cancel(); } catch { /* no-op */ } return; }
-    Object.keys(CUE_FILES).forEach(key => {
-      if (!cueCacheRef.current[key]) {
-        const a = new Audio(`${CUE_AUDIO_BASE}/${CUE_FILES[key]}`);
-        a.preload = "auto";
-        a.volume = 1;
-        cueCacheRef.current[key] = a;
-      }
+    try {
+      const Ctx: typeof AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (Ctx && !cueCtxRef.current) cueCtxRef.current = new Ctx();
+    } catch { /* no-op */ }
+    const ctx = cueCtxRef.current;
+    if (!ctx) return;
+    ctx.resume?.().catch(() => {});
+    Object.keys(CUE_FILES).forEach(async (key) => {
+      if (cueBuffersRef.current[key]) return;
+      try {
+        const res = await fetch(`${CUE_AUDIO_BASE}/${CUE_FILES[key]}`);
+        const arr = await res.arrayBuffer();
+        cueBuffersRef.current[key] = await ctx.decodeAudioData(arr);
+      } catch { /* leave unloaded → TTS fallback */ }
     });
   }, [voiceEnabled]);
 
-  // Speak a phase cue. Prefers Jordan's recorded clip; falls back to the device
-  // voice so guidance works even before the clips are uploaded.
+  // Speak a phase cue via Web Audio — a fresh buffer source each time, so rapid
+  // back-to-back cues never get dropped (fixes the silence on the fast rungs).
+  // Falls back to device TTS if the clip isn't decoded yet.
   const playCue = useCallback((label: string) => {
     const cue = cueForLabel(label);
     if (!cue) return;
-    const file = CUE_FILES[cue.key];
-    if (!file) return;
-    let audio = cueCacheRef.current[cue.key];
-    if (!audio) {
-      audio = new Audio(`${CUE_AUDIO_BASE}/${file}`);
-      audio.volume = 1;
-      cueCacheRef.current[cue.key] = audio;
+    const ctx = cueCtxRef.current;
+    const buf = ctx ? cueBuffersRef.current[cue.key] : null;
+    if (ctx && buf) {
+      try {
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
+        return;
+      } catch { /* fall through to TTS */ }
     }
-    try { audio.currentTime = 0; } catch { /* no-op */ }
-    const p = audio.play();
-    if (p) {
-      p.catch(() => {
-        try {
-          window.speechSynthesis?.cancel();
-          const u = new SpeechSynthesisUtterance(cue.spoken);
-          u.rate = 0.9;
-          window.speechSynthesis?.speak(u);
-        } catch { /* no-op */ }
-      });
-    }
+    try {
+      window.speechSynthesis?.cancel();
+      const u = new SpeechSynthesisUtterance(cue.spoken);
+      u.rate = 0.9;
+      window.speechSynthesis?.speak(u);
+    } catch { /* no-op */ }
   }, []);
 
   const totalSeconds = selectedDuration * 60;
@@ -575,7 +587,13 @@ export default function BreathePage() {
           )}
 
           {step === "checkin_before" && (
-            <motion.div key="checkin_before" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <motion.div key="checkin_before" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="flex-1 flex flex-col justify-center">
+              <button onClick={() => setStep("setup")}
+                className="absolute top-6 left-6 p-3 rounded-full text-muted-foreground/60 hover:text-foreground bg-card transition-colors"
+                title="Back">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
               <StressRating label="Rate your levels of stress or negative emotions." onSelect={handleBeforeRated} />
             </motion.div>
           )}
@@ -628,7 +646,8 @@ export default function BreathePage() {
           )}
 
           {step === "checkin_after" && (
-            <motion.div key="checkin_after" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <motion.div key="checkin_after" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="flex-1 flex flex-col justify-center">
               <StressRating label="How stressed do you feel now?" onSelect={handleAfterRated} />
             </motion.div>
           )}
