@@ -3,12 +3,12 @@ import { Check, Sparkles } from "lucide-react";
 const STRIPE_URL = "https://buy.stripe.com/3cI9AU5W3duS4k2fIe7ss08";
 
 const LEARN = [
-  "Why you keep running the same scripts on repeat — even when every part of you wants change",
-  "Why more effort isn't the answer (real change comes from thinking differently, not grinding harder)",
-  "Why your self-concept is the one thing standing between you and the life you want",
-  "Why your dreams are far closer than you think",
-  "The Monday Stress Test — the exercise that unlocks exactly what you want, and what your architected life actually looks like",
-  "How to turn your gifts into something you're paid for — if you aren't already",
+  "Why change never sticks when you white-knuckle behavior — and the level beneath it where it finally holds",
+  "Why you keep defaulting to the same old self, even when every part of you wants to change",
+  "Why who you're being matters more than any strategy or amount of effort",
+  "The pond: how your identity quietly runs your thoughts, feelings, behaviors, and results on a loop — and how to change it at the source",
+  "Why your dreams are far closer than you think once you shift who you are",
+  "The Monday Stress Test — the exercise that unlocks what you actually want, and the version of you who already has it",
 ];
 
 const GET = [
@@ -31,19 +31,33 @@ export default function RedesigningWorkshopPage() {
           <span className="italic text-accent">Become the architect.</span>
         </h1>
 
-        <div className="velum-card p-6 md:p-7 mb-8">
+        <div className="velum-card p-6 md:p-7 mb-6">
           <p className="text-[17px] leading-relaxed mb-4">
-            The #1 reason people don't get what they want isn't that they're not smart enough,
-            capable enough, or "worthy" enough.
+            You've changed the habits. Tried the strategy. White-knuckled the willpower. And you
+            keep snapping back to the same old you.
           </p>
           <p className="text-[17px] leading-relaxed">
-            It's that they don't know <span className="italic">what they actually want.</span>{" "}
-            <span className="text-accent font-medium">You can't hit a target you can't see.</span>
+            Here's why: change doesn't hold at the level of behavior. It holds at the level of{" "}
+            <span className="italic">who you are</span> — your identity, the way you see yourself
+            and the world.{" "}
+            <span className="text-accent font-medium">Redesign that, and your reality reorganizes around the new you.</span>
+          </p>
+        </div>
+
+        <div className="velum-card-flat p-5 md:p-6 mb-8">
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
+            Your identity is a pond of beliefs. It trickles out your{" "}
+            <span className="text-foreground">thoughts</span> → which become your{" "}
+            <span className="text-foreground">feelings</span> → which become your{" "}
+            <span className="text-foreground">behaviors</span> → which become your{" "}
+            <span className="text-foreground">results</span> — and those flow right back up to
+            reinforce the identity. Most people spend their lives fighting the behavior.{" "}
+            <span className="text-accent">We change the water at the source.</span>
           </p>
         </div>
 
         <p className="text-center text-[17px] mb-2">
-          On <strong>Thursday, June 11 · 6PM PST</strong>, we're going to fix that.
+          On <strong>Thursday, June 11 · 6PM PST</strong>, we redesign it — at the root.
         </p>
         <p className="text-center text-sm text-muted-foreground mb-12">
           A real 90-minute live workshop — not a pre-recorded "webinar" with a sales pitch eating half of it.
