@@ -22,6 +22,13 @@ interface Technique {
 
 const techniques: Technique[] = [
   {
+    id: "box", name: "Box Breathing", desc: "Rapid calm & focus", color: "#4a7a6e",
+    phases: [
+      { label: "Inhale", duration: 4 }, { label: "Hold", duration: 4 },
+      { label: "Exhale", duration: 4 }, { label: "Hold", duration: 4 },
+    ],
+  },
+  {
     id: "breath_ladder", name: "Breath Ladder", desc: "The signature Velum sweep — descend to one breath and climb back", color: "#be9e5e",
     phases: [
       { label: "Inhale", duration: 8 }, { label: "Exhale", duration: 8 },
@@ -39,13 +46,6 @@ const techniques: Technique[] = [
       { label: "Inhale", duration: 6 }, { label: "Exhale", duration: 6 },
       { label: "Inhale", duration: 7 }, { label: "Exhale", duration: 7 },
       { label: "Inhale", duration: 8 }, { label: "Exhale", duration: 8 },
-    ],
-  },
-  {
-    id: "box", name: "Box Breathing", desc: "Rapid calm & focus", color: "#4a7a6e",
-    phases: [
-      { label: "Inhale", duration: 4 }, { label: "Hold", duration: 4 },
-      { label: "Exhale", duration: 4 }, { label: "Hold", duration: 4 },
     ],
   },
   {
