@@ -49,6 +49,12 @@ const techniques: Technique[] = [
     ],
   },
   {
+    id: "belly", name: "Belly Breathing", desc: "Diaphragmatic breathing — the foundational reset", color: "#4e8a82",
+    phases: [
+      { label: "Inhale", duration: 4 }, { label: "Exhale", duration: 6 },
+    ],
+  },
+  {
     id: "478", name: "4-7-8", desc: "Parasympathetic activation and relaxation", color: "#6f8a7e",
     phases: [
       { label: "Inhale", duration: 4 }, { label: "Hold", duration: 7 },
