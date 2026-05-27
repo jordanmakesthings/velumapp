@@ -154,8 +154,8 @@ export default function AuthPage() {
 
       <div className="relative w-full max-w-md">
 
-        {/* Brand lockup */}
-        <div className="flex justify-center mb-10">
+        {/* Brand lockup — tight to the card */}
+        <div className="flex justify-center mb-5">
           <VelumMark variant="lockup" size="md" />
         </div>
 
@@ -170,25 +170,20 @@ export default function AuthPage() {
         {/* Green card — the container for everything */}
         <div className="velum-card-accent p-8 md:p-10">
 
-          {/* Eyebrow */}
-          {mode === "signup" && !referrerCode && (
-            <p className="text-eyebrow text-center mb-5">
-              Free forever · No card needed
-            </p>
-          )}
-
           {/* Headline — Cormorant editorial */}
-          <h2 className="text-display text-4xl md:text-[2.6rem] leading-[1.05] text-center mb-3">
+          <h2 className="text-display text-4xl md:text-[2.6rem] leading-[1.05] text-center mb-7">
             {mode === "signup" && <>Welcome to the ultimate<br />tool for your<br /><RotatingWord /></>}
             {mode === "login" && <>Welcome<br /><span className="italic text-accent">back.</span></>}
             {mode === "forgot" && <>Reset your<br /><span className="italic text-accent">password.</span></>}
           </h2>
 
-          <p className="text-muted-foreground text-sm font-sans text-center mb-7 max-w-[340px] mx-auto leading-relaxed">
-            {mode === "signup" && "Real-time tools to move your body out of survival mode — in under 60 seconds."}
-            {mode === "login" && "Return to where you left off."}
-            {mode === "forgot" && "We'll send you a reset link."}
-          </p>
+          {/* Subheader — only for login/forgot. Signup headline stands on its own. */}
+          {mode !== "signup" && (
+            <p className="text-muted-foreground text-sm font-sans text-center mb-7 max-w-[340px] mx-auto leading-relaxed">
+              {mode === "login" && "Return to where you left off."}
+              {mode === "forgot" && "We'll send you a reset link."}
+            </p>
+          )}
 
           {sent ? (
             <div className="text-center py-4">
