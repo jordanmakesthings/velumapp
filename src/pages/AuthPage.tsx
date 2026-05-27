@@ -179,7 +179,7 @@ export default function AuthPage() {
 
           {/* Headline — Cormorant editorial */}
           <h2 className="text-display text-4xl md:text-[2.6rem] leading-[1.05] text-center mb-3">
-            {mode === "signup" && <>Welcome to the ultimate<br />tool for your <RotatingWord /></>}
+            {mode === "signup" && <>Welcome to the ultimate<br />tool for your<br /><RotatingWord /></>}
             {mode === "login" && <>Welcome<br /><span className="italic text-accent">back.</span></>}
             {mode === "forgot" && <>Reset your<br /><span className="italic text-accent">password.</span></>}
           </h2>
