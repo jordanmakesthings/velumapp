@@ -45,42 +45,38 @@ const slide = {
   exit:    { opacity: 0, x: -24, transition: { duration: 0.2 } },
 };
 
-// 3 data-collection steps drive the progress bar: 0 → 33%, 2 → 100%
-const DATA_STEPS = 3;
+// 2 data-collection steps drive the progress bar (goals + experience).
+// Name + phone are pulled from the profile (set at signup) — no re-collection.
+const DATA_STEPS = 2;
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  const { user, refreshProfile, hasAccess } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  // Step 0
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-
-  // Step 1 — multi-select
+  // Step 0 — multi-select goals
   const [goals, setGoals] = useState<string[]>([]);
 
-  // Step 2
+  // Step 1 — experience
   const [experience, setExperience] = useState("");
 
-  // Step 3 — building animation
+  // Step 2 — building animation
   const [buildLine, setBuildLine] = useState(0);
 
-  // Progress bar fill — only shown on data steps (0-2)
+  // First name pulled from profile (already captured at signup as full_name).
+  const firstName = (profile?.full_name || "").trim().split(" ")[0] || "";
+
+  // Progress bar fill — only shown on data steps (0-1)
   const progressPercent = Math.min(100, ((step + 1) / DATA_STEPS) * 100);
   const showProgress = step < DATA_STEPS;
 
-  // Step 0 validity
-  const detailsValid = firstName.trim().length >= 1 && lastName.trim().length >= 1 && phone.trim().length >= 7;
-
-  // Step 3 — cycle through building lines, then auto-advance
+  // Step 2 — cycle through building lines, then auto-advance to welcome
   useEffect(() => {
-    if (step !== 3) return;
+    if (step !== 2) return;
     setBuildLine(0);
     const tick = setInterval(() => setBuildLine(l => Math.min(l + 1, BUILDING_LINES.length - 1)), 1000);
-    const finish = setTimeout(() => setStep(4), 5000);
+    const finish = setTimeout(() => setStep(3), 5000);
     return () => { clearInterval(tick); clearTimeout(finish); };
   }, [step]);
 
@@ -91,20 +87,12 @@ export default function OnboardingPage() {
     setSaving(true);
     await supabase.from("profiles").update({
       onboarding_completed: true,
-      full_name: `${firstName.trim()} ${lastName.trim()}`.trim(),
-      phone: phone.trim(),
-      onboarding_answers: {
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        goals,
-        experience,
-      },
+      onboarding_answers: { goals, experience },
     }).eq("id", user.id);
     await refreshProfile();
-    // No-card trial users have hasAccess=true — drop them straight into the app
-    // so they hit the wedge (custom track generator) before they ever see pricing.
-    // Card-trial / no-trial users still go to /premium to convert.
-    navigate(hasAccess ? "/home" : "/premium");
+    // Freemium model: everyone lands on /home. Conversion happens organically via
+    // soft paywall sheets when they tap a premium feature — not by force at signup.
+    navigate("/home");
   };
 
   const next = () => setStep(s => s + 1);
@@ -131,59 +119,11 @@ export default function OnboardingPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-[440px] mx-auto w-full py-8">
         <AnimatePresence mode="wait">
 
-          {/* STEP 0 — Your details */}
+          {/* STEP 0 — Goals (multi-select). First impression — opens with the logo. */}
           {step === 0 && (
-            <motion.div key="details" {...slide} className="w-full">
-              <div className="text-center mb-8">
-                <img src={logoCircle} alt="Velum" className="w-24 h-24 object-contain mx-auto mb-4" />
-                <h1 className="text-display text-[2.4rem] leading-[1.05] mb-3">Let's get<br />you <span className="text-accent italic">set up.</span></h1>
-                <p className="text-muted-foreground text-sm font-light">
-                  Your details stay yours. We use phone for important account messages only.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3">
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    placeholder="First name"
-                    value={firstName}
-                    onChange={e => setFirstName(e.target.value)}
-                    className="velum-card w-1/2 px-4 py-4 text-foreground text-sm font-sans placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent/50"
-                    autoComplete="given-name"
-                    autoFocus
-                  />
-                  <input
-                    type="text"
-                    placeholder="Last name"
-                    value={lastName}
-                    onChange={e => setLastName(e.target.value)}
-                    className="velum-card w-1/2 px-4 py-4 text-foreground text-sm font-sans placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent/50"
-                    autoComplete="family-name"
-                  />
-                </div>
-                <input
-                  type="tel"
-                  placeholder="Phone (+1 555 123 4567)"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  className="velum-card w-full px-4 py-4 text-foreground text-sm font-sans placeholder:text-muted-foreground/50 focus:outline-none focus:border-accent/50"
-                  autoComplete="tel"
-                />
-                <button
-                  onClick={next}
-                  disabled={!detailsValid}
-                  className="w-full py-5 rounded-full gold-gradient text-primary-foreground font-bold text-base tracking-wide active:scale-[0.98] transition-transform disabled:opacity-40 mt-2"
-                >
-                  Continue →
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* STEP 1 — Goals (multi-select) */}
-          {step === 1 && (
             <motion.div key="goals" {...slide} className="w-full">
               <div className="text-center mb-8">
+                <img src={logoCircle} alt="Velum" className="w-20 h-20 object-contain mx-auto mb-5" />
                 <h1 className="text-display text-[2.4rem] leading-[1.05] mb-3">What brought<br />you <span className="text-accent italic">here?</span></h1>
                 <p className="text-muted-foreground text-sm font-light">
                   Pick all that apply.
@@ -220,8 +160,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* STEP 2 — Experience */}
-          {step === 2 && (
+          {/* STEP 1 — Experience */}
+          {step === 1 && (
             <motion.div key="exp" {...slide} className="w-full">
               <div className="text-center mb-8">
                 <h1 className="text-display text-[2.1rem] leading-[1.1] mb-3">Rate your <span className="text-accent italic">experience</span><br />with meditation &amp; nervous system work.</h1>
@@ -248,8 +188,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* STEP 3 — Building your program (5s) */}
-          {step === 3 && (
+          {/* STEP 2 — Building your program (5s) */}
+          {step === 2 && (
             <motion.div key="building" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full text-center">
               <div className="relative w-24 h-24 mx-auto mb-8">
                 <div className="absolute inset-0 rounded-full border-2 border-accent/15" />
@@ -276,19 +216,19 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* STEP 4 — Almost there */}
-          {step === 4 && (
-            <motion.div key="almost" {...slide} className="w-full text-center">
+          {/* STEP 3 — You're in. Welcome them into the app, no paywall push. */}
+          {step === 3 && (
+            <motion.div key="welcome" {...slide} className="w-full text-center">
               <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(201,168,76,0.25)]">
                 <span className="text-primary-foreground text-2xl">✦</span>
               </div>
-              <p className="text-eyebrow mb-3">Almost there</p>
+              <p className="text-eyebrow mb-3">You're in</p>
               <h1 className="text-editorial text-[2.6rem] italic mb-6 font-light leading-[1.05]">
-                Imagine 7 days<br />from now{firstName ? `, ${firstName}` : ""}.
+                Welcome{firstName ? `, ${firstName}` : ""}.
               </h1>
 
               <div className="velum-card-accent p-5 mb-6 text-left">
-                <p className="text-eyebrow mb-4 text-center">Where you…</p>
+                <p className="text-eyebrow mb-4 text-center">Imagine 7 days from now…</p>
                 <div className="flex flex-col gap-3">
                   {OUTCOME_BULLETS.map((bullet, i) => (
                     <div key={i} className="flex items-start gap-3">
@@ -304,12 +244,8 @@ export default function OnboardingPage() {
                 disabled={saving}
                 className="w-full py-5 rounded-full gold-gradient text-primary-foreground font-bold text-base tracking-wide active:scale-[0.98] transition-transform disabled:opacity-50"
               >
-                {saving ? "Setting up…" : "Choose your plan →"}
+                {saving ? "Setting up…" : "Enter Velum →"}
               </button>
-
-              <p className="mt-4 text-muted-foreground/70 text-[11px]">
-                Monthly · Annual · Lifetime
-              </p>
             </motion.div>
           )}
 
