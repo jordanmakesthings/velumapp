@@ -79,18 +79,29 @@ export default function OnboardingPage() {
   // First name pulled from profile (already captured at signup).
   const firstName = (profile?.full_name || "").trim().split(" ")[0] || "";
 
-  // Building lines reference their actual answers so the wait feels earned.
-  const buildingLines = useMemo(() => {
-    const firstVision = VISION.find(v => v.key === vision[0])?.label || "I trust myself";
-    const firstGoal = GOALS.find(g => g.key === goals[0])?.label || "your goals";
-    return [
-      `Anchoring "${firstVision}"…`,
-      `Aligning with "${firstGoal}"…`,
-      "Calibrating your daily practice…",
-      "Mapping your first protocol…",
-      "Ready.",
-    ];
-  }, [vision, goals]);
+  // Generic but on-brand building lines. The long verbose vision/goal labels
+  // made personalized lines unreadable, so we keep these short and rhythmic.
+  const buildingLines = useMemo(() => [
+    "Anchoring your vision…",
+    "Aligning your practice…",
+    "Calibrating your nervous system…",
+    "Mapping your first protocol…",
+    "Ready.",
+  ], []);
+
+  // Device detection for the install step — show iOS Safari steps,
+  // Android Chrome steps, or skip the step entirely on desktop / already installed.
+  const installPlatform = useMemo<"ios" | "android" | "skip">(() => {
+    if (typeof window === "undefined") return "skip";
+    const ua = navigator.userAgent.toLowerCase();
+    const standalone =
+      window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    if (standalone) return "skip";
+    if (/iphone|ipad|ipod/.test(ua)) return "ios";
+    if (/android/.test(ua)) return "android";
+    return "skip";
+  }, []);
 
   const progressPercent = Math.min(100, ((step + 1) / DATA_STEPS) * 100);
   const showProgress = step < DATA_STEPS;
@@ -301,28 +312,80 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* STEP 6 — Welcome. Ties to today's "I made breathwork free" email. */}
+          {/* STEP 6 — Welcome. Personal moment — name + a single CTA. */}
           {step === 6 && (
             <motion.div key="welcome" {...slide} className="w-full text-center">
               <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(201,168,76,0.25)]">
                 <span className="text-primary-foreground text-2xl">✦</span>
               </div>
               <p className="text-eyebrow mb-3">You're in</p>
-              <h1 className="text-editorial text-[2.6rem] italic mb-6 font-light leading-[1.05]">
+              <h1 className="text-editorial text-[2.6rem] italic mb-12 font-light leading-[1.05]">
                 Welcome{firstName ? `, ${firstName}` : ""}.
               </h1>
 
-              <div className="velum-card-accent p-5 mb-6 text-left">
-                <p className="text-eyebrow mb-4 text-center">Your first move</p>
-                <p className="text-foreground text-sm font-sans leading-relaxed">
-                  Velum's breathwork tool is open to you, free, forever. The fastest way to feel the shift
-                  is to sit with it for five minutes today. Even one session changes the day around it.
-                </p>
+              <button
+                onClick={() => installPlatform === "skip" ? complete() : setStep(7)}
+                disabled={saving}
+                className="w-full py-5 rounded-full gold-gradient text-primary-foreground font-bold text-base tracking-wide active:scale-[0.98] transition-transform disabled:opacity-50"
+              >
+                {saving ? "Setting up…" : "Continue →"}
+              </button>
+            </motion.div>
+          )}
+
+          {/* STEP 7 — Add to home screen (iOS / Android only) */}
+          {step === 7 && (
+            <motion.div key="install" {...slide} className="w-full text-center">
+              <p className="text-eyebrow mb-3">One last thing</p>
+              <h1 className="text-display text-[2.2rem] leading-[1.05] mb-6">
+                Add Velum to your <span className="italic text-accent">home screen.</span>
+              </h1>
+              <p className="text-muted-foreground text-sm font-sans leading-relaxed mb-7 max-w-[360px] mx-auto">
+                Practice with one tap, get push reminders, and use Velum without the browser bar in the way.
+              </p>
+
+              <div className="velum-card-accent p-5 mb-8 text-left">
+                {installPlatform === "ios" && (
+                  <ol className="flex flex-col gap-3.5 text-foreground text-sm font-sans">
+                    <li className="flex items-start gap-3">
+                      <span className="text-accent text-xs font-bold mt-0.5">1.</span>
+                      <span>Tap the <span className="text-accent font-medium">Share</span> button at the bottom of Safari (square with the up arrow).</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-accent text-xs font-bold mt-0.5">2.</span>
+                      <span>Scroll down and tap <span className="text-accent font-medium">"Add to Home Screen."</span></span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-accent text-xs font-bold mt-0.5">3.</span>
+                      <span>Tap <span className="text-accent font-medium">"Add"</span> in the top-right corner.</span>
+                    </li>
+                  </ol>
+                )}
+                {installPlatform === "android" && (
+                  <ol className="flex flex-col gap-3.5 text-foreground text-sm font-sans">
+                    <li className="flex items-start gap-3">
+                      <span className="text-accent text-xs font-bold mt-0.5">1.</span>
+                      <span>Tap the <span className="text-accent font-medium">menu</span> (three dots) at the top right of Chrome.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-accent text-xs font-bold mt-0.5">2.</span>
+                      <span>Tap <span className="text-accent font-medium">"Add to Home screen"</span> or <span className="text-accent font-medium">"Install app."</span></span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-accent text-xs font-bold mt-0.5">3.</span>
+                      <span>Tap <span className="text-accent font-medium">"Install"</span> to confirm.</span>
+                    </li>
+                  </ol>
+                )}
               </div>
 
               <button onClick={complete} disabled={saving}
                 className="w-full py-5 rounded-full gold-gradient text-primary-foreground font-bold text-base tracking-wide active:scale-[0.98] transition-transform disabled:opacity-50">
                 {saving ? "Setting up…" : "Enter Velum →"}
+              </button>
+              <button onClick={complete} disabled={saving}
+                className="text-muted-foreground/60 text-xs font-sans tracking-wide mt-4 hover:text-accent transition-colors">
+                I'll do this later
               </button>
             </motion.div>
           )}

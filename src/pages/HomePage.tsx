@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useEffect, useMemo } from "react";
-import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Hand, Fingerprint, Play, Pause, Check, ChevronLeft, ChevronRight, Timer as TimerIcon, X as XIcon } from "lucide-react";
+import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Hand, Play, Pause, Check, ChevronLeft, ChevronRight, Timer as TimerIcon, X as XIcon } from "lucide-react";
 import { ShareCard } from "@/components/ShareCard";
 import { useState, useRef } from "react";
 import { getTodayCheckin } from "@/lib/velumStorage";
@@ -708,7 +708,7 @@ export default function HomePage() {
           <div className="relative">
             <div className="flex items-center gap-2 mb-3">
               <Lock className="w-3.5 h-3.5 text-accent" />
-              <p className="text-eyebrow text-accent">Premium · from $8/mo</p>
+              <p className="text-eyebrow text-accent">Premium</p>
             </div>
             <p className="text-foreground text-[1.7rem] md:text-[2rem] font-serif font-light leading-[1.15] mb-3 max-w-[440px]">
               Your first <span className="italic">custom rewiring audio</span> awaits.
@@ -774,7 +774,7 @@ export default function HomePage() {
       {/* Tools grid — 2×2 */}
       <div className="mb-10 min-w-0 w-full">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-eyebrow">Real-time tools</p>
+          <p className="text-eyebrow">The Toolkit</p>
           <span className="text-ui text-[10px] tracking-wider uppercase opacity-60">Interactive</span>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -783,14 +783,13 @@ export default function HomePage() {
             { to: "/timer", icon: TimerIcon, name: "Open Meditation", sub: "Set a duration and sit.", primary: true, premium: false },
             { to: "/bilateral", icon: Zap, name: "Bilateral", sub: "Visual + stereo audio", premium: true },
             { to: "/tapping", icon: Heart, name: "Tapping", sub: "EFT · Guided sequences", premium: true },
-            { to: "/somatic-touch", icon: Fingerprint, name: "Somatic", sub: "Grounding sequences", premium: true },
           ].map(({ to, icon: Icon, name, sub, primary, premium }) => {
             const locked = premium && !hasAccess;
             const inner = (
               <>
                 {locked && (
                   <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-accent/15 border border-accent/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-accent tracking-wide">
-                    <Lock className="w-2.5 h-2.5" /> $8/mo
+                    <Lock className="w-2.5 h-2.5" /> Premium
                   </span>
                 )}
                 <div className="w-9 h-9 rounded-lg bg-accent/10 border border-accent/15 flex items-center justify-center group-hover:bg-accent/15 transition-colors">
@@ -982,7 +981,7 @@ export default function HomePage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-foreground text-sm font-sans font-medium">Nervous System Score</p>
-            <p className="text-muted-foreground text-[11px]">Track stress before/after each session · Premium · $8/mo</p>
+            <p className="text-muted-foreground text-[11px]">Track stress before/after each session · Premium</p>
           </div>
           <ArrowRight className="w-4 h-4 text-accent shrink-0" />
         </button>
