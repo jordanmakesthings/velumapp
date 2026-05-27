@@ -3,18 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import logoCircle from "@/assets/logo-circle.png";
 
 // ── Step 0 — what brought them here ────────────────────────────────────────
 const GOALS = [
-  { key: "stress",     label: "Manage stress & anxiety" },
-  { key: "emotions",   label: "Master my emotions" },
-  { key: "sleep",      label: "Sleep deeper & recover faster" },
-  { key: "confidence", label: "Build confidence & self-worth" },
-  { key: "habits",     label: "Break self-sabotaging patterns" },
-  { key: "self",       label: "Deepen connection to myself" },
-  { key: "focus",      label: "More energy & mental clarity" },
-  { key: "trauma",     label: "Process and release what I'm carrying" },
+  { key: "emotions",   label: "Learn to master my emotions" },
+  { key: "future",     label: "Train my brain to create my desired future" },
+  { key: "selfworth",  label: "Experience deeper levels of self-connection, confidence & self-worth" },
+  { key: "sleep",      label: "Deeper sleep and increased energy" },
+  { key: "patterns",   label: "Break self-sabotaging patterns" },
+  { key: "wealth",     label: "Create more financial wealth and prosperity" },
+  { key: "meditation", label: "Build a daily meditation practice" },
+  { key: "practice",   label: "Build a daily practice — meditation, breathwork, journaling — to rewire my brain" },
 ];
 
 // ── Step 1 — experience level ──────────────────────────────────────────────
@@ -29,9 +28,9 @@ const EXPERIENCE = [
 const TRIED = [
   { key: "apps",       label: "Meditation apps (Calm, Headspace, Insight Timer)" },
   { key: "therapy",    label: "Therapy or counseling" },
-  { key: "breathwork", label: "Breathwork (Wim Hof, holotropic, sigh, box)" },
-  { key: "yoga",       label: "Yoga or yoga nidra" },
-  { key: "medicine",   label: "Plant medicine retreats" },
+  { key: "breathwork", label: "Breathwork (Wim Hof, Holotropic)" },
+  { key: "yoga",       label: "Yoga or Yoga Nidra" },
+  { key: "medicine",   label: "Plant medicine" },
   { key: "books",      label: "Books, podcasts, courses" },
   { key: "coaches",    label: "Coaches or mentors" },
   { key: "nothing",    label: "Nothing yet — this is my first real try" },
@@ -80,10 +79,10 @@ export default function OnboardingPage() {
   // Building lines reference their actual answers so the wait feels earned.
   const buildingLines = useMemo(() => {
     const firstVision = VISION.find(v => v.key === vision[0])?.label || "I trust myself";
-    const firstGoal = GOALS.find(g => g.key === goals[0])?.label.toLowerCase() || "your goals";
+    const firstGoal = GOALS.find(g => g.key === goals[0])?.label || "your goals";
     return [
       `Anchoring "${firstVision}"…`,
-      `Curating sessions for ${firstGoal}…`,
+      `Aligning with "${firstGoal}"…`,
       "Calibrating your daily practice…",
       "Mapping your first protocol…",
       "Ready.",
@@ -130,23 +129,23 @@ export default function OnboardingPage() {
              style={{ background: "radial-gradient(circle, hsla(42,53%,32%,0.08) 0%, transparent 60%)", filter: "blur(50px)" }} />
       </div>
 
-      {/* Thin gold progress bar */}
+      {/* Thin gold progress bar — pinned near the top of the screen */}
       {showProgress && (
-        <div className="pt-6 pb-2 flex-shrink-0 px-6 max-w-[440px] mx-auto w-full">
+        <div className="pt-10 px-6 max-w-[440px] mx-auto w-full">
           <div className="h-[3px] w-full rounded-full bg-foreground/10 overflow-hidden">
             <div className="h-full gold-gradient transition-all duration-500" style={{ width: `${progressPercent}%` }} />
           </div>
         </div>
       )}
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-[440px] mx-auto w-full py-8">
+      {/* Content sits just below the progress bar, no big centered gap */}
+      <div className="flex-1 flex flex-col items-center justify-start px-6 max-w-[440px] mx-auto w-full pt-8 pb-10">
         <AnimatePresence mode="wait">
 
           {/* STEP 0 — Goals */}
           {step === 0 && (
             <motion.div key="goals" {...slide} className="w-full">
-              <div className="text-center mb-8">
-                <img src={logoCircle} alt="Velum" className="w-20 h-20 object-contain mx-auto mb-5" />
+              <div className="text-center mb-6">
                 <h1 className="text-display text-[2.4rem] leading-[1.05] mb-3">What brought<br />you <span className="text-accent italic">here?</span></h1>
                 <p className="text-muted-foreground text-sm font-light">
                   Pick all that apply.
@@ -229,21 +228,12 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* STEP 3 — Educational beat. Tells them what Velum actually is. */}
+          {/* STEP 3 — Educational beat. A single paragraph that names what Velum actually is. */}
           {step === 3 && (
             <motion.div key="education" {...slide} className="w-full text-center">
-              <p className="text-eyebrow mb-4">Here's what you've stepped into</p>
-              <h1 className="text-display text-[2.2rem] italic leading-[1.05] mb-6">
-                Velum is a <span className="text-accent">transformational platform</span> — not another wellness app.
-              </h1>
-              <div className="velum-card-accent p-6 text-left mb-8">
-                <p className="text-foreground text-[15px] font-sans leading-relaxed">
-                  We work at the deepest levels of your <span className="text-accent">nervous system</span>, your <span className="text-accent">subconscious mind</span>, and the <span className="text-accent">identity</span> underneath everything.
-                </p>
-                <p className="text-foreground/85 text-[15px] font-sans leading-relaxed mt-4">
-                  Not surface-level. Not symptom management. The roots.
-                </p>
-              </div>
+              <p className="text-foreground text-[17px] font-sans leading-[1.7] mb-10 max-w-[400px] mx-auto">
+                Unlike generic meditation apps, Velum is a <span className="italic text-accent">transformational platform</span> designed to create rapid and lasting changes by working at the deepest levels of your <span className="italic text-accent">nervous system</span>, your <span className="italic text-accent">subconscious mind</span>, and your <span className="italic text-accent">identity</span>.
+              </p>
               <button onClick={next}
                 className="w-full py-5 rounded-full gold-gradient text-primary-foreground font-bold text-base tracking-wide active:scale-[0.98] transition-transform">
                 Show me →
