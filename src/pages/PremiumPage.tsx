@@ -120,7 +120,7 @@ export default function PremiumPage() {
   // Already subscribed view
   if (isPremium) {
     return (
-      <div className="min-h-screen bg-radial-subtle flex flex-col relative">
+      <div className="safe-area-pt min-h-screen bg-radial-subtle flex flex-col relative">
 
         <div className="fixed top-0 inset-x-0 z-50 flex items-center px-4 py-4">
           <button onClick={() => navigate("/home")} className="p-2 text-muted-foreground hover:text-foreground transition-colors">

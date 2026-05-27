@@ -438,7 +438,7 @@ export default function TappingGeneratorPage() {
   );
 
   const Generating = ({ msg = "Building your session…" }: { msg?: string }) => (
-    <div className="min-h-screen bg-radial-subtle flex flex-col items-center justify-center gap-6 px-6">
+    <div className="safe-area-pt min-h-screen bg-radial-subtle flex flex-col items-center justify-center gap-6 px-6">
       <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center">
         <Sparkles className="w-6 h-6 text-primary-foreground animate-pulse" />
       </div>

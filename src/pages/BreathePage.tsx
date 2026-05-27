@@ -597,7 +597,7 @@ export default function BreathePage() {
             <motion.div key="checkin_before" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
               className="flex-1 flex flex-col justify-center">
               <button onClick={() => setStep("setup")}
-                className="absolute top-6 left-6 p-3 rounded-full text-muted-foreground/60 hover:text-foreground bg-card transition-colors"
+                className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-6 p-3 rounded-full text-muted-foreground/60 hover:text-foreground bg-card transition-colors"
                 title="Back">
                 <ChevronLeft className="w-5 h-5" />
               </button>
@@ -610,13 +610,13 @@ export default function BreathePage() {
               className="text-center flex flex-col items-center justify-center flex-1">
               
               <button onClick={() => setMusicEnabled(v => !v)}
-                className={`absolute top-6 right-6 p-3 rounded-full transition-all ${musicPlaying ? "text-accent bg-accent/10" : "text-muted-foreground/40 bg-card"}`}
+                className={`absolute top-[calc(env(safe-area-inset-top)+1rem)] right-6 p-3 rounded-full transition-all ${musicPlaying ? "text-accent bg-accent/10" : "text-muted-foreground/40 bg-card"}`}
                 title={musicPlaying ? "Mute music" : "Play music"}>
                 <Headphones className="w-5 h-5" />
               </button>
 
               <button onClick={() => setVoiceEnabled(v => !v)}
-                className={`absolute top-6 left-6 p-3 rounded-full transition-all ${voiceEnabled ? "text-accent bg-accent/10" : "text-muted-foreground/40 bg-card"}`}
+                className={`absolute top-[calc(env(safe-area-inset-top)+1rem)] left-6 p-3 rounded-full transition-all ${voiceEnabled ? "text-accent bg-accent/10" : "text-muted-foreground/40 bg-card"}`}
                 title={voiceEnabled ? "Voice cues on" : "Voice cues off"}>
                 <Mic className="w-5 h-5" />
               </button>

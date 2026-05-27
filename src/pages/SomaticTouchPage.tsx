@@ -259,7 +259,7 @@ export default function SomaticTouchPage() {
   // ---------------------------------------------------------------------------
   if (phase === "intake-sensation") {
     return (
-      <div className="min-h-screen bg-radial-subtle flex flex-col">
+      <div className="safe-area-pt min-h-screen bg-radial-subtle flex flex-col">
         <div className="flex items-center px-4 pt-4 mb-6">
           <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back

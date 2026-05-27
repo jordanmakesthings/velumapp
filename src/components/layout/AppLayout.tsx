@@ -35,7 +35,7 @@ export function AppLayout() {
         </aside>
       )}
 
-      <main className={`min-w-0 w-full max-w-full flex-1 overflow-x-hidden ${!hideNav ? "lg:ml-[220px]" : ""} ${!hideNav ? "pb-[96px] lg:pb-0" : ""}`}>
+      <main className={`safe-area-pt min-w-0 w-full max-w-full flex-1 overflow-x-hidden ${!hideNav ? "lg:ml-[220px]" : ""} ${!hideNav ? "pb-[96px] lg:pb-0" : ""}`}>
         <Outlet />
       </main>
 

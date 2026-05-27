@@ -120,7 +120,7 @@ export default function CheckinPage() {
   // --- Rating ---
   if (phase === "rating") {
     return (
-      <div className="min-h-screen bg-radial-subtle flex flex-col">
+      <div className="safe-area-pt min-h-screen bg-radial-subtle flex flex-col">
         <div className="px-4 pt-4">
           <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm font-sans text-foreground min-h-10">
             <ArrowLeft className="w-4 h-4" /> Back

@@ -76,7 +76,7 @@ export default function PaymentSuccessPage() {
   }, [hasAccess, navigate, user?.id]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-6 py-12">
+    <div className="safe-area-pt min-h-screen relative overflow-hidden flex items-center justify-center px-6 py-12">
       {/* Ambient green glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div
