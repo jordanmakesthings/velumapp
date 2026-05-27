@@ -490,10 +490,17 @@ function FinderSectionEditor({ settingKey, label, desc }: { settingKey: string; 
 
 const emptyTrackForm = {
   title: "", description: "", category: "meditation",
-  duration_minutes: 10, is_featured: false,
+  duration_minutes: 10, is_featured: false, is_free: false,
   audio_url: "", thumbnail_url: "", thumbnail_square_url: "", course_id: "", subcategory_id: "", order_index: 0,
   content_type: "audio", steps: "", tags: [] as string[], goals: [] as string[],
 };
+
+// Small reusable FREE pill for admin list items
+const FreePill = () => (
+  <span className="inline-flex items-center rounded-full bg-accent/15 border border-accent/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-accent tracking-wider uppercase">
+    Free
+  </span>
+);
 
 function UsersTab() {
   const queryClient = useQueryClient();
@@ -632,12 +639,12 @@ export default function AdminPage() {
   const [newPromptCategory, setNewPromptCategory] = useState("");
 
   const [showCourseForm, setShowCourseForm] = useState(false);
-  const [courseForm, setCourseForm] = useState({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "", course_type: "audio", is_premium: true, is_published: false });
+  const [courseForm, setCourseForm] = useState({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "", course_type: "audio", is_premium: true, is_published: false, is_free: false });
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [managingCourseId, setManagingCourseId] = useState<string | null>(null);
 
   const [showMasteryForm, setShowMasteryForm] = useState(false);
-  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [] as { name: string; url: string }[] });
+  const [masteryForm, setMasteryForm] = useState({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [] as { name: string; url: string }[], is_free: false });
   const [editingMastery, setEditingMastery] = useState<any>(null);
 
   const [showSubcatForm, setShowSubcatForm] = useState(false);
@@ -833,6 +840,7 @@ export default function AdminPage() {
       const saveData: Record<string, any> = {
         title: data.title, description: data.description || null, category: data.category,
         duration_minutes: data.duration_minutes, is_featured: data.is_featured,
+        is_free: !!(data as any).is_free,
         audio_url: data.audio_url || null, thumbnail_url: data.thumbnail_url || null,
         thumbnail_square_url: (data as any).thumbnail_square_url || null,
         course_id: data.course_id || null, subcategory_id: data.subcategory_id || null, order_index: data.order_index,
@@ -869,7 +877,7 @@ export default function AdminPage() {
 
   const saveCourseMutation = useMutation({
     mutationFn: async (data: typeof courseForm) => {
-      const saveData = { title: data.title, description: data.description || null, cover_image_url: data.cover_image_url || null, course_type: data.course_type || "audio", is_premium: data.is_premium, is_published: data.is_published };
+      const saveData = { title: data.title, description: data.description || null, cover_image_url: data.cover_image_url || null, course_type: data.course_type || "audio", is_premium: data.is_premium, is_published: data.is_published, is_free: !!(data as any).is_free };
       if (editingCourse) {
         const { error } = await supabase.from("courses_v2").update(saveData).eq("id", editingCourse.id);
         if (error) throw error;
@@ -883,7 +891,7 @@ export default function AdminPage() {
       queryClient.invalidateQueries({ queryKey: ["courses_v2", { publishedOnly: true }] });
       queryClient.invalidateQueries({ queryKey: ["courses_v2", { publishedOnly: false }] });
       setShowCourseForm(false); setEditingCourse(null);
-      setCourseForm({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "", course_type: "audio", is_premium: true, is_published: false });
+      setCourseForm({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "", course_type: "audio", is_premium: true, is_published: false, is_free: false });
       toast.success(editingCourse ? "Course updated" : "Course created");
     },
     onError: (err: any) => toast.error(err.message),
@@ -914,6 +922,7 @@ export default function AdminPage() {
         player_image_url_1_1: (data as any).player_image_url_1_1 || null,
         pause_prompts: parsedPrompts,
         downloadable_files: data.downloadable_files || [],
+        is_free: !!(data as any).is_free,
       };
       if (editingMastery) {
         const { error } = await supabase.from("mastery_classes").update(saveData as any).eq("id", editingMastery.id);
@@ -927,7 +936,7 @@ export default function AdminPage() {
       queryClient.invalidateQueries({ queryKey: ["adminMastery"] });
       queryClient.invalidateQueries({ queryKey: ["mastery_classes"] });
       setShowMasteryForm(false); setEditingMastery(null);
-      setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [] });
+      setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [], is_free: false });
       toast.success(editingMastery ? "Class updated" : "Class created");
     },
     onError: (err: any) => toast.error(err.message),
@@ -995,6 +1004,7 @@ export default function AdminPage() {
     setTrackForm({
       title: track.title, description: track.description || "", category: track.category,
       duration_minutes: track.duration_minutes, is_featured: track.is_featured,
+      is_free: !!track.is_free,
       audio_url: track.audio_url || "", thumbnail_url: track.thumbnail_url || "",
       thumbnail_square_url: (track as any).thumbnail_square_url || "",
       course_id: track.course_id || "", subcategory_id: track.subcategory_id || "", order_index: track.order_index,
@@ -1177,6 +1187,13 @@ export default function AdminPage() {
                   <label className="md:col-span-2 flex items-center gap-2 text-foreground text-sm font-sans cursor-pointer">
                     <input type="checkbox" checked={trackForm.is_featured} onChange={e => setTrackForm(f => ({ ...f, is_featured: e.target.checked }))} className="accent-accent" /> Featured
                   </label>
+                  <label className="md:col-span-2 flex items-start gap-2.5 text-foreground text-sm font-sans cursor-pointer rounded-xl border border-accent/20 bg-accent/[0.04] p-3">
+                    <input type="checkbox" checked={trackForm.is_free} onChange={e => setTrackForm(f => ({ ...f, is_free: e.target.checked }))} className="accent-accent mt-0.5" />
+                    <div>
+                      <p className="text-foreground text-sm font-medium">Free for everyone</p>
+                      <p className="text-muted-foreground text-[11px] mt-0.5">No subscription required to access this.</p>
+                    </div>
+                  </label>
                   <details className="md:col-span-2 border-t border-foreground/5 pt-3">
                     <summary className="cursor-pointer text-muted-foreground text-[10px] font-sans font-medium tracking-wider uppercase select-none hover:text-foreground">Advanced</summary>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -1278,7 +1295,10 @@ export default function AdminPage() {
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{track.title}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-foreground truncate">{track.title}</p>
+                              {track.is_free && <FreePill />}
+                            </div>
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                               {track.duration_minutes} min{!track.audio_url && track.content_type === "audio" ? " · No audio" : ""}{track.is_featured ? " · ★" : ""}{track.content_type === "journaling" ? " · Journaling" : ""}
                             </p>
@@ -1390,7 +1410,7 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-display text-2xl">Courses</h2>
-              <button onClick={() => { setEditingCourse(null); setCourseForm({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "", course_type: "audio", is_premium: true, is_published: false }); setShowCourseForm(true); }}
+              <button onClick={() => { setEditingCourse(null); setCourseForm({ title: "", description: "", thumbnail_url: "", category: "", cover_image_url: "", course_type: "audio", is_premium: true, is_published: false, is_free: false }); setShowCourseForm(true); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
                 <Plus className="w-4 h-4" /> Add Course
               </button>
@@ -1432,6 +1452,13 @@ export default function AdminPage() {
                       <label className="text-xs text-foreground/80 font-sans">Published</label>
                     </div>
                   </div>
+                  <label className="md:col-span-2 flex items-start gap-2.5 text-foreground text-sm font-sans cursor-pointer rounded-xl border border-accent/20 bg-accent/[0.04] p-3">
+                    <input type="checkbox" checked={courseForm.is_free} onChange={e => setCourseForm(f => ({ ...f, is_free: e.target.checked }))} className="accent-accent mt-0.5" />
+                    <div>
+                      <p className="text-foreground text-sm font-medium">Free for everyone</p>
+                      <p className="text-muted-foreground text-[11px] mt-0.5">No subscription required to access this.</p>
+                    </div>
+                  </label>
                   <div className="md:col-span-2 border-b border-foreground/5 pb-4">
                     <ThumbnailGenerator
                       title={courseForm.title}
@@ -1466,7 +1493,10 @@ export default function AdminPage() {
                   <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => setManagingCourseId(managingCourseId === course.id ? null : course.id)}>
                     {course.thumbnail_url && <img src={course.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
                     <div>
-                      <p className="text-foreground text-sm font-sans font-medium">{course.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-foreground text-sm font-sans font-medium">{course.title}</p>
+                        {course.is_free && <FreePill />}
+                      </div>
                       <p className="text-ui text-xs">{course.category ? CATEGORIES[course.category] || course.category : "No category"}</p>
                     </div>
                   </div>
@@ -1475,7 +1505,7 @@ export default function AdminPage() {
                       className="px-2.5 py-1.5 rounded-lg text-xs font-sans text-accent hover:text-foreground border border-accent/20 hover:border-accent/40 transition-colors">
                       Manage
                     </button>
-                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", thumbnail_url: "", category: "", cover_image_url: course.cover_image_url || "", course_type: course.course_type || "audio", is_premium: course.is_premium ?? true, is_published: course.is_published ?? false }); setShowCourseForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                    <button onClick={() => { setEditingCourse(course); setCourseForm({ title: course.title, description: course.description || "", thumbnail_url: "", category: "", cover_image_url: course.cover_image_url || "", course_type: course.course_type || "audio", is_premium: course.is_premium ?? true, is_published: course.is_published ?? false, is_free: !!course.is_free }); setShowCourseForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-foreground"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => { if (confirm("Delete?")) deleteCourseMutation.mutate(course.id); }}
                       className="p-2 rounded-lg text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
@@ -1491,7 +1521,7 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-display text-2xl">Mastery Classes</h2>
-              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [] }); setShowMasteryForm(true); }}
+              <button onClick={() => { setEditingMastery(null); setMasteryForm({ title: "", description: "", duration_minutes: 30, audio_url: "", thumbnail_url: "", theme: "", cover_image_url: "", cover_image_url_16_9: "", player_image_url_1_1: "", pause_prompts: "[]", downloadable_files: [], is_free: false }); setShowMasteryForm(true); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full gold-gradient text-primary-foreground text-sm font-sans font-medium active:scale-95 transition-transform">
                 <Plus className="w-4 h-4" /> Add Class
               </button>
@@ -1517,6 +1547,13 @@ export default function AdminPage() {
                     <input type="number" value={masteryForm.duration_minutes} onChange={e => setMasteryForm(f => ({ ...f, duration_minutes: Number(e.target.value) }))} className={inputClass} />
                   </div>
                   <div>{/* spacer */}</div>
+                  <label className="md:col-span-2 flex items-start gap-2.5 text-foreground text-sm font-sans cursor-pointer rounded-xl border border-accent/20 bg-accent/[0.04] p-3">
+                    <input type="checkbox" checked={masteryForm.is_free} onChange={e => setMasteryForm(f => ({ ...f, is_free: e.target.checked }))} className="accent-accent mt-0.5" />
+                    <div>
+                      <p className="text-foreground text-sm font-medium">Free for everyone</p>
+                      <p className="text-muted-foreground text-[11px] mt-0.5">No subscription required to access this.</p>
+                    </div>
+                  </label>
 
                   <UploadRow label="Audio File" field="audio_url" folder="audio" value={masteryForm.audio_url}
                     setForm={setMasteryFormWrapped} uploadKey="masteryAudio" accept="audio/*" preview="audio" />
@@ -1585,7 +1622,10 @@ export default function AdminPage() {
                   <div className="flex items-center gap-3 flex-1">
                     {mc.thumbnail_url && <img src={mc.thumbnail_url} alt="" className="w-12 h-8 rounded-lg object-cover" />}
                     <div>
-                      <p className="text-foreground text-sm font-sans font-medium">{mc.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-foreground text-sm font-sans font-medium">{mc.title}</p>
+                        {mc.is_free && <FreePill />}
+                      </div>
                       <p className="text-ui text-xs">{mc.duration_minutes} min{mc.theme ? ` · ${mc.theme}` : ""}{!mc.audio_url ? " · No audio" : ""}</p>
                     </div>
                   </div>
@@ -1600,6 +1640,7 @@ export default function AdminPage() {
                         player_image_url_1_1: (mc as any).player_image_url_1_1 || "",
                         pause_prompts: JSON.stringify(mc.pause_prompts || [], null, 2),
                         downloadable_files: Array.isArray((mc as any).downloadable_files) ? (mc as any).downloadable_files : [],
+                        is_free: !!(mc as any).is_free,
                       });
                       setShowMasteryForm(true);
                       window.scrollTo({ top: 0, behavior: "smooth" });

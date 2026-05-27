@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useEffect, useMemo } from "react";
-import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Clock, Hand, Fingerprint, Play, Pause, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Hand, Fingerprint, Play, Pause, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useRef } from "react";
 import { getTodayCheckin } from "@/lib/velumStorage";
 import { TrackCover } from "@/components/TrackCover";
@@ -10,6 +10,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOneSignalInit } from "@/hooks/useOneSignal";
 import { format } from "date-fns";
 import NervousSystemScore from "@/components/profile/NervousSystemScore";
+import { usePaywall } from "@/components/PaywallSheet";
+import { Lock } from "lucide-react";
 
 const QUOTES = [
 { text: "The present moment is the only place where life exists.", author: "Eckhart Tolle" },
@@ -464,7 +466,8 @@ export default function HomePage() {
   const [reflectionText, setReflectionText] = useState("");
   const [savingReflection, setSavingReflection] = useState(false);
   const todayCheckin = getTodayCheckin();
-  const { user, profile, isInTrial, trialDaysLeft, hasAccess } = useAuth();
+  const { user, profile, hasAccess } = useAuth();
+  const { open: openPaywall } = usePaywall();
   const firstName = profile?.full_name?.split(" ")[0];
   // carousel refs removed
 
@@ -603,25 +606,38 @@ export default function HomePage() {
         <p className="text-muted-foreground text-xs font-sans tracking-wide">— {todayQuote.author}</p>
       </div>
 
-      {/* HERO — Custom Track is the anchor of Today (wrapped so any crash falls back gracefully) */}
-      <TileErrorBoundary>
-        <CustomTrackHomeTile />
-      </TileErrorBoundary>
-
-      {/* Trial countdown banner */}
-      {isInTrial && (
-        <Link to="/premium" className={`velum-card mb-4 w-full p-4 flex items-center gap-4 ${trialDaysLeft <= 2 ? "border border-accent/40" : ""}`}>
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${trialDaysLeft <= 2 ? "gold-gradient" : "bg-surface-light"}`}>
-            <Clock className={`w-4 h-4 ${trialDaysLeft <= 2 ? "text-primary-foreground" : "text-accent"}`} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-foreground text-sm font-sans font-medium">
-              {trialDaysLeft <= 0 ? "Your trial ends today" : `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left in your trial`}
+      {/* HERO — Custom Track is the anchor of Today.
+          Free users get a locked preview that opens the paywall sheet.
+          Paid users get the full tile, wrapped so any crash falls back gracefully. */}
+      {hasAccess ? (
+        <TileErrorBoundary>
+          <CustomTrackHomeTile />
+        </TileErrorBoundary>
+      ) : (
+        <button
+          onClick={openPaywall}
+          className="velum-card mb-6 w-full p-7 block text-left border border-accent/45 bg-gradient-to-br from-accent/15 via-accent/8 to-transparent shadow-xl shadow-accent/10 relative overflow-hidden active:scale-[0.99] transition-transform"
+        >
+          <div className="absolute -top-16 -right-16 w-52 h-52 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3">
+              <Lock className="w-3.5 h-3.5 text-accent" />
+              <p className="text-eyebrow text-accent">Premium · from $8/mo</p>
+            </div>
+            <p className="text-foreground text-[1.7rem] md:text-[2rem] font-serif font-light leading-[1.15] mb-3 max-w-[440px]">
+              Your first <span className="italic">custom rewiring audio</span> awaits.
             </p>
-            <p className="text-muted-foreground text-[11px]">Annual plan · $99/yr · save 57% →</p>
+            <p className="text-muted-foreground text-sm leading-relaxed mb-5 max-w-[440px]">
+              A 60-second conversation. A 10-minute Ericksonian audio written for your exact pattern, in your chosen voice. Unlock Premium to generate.
+            </p>
+            <span className="inline-flex items-center gap-2 rounded-full gold-gradient text-primary-foreground px-5 py-2.5 text-xs font-semibold tracking-wide">
+              Unlock Premium <ArrowRight className="w-3.5 h-3.5" />
+            </span>
           </div>
-        </Link>
+        </button>
       )}
+
+      {/* Trial banner removed (no more trials) */}
 
 
 {/* Daily check-in card hidden for now */}
@@ -677,25 +693,42 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { to: "/breathe", icon: Wind, name: "Breathwork", sub: "8 techniques · voice-guided", primary: true },
-            { to: "/bilateral", icon: Zap, name: "Bilateral", sub: "Visual + stereo audio" },
-            { to: "/tapping", icon: Heart, name: "Tapping", sub: "EFT · Guided sequences" },
-            { to: "/somatic-touch", icon: Fingerprint, name: "Somatic", sub: "Grounding sequences" },
-          ].map(({ to, icon: Icon, name, sub, primary }) => (
-            <Link
-              key={to}
-              to={to}
-              className={`velum-card p-5 flex flex-col justify-between min-h-[140px] group transition-all ${primary ? "border-accent/30 bg-accent/[0.04]" : ""}`}
-            >
-              <div className="w-9 h-9 rounded-lg bg-accent/10 border border-accent/15 flex items-center justify-center group-hover:bg-accent/15 transition-colors">
-                <Icon className="w-4 h-4 text-accent" />
-              </div>
-              <div>
-                <p className="text-foreground text-[15px] font-semibold tracking-tight">{name}</p>
-                <p className="text-ui text-[11px] mt-1 tracking-wide">{sub}</p>
-              </div>
-            </Link>
-          ))}
+            { to: "/breathe", icon: Wind, name: "Breathwork", sub: "8 techniques · voice-guided", primary: true, premium: false },
+            { to: "/bilateral", icon: Zap, name: "Bilateral", sub: "Visual + stereo audio", premium: true },
+            { to: "/tapping", icon: Heart, name: "Tapping", sub: "EFT · Guided sequences", premium: true },
+            { to: "/somatic-touch", icon: Fingerprint, name: "Somatic", sub: "Grounding sequences", premium: true },
+          ].map(({ to, icon: Icon, name, sub, primary, premium }) => {
+            const locked = premium && !hasAccess;
+            const inner = (
+              <>
+                {locked && (
+                  <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-accent/15 border border-accent/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-accent tracking-wide">
+                    <Lock className="w-2.5 h-2.5" /> $8/mo
+                  </span>
+                )}
+                <div className="w-9 h-9 rounded-lg bg-accent/10 border border-accent/15 flex items-center justify-center group-hover:bg-accent/15 transition-colors">
+                  <Icon className="w-4 h-4 text-accent" />
+                </div>
+                <div>
+                  <p className="text-foreground text-[15px] font-semibold tracking-tight">{name}</p>
+                  <p className="text-ui text-[11px] mt-1 tracking-wide">{sub}</p>
+                </div>
+              </>
+            );
+            const className = `velum-card relative p-5 flex flex-col justify-between min-h-[140px] group transition-all text-left ${primary ? "border-accent/30 bg-accent/[0.04]" : ""} ${locked ? "opacity-95" : ""}`;
+            if (locked) {
+              return (
+                <button key={to} type="button" onClick={openPaywall} className={className}>
+                  {inner}
+                </button>
+              );
+            }
+            return (
+              <Link key={to} to={to} className={className}>
+                {inner}
+              </Link>
+            );
+          })}
         </div>
       </div>
 
@@ -713,7 +746,7 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {/* Library quick links */}
+      {/* Library quick links — browseable for everyone; per-item locks live inside each page */}
       <div className="mb-10 min-w-0 w-full">
         <p className="text-eyebrow mb-4">The Library</p>
         <div className="flex flex-col gap-1.5">
@@ -723,8 +756,14 @@ export default function HomePage() {
             { label: "Mastery Classes", count: masteryCount, to: "/library?tab=mastery" },
             { label: "Quests", count: courses.length, to: "/courses" },
           ].map(({ label, count, to }) => (
-            <Link key={to} to={to} className="velum-card-flat flex items-center justify-between px-4 py-3.5 group hover:border-accent/25 transition-colors">
-              <p className="text-foreground text-sm font-medium">{label}</p>
+            <Link
+              key={to}
+              to={to}
+              className="velum-card-flat flex items-center justify-between px-4 py-3.5 group hover:border-accent/25 transition-colors text-left w-full"
+            >
+              <div className="flex items-center gap-2">
+                <p className="text-foreground text-sm font-medium">{label}</p>
+              </div>
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground/70 text-xs tabular-nums">{count}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/60 group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
@@ -765,7 +804,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Featured Courses */}
+      {/* Featured Courses — visible to everyone; per-item locks for free users */}
       {courses.length > 0 &&
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -775,12 +814,18 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {courses.slice(0, 2).map((course: any) => {
               const lessonCount = (courseLessonCounts as Record<string, number>)[course.id] || 0;
-              return (
-                <Link key={course.id} to={`/course-v2?courseId=${course.id}`} className="velum-card overflow-hidden">
+              const isLocked = !course.is_free && !hasAccess;
+              const body = (
+                <>
                   <div className="aspect-[16/9] bg-surface-light relative">
                     {(course.cover_image_url || course.thumbnail_url) &&
                     <img src={course.cover_image_url || course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
                     }
+                    {isLocked && (
+                      <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-background/85 backdrop-blur-sm border border-accent/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-accent tracking-wide">
+                        <Lock className="w-2.5 h-2.5" /> $8/mo
+                      </span>
+                    )}
                   </div>
                   <div className="p-4">
                     <p className="text-accent text-[10px] font-sans font-bold tracking-wide uppercase mb-1">
@@ -792,31 +837,69 @@ export default function HomePage() {
                       <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" /> {lessonCount} lessons</span>
                     </div>
                   </div>
-                </Link>);
-
+                </>
+              );
+              if (isLocked) {
+                return (
+                  <button key={course.id} type="button" onClick={openPaywall} className="velum-card overflow-hidden text-left">{body}</button>
+                );
+              }
+              return (
+                <Link key={course.id} to={`/course-v2?courseId=${course.id}`} className="velum-card overflow-hidden">{body}</Link>
+              );
             })}
           </div>
         </div>
         }
 
-      {/* Continue Your Journey */}
+      {/* Continue Your Journey — per-item lock honors track.is_free */}
       {nextTrack && progress.length > 0 &&
-        <div className="mb-8">
-          <p className="text-ui text-[11px] tracking-[2.5px] uppercase mb-4">Continue Your Journey</p>
-          <div className="velum-card p-6">
-            <h3 className="text-display text-xl mb-3">{nextTrack.title}</h3>
-            <span className="text-foreground text-xs border border-foreground/20 rounded-full px-3 py-1 font-sans">{nextTrack.duration_minutes} min</span>
-            <div className="mt-4">
-              <Link to={`/player?trackId=${nextTrack.id}`} className="inline-block px-5 py-2.5 rounded-lg gold-gradient text-primary-foreground text-sm font-sans font-bold">
-                Continue →
-              </Link>
+        (() => {
+          const lockedNext = !(nextTrack as any).is_free && !hasAccess;
+          return (
+            <div className="mb-8">
+              <p className="text-ui text-[11px] tracking-[2.5px] uppercase mb-4">Continue Your Journey</p>
+              <div className="velum-card p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-display text-xl">{nextTrack.title}</h3>
+                  {lockedNext && <Lock className="w-3.5 h-3.5 text-accent" />}
+                </div>
+                <span className="text-foreground text-xs border border-foreground/20 rounded-full px-3 py-1 font-sans">{nextTrack.duration_minutes} min</span>
+                <div className="mt-4">
+                  {lockedNext ? (
+                    <button type="button" onClick={openPaywall} className="inline-block px-5 py-2.5 rounded-lg gold-gradient text-primary-foreground text-sm font-sans font-bold">
+                      Unlock to continue →
+                    </button>
+                  ) : (
+                    <Link to={`/player?trackId=${nextTrack.id}`} className="inline-block px-5 py-2.5 rounded-lg gold-gradient text-primary-foreground text-sm font-sans font-bold">
+                      Continue →
+                    </Link>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })()
         }
 
-      {/* Nervous System Score */}
-      <NervousSystemScore />
+      {/* Nervous System Score — premium only */}
+      {hasAccess ? (
+        <NervousSystemScore />
+      ) : (
+        <button
+          onClick={openPaywall}
+          className="velum-card w-full p-6 text-left flex items-center gap-4 group active:scale-[0.99] transition-transform"
+        >
+          <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+            <Lock className="w-4 h-4 text-accent" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-foreground text-sm font-sans font-medium">Nervous System Score</p>
+            <p className="text-muted-foreground text-[11px]">Track stress before/after each session · Premium · $8/mo</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-accent shrink-0" />
+        </button>
+      )}
 
     </div>
     </div>);

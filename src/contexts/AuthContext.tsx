@@ -24,9 +24,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   hasAccess: boolean;
-  isInTrial: boolean;
-  trialDaysLeft: number;
-  signUp: (email: string, password: string, fullName?: string, phone?: string, options?: { grantFreeTrial?: boolean }) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName?: string, phone?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -42,21 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const isInTrial = !!(
-    profile?.trial_ends_at && new Date(profile.trial_ends_at) > new Date()
-  );
-  const trialDaysLeft = profile?.trial_ends_at
-    ? Math.max(0, Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / 86_400_000))
-    : 0;
-  // Stripe sets subscription_status to "trialing" during the 7-day trial period
-  // on the annual plan. Without including it here, paid trial users get bounced
-  // back to /premium right after they enter their card. "active" + "trialing"
-  // both grant access; "past_due" / "canceled" / "incomplete" do not.
+  // Trials are killed app-wide. Access requires an active sub or lifetime.
+  // "trialing" status retained ONLY for any legacy stripe trials still mid-cycle.
   const hasAccess =
     profile?.subscription_status === "active" ||
     profile?.subscription_status === "trialing" ||
-    profile?.subscription_plan === "lifetime" ||
-    isInTrial;
+    profile?.subscription_plan === "lifetime";
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -120,7 +109,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     fullName?: string,
     phone?: string,
-    options?: { grantFreeTrial?: boolean },
   ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -131,19 +119,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     if (!error && data.user) {
-      // Profile updates: phone (always), and trial dates (only when this signup
-      // came from the no-card-trial funnel — Funnel B / /trial-free). Card-trial
-      // signups don't get app-level trial; their trial is created by Stripe at
-      // checkout via trial_period_days on the annual price.
-      const grantFreeTrial = !!options?.grantFreeTrial;
+      // Profile updates: phone (always). Trials are killed — no trial dates set.
       const profileUpdates: Record<string, unknown> = {};
       if (phone) profileUpdates.phone = phone;
-      if (grantFreeTrial) {
-        const trialEnd = new Date();
-        trialEnd.setDate(trialEnd.getDate() + 7);
-        profileUpdates.trial_started_at = new Date().toISOString();
-        profileUpdates.trial_ends_at = trialEnd.toISOString();
-      }
       // Attribution: persist captured UTMs + referrer so we know where each signup came from
       try {
         const { readAttribution, clearAttribution } = await import("@/lib/attribution");
@@ -157,15 +135,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (attr.landing_page) profileUpdates.landing_page = attr.landing_page;
         clearAttribution();
       } catch {}
-      // Pull quiz answers (if they came from /quiz) and persist to onboarding_answers
-      // so the existing generate-custom-track flow can use them as the diagnosis.
+      // Pull quiz answers (if they came from /quiz or /protocol-quiz) and persist
+      // to onboarding_answers so the app can personalize the first protocol.
       try {
-        const quizRaw = localStorage.getItem("velum_quiz_answers_v1");
+        const protocolRaw = localStorage.getItem("velum_protocol_quiz_v1");
+        const quizRaw = protocolRaw || localStorage.getItem("velum_quiz_answers_v1");
         if (quizRaw) {
           const quiz = JSON.parse(quizRaw);
           profileUpdates.onboarding_answers = quiz;
           // Mark onboarding completed since the quiz IS the new onboarding
           profileUpdates.onboarding_completed = true;
+          localStorage.removeItem("velum_protocol_quiz_v1");
           localStorage.removeItem("velum_quiz_answers_v1");
         }
       } catch {}
@@ -225,7 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, isAdmin, hasAccess, isInTrial, trialDaysLeft, signUp, signIn, signInWithMagicLink, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, isAdmin, hasAccess, signUp, signIn, signInWithMagicLink, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

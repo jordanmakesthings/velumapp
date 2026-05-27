@@ -189,10 +189,48 @@ export default function PremiumPage() {
 
       <div className="px-6 pt-12 pb-12 max-w-lg mx-auto relative">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="text-center mb-10">
+          <div className="text-center mb-8">
             <img src={logoCircle} alt="Velum" className="w-20 h-20 object-contain mx-auto mb-2" />
-            <h1 className="text-display text-[2.4rem] leading-[1.05] font-light mb-3 mt-0">Final Step</h1>
-            <p className="text-muted-foreground text-[15px] font-sans font-light">Your First Rewiring Audio Awaits</p>
+            <h1 className="text-display text-[2.4rem] leading-[1.05] font-light mb-3 mt-0">Unlock Velum</h1>
+            <p className="text-muted-foreground text-[15px] font-sans font-light">From $8/mo · No trial · Cancel anytime</p>
+          </div>
+
+          {/* Tier comparison */}
+          <div className="grid grid-cols-1 gap-3 mb-8">
+            <div className="velum-card-flat p-5">
+              <p className="text-eyebrow text-muted-foreground mb-3">What you already have · Free</p>
+              <ul className="space-y-1.5">
+                {[
+                  "Home dashboard",
+                  "All 8 breathwork techniques",
+                  "Happiness Mastery Class",
+                  "Daily journal prompt + 30 days of history",
+                  "Find Your Session recommendations",
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2 text-foreground/85 text-sm font-sans">
+                    <span className="text-accent/60 mt-0.5">✓</span>{item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="velum-card p-5 border-accent/30 bg-accent/[0.04]">
+              <p className="text-eyebrow text-accent mb-3">What unlocks with Premium</p>
+              <ul className="space-y-1.5">
+                {[
+                  "Full meditation, rapid resets & journaling library",
+                  "All Mastery Classes (updated monthly)",
+                  "Custom Rewiring Audios — personalized to you",
+                  "EFT tapping, bilateral & somatic tools",
+                  "All Quests & multi-day Courses",
+                  "Full journal history + daily check-ins",
+                  "Nervous System Score & progress tracking",
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2 text-foreground text-sm font-sans">
+                    <span className="text-accent mt-0.5">✓</span>{item}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
           {/* Plans */}
@@ -221,26 +259,21 @@ export default function PremiumPage() {
               </button>
             </div>
 
-            {/* ANNUAL — 7-day trial */}
-            <div className="relative">
-              <span className="absolute -top-2.5 left-4 bg-accent text-background text-[10px] font-sans font-semibold px-2.5 py-0.5 rounded-full tracking-wide z-10">
-                7-day free trial
-              </span>
-              <button
-                onClick={() => handleSubscribe("annual")}
-                disabled={loading !== null}
-                className="velum-card w-full p-5 text-left transition-all flex items-center justify-between disabled:opacity-70"
-              >
-                <div>
-                  <p className="text-foreground font-sans font-medium">Annual</p>
-                  <p className="text-muted-foreground text-xs mt-0.5">~$8/mo · save 57% vs monthly</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-accent text-2xl font-serif">$99</p>
-                  <p className="text-muted-foreground text-xs">/year</p>
-                </div>
-              </button>
-            </div>
+            {/* ANNUAL */}
+            <button
+              onClick={() => handleSubscribe("annual")}
+              disabled={loading !== null}
+              className="velum-card w-full p-5 text-left transition-all flex items-center justify-between disabled:opacity-70"
+            >
+              <div>
+                <p className="text-foreground font-sans font-medium">Annual</p>
+                <p className="text-muted-foreground text-xs mt-0.5">~$8/mo · save 57% vs monthly</p>
+              </div>
+              <div className="text-right">
+                <p className="text-accent text-2xl font-serif">$99</p>
+                <p className="text-muted-foreground text-xs">/year</p>
+              </div>
+            </button>
 
             {/* MONTHLY — no trial */}
             <button

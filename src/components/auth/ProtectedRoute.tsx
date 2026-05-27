@@ -2,12 +2,21 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReactNode } from "react";
 
-// Routes an onboarded-but-unpaid user is still allowed to hit.
-// Everything else bounces to /premium until they subscribe.
-const PAYWALL_WHITELIST = ["/premium", "/paymentsuccess", "/profile"];
+// Free-tier accessible routes (kept here for reference; gating is now
+// page-level via <PremiumGate>, not redirect-level). Auth + onboarding
+// checks still live here.
+export const FREE_TIER_ROUTES = [
+  "/home",
+  "/breathe",
+  "/finder",
+  "/journal",
+  "/profile",
+  "/premium",
+  "/mastery-player", // Happiness class allowed; others gated inside the page
+];
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, profile, loading, hasAccess } = useAuth();
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -25,7 +34,6 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     try { hasAccount = localStorage.getItem("velum_has_account") === "1"; } catch {}
     // Preserve the original URL + any query params (esp. email) so the auth
     // page can pre-fill email, and so we can redirect back after login.
-    // Without this, email recovery links lose their email param on bounce.
     const incomingParams = new URLSearchParams(location.search);
     const next = location.pathname + location.search;
     const passthrough = new URLSearchParams();
@@ -37,9 +45,6 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   // Redirect TO onboarding if not completed.
-  // Whitelist: /onboarding (target), /paymentsuccess (post-Stripe redirect),
-  // /premium (so users can pay before doing onboarding — critical for OTO
-  // and recovery flows), /profile (so they can sign out if stuck).
   const ONBOARDING_WHITELIST = ["/onboarding", "/paymentsuccess", "/premium", "/profile"];
   if (
     profile &&
@@ -58,16 +63,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/home" replace />;
   }
 
-  // Hard paywall gate: onboarded but not subscribed → force /premium
-  // Whitelist allows /premium itself, /paymentsuccess (post-checkout), /profile (so they can sign out)
-  if (
-    profile &&
-    profile.onboarding_completed &&
-    !hasAccess &&
-    !PAYWALL_WHITELIST.some(p => location.pathname.startsWith(p))
-  ) {
-    return <Navigate to="/premium" replace />;
-  }
-
+  // Freemium: NO hard paywall redirect. Premium pages render <PremiumGate>
+  // and the global <PaywallSheet> handles upgrade flow.
   return <>{children}</>;
 }

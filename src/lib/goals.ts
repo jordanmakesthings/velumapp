@@ -12,7 +12,7 @@ export interface Goal {
 }
 
 export const GOALS: Goal[] = [
-  { slug: "calm",       label: "Calm & Anxiety",       short: "Calm",       cover: COVER_BASE + "02-water.jpg" },
+  { slug: "calm",       label: "Calm & Stress Relief", short: "Calm",       cover: COVER_BASE + "02-water.jpg" },
   { slug: "sleep",      label: "Sleep",                short: "Sleep",      cover: COVER_BASE + "20-moon.jpg" },
   { slug: "energy",     label: "Morning & Energy",     short: "Energy",     cover: COVER_BASE + "09-flame.jpg" },
   { slug: "focus",      label: "Focus",                short: "Focus",      cover: COVER_BASE + "17-orb.jpg" },

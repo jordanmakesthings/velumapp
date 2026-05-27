@@ -111,12 +111,13 @@ export default function PlayerPage() {
     setIsFavorited(favorites.some((f: any) => f.track_id === trackId));
   }, [favorites, trackId]);
 
-  // Subscription gate: if no access (subscription or trial), show paywall
+  // Per-item gate: only show paywall if the track itself is premium AND the user lacks access.
+  const isTrackLocked = !!track && !(track as any).is_free && !hasAccess;
   useEffect(() => {
-    if (track && !hasAccess) {
+    if (isTrackLocked) {
       setShowPaywall(true);
     }
-  }, [track, hasAccess]);
+  }, [isTrackLocked]);
 
   const toggleFavMutation = useMutation({
     mutationFn: async () => {
@@ -259,8 +260,8 @@ export default function PlayerPage() {
     );
   }
 
-  // Access gate
-  if (!hasAccess) {
+  // Access gate — only when this specific track is premium
+  if (isTrackLocked) {
     return (
       <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background flex flex-col">
         <div className="safe-area-pt px-4 pt-4">

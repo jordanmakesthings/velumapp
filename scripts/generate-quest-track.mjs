@@ -23,12 +23,12 @@ const SUPABASE_URL = "https://etghaosktmxloqivquvu.supabase.co";
 const FN = "generate-custom-track";
 
 const TRACK_PRESETS = {
-  "week-1-earn": {
-    title: "Already Wealthy — Pillar 1: Earn",
-    voice: "theo",
-    file: "quest-tracks/week-1-earn.txt",
-  },
-  // Weeks 2-6 plug in here as we write them
+  "week-1-earn":      { title: "The Money Pillars 1: Earn",       voice: "theo", file: "quest-tracks/week-1-earn.txt" },
+  "week-2-keep":      { title: "The Money Pillars 2: Keep",       voice: "theo", file: "quest-tracks/week-2-keep.txt" },
+  "week-3-spend":     { title: "The Money Pillars 3: Spend",      voice: "theo", file: "quest-tracks/week-3-spend.txt" },
+  "week-4-multiply":  { title: "The Money Pillars 4: Multiply",   voice: "theo", file: "quest-tracks/week-4-multiply.txt" },
+  "week-5-enjoy":     { title: "The Money Pillars 5: Enjoy",      voice: "theo", file: "quest-tracks/week-5-enjoy.txt" },
+  "week-6-circulate": { title: "The Money Pillars 6: Circulate",  voice: "theo", file: "quest-tracks/week-6-circulate.txt" },
 };
 
 async function main() {

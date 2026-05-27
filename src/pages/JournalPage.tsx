@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Trash2, Feather, ArrowRight } from "lucide-react";
+import { usePaywall } from "@/components/PaywallSheet";
+import { Trash2, Feather, ArrowRight, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 function formatDate(dateStr: string) {
@@ -20,7 +21,8 @@ function countWords(text: string) {
 type FilterType = "all" | "reflection" | "exercise" | "mastery" | "course";
 
 export default function JournalPage() {
-  const { user } = useAuth();
+  const { user, hasAccess } = useAuth();
+  const { open: openPaywall } = usePaywall();
   const queryClient = useQueryClient();
   const [reflection, setReflection] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
@@ -153,7 +155,17 @@ export default function JournalPage() {
   const totalWords = useMemo(() => reflections.reduce((sum: number, r: any) => sum + countWords(r.content), 0), [reflections]);
   const completedTrackIds = useMemo(() => new Set(allProgress.map((p: any) => p.track_id)), [allProgress]);
 
-  const pastEntries = filtered.filter(e => !(e.type === "reflection" && e.date === today));
+  const pastEntriesAll = filtered.filter(e => !(e.type === "reflection" && e.date === today));
+  // Free tier: cap history to the last 30 days.
+  const thirtyDaysAgoStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split("T")[0];
+  })();
+  const pastEntries = hasAccess
+    ? pastEntriesAll
+    : pastEntriesAll.filter(e => (e.date || "") >= thirtyDaysAgoStr);
+  const truncatedForFree = !hasAccess && pastEntriesAll.length > pastEntries.length;
   const isLoading = loadingReflections || !user;
 
   return (
@@ -366,6 +378,22 @@ export default function JournalPage() {
               );
             })}
           </div>
+        )}
+
+        {truncatedForFree && (
+          <button
+            onClick={openPaywall}
+            className="velum-card mt-6 w-full p-5 flex items-center gap-3 text-left group active:scale-[0.99] transition-transform"
+          >
+            <div className="w-9 h-9 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+              <Lock className="w-4 h-4 text-accent" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-foreground text-sm font-sans font-medium">30-day limit · upgrade for full history</p>
+              <p className="text-muted-foreground text-[11px]">Unlock Premium to read every entry you've ever written.</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-accent shrink-0" />
+          </button>
         )}
       </div>
     </div>

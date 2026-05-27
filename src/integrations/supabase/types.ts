@@ -129,6 +129,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_free: boolean
           is_premium: boolean
           is_published: boolean
           modules: Json | null
@@ -141,6 +142,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_free?: boolean
           is_premium?: boolean
           is_published?: boolean
           modules?: Json | null
@@ -153,11 +155,89 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_free?: boolean
           is_premium?: boolean
           is_published?: boolean
           modules?: Json | null
           order_index?: number
           title?: string
+        }
+        Relationships: []
+      }
+      custom_track_listens: {
+        Row: {
+          created_at: string
+          duration_listened_sec: number
+          id: string
+          listened_date: string
+          track_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_listened_sec?: number
+          id?: string
+          listened_date?: string
+          track_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_listened_sec?: number
+          id?: string
+          listened_date?: string
+          track_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_track_listens_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "custom_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_tracks: {
+        Row: {
+          audio_url: string
+          created_at: string | null
+          duration_sec: number | null
+          id: string
+          issue_summary: string | null
+          metaphor_family: string | null
+          modality: string | null
+          play_count: number | null
+          script_text: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          audio_url: string
+          created_at?: string | null
+          duration_sec?: number | null
+          id?: string
+          issue_summary?: string | null
+          metaphor_family?: string | null
+          modality?: string | null
+          play_count?: number | null
+          script_text?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          audio_url?: string
+          created_at?: string | null
+          duration_sec?: number | null
+          id?: string
+          issue_summary?: string | null
+          metaphor_family?: string | null
+          modality?: string | null
+          play_count?: number | null
+          script_text?: string | null
+          title?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -304,6 +384,36 @@ export type Database = {
           },
         ]
       }
+      goals: {
+        Row: {
+          cover: string | null
+          created_at: string
+          id: string
+          label: string
+          order_index: number
+          short: string
+          slug: string
+        }
+        Insert: {
+          cover?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          order_index?: number
+          short: string
+          slug: string
+        }
+        Update: {
+          cover?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          order_index?: number
+          short?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       journal_entries: {
         Row: {
           content: string
@@ -414,8 +524,10 @@ export type Database = {
           created_at: string
           description: string | null
           downloadable_files: Json | null
+          drip_day_offset: number | null
           duration_minutes: number
           id: string
+          is_free: boolean
           is_free_preview: boolean
           journal_prompt: string | null
           media_url: string | null
@@ -430,8 +542,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           downloadable_files?: Json | null
+          drip_day_offset?: number | null
           duration_minutes?: number
           id?: string
+          is_free?: boolean
           is_free_preview?: boolean
           journal_prompt?: string | null
           media_url?: string | null
@@ -446,8 +560,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           downloadable_files?: Json | null
+          drip_day_offset?: number | null
           duration_minutes?: number
           id?: string
+          is_free?: boolean
           is_free_preview?: boolean
           journal_prompt?: string | null
           media_url?: string | null
@@ -518,6 +634,7 @@ export type Database = {
           downloadable_files: Json | null
           duration_minutes: number
           id: string
+          is_free: boolean
           is_premium: boolean
           order_index: number
           pause_prompts: Json | null
@@ -535,6 +652,7 @@ export type Database = {
           downloadable_files?: Json | null
           duration_minutes?: number
           id?: string
+          is_free?: boolean
           is_premium?: boolean
           order_index?: number
           pause_prompts?: Json | null
@@ -552,6 +670,7 @@ export type Database = {
           downloadable_files?: Json | null
           duration_minutes?: number
           id?: string
+          is_free?: boolean
           is_premium?: boolean
           order_index?: number
           pause_prompts?: Json | null
@@ -567,57 +686,164 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           email: string | null
+          extra_track_credits: number
           full_name: string | null
           id: string
           is_admin: boolean | null
+          landing_page: string | null
           onboarding_answers: Json | null
           onboarding_completed: boolean
           onesignal_player_id: string | null
           phone: string | null
+          referral_code: string | null
+          referral_credit_months: number
+          referred_by: string | null
+          referrer: string | null
           reminder_time: string | null
           stripe_customer_id: string | null
           subscription_expires_at: string | null
           subscription_plan: string | null
           subscription_status: string | null
+          tapping_daily_count: number | null
+          tapping_daily_date: string | null
+          terms_accepted_at: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+          unlimited_tracks: boolean
           updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          voice_preference: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           email?: string | null
+          extra_track_credits?: number
           full_name?: string | null
           id: string
           is_admin?: boolean | null
+          landing_page?: string | null
           onboarding_answers?: Json | null
           onboarding_completed?: boolean
           onesignal_player_id?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referral_credit_months?: number
+          referred_by?: string | null
+          referrer?: string | null
           reminder_time?: string | null
           stripe_customer_id?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null
           subscription_status?: string | null
+          tapping_daily_count?: number | null
+          tapping_daily_date?: string | null
+          terms_accepted_at?: string | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
+          unlimited_tracks?: boolean
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          voice_preference?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           email?: string | null
+          extra_track_credits?: number
           full_name?: string | null
           id?: string
           is_admin?: boolean | null
+          landing_page?: string | null
           onboarding_answers?: Json | null
           onboarding_completed?: boolean
           onesignal_player_id?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referral_credit_months?: number
+          referred_by?: string | null
+          referrer?: string | null
           reminder_time?: string | null
           stripe_customer_id?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null
           subscription_status?: string | null
+          tapping_daily_count?: number | null
+          tapping_daily_date?: string | null
+          terms_accepted_at?: string | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
+          unlimited_tracks?: boolean
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          voice_preference?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          credited_at: string | null
+          id: string
+          referred_id: string
+          referrer_id: string
+          status: string
+          subscribed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          credited_at?: string | null
+          id?: string
+          referred_id: string
+          referrer_id: string
+          status?: string
+          subscribed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          credited_at?: string | null
+          id?: string
+          referred_id?: string
+          referrer_id?: string
+          status?: string
+          subscribed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subcategories: {
         Row: {
@@ -670,6 +896,93 @@ export type Database = {
         }
         Relationships: []
       }
+      tapping_sessions: {
+        Row: {
+          aspects: string | null
+          body_location: string | null
+          completed: boolean
+          created_at: string
+          duration_seconds: number | null
+          final_suds: number | null
+          id: string
+          initial_suds: number
+          is_free: boolean
+          issue: string
+          path: string
+          positive_belief: string | null
+          resistance_final: number | null
+          resistance_initial: number | null
+          suds_journey: Json | null
+          user_id: string
+        }
+        Insert: {
+          aspects?: string | null
+          body_location?: string | null
+          completed?: boolean
+          created_at?: string
+          duration_seconds?: number | null
+          final_suds?: number | null
+          id?: string
+          initial_suds: number
+          is_free?: boolean
+          issue: string
+          path: string
+          positive_belief?: string | null
+          resistance_final?: number | null
+          resistance_initial?: number | null
+          suds_journey?: Json | null
+          user_id: string
+        }
+        Update: {
+          aspects?: string | null
+          body_location?: string | null
+          completed?: boolean
+          created_at?: string
+          duration_seconds?: number | null
+          final_suds?: number | null
+          id?: string
+          initial_suds?: number
+          is_free?: boolean
+          issue?: string
+          path?: string
+          positive_belief?: string | null
+          resistance_final?: number | null
+          resistance_initial?: number | null
+          suds_journey?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      track_covers: {
+        Row: {
+          collection_palette: string | null
+          created_at: string
+          id: string
+          mood: string | null
+          name: string
+          tags: string[]
+          url: string
+        }
+        Insert: {
+          collection_palette?: string | null
+          created_at?: string
+          id?: string
+          mood?: string | null
+          name: string
+          tags?: string[]
+          url: string
+        }
+        Update: {
+          collection_palette?: string | null
+          created_at?: string
+          id?: string
+          mood?: string | null
+          name?: string
+          tags?: string[]
+          url?: string
+        }
+        Relationships: []
+      }
       tracks: {
         Row: {
           audio_url: string | null
@@ -679,8 +992,10 @@ export type Database = {
           created_at: string
           description: string | null
           duration_minutes: number
+          goals: string[]
           id: string
           is_featured: boolean
+          is_free: boolean
           is_premium: boolean
           lock_days: number
           lock_type: string
@@ -701,8 +1016,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration_minutes?: number
+          goals?: string[]
           id?: string
           is_featured?: boolean
+          is_free?: boolean
           is_premium?: boolean
           lock_days?: number
           lock_type?: string
@@ -723,8 +1040,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration_minutes?: number
+          goals?: string[]
           id?: string
           is_featured?: boolean
+          is_free?: boolean
           is_premium?: boolean
           lock_days?: number
           lock_type?: string
@@ -806,6 +1125,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      attribute_referral: {
+        Args: { p_referral_code: string }
+        Returns: undefined
+      }
+      decrement_extra_track_credits: { Args: { uid: string }; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -814,12 +1138,17 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      founding_lifetime_remaining: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_extra_track_credits: {
+        Args: { add?: number; uid: string }
+        Returns: number
       }
       move_to_dlq: {
         Args: {
@@ -830,6 +1159,7 @@ export type Database = {
         }
         Returns: number
       }
+      pick_cover_by_tags: { Args: { p_tags: string[] }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -837,6 +1167,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      record_track_listen: {
+        Args: { p_seconds: number; p_track_id: string }
+        Returns: number
       }
     }
     Enums: {

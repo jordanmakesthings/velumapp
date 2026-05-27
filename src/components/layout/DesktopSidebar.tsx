@@ -3,7 +3,7 @@ import { Sparkles, Compass, Headphones, User } from "lucide-react";
 
 const navItems = [
   { path: "/home",    icon: Sparkles,   label: "Home",     match: ["/home", "/"] },
-  { path: "/library", icon: Compass,    label: "Discover", match: ["/library", "/tools", "/courses", "/course", "/subcategory", "/journal", "/breathe", "/bilateral", "/tapping", "/somatic-touch", "/sos"] },
+  { path: "/library", icon: Compass,    label: "Discover", match: ["/library", "/tools", "/courses", "/course", "/subcategory", "/journal", "/breathe", "/bilateral", "/tapping", "/somatic-touch"] },
   { path: "/audios",  icon: Headphones, label: "Audios",   match: ["/audios", "/custom-track"] },
   { path: "/profile", icon: User,       label: "Me",       match: ["/profile", "/premium"] },
 ];

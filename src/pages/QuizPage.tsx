@@ -490,7 +490,7 @@ export default function QuizPage() {
                     Close the gap →
                   </button>
                   <p className="text-[11px] text-muted-foreground/70 mt-5 font-sans leading-relaxed">
-                    7-day annual trial · cancel anytime · 30-day full refund
+                    Free to start · cancel anytime · 30-day full refund
                   </p>
                 </div>
               </div>

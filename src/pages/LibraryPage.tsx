@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Search, Heart, Sparkles, Wind, Zap, GraduationCap, Feather, BookOpen, Check, Play, ChevronLeft, Hand, Fingerprint, AlertCircle } from "lucide-react";
+import { Search, Heart, Sparkles, Wind, Zap, GraduationCap, Feather, BookOpen, Check, Play, ChevronLeft, Hand, Fingerprint, Lock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePaywall } from "@/components/PaywallSheet";
 
 type Tab = "sessions" | "favorites" | "courses" | "mastery" | "journal";
 
@@ -25,7 +26,8 @@ const CATEGORIES = [
 ];
 
 export default function LibraryPage() {
-  const { user } = useAuth();
+  const { user, hasAccess } = useAuth();
+  const { open: openPaywall } = usePaywall();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
@@ -128,40 +130,63 @@ export default function LibraryPage() {
   const favoriteTracks = tracks.filter((t: any) => favoriteTrackIds.has(t.id));
   const categorySubcats = selectedCategory ? subcategories.filter((s: any) => s.category === selectedCategory) : [];
 
-  const TrackCard = ({ track }: { track: any }) => (
-    <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card overflow-hidden group min-w-0">
-      <div className="aspect-square bg-surface-light relative overflow-hidden rounded-xl">
-        {(track.thumbnail_square_url || track.thumbnail_url) ? (
-          <img src={track.thumbnail_square_url ?? track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
-        )}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
-            <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
-          </div>
-        </div>
-        {completedTrackIds.has(track.id) && (
-          <div className="absolute top-2 left-2 w-5 h-5 rounded-full gold-gradient flex items-center justify-center">
-            <Check className="w-3 h-3 text-primary-foreground" />
-          </div>
-        )}
-      </div>
-      <div className="p-3 flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-foreground text-xs font-sans leading-tight line-clamp-2">{track.title}</p>
-          {track.description && (
-            <p className="text-muted-foreground text-[11px] mt-1 line-clamp-2 leading-snug">{track.description}</p>
+  const TrackCard = ({ track }: { track: any }) => {
+    const isLocked = !track.is_free && !hasAccess;
+    const cardBody = (
+      <>
+        <div className="aspect-square bg-surface-light relative overflow-hidden rounded-xl">
+          {(track.thumbnail_square_url || track.thumbnail_url) ? (
+            <img src={track.thumbnail_square_url ?? track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
           )}
-          <p className="text-ui text-[10px] mt-1">{track.duration_minutes} min</p>
+          {!isLocked && (
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
+                <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
+              </div>
+            </div>
+          )}
+          {completedTrackIds.has(track.id) && (
+            <div className="absolute top-2 left-2 w-5 h-5 rounded-full gold-gradient flex items-center justify-center">
+              <Check className="w-3 h-3 text-primary-foreground" />
+            </div>
+          )}
+          {isLocked && (
+            <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-background/85 backdrop-blur-sm border border-accent/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-accent tracking-wide">
+              <Lock className="w-2.5 h-2.5" /> $8/mo
+            </span>
+          )}
         </div>
-        <button onClick={(e) => { e.preventDefault(); toggleFavMutation.mutate(track.id); }}
-          className={`transition-colors shrink-0 ${favoriteTrackIds.has(track.id) ? "text-accent" : "text-muted-foreground hover:text-accent"}`}>
-          <Heart className={`w-4 h-4 ${favoriteTrackIds.has(track.id) ? "fill-current" : ""}`} />
+        <div className="p-3 flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-foreground text-xs font-sans leading-tight line-clamp-2">{track.title}</p>
+            {track.description && (
+              <p className="text-muted-foreground text-[11px] mt-1 line-clamp-2 leading-snug">{track.description}</p>
+            )}
+            <p className="text-ui text-[10px] mt-1">{track.duration_minutes} min</p>
+          </div>
+          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavMutation.mutate(track.id); }}
+            className={`transition-colors shrink-0 ${favoriteTrackIds.has(track.id) ? "text-accent" : "text-muted-foreground hover:text-accent"}`}>
+            <Heart className={`w-4 h-4 ${favoriteTrackIds.has(track.id) ? "fill-current" : ""}`} />
+          </button>
+        </div>
+      </>
+    );
+
+    if (isLocked) {
+      return (
+        <button key={track.id} type="button" onClick={openPaywall} className="velum-card overflow-hidden group min-w-0 text-left">
+          {cardBody}
         </button>
-      </div>
-    </Link>
-  );
+      );
+    }
+    return (
+      <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card overflow-hidden group min-w-0">
+        {cardBody}
+      </Link>
+    );
+  };
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-3xl mx-auto overflow-x-hidden">
@@ -173,9 +198,8 @@ export default function LibraryPage() {
       {/* Tools quick-access row */}
       <div className="mb-8">
         <p className="text-eyebrow mb-3">Interactive tools</p>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {[
-            { path: "/sos",           icon: AlertCircle,  label: "SOS" },
             { path: "/breathe",       icon: Wind,         label: "Breathe" },
             { path: "/tapping",       icon: Hand,         label: "Tapping" },
             { path: "/bilateral",     icon: Zap,          label: "Bilateral" },
@@ -295,24 +319,44 @@ export default function LibraryPage() {
         <div className="grid grid-cols-2 gap-3">
           {masteryClasses.length === 0 ? (
             <p className="text-muted-foreground text-sm col-span-2 text-center py-8">No mastery classes yet.</p>
-          ) : masteryClasses.map((mc: any) => (
-            <Link key={mc.id} to={`/mastery-player?id=${mc.id}`} className="velum-card overflow-hidden group min-w-0">
-              <div className="aspect-video bg-surface-light relative overflow-hidden">
-                {(mc.cover_image_url_16_9 || mc.thumbnail_url || mc.cover_image_url) ? (
-                  <img src={mc.cover_image_url_16_9 || mc.thumbnail_url || mc.cover_image_url} alt={mc.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
-                )}
-              </div>
-              <div className="p-3">
-                <p className="text-foreground text-xs font-sans font-medium leading-tight line-clamp-2">{mc.title}</p>
-                {mc.description && (
-                  <p className="text-muted-foreground text-[11px] mt-1 line-clamp-2 leading-snug">{mc.description}</p>
-                )}
-                <p className="text-ui text-[10px] mt-1">{mc.duration_minutes} min</p>
-              </div>
-            </Link>
-          ))}
+          ) : masteryClasses.map((mc: any) => {
+            const isLocked = !mc.is_free && !hasAccess;
+            const body = (
+              <>
+                <div className="aspect-video bg-surface-light relative overflow-hidden">
+                  {(mc.cover_image_url_16_9 || mc.thumbnail_url || mc.cover_image_url) ? (
+                    <img src={mc.cover_image_url_16_9 || mc.thumbnail_url || mc.cover_image_url} alt={mc.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-[radial-gradient(ellipse_at_left,_hsl(var(--card)),_hsl(var(--background)))]" />
+                  )}
+                  {isLocked && (
+                    <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-background/85 backdrop-blur-sm border border-accent/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-accent tracking-wide">
+                      <Lock className="w-2.5 h-2.5" /> $8/mo
+                    </span>
+                  )}
+                </div>
+                <div className="p-3">
+                  <p className="text-foreground text-xs font-sans font-medium leading-tight line-clamp-2">{mc.title}</p>
+                  {mc.description && (
+                    <p className="text-muted-foreground text-[11px] mt-1 line-clamp-2 leading-snug">{mc.description}</p>
+                  )}
+                  <p className="text-ui text-[10px] mt-1">{mc.duration_minutes} min</p>
+                </div>
+              </>
+            );
+            if (isLocked) {
+              return (
+                <button key={mc.id} type="button" onClick={openPaywall} className="velum-card overflow-hidden group min-w-0 text-left">
+                  {body}
+                </button>
+              );
+            }
+            return (
+              <Link key={mc.id} to={`/mastery-player?id=${mc.id}`} className="velum-card overflow-hidden group min-w-0">
+                {body}
+              </Link>
+            );
+          })}
         </div>
       )}
 

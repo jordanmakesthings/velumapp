@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePaywall } from "@/components/PaywallSheet";
 import { toast } from "sonner";
 
 function formatTime(s: number) {
@@ -19,6 +20,7 @@ export default function MasteryPlayerPage() {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id") || "";
   const { user, hasAccess } = useAuth();
+  const { open: openPaywall } = usePaywall();
   const queryClient = useQueryClient();
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -111,7 +113,8 @@ export default function MasteryPlayerPage() {
     },
   });
 
-  const isGated = !hasAccess;
+  // Per-item gate: only premium classes lock for free users.
+  const isGated = !!mc && !hasAccess && !(mc as any).is_free;
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   // Collect visible prompts in order
@@ -192,10 +195,10 @@ export default function MasteryPlayerPage() {
             <h3 className="text-display mb-2 text-xl">Subscribe to Access</h3>
             <p className="text-ui mb-5 text-sm">Subscribe to unlock this class and all content in Velum.</p>
             <button
-              onClick={() => navigate("/premium")}
+              onClick={openPaywall}
               className="rounded-xl gold-gradient px-6 py-3 text-sm font-sans font-medium text-primary-foreground active:scale-95 transition-transform"
             >
-              Begin My Journey
+              Unlock Premium · from $8/mo
             </button>
           </div>
         ) : (

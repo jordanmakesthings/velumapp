@@ -308,7 +308,7 @@ export default function OnboardingPage() {
               </button>
 
               <p className="mt-4 text-muted-foreground/70 text-[11px]">
-                Monthly · Annual (7-day trial) · Lifetime
+                Monthly · Annual · Lifetime
               </p>
             </motion.div>
           )}

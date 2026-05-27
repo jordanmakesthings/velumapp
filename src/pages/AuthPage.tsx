@@ -9,15 +9,11 @@ type Mode = "signup" | "login" | "forgot";
 
 function resolveInitialMode(pathname: string): Mode {
   if (pathname.startsWith("/login") || pathname.startsWith("/signin")) return "login";
-  if (pathname.startsWith("/signup") || pathname.startsWith("/trial-free")) return "signup";
+  if (pathname.startsWith("/signup")) return "signup";
   try {
     if (localStorage.getItem("velum_has_account") === "1") return "login";
   } catch {}
   return "signup";
-}
-
-function isFreeTrialFunnel(pathname: string): boolean {
-  return pathname.startsWith("/trial-free");
 }
 
 export default function AuthPage() {
@@ -25,7 +21,6 @@ export default function AuthPage() {
   const location = useLocation();
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<Mode>(() => resolveInitialMode(location.pathname));
-  const freeTrial = isFreeTrialFunnel(location.pathname);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
@@ -47,11 +42,7 @@ export default function AuthPage() {
     }
     const prefill = params.get("email");
     if (prefill) setEmail(prefill.trim());
-    if (freeTrial) {
-      import("@/lib/reddit-pixel").then(({ rdtTrack }) => rdtTrack("ViewContent")).catch(() => {});
-      import("@/lib/meta-pixel").then(({ fbqTrack }) => fbqTrack("ViewContent")).catch(() => {});
-    }
-  }, [freeTrial]);
+  }, []);
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +74,7 @@ export default function AuthPage() {
         // one later via "Forgot password" if they want one. Future logins
         // typically happen via magic link (TODO: add magic link to /login).
         const autoPassword = crypto.randomUUID() + "Aa1!";
-        const { error } = await signUp(email, autoPassword, fullName.trim(), phone.trim(), { grantFreeTrial: freeTrial });
+        const { error } = await signUp(email, autoPassword, fullName.trim(), phone.trim());
         if (error) throw error;
         try { localStorage.setItem("velum_has_account", "1"); } catch {}
         // If they came from a lead-magnet OTO with ?plan= preselected, jump
@@ -153,25 +144,19 @@ export default function AuthPage() {
           {/* Eyebrow */}
           {mode === "signup" && !referrerCode && (
             <p className="text-eyebrow text-center mb-5">
-              {freeTrial ? "Free 7-day trial · No credit card required" : "Regulate your body in 60 seconds"}
+              Free forever · No card needed
             </p>
           )}
 
           {/* Headline — Cormorant editorial */}
           <h2 className="text-display text-4xl md:text-[2.6rem] leading-[1.05] text-center mb-3">
-            {mode === "signup" && (freeTrial
-              ? <>Generate your first<br /><span className="italic text-accent">custom hypnosis.</span></>
-              : <>Regulate your<br /><span className="italic text-accent">nervous system.</span></>
-            )}
+            {mode === "signup" && <>Regulate your<br /><span className="italic text-accent">nervous system.</span></>}
             {mode === "login" && <>Welcome<br /><span className="italic text-accent">back.</span></>}
             {mode === "forgot" && <>Reset your<br /><span className="italic text-accent">password.</span></>}
           </h2>
 
           <p className="text-muted-foreground text-sm font-sans text-center mb-7 max-w-[340px] mx-auto leading-relaxed">
-            {mode === "signup" && (freeTrial
-              ? "60 seconds of conversation. A personalized 10-minute Ericksonian rewiring audio, in your chosen voice. No card needed to start."
-              : "Real-time tools to move your body out of survival mode — in under 60 seconds."
-            )}
+            {mode === "signup" && "Real-time tools to move your body out of survival mode — in under 60 seconds."}
             {mode === "login" && "Return to where you left off."}
             {mode === "forgot" && "We'll send you a reset link."}
           </p>
@@ -241,7 +226,7 @@ export default function AuthPage() {
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                   <>
-                    {mode === "signup" && (freeTrial ? "Start Rewiring →" : "Begin →")}
+                    {mode === "signup" && "Begin free →"}
                     {mode === "login" && "Sign in →"}
                     {mode === "forgot" && "Send reset link"}
                   </>
@@ -273,7 +258,7 @@ export default function AuthPage() {
           {mode === "login" && (
             <p className="text-muted-foreground text-xs font-sans">
               No account?{" "}
-              <button onClick={() => setMode("signup")} className="text-accent hover:underline underline-offset-2">Start free trial</button>
+              <button onClick={() => setMode("signup")} className="text-accent hover:underline underline-offset-2">Create free account</button>
             </p>
           )}
           {mode === "forgot" && (

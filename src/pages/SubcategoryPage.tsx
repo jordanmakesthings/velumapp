@@ -1,8 +1,9 @@
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { ChevronLeft, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, CheckCircle2, Lock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePaywall } from "@/components/PaywallSheet";
 
 const CATEGORY_LABELS: Record<string, string> = {
   meditation: "Meditation",
@@ -17,7 +18,8 @@ export default function SubcategoryPage() {
   const [searchParams] = useSearchParams();
   const category = searchParams.get("category") || "";
   const subcategoryId = searchParams.get("subcategory") || "";
-  const { user } = useAuth();
+  const { user, hasAccess } = useAuth();
+  const { open: openPaywall } = usePaywall();
 
   // Fetch subcategory name
   const { data: subcategory } = useQuery({
@@ -103,12 +105,9 @@ export default function SubcategoryPage() {
           <div className="grid grid-cols-2 gap-3">
             {tracks.map((track: any) => {
               const isCompleted = completedIds instanceof Set && completedIds.has(track.id);
-              return (
-                <Link
-                  key={track.id}
-                  to={`/player?trackId=${track.id}`}
-                  className="velum-card min-w-0 max-w-full overflow-hidden"
-                >
+              const isLocked = !track.is_free && !hasAccess;
+              const body = (
+                <>
                   {track.thumbnail_url ? (
                     <div className="relative aspect-video overflow-hidden">
                       <img src={track.thumbnail_url} alt={track.title} className="w-full h-full object-cover" />
@@ -116,6 +115,11 @@ export default function SubcategoryPage() {
                         <div className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full gold-gradient">
                           <CheckCircle2 className="w-3 h-3 text-primary-foreground" />
                         </div>
+                      )}
+                      {isLocked && (
+                        <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-background/85 backdrop-blur-sm border border-accent/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-accent tracking-wide">
+                          <Lock className="w-2.5 h-2.5" /> $8/mo
+                        </span>
                       )}
                     </div>
                   ) : (
@@ -125,6 +129,11 @@ export default function SubcategoryPage() {
                           <CheckCircle2 className="w-3 h-3 text-primary-foreground" />
                         </div>
                       )}
+                      {isLocked && (
+                        <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-background/85 backdrop-blur-sm border border-accent/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-accent tracking-wide">
+                          <Lock className="w-2.5 h-2.5" /> $8/mo
+                        </span>
+                      )}
                     </div>
                   )}
                   <div className="p-2.5 min-w-0">
@@ -133,7 +142,15 @@ export default function SubcategoryPage() {
                       <p className="text-muted-foreground mt-1 text-[11px]">{track.duration_minutes}m</p>
                     )}
                   </div>
-                </Link>
+                </>
+              );
+              if (isLocked) {
+                return (
+                  <button key={track.id} type="button" onClick={openPaywall} className="velum-card min-w-0 max-w-full overflow-hidden text-left">{body}</button>
+                );
+              }
+              return (
+                <Link key={track.id} to={`/player?trackId=${track.id}`} className="velum-card min-w-0 max-w-full overflow-hidden">{body}</Link>
               );
             })}
           </div>

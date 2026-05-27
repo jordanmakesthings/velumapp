@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, Lock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePaywall } from "@/components/PaywallSheet";
 import VelumMark from "@/components/VelumMark";
 
 export default function CoursesPage() {
-  const { user } = useAuth();
+  const { user, hasAccess } = useAuth();
+  const { open: openPaywall } = usePaywall();
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: courses = [], isLoading } = useQuery({
@@ -118,26 +120,42 @@ export default function CoursesPage() {
             if (course.source === "v2") {
               const courseLessons = lessons.filter((l: any) => l.course_id === course.id);
               const completedLessons = lessonProgress.filter((p: any) => p.course_id === course.id).length;
-              return (
-                <Link key={course.id} to={`/course-v2?courseId=${course.id}`} className="velum-card overflow-hidden group">
+              const isLocked = !course.is_free && !hasAccess;
+              const body = (
+                <>
                   <div className="h-36 bg-surface-light relative">
                     {course.cover_image_url ? (
                       <img src={course.cover_image_url} alt={course.title} className="w-full h-full object-cover" />
                     ) : (
                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_hsl(42,53%,54%,0.1)_0%,_transparent_60%)]" />
                     )}
+                    {isLocked && (
+                      <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-background/85 backdrop-blur-sm border border-accent/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-accent tracking-wide">
+                        <Lock className="w-2.5 h-2.5" /> $8/mo
+                      </span>
+                    )}
                   </div>
                   <div className="p-5">
                     <h3 className="text-foreground font-serif text-lg mb-1">{course.title}</h3>
                     <p className="text-ui text-xs mb-4">{course.description}</p>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-1.5 bg-surface-light rounded-full overflow-hidden">
-                        <div className="h-full gold-gradient rounded-full" style={{ width: `${courseLessons.length ? (completedLessons / courseLessons.length) * 100 : 0}%` }} />
+                    {!isLocked && (
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-1.5 bg-surface-light rounded-full overflow-hidden">
+                          <div className="h-full gold-gradient rounded-full" style={{ width: `${courseLessons.length ? (completedLessons / courseLessons.length) * 100 : 0}%` }} />
+                        </div>
+                        <span className="text-ui text-[10px] font-sans tabular-nums">{completedLessons}/{courseLessons.length}</span>
                       </div>
-                      <span className="text-ui text-[10px] font-sans tabular-nums">{completedLessons}/{courseLessons.length}</span>
-                    </div>
+                    )}
                   </div>
-                </Link>
+                </>
+              );
+              if (isLocked) {
+                return (
+                  <button key={course.id} type="button" onClick={openPaywall} className="velum-card overflow-hidden group text-left">{body}</button>
+                );
+              }
+              return (
+                <Link key={course.id} to={`/course-v2?courseId=${course.id}`} className="velum-card overflow-hidden group">{body}</Link>
               );
             } else {
               const trackCount = getTrackCount(course.id);

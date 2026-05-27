@@ -13,6 +13,7 @@ interface LessonForm {
   media_url: string;
   written_content: string;
   is_free_preview: boolean;
+  is_free: boolean;
   order_index: number;
   downloadable_files: { name: string; url: string }[];
   lesson_type: "audio" | "video" | "writing";
@@ -29,7 +30,7 @@ interface ModuleData {
 
 const emptyLesson: LessonForm = {
   title: "", description: "", duration_minutes: 0, media_url: "",
-  written_content: "", is_free_preview: false, order_index: 0,
+  written_content: "", is_free_preview: false, is_free: false, order_index: 0,
   downloadable_files: [], lesson_type: "audio",
   thumbnail_url: "", thumbnail_square_url: "",
   journal_prompt: "",
@@ -158,6 +159,7 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
         media_url: data.media_url || null,
         written_content: data.written_content || null,
         is_free_preview: data.is_free_preview,
+        is_free: data.is_free,
         order_index: data.order_index,
         course_id: courseId,
         downloadable_files: data.downloadable_files as any,
@@ -345,6 +347,14 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                 <label className="text-xs text-foreground/80 font-sans">Free preview</label>
               </div>
 
+              <label className="md:col-span-2 flex items-start gap-2.5 text-foreground text-sm font-sans cursor-pointer rounded-xl border border-accent/20 bg-accent/[0.04] p-3">
+                <input type="checkbox" checked={lessonForm.is_free} onChange={e => setLessonForm(f => ({ ...f, is_free: e.target.checked }))} className="accent-accent mt-0.5" />
+                <div>
+                  <p className="text-foreground text-sm font-medium">Free for everyone</p>
+                  <p className="text-muted-foreground text-[11px] mt-0.5">No subscription required to access this.</p>
+                </div>
+              </label>
+
               {(lessonForm.lesson_type === "audio" || lessonForm.lesson_type === "video") && (
                 <div className="md:col-span-2">
                   <label className={labelClass}>{lessonForm.lesson_type === "video" ? "Video File" : "Audio File"}</label>
@@ -443,7 +453,12 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                     {typeIcon(type)}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-foreground text-sm font-sans font-medium truncate">{lesson.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-foreground text-sm font-sans font-medium truncate">{lesson.title}</p>
+                      {lesson.is_free && (
+                        <span className="inline-flex items-center rounded-full bg-accent/15 border border-accent/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-accent tracking-wider uppercase shrink-0">Free</span>
+                      )}
+                    </div>
                     <p className="text-muted-foreground text-xs font-sans">
                       {lesson.duration_minutes} min
                       {lesson.is_free_preview && <span className="ml-2 text-accent">· Free preview</span>}
@@ -459,6 +474,7 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                         media_url: lesson.media_url || "",
                         written_content: lesson.written_content || "",
                         is_free_preview: lesson.is_free_preview,
+                        is_free: !!lesson.is_free,
                         order_index: lesson.order_index,
                         downloadable_files: Array.isArray(lesson.downloadable_files) ? lesson.downloadable_files as any : [],
                         lesson_type: detectLessonType(lesson) as any,

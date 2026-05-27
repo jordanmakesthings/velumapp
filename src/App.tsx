@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PaywallSheetProvider } from "@/components/PaywallSheet";
+import { PremiumGate } from "@/components/PremiumGate";
 import HomePage from "./pages/HomePage";
 import LibraryPage from "./pages/LibraryPage";
 import FinderPage from "./pages/FinderPage";
@@ -22,7 +24,6 @@ import BilateralPage from "./pages/BilateralPage";
 import ToolsPage from "./pages/ToolsPage";
 import TappingGeneratorPage from "./pages/TappingGeneratorPage";
 import SomaticTouchPage from "./pages/SomaticTouchPage";
-import SOSPage from "./pages/SOSPage";
 import CheckinPage from "./pages/CheckinPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import CourseExperiencePage from "./pages/CourseExperiencePage";
@@ -51,6 +52,11 @@ const queryClient = new QueryClient();
 // Fire on first module load so UTMs are captured before any route renders.
 captureAttribution();
 
+// Premium page wrappers — each gets a PremiumGate fallback that opens the paywall sheet.
+const Gated = ({ title, description, children }: { title: string; description: string; children: React.ReactNode }) => (
+  <PremiumGate title={title} description={description}>{children}</PremiumGate>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -58,10 +64,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <PaywallSheetProvider>
           <Routes>
             {/* Public routes */}
             <Route path="/signup" element={<AuthPage />} />
-            <Route path="/trial-free" element={<AuthPage />} />
+            <Route path="/trial-free" element={<Navigate to="/signup" replace />} />
             <Route path="/free-track" element={<FreeTrackPage />} />
             <Route path="/welcome-back" element={<WelcomeBackPage />} />
             <Route path="/quiz" element={<QuizPage />} />
@@ -76,21 +83,21 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/auth/confirm" element={<AuthConfirmPage />} />
 
-            {/* App routes with layout — all protected */}
+            {/* App routes with layout — auth-protected, mix of free + gated */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="/home" element={<HomePage />} />
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/finder" element={<FinderPage />} />
               <Route path="/breathe" element={<BreathePage />} />
-              <Route path="/tools" element={<ToolsPage />} />
+              <Route path="/tools" element={<Gated title="Interactive Tools" description="Tapping, bilateral, somatic touch — the full real-time toolkit. Premium unlocks everything beyond breathwork."><ToolsPage /></Gated>} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/course/:id" element={<CourseDetailPage />} />
               <Route path="/course-v2" element={<CourseExperiencePage />} />
               <Route path="/subcategory" element={<SubcategoryPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/journal" element={<JournalPage />} />
-              <Route path="/custom-track" element={<CustomTrackPage />} />
+              <Route path="/custom-track" element={<Gated title="Your Custom Rewiring Audio" description="A 60-second conversation. A personalized 10-minute Ericksonian audio in your chosen voice. The Velum moat — unlocked with Premium."><CustomTrackPage /></Gated>} />
               <Route path="/audios" element={<AudiosPage />} />
             </Route>
 
@@ -99,11 +106,10 @@ const App = () => (
             <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/premium" element={<ProtectedRoute><PremiumPage /></ProtectedRoute>} />
             <Route path="/player" element={<ProtectedRoute><PlayerPage /></ProtectedRoute>} />
-            <Route path="/bilateral" element={<ProtectedRoute><BilateralPage /></ProtectedRoute>} />
-            <Route path="/tapping" element={<ProtectedRoute><TappingGeneratorPage /></ProtectedRoute>} />
-            <Route path="/somatic-touch" element={<ProtectedRoute><SomaticTouchPage /></ProtectedRoute>} />
-            <Route path="/sos" element={<ProtectedRoute><SOSPage /></ProtectedRoute>} />
-            <Route path="/checkin" element={<ProtectedRoute><CheckinPage /></ProtectedRoute>} />
+            <Route path="/bilateral" element={<ProtectedRoute><Gated title="Bilateral Stimulation" description="Visual + stereo audio bilateral tool. Unlock with Premium."><BilateralPage /></Gated></ProtectedRoute>} />
+            <Route path="/tapping" element={<ProtectedRoute><Gated title="EFT Tapping" description="Guided tapping sequences for clearing stress and limiting beliefs. Premium-only."><TappingGeneratorPage /></Gated></ProtectedRoute>} />
+            <Route path="/somatic-touch" element={<ProtectedRoute><Gated title="Somatic Touch" description="Grounding sequences for nervous-system regulation. Premium-only."><SomaticTouchPage /></Gated></ProtectedRoute>} />
+            <Route path="/checkin" element={<ProtectedRoute><Gated title="Daily Check-in" description="Rate your nervous system and get a tool recommendation. Premium-only."><CheckinPage /></Gated></ProtectedRoute>} />
             <Route path="/mastery-player" element={<ProtectedRoute><MasteryPlayerPage /></ProtectedRoute>} />
             <Route path="/home-setup" element={<ProtectedRoute><HomeScreenSetupPage /></ProtectedRoute>} />
             <Route path="/paymentsuccess" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
@@ -115,6 +121,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </PaywallSheetProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

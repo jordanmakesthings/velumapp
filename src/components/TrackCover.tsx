@@ -34,7 +34,7 @@ const TITLE_OVERRIDES: { match: RegExp; slug: string }[] = [
   { match: /pillars?\b.*\b3\b|\bspend\b/i,                 slug: "01-doorway" },
   { match: /pillars?\b.*\b4\b|\bmultiply\b/i,              slug: "04-forest" },
   { match: /pillars?\b.*\b5\b|\benjoy\b/i,                 slug: "20-moon" },
-  { match: /pillars?\b.*\b6\b|\bcirculate\b|\bgive\b/i,    slug: "12-cosmic" },
+  { match: /pillars?\b.*\b6\b|\bcirculate\b|\bgive\b/i,    slug: "10-mist" },
 ];
 
 // FNV-1a 32-bit hash — fast + good distribution
@@ -85,7 +85,7 @@ export function TrackCover({ trackId, title, size = "md", rounded = "2xl", showT
         src={url}
         alt=""
         loading="lazy"
-        className="absolute inset-0 w-full h-full object-cover scale-110"
+        className="absolute inset-0 w-full h-full object-cover object-center"
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
       />
       {showTitle && title && (

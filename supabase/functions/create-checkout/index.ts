@@ -117,7 +117,6 @@ Deno.serve(async (req) => {
     if (plan === "annual") {
       sessionParams.mode = "subscription";
       sessionParams.subscription_data = {
-        trial_period_days: 7,
         metadata: {
           supabase_user_id: userId,
           plan,
