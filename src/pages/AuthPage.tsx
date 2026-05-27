@@ -173,7 +173,7 @@ export default function AuthPage() {
 
           {/* Headline — Cormorant editorial */}
           <h2 className="text-display text-4xl md:text-[2.6rem] leading-[1.05] text-center mb-7">
-            {mode === "signup" && <>Welcome to the ultimate<br />tool for your<br /><RotatingWord /></>}
+            {mode === "signup" && <>The ultimate tool<br />for your<br /><RotatingWord /></>}
             {mode === "login" && <>Welcome<br /><span className="italic text-accent">back.</span></>}
             {mode === "forgot" && <>Reset your<br /><span className="italic text-accent">password.</span></>}
           </h2>
@@ -262,7 +262,7 @@ export default function AuthPage() {
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                   <>
-                    {mode === "signup" && "Create Account →"}
+                    {mode === "signup" && "Create Free Account →"}
                     {mode === "login" && "Sign in →"}
                     {mode === "forgot" && "Send reset link"}
                   </>
@@ -294,7 +294,7 @@ export default function AuthPage() {
           {mode === "login" && (
             <p className="text-foreground/70 text-sm font-sans">
               No account?{" "}
-              <button onClick={() => setMode("signup")} className="text-accent hover:underline underline-offset-2">Create free account</button>
+              <button onClick={() => setMode("signup")} className="text-accent hover:underline underline-offset-2">Create Free Account</button>
             </p>
           )}
           {mode === "forgot" && (
