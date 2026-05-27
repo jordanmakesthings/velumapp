@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,27 +16,26 @@ const GOALS = [
   { key: "trauma",     label: "Process and release what I'm carrying" },
 ];
 
-const EXPERIENCE = [
-  { key: "new",      label: "New to this",         sub: "These tools are unfamiliar to me" },
-  { key: "some",     label: "Some experience",     sub: "I've explored but never gone deep" },
-  { key: "regular",  label: "Regular practice",    sub: "I show up — but I know there's more" },
-  { key: "advanced", label: "Deep practitioner",   sub: "I live this. I'm here to go further." },
+// Future-pacing — written in PRESENT TENSE so the user reads them as already-true,
+// not as goals. The mind responds differently to "I am calm" vs "I want to be calm".
+const VISION = [
+  { key: "calm",     label: "I'm calm under pressure" },
+  { key: "trust",    label: "I trust myself" },
+  { key: "sleep",    label: "I sleep deeply" },
+  { key: "present",  label: "I'm fully present with the people I love" },
+  { key: "free",     label: "I'm no longer running from anything" },
+  { key: "safe",     label: "My body finally feels safe" },
+  { key: "build",    label: "I'm building what I'm here to build" },
+  { key: "want",     label: "I wake up wanting to be me" },
 ];
 
-const BUILDING_LINES = [
-  "Analyzing your goals…",
-  "Mapping your nervous system signature…",
-  "Curating your first sessions…",
-  "Calibrating your daily practice…",
-  "Ready.",
-];
-
-const OUTCOME_BULLETS = [
-  "Reclaim agency over your thinking",
-  "Snap yourself out of fight-or-flight at will",
-  "Wake up with the inner peace you know you're capable of",
-  "Fall asleep embodying a deep sense of safety",
-  "Have the tools to break through the beliefs keeping you anchored to the past",
+// Embodied felt-sense — locks the vision into a single word the body recognizes.
+const FEELING = [
+  { key: "settled",  label: "Settled" },
+  { key: "free",     label: "Free" },
+  { key: "powerful", label: "Powerful" },
+  { key: "whole",    label: "Whole" },
+  { key: "awake",    label: "Awake" },
 ];
 
 const slide = {
@@ -45,9 +44,8 @@ const slide = {
   exit:    { opacity: 0, x: -24, transition: { duration: 0.2 } },
 };
 
-// 2 data-collection steps drive the progress bar (goals + experience).
-// Name + phone are pulled from the profile (set at signup) — no re-collection.
-const DATA_STEPS = 2;
+// 3 data-collection steps drive the progress bar (goals + vision + feeling).
+const DATA_STEPS = 3;
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -55,43 +53,61 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  // Step 0 — multi-select goals
+  // Step 0 — what brought them here
   const [goals, setGoals] = useState<string[]>([]);
 
-  // Step 1 — experience
-  const [experience, setExperience] = useState("");
+  // Step 1 — future-pace vision
+  const [vision, setVision] = useState<string[]>([]);
 
-  // Step 2 — building animation
+  // Step 2 — embodied felt-sense
+  const [feeling, setFeeling] = useState("");
+
+  // Step 3 — building animation
   const [buildLine, setBuildLine] = useState(0);
 
-  // First name pulled from profile (already captured at signup as full_name).
+  // First name pulled from profile (already captured at signup).
   const firstName = (profile?.full_name || "").trim().split(" ")[0] || "";
 
-  // Progress bar fill — only shown on data steps (0-1)
+  // Building lines reference what they actually said, so the "building" feels personal.
+  const buildingLines = useMemo(() => {
+    const feelingLabel = FEELING.find(f => f.key === feeling)?.label || "calm";
+    const firstVision = VISION.find(v => v.key === vision[0])?.label || "I trust myself";
+    const firstGoal = GOALS.find(g => g.key === goals[0])?.label.toLowerCase() || "your goals";
+    return [
+      `Anchoring "${firstVision}"…`,
+      `Mapping your path to feeling ${feelingLabel}…`,
+      `Curating sessions for ${firstGoal}…`,
+      "Calibrating your daily practice…",
+      "Ready.",
+    ];
+  }, [feeling, vision, goals]);
+
+  // Progress bar fill — only shown on data steps (0-2)
   const progressPercent = Math.min(100, ((step + 1) / DATA_STEPS) * 100);
   const showProgress = step < DATA_STEPS;
 
-  // Step 2 — cycle through building lines, then auto-advance to welcome
+  // Step 3 — cycle through building lines, then auto-advance to welcome
   useEffect(() => {
-    if (step !== 2) return;
+    if (step !== 3) return;
     setBuildLine(0);
-    const tick = setInterval(() => setBuildLine(l => Math.min(l + 1, BUILDING_LINES.length - 1)), 1000);
-    const finish = setTimeout(() => setStep(3), 5000);
+    const tick = setInterval(() => setBuildLine(l => Math.min(l + 1, buildingLines.length - 1)), 1100);
+    const finish = setTimeout(() => setStep(4), 5800);
     return () => { clearInterval(tick); clearTimeout(finish); };
-  }, [step]);
+  }, [step, buildingLines.length]);
 
   const toggleGoal = (key: string) => setGoals(g => g.includes(key) ? g.filter(k => k !== key) : [...g, key]);
+  const toggleVision = (key: string) => setVision(v => v.includes(key) ? v.filter(k => k !== key) : [...v, key]);
 
   const complete = async () => {
     if (!user || saving) return;
     setSaving(true);
     await supabase.from("profiles").update({
       onboarding_completed: true,
-      onboarding_answers: { goals, experience },
+      onboarding_answers: { goals, vision, feeling },
     }).eq("id", user.id);
     await refreshProfile();
-    // Freemium model: everyone lands on /home. Conversion happens organically via
-    // soft paywall sheets when they tap a premium feature — not by force at signup.
+    // Freemium model: everyone lands on /home. Conversion happens via soft paywall
+    // sheets when they tap a premium feature — not by force at signup.
     navigate("/home");
   };
 
@@ -160,36 +176,77 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* STEP 1 — Experience */}
+          {/* STEP 1 — Future-pace, vision. Present-tense statements lock in identity. */}
           {step === 1 && (
-            <motion.div key="exp" {...slide} className="w-full">
+            <motion.div key="vision" {...slide} className="w-full">
               <div className="text-center mb-8">
-                <h1 className="text-display text-[2.1rem] leading-[1.1] mb-3">Rate your <span className="text-accent italic">experience</span><br />with meditation &amp; nervous system work.</h1>
+                <p className="text-eyebrow mb-3">Take a breath</p>
+                <h1 className="text-display text-[2rem] leading-[1.1] mb-3">
+                  Picture <span className="italic text-accent">6 months from now.</span><br />
+                  Which is true about you?
+                </h1>
+                <p className="text-muted-foreground text-sm font-light">
+                  Pick what lands.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                {VISION.map(({ key, label }) => {
+                  const selected = vision.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => toggleVision(key)}
+                      className={`velum-card w-full px-5 py-4 flex items-center gap-3 text-left transition-all duration-200 active:scale-[0.98] ${
+                        selected ? "!border-accent/50 shadow-[0_0_24px_rgba(201,168,76,0.15)]" : ""
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-[4px] border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                        selected ? "border-accent bg-accent" : "border-muted-foreground/30"
+                      }`}>
+                        {selected && <span className="text-primary-foreground text-[10px] font-bold leading-none">✓</span>}
+                      </div>
+                      <span className="text-foreground text-sm font-sans font-medium italic">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={next}
+                disabled={vision.length === 0}
+                className="w-full py-5 rounded-full gold-gradient text-primary-foreground font-bold text-base tracking-wide active:scale-[0.98] transition-transform disabled:opacity-40 mt-5"
+              >
+                Continue →
+              </button>
+            </motion.div>
+          )}
+
+          {/* STEP 2 — Embodied feeling. Single-select word that anchors the felt sense. */}
+          {step === 2 && (
+            <motion.div key="feeling" {...slide} className="w-full">
+              <div className="text-center mb-10">
+                <p className="text-eyebrow mb-3">Now feel it</p>
+                <h1 className="text-display text-[2.2rem] leading-[1.05] mb-3">
+                  How does <span className="italic text-accent">that version of you</span><br />feel — in one word?
+                </h1>
               </div>
               <div className="flex flex-col gap-3">
-                {EXPERIENCE.map(({ key, label, sub }) => (
+                {FEELING.map(({ key, label }) => (
                   <button
                     key={key}
-                    onClick={() => { setExperience(key); next(); }}
-                    className={`velum-card w-full px-5 py-5 flex items-center justify-between text-left transition-all duration-200 active:scale-[0.98] ${
-                      experience === key ? "!border-accent/50 shadow-[0_0_24px_rgba(201,168,76,0.15)]" : ""
+                    onClick={() => { setFeeling(key); next(); }}
+                    className={`velum-card w-full py-5 flex items-center justify-center text-center transition-all duration-200 active:scale-[0.98] ${
+                      feeling === key ? "!border-accent/50 shadow-[0_0_24px_rgba(201,168,76,0.15)]" : ""
                     }`}
                   >
-                    <div>
-                      <p className="text-foreground text-sm font-sans font-semibold">{label}</p>
-                      <p className="text-muted-foreground text-xs font-sans mt-0.5">{sub}</p>
-                    </div>
-                    <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ml-4 transition-all ${
-                      experience === key ? "border-accent bg-accent" : "border-muted-foreground/25"
-                    }`} />
+                    <span className="text-display text-2xl italic">{label}</span>
                   </button>
                 ))}
               </div>
             </motion.div>
           )}
 
-          {/* STEP 2 — Building your program (5s) */}
-          {step === 2 && (
+          {/* STEP 3 — Building your program. References their actual answers. */}
+          {step === 3 && (
             <motion.div key="building" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full text-center">
               <div className="relative w-24 h-24 mx-auto mb-8">
                 <div className="absolute inset-0 rounded-full border-2 border-accent/15" />
@@ -199,25 +256,25 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <p className="text-eyebrow mb-3">Building your program</p>
-              <div className="h-6">
+              <div className="h-7">
                 <AnimatePresence mode="wait">
                   <motion.p
                     key={buildLine}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.25 }}
+                    transition={{ duration: 0.3 }}
                     className="text-muted-foreground text-sm font-sans"
                   >
-                    {BUILDING_LINES[buildLine]}
+                    {buildingLines[buildLine]}
                   </motion.p>
                 </AnimatePresence>
               </div>
             </motion.div>
           )}
 
-          {/* STEP 3 — You're in. Welcome them into the app, no paywall push. */}
-          {step === 3 && (
+          {/* STEP 4 — You're in. Welcome them into the app, no paywall push. */}
+          {step === 4 && (
             <motion.div key="welcome" {...slide} className="w-full text-center">
               <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(201,168,76,0.25)]">
                 <span className="text-primary-foreground text-2xl">✦</span>
@@ -228,15 +285,11 @@ export default function OnboardingPage() {
               </h1>
 
               <div className="velum-card-accent p-5 mb-6 text-left">
-                <p className="text-eyebrow mb-4 text-center">Imagine 7 days from now…</p>
-                <div className="flex flex-col gap-3">
-                  {OUTCOME_BULLETS.map((bullet, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <span className="text-accent text-sm mt-0.5 flex-shrink-0">—</span>
-                      <p className="text-foreground text-sm font-sans leading-snug">{bullet}</p>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-eyebrow mb-4 text-center">Your first move</p>
+                <p className="text-foreground text-sm font-sans leading-relaxed">
+                  Velum's breathwork tool is open to you, free, forever. The fastest way to feel the shift
+                  is to sit with it for just five minutes today. Even one session changes the day around it.
+                </p>
               </div>
 
               <button
