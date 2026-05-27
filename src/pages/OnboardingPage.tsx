@@ -38,14 +38,17 @@ const TRIED = [
 
 // ── Step 4 — future-pacing vision (PRESENT TENSE, that's the whole point) ──
 const VISION = [
-  { key: "calm",    label: "I'm calm under pressure" },
-  { key: "trust",   label: "I trust myself" },
-  { key: "sleep",   label: "I sleep deeply" },
-  { key: "present", label: "I'm fully present with the people I love" },
-  { key: "free",    label: "I'm no longer running from anything" },
-  { key: "safe",    label: "My body finally feels safe" },
-  { key: "build",   label: "I'm building what I'm here to build" },
-  { key: "want",    label: "I wake up wanting to be me" },
+  { key: "agency",     label: "I feel a sense of control and agency over my emotions" },
+  { key: "confidence", label: "I embody a true sense of quiet confidence and self-certainty" },
+  { key: "inner",      label: "I no longer look outside myself for answers" },
+  { key: "money",      label: "I'm experiencing a greater flow of money" },
+  { key: "present",    label: "I live more in the present moment, less in the future or the past" },
+  { key: "sleep",      label: "I fall asleep quickly and sleep deeply, waking up feeling rested" },
+  { key: "calm",       label: "I navigate life's inevitable ups and downs with a greater sense of calm and indifference" },
+  { key: "vitality",   label: "Overall I have greater senses of health and vitality" },
+  { key: "aligned",    label: "I feel aligned in the work I do and my mission on earth" },
+  { key: "toolbox",    label: "I have a toolbox I can reach for any time I need to come back into balance" },
+  { key: "embody",     label: "I'm no longer working toward an imaginary future — I'm embodying that future self each day" },
 ];
 
 const slide = {
@@ -245,10 +248,9 @@ export default function OnboardingPage() {
           {step === 4 && (
             <motion.div key="vision" {...slide} className="w-full">
               <div className="text-center mb-8">
-                <p className="text-eyebrow mb-3">Take a breath</p>
                 <h1 className="text-display text-[2rem] leading-[1.1] mb-3">
                   Picture <span className="italic text-accent">6 months from now.</span><br />
-                  Which is true about you?
+                  What is true?
                 </h1>
                 <p className="text-muted-foreground text-sm font-light">
                   Pick what lands.
