@@ -1,9 +1,38 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import VelumMark from "@/components/VelumMark";
+
+// Words that cycle through the signup hero ("the ultimate tool for your X").
+// Each one is a layer Velum actually addresses — keeps the promise honest.
+const ROTATING_WORDS = ["mind", "body", "nervous system"];
+
+function RotatingWord() {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const tick = setInterval(() => setIdx(i => (i + 1) % ROTATING_WORDS.length), 2500);
+    return () => clearInterval(tick);
+  }, []);
+  return (
+    <span className="inline-block">
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={ROTATING_WORDS[idx]}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="italic text-accent inline-block"
+        >
+          {ROTATING_WORDS[idx]}.
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  );
+}
 
 type Mode = "signup" | "login" | "forgot";
 
@@ -150,7 +179,7 @@ export default function AuthPage() {
 
           {/* Headline — Cormorant editorial */}
           <h2 className="text-display text-4xl md:text-[2.6rem] leading-[1.05] text-center mb-3">
-            {mode === "signup" && <>Regulate your<br /><span className="italic text-accent">nervous system.</span></>}
+            {mode === "signup" && <>Welcome to the ultimate<br />tool for your <RotatingWord /></>}
             {mode === "login" && <>Welcome<br /><span className="italic text-accent">back.</span></>}
             {mode === "forgot" && <>Reset your<br /><span className="italic text-accent">password.</span></>}
           </h2>
