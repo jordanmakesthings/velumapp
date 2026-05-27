@@ -21,6 +21,10 @@ const androidSteps = [
 export default function HomeScreenSetupPage() {
   const [device, setDevice] = useState<"ios" | "android" | null>(null);
   const navigate = useNavigate();
+  const dismiss = () => {
+    try { localStorage.setItem("velum_home_setup_seen", "1"); } catch {}
+    navigate("/");
+  };
   const steps = device === "ios" ? iosSteps : androidSteps;
 
   return (
@@ -80,7 +84,7 @@ export default function HomeScreenSetupPage() {
                 </button>
               </div>
               <button
-                onClick={() => navigate("/")}
+                onClick={dismiss}
                 className="text-muted-foreground/70 text-xs font-sans underline underline-offset-2 hover:text-muted-foreground"
               >
                 Skip this step
@@ -104,7 +108,7 @@ export default function HomeScreenSetupPage() {
                 ))}
               </ol>
               <button
-                onClick={() => navigate("/")}
+                onClick={dismiss}
                 className="w-full py-4 rounded-xl gold-gradient text-primary-foreground font-sans font-semibold text-sm active:scale-[0.98] transition-transform shadow-[0_0_30px_rgba(201,168,76,0.25)] mb-4"
               >
                 Enter Velum →

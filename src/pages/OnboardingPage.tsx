@@ -122,6 +122,11 @@ export default function OnboardingPage() {
   const complete = async () => {
     if (!user || saving) return;
     setSaving(true);
+    // Mark home-screen-setup as seen if they reached this point — covers both
+    // the case where they tapped "Enter Velum" after seeing the install steps
+    // AND the case where they're on desktop/already-installed (installPlatform='skip').
+    // PaymentSuccessPage reads this flag to skip the post-purchase prompt.
+    try { localStorage.setItem("velum_home_setup_seen", "1"); } catch {}
     await supabase.from("profiles").update({
       onboarding_completed: true,
       onboarding_answers: { goals, experience, tried, vision },

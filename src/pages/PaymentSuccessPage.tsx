@@ -8,6 +8,15 @@ import { rdtTrack } from "@/lib/reddit-pixel";
 const MAX_POLL_MS = 12000;
 const POLL_INTERVAL_MS = 1500;
 
+// If the user already saw the home-screen setup step during onboarding,
+// skip it after purchase — no point asking them twice.
+function postPaywallRoute(): string {
+  try {
+    if (localStorage.getItem("velum_home_setup_seen") === "1") return "/home";
+  } catch {}
+  return "/home-setup";
+}
+
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
   const { user, hasAccess, refreshProfile } = useAuth();
@@ -30,7 +39,7 @@ export default function PaymentSuccessPage() {
       if (cancelled) return;
       clearInterval(interval);
       setMessage("Taking longer than expected. Continuing anyway.");
-      setTimeout(() => navigate("/home-setup", { replace: true }), 1200);
+      setTimeout(() => navigate(postPaywallRoute(), { replace: true }), 1200);
     }, MAX_POLL_MS);
 
     return () => { cancelled = true; clearInterval(interval); clearTimeout(timeout); };
@@ -62,7 +71,7 @@ export default function PaymentSuccessPage() {
         fbqTrack("Purchase", { value, currency: "USD" });
       } catch {}
     })();
-    const t = setTimeout(() => navigate("/home-setup", { replace: true }), 1200);
+    const t = setTimeout(() => navigate(postPaywallRoute(), { replace: true }), 1200);
     return () => clearTimeout(t);
   }, [hasAccess, navigate, user?.id]);
 
@@ -108,7 +117,7 @@ export default function PaymentSuccessPage() {
           </div>
 
           <button
-            onClick={() => navigate("/home-setup", { replace: true })}
+            onClick={() => navigate(postPaywallRoute(), { replace: true })}
             className="text-muted-foreground/70 text-xs font-sans underline underline-offset-2 hover:text-muted-foreground"
           >
             Skip →
