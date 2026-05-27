@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { Download, Upload, Check, Loader2 } from "lucide-react";
+import { Download, Upload, Check, Loader2, Shuffle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { listAllCovers, deriveTagsFromText, type TrackCover } from "@/lib/track-covers";
 import { toast } from "sonner";
@@ -402,6 +402,11 @@ export default function ThumbnailGenerator({ title, category, enabled: externalE
   const logoRef = useRef<HTMLCanvasElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
+  // Local shuffle override — when set, forces a specific (different) cover from the pool.
+  // External `coverUrlOverride` prop wins if provided.
+  const [localCoverOverride, setLocalCoverOverride] = useState<string | null>(null);
+  const [shuffling, setShuffling] = useState(false);
+  const effectiveOverride = coverUrlOverride ?? localCoverOverride ?? undefined;
 
   const redrawAndNotify = useCallback(() => {
     if (!enabled) return;
@@ -409,12 +414,36 @@ export default function ThumbnailGenerator({ title, category, enabled: externalE
     // Debounce: draw (async — artwork may need to load) then emit blobs.
     if (pendingRef.current) clearTimeout(pendingRef.current);
     pendingRef.current = setTimeout(async () => {
-      if (libraryRef.current) await drawLibrary(libraryRef.current, title, category, logoRef.current, coverUrlOverride);
-      if (playerRef.current) await drawPlayer(playerRef.current, title, category, logoRef.current, coverUrlOverride);
+      if (libraryRef.current) await drawLibrary(libraryRef.current, title, category, logoRef.current, effectiveOverride);
+      if (playerRef.current) await drawPlayer(playerRef.current, title, category, logoRef.current, effectiveOverride);
       if (libraryRef.current) libraryRef.current.toBlob(b => onLibraryBlob?.(b), "image/png");
       if (playerRef.current) playerRef.current.toBlob(b => onPlayerBlob?.(b), "image/png");
     }, 400);
-  }, [title, category, enabled, onLibraryBlob, onPlayerBlob, coverUrlOverride]);
+  }, [title, category, enabled, onLibraryBlob, onPlayerBlob, effectiveOverride]);
+
+  // Reset the local shuffle whenever the title changes — a fresh title gets its
+  // auto-matched art, not the previously-shuffled one from another item.
+  useEffect(() => { setLocalCoverOverride(null); }, [title]);
+
+  const handleRegenerate = useCallback(async () => {
+    setShuffling(true);
+    try {
+      const covers = await listAllCovers();
+      if (!covers.length) { toast.error("No covers available"); return; }
+      // Determine the current cover so we don't re-pick the same one.
+      let current = effectiveOverride;
+      if (!current) {
+        const auto = await pickCoverUrl(title, category);
+        current = auto ?? undefined;
+      }
+      const pool = covers.filter(c => c.url !== current);
+      if (!pool.length) { toast.error("Only one cover in the pool"); return; }
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      setLocalCoverOverride(pick.url);
+    } finally {
+      setShuffling(false);
+    }
+  }, [title, category, effectiveOverride]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -471,9 +500,23 @@ export default function ThumbnailGenerator({ title, category, enabled: externalE
         <label className="text-xs text-muted-foreground uppercase tracking-wider">
           Thumbnails <span className="normal-case ml-2 opacity-50">Auto-generate on-brand</span>
         </label>
-        <button type="button" onClick={handleToggle} className={`relative w-10 h-5 rounded-full transition-all ${enabled ? "bg-accent" : "bg-card"}`}>
-          <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-foreground shadow transition-all ${enabled ? "left-5" : "left-0.5"}`} />
-        </button>
+        <div className="flex items-center gap-3">
+          {enabled && (
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              disabled={shuffling}
+              className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-accent transition-colors disabled:opacity-40"
+              title="Pick a different artwork"
+            >
+              {shuffling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Shuffle className="w-3 h-3" />}
+              Regenerate
+            </button>
+          )}
+          <button type="button" onClick={handleToggle} className={`relative w-10 h-5 rounded-full transition-all ${enabled ? "bg-accent" : "bg-card"}`}>
+            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-foreground shadow transition-all ${enabled ? "left-5" : "left-0.5"}`} />
+          </button>
+        </div>
       </div>
       {enabled && (
         <div className="space-y-3">
