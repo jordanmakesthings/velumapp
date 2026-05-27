@@ -832,31 +832,21 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {/* Library quick links — browseable for everyone; per-item locks live inside each page */}
+      {/* Library — single CTA; the new Library page handles browsing */}
       <div className="mb-10 min-w-0 w-full">
-        <p className="text-eyebrow mb-4">The Library</p>
-        <div className="flex flex-col gap-1.5">
-          {[
-            { label: "Meditation", count: categoryCounts["meditation"] || 0, to: "/library?category=meditation" },
-            { label: "Rapid Resets", count: categoryCounts["rapid_resets"] || 0, to: "/library?category=rapid_resets" },
-            { label: "Mastery Classes", count: masteryCount, to: "/library?tab=mastery" },
-            { label: "Quests", count: courses.length, to: "/courses" },
-          ].map(({ label, count, to }) => (
-            <Link
-              key={to}
-              to={to}
-              className="velum-card-flat flex items-center justify-between px-4 py-3.5 group hover:border-accent/25 transition-colors text-left w-full"
-            >
-              <div className="flex items-center gap-2">
-                <p className="text-foreground text-sm font-medium">{label}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-muted-foreground/70 text-xs tabular-nums">{count}</span>
-                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/60 group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
-              </div>
-            </Link>
-          ))}
-        </div>
+        <Link
+          to="/library"
+          className="velum-card flex items-center gap-4 px-5 py-4 group hover:border-accent/30 transition-colors w-full"
+        >
+          <div className="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+            <BookOpen className="w-4 h-4 text-accent" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-foreground text-[15px] font-semibold tracking-tight">Browse the Library</p>
+            <p className="text-ui text-[11px] mt-0.5 tracking-wide">Meditations, tapping, quests, mastery & more</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
+        </Link>
       </div>
 
       {/* Today's Reflection — kept intentionally neutral (no gold) so the prompt + the user's writing carry the weight, not branding */}
