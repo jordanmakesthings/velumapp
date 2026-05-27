@@ -8,14 +8,14 @@ import { ShareCard } from "@/components/ShareCard";
 
 const DURATIONS = [5, 10, 15, 20, 30, 45, 60];
 
-type Ambient = "none" | "rain" | "forest" | "om" | "bell-only";
+type Ambient = "none" | "rain" | "forest" | "fire" | "waves";
 
 const AMBIENT_OPTIONS: { key: Ambient; label: string }[] = [
   { key: "none", label: "None" },
   { key: "rain", label: "Rain" },
   { key: "forest", label: "Forest" },
-  { key: "om", label: "Om" },
-  { key: "bell-only", label: "Bell-only" },
+  { key: "fire", label: "Fire" },
+  { key: "waves", label: "Waves" },
 ];
 
 const BOWL_URL = "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/audio/bowl.mp3";
@@ -23,8 +23,8 @@ const AMBIENT_URLS: Record<Ambient, string | null> = {
   none: null,
   rain: "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/audio/ambient-rain.mp3",
   forest: "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/audio/ambient-forest.mp3",
-  om: "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/audio/ambient-om.mp3",
-  "bell-only": null,
+  fire: "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/audio/ambient-fire.mp3",
+  waves: "https://etghaosktmxloqivquvu.supabase.co/storage/v1/object/public/audio/ambient-waves.mp3",
 };
 
 function fmt(s: number) {
