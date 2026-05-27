@@ -240,7 +240,7 @@ export default function PremiumPage() {
             <div className="relative">
               {isFounding && (
                 <span className="absolute -top-2.5 left-4 gold-gradient text-primary-foreground text-[10px] font-sans font-semibold px-2.5 py-0.5 rounded-full tracking-wide z-10">
-                  14 remaining
+                  6 remaining
                 </span>
               )}
               <button

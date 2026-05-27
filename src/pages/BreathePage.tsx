@@ -170,7 +170,7 @@ export default function BreathePage() {
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [phaseLabel, setPhaseLabel] = useState("");
   const [phaseCountdown, setPhaseCountdown] = useState(0);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const voiceEnabledRef = useRef(false);
@@ -515,7 +515,13 @@ export default function BreathePage() {
                   {techniques.map(t => {
                     const sel = selectedTech.id === t.id;
                     return (
-                      <button key={t.id} onClick={() => setSelectedTech(t)}
+                      <button key={t.id} onClick={() => {
+                        setSelectedTech(t);
+                        // Jump down to the duration / start area so they don't have to scroll.
+                        requestAnimationFrame(() => {
+                          document.getElementById("breathe-setup-anchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        });
+                      }}
                         className={`velum-card p-3.5 text-left transition-all duration-200 ${sel ? "ring-1 ring-accent/50" : ""}`}>
                         <div className="w-2 h-2 rounded-full mb-2" style={{ background: t.color, boxShadow: sel ? `0 0 8px ${t.color}` : "none" }} />
                         <div className="text-[13px] font-semibold text-foreground mb-0.5 uppercase">{t.name}</div>
@@ -539,7 +545,7 @@ export default function BreathePage() {
                 </div>
               </div>
 
-              <div className="velum-card p-5 mb-5 border border-accent/20">
+              <div id="breathe-setup-anchor" className="velum-card p-5 mb-5 border border-accent/20">
                 <div className="flex justify-between items-center mb-4">
                   <p className="text-[11px] tracking-[2px] uppercase text-muted-foreground/50">Duration</p>
                   <span className="text-display text-2xl text-accent">{selectedDuration} min</span>

@@ -859,11 +859,11 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Today's Reflection */}
+      {/* Today's Reflection — kept intentionally neutral (no gold) so the prompt + the user's writing carry the weight, not branding */}
       <div className="mb-10 min-w-0 w-full max-w-full">
         <div className="mb-4 flex flex-wrap gap-6 items-center">
-          <p className="text-eyebrow">Today's Reflection</p>
-          <Link to="/journal" className="text-muted-foreground/70 text-[10px] tracking-[0.2em] uppercase hover:text-accent transition-colors">Past entries →</Link>
+          <p className="text-[10px] font-medium tracking-[0.28em] uppercase text-muted-foreground">Today's Reflection</p>
+          <Link to="/journal" className="text-muted-foreground/70 text-[10px] tracking-[0.2em] uppercase hover:text-foreground transition-colors">Past entries →</Link>
         </div>
         <div className="velum-card w-full max-w-full min-w-0 p-6">
           <p className="text-muted-foreground/60 mb-4 text-[10px] font-medium tracking-[0.2em] uppercase tabular-nums">
@@ -874,7 +874,7 @@ export default function HomePage() {
             value={reflectionText}
             onChange={(e) => setReflectionText(e.target.value)}
             placeholder="Take a breath, then write freely…"
-            className="mb-4 h-28 w-full max-w-full rounded-xl p-4 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-accent/30 transition-shadow bg-background/80 border border-border text-foreground placeholder:text-muted-foreground/40"
+            className="mb-4 h-28 w-full max-w-full rounded-xl p-4 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-shadow bg-background/80 border border-border text-foreground placeholder:text-muted-foreground/40"
           />
 
           {user &&
@@ -882,7 +882,7 @@ export default function HomePage() {
               <button
                 onClick={handleSaveReflection}
                 disabled={!reflectionText.trim() || savingReflection}
-                className="rounded-full border border-accent/30 hover:border-accent px-5 py-2.5 text-xs font-medium tracking-wide text-accent disabled:opacity-30 disabled:border-border disabled:text-muted-foreground transition-all">
+                className="rounded-full border border-foreground/20 hover:border-foreground/40 px-5 py-2.5 text-xs font-medium tracking-wide text-foreground disabled:opacity-30 disabled:border-border disabled:text-muted-foreground transition-all">
                 Save reflection →
               </button>
             </div>

@@ -52,6 +52,9 @@ export default function TimerPage() {
   const tickRef = useRef<number | null>(null);
   const lastBellMarkerRef = useRef<number>(0); // seconds elapsed at last interval bell
   const completedRef = useRef(false);
+  // Tracks whether ambient is currently playing — separate from `running` so it
+  // can outlive the session (per request: ding goes off, sounds keep playing).
+  const [ambientPlaying, setAmbientPlaying] = useState(false);
 
   // Lazy ensure AudioContext + try load bowl buffer
   const ensureAudio = async () => {
@@ -133,10 +136,17 @@ export default function TimerPage() {
     })();
   }, [user]);
 
-  // Start ambient stream (silent no-op on 404 / unsupported)
+  // Start ambient stream (silent no-op on 404 / unsupported). Swaps cleanly if
+  // another ambient is already playing — used for both preview-on-tap and full play.
   const startAmbient = (kind: Ambient) => {
     const url = AMBIENT_URLS[kind];
-    if (!url) return;
+    // 'none' means: stop whatever's playing.
+    if (!url) { stopAmbient(); return; }
+    // Stop the previous one before swapping.
+    if (ambientElRef.current) {
+      try { ambientElRef.current.pause(); ambientElRef.current.src = ""; } catch {}
+      ambientElRef.current = null;
+    }
     try {
       const el = new Audio(url);
       el.loop = true;
@@ -146,6 +156,7 @@ export default function TimerPage() {
         /* silent fallback */
       });
       ambientElRef.current = el;
+      setAmbientPlaying(true);
     } catch {
       /* silent */
     }
@@ -158,6 +169,7 @@ export default function TimerPage() {
       } catch {}
       ambientElRef.current = null;
     }
+    setAmbientPlaying(false);
   };
 
   const recordSession = async (completedInFull: boolean) => {
@@ -190,7 +202,8 @@ export default function TimerPage() {
       window.clearInterval(tickRef.current);
       tickRef.current = null;
     }
-    stopAmbient();
+    // NOTE: ambient intentionally keeps playing past the closing bell.
+    // The user can stop it from the floating bar that appears on the setup screen.
     await playTripleBell();
     await recordSession(completedInFull);
 
@@ -295,8 +308,8 @@ export default function TimerPage() {
   );
 
   return (
-    <div className="min-h-screen bg-radial-subtle">
-      <div className="mx-auto w-full max-w-2xl px-5 pt-6 pb-12">
+    <div className="min-h-screen bg-radial-subtle" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+      <div className="mx-auto w-full max-w-2xl px-5 pt-8 pb-12">
         {/* Top bar */}
         <div className="mb-8 flex items-center gap-3">
           <Link
@@ -311,12 +324,9 @@ export default function TimerPage() {
 
         {!running ? (
           <div>
-            <h1 className="text-display text-3xl md:text-4xl leading-tight mb-2">
-              Set a duration. <span className="italic text-accent">Sit.</span>
+            <h1 className="text-display text-3xl md:text-4xl leading-tight mb-8">
+              Enter the <span className="italic text-accent">stillness</span>.
             </h1>
-            <p className="text-ui text-sm mb-8 max-w-md">
-              A timer, a bowl, and your breath. The simplest practice in Velum — free for everyone.
-            </p>
 
             {/* Duration pills */}
             <div className="mb-8">
@@ -341,7 +351,7 @@ export default function TimerPage() {
               </div>
             </div>
 
-            {/* Ambient sound pills */}
+            {/* Ambient sound pills — tap to preview, tap again to set selection */}
             <div className="mb-10">
               <p className="text-eyebrow mb-3">Ambient sound</p>
               <div className="flex flex-wrap gap-2">
@@ -350,7 +360,13 @@ export default function TimerPage() {
                   return (
                     <button
                       key={opt.key}
-                      onClick={() => setAmbient(opt.key)}
+                      onClick={async () => {
+                        setAmbient(opt.key);
+                        // Preview immediately on tap. AudioContext may need a gesture
+                        // resume for iOS; ensureAudio handles that.
+                        await ensureAudio();
+                        startAmbient(opt.key);
+                      }}
                       className={`px-4 py-2 rounded-full text-sm font-sans transition-all ${
                         selected
                           ? "gold-gradient text-primary-foreground font-semibold"
@@ -363,6 +379,20 @@ export default function TimerPage() {
                 })}
               </div>
             </div>
+
+            {/* Floating "Sounds still playing" bar — only shown if user previewed
+                or just finished a session and ambient is still going. */}
+            {ambientPlaying && (
+              <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-accent/25 bg-accent/[0.06] px-4 py-3">
+                <p className="text-ui text-xs">Sounds are playing</p>
+                <button
+                  onClick={stopAmbient}
+                  className="text-accent text-xs font-sans font-semibold hover:underline underline-offset-4"
+                >
+                  Stop
+                </button>
+              </div>
+            )}
 
             {/* Begin */}
             <button
@@ -413,9 +443,11 @@ export default function TimerPage() {
               </div>
             </div>
 
-            <p className="text-ui text-xs tracking-[0.3em] uppercase mt-6">
-              {paused ? "Paused" : "Breathe"}
-            </p>
+            {paused && (
+              <p className="text-ui text-xs tracking-[0.3em] uppercase mt-6">
+                Paused
+              </p>
+            )}
 
             <div className="mt-10 flex flex-col items-center gap-4">
               <button
