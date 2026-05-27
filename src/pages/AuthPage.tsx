@@ -180,7 +180,7 @@ export default function AuthPage() {
 
           {/* Subheader — only for login/forgot. Signup headline stands on its own. */}
           {mode !== "signup" && (
-            <p className="text-muted-foreground text-sm font-sans text-center mb-7 max-w-[340px] mx-auto leading-relaxed">
+            <p className="text-foreground/85 text-[15px] font-sans text-center mb-7 max-w-[340px] mx-auto leading-relaxed">
               {mode === "login" && "Return to where you left off."}
               {mode === "forgot" && "We'll send you a reset link."}
             </p>
@@ -286,13 +286,13 @@ export default function AuthPage() {
         {/* Mode switches — outside the card, quieter */}
         <div className="mt-6 flex flex-col items-center gap-2">
           {mode === "signup" && (
-            <p className="text-muted-foreground text-xs font-sans">
+            <p className="text-foreground/70 text-sm font-sans">
               Already have an account?{" "}
               <button onClick={() => setMode("login")} className="text-accent hover:underline underline-offset-2">Sign in</button>
             </p>
           )}
           {mode === "login" && (
-            <p className="text-muted-foreground text-xs font-sans">
+            <p className="text-foreground/70 text-sm font-sans">
               No account?{" "}
               <button onClick={() => setMode("signup")} className="text-accent hover:underline underline-offset-2">Create free account</button>
             </p>
