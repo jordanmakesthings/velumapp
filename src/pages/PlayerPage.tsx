@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaywallModal } from "@/components/PaywallModal";
 import JournalingPlayer from "@/components/player/JournalingPlayer";
+import { ShareCard } from "@/components/ShareCard";
 
 const SPEEDS = [0.75, 1, 1.25, 1.5];
 
@@ -78,6 +79,8 @@ export default function PlayerPage() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [scrubbing, setScrubbing] = useState(false);
   const [scrubValue, setScrubValue] = useState(0);
+  const [showShare, setShowShare] = useState(false);
+  const [currentStreak, setCurrentStreak] = useState(0);
   const [controlsVisible, setControlsVisible] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -165,9 +168,28 @@ export default function PlayerPage() {
         });
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["user_progress", user?.id] });
+      // Compute streak for share card
+      if (user) {
+        const { data: pr } = await supabase
+          .from("user_progress")
+          .select("completed_date")
+          .eq("user_id", user.id)
+          .eq("completed", true);
+        const dates = new Set((pr || []).map((p: any) => p.completed_date));
+        let s = 0;
+        const today = new Date();
+        for (let i = 0; i < 365; i++) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          if (dates.has(d.toISOString().split("T")[0])) s++;
+          else if (i > 0) break;
+        }
+        setCurrentStreak(s);
+      }
       setStep("done");
+      setShowShare(true);
     },
     onError: () => {
       setStep("done");
@@ -332,6 +354,16 @@ export default function PlayerPage() {
             Back to Library
           </button>
         </div>
+        <ShareCard
+          open={showShare}
+          onClose={() => setShowShare(false)}
+          variant="session"
+          data={{
+            minutes: Math.max(1, Math.round((duration || 0) / 60)),
+            title: track?.title || "Session",
+            streak: currentStreak,
+          }}
+        />
       </div>
     );
   }

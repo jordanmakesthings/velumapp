@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaywall } from "@/components/PaywallSheet";
 import { toast } from "sonner";
+import { ShareCard } from "@/components/ShareCard";
 
 function formatTime(s: number) {
   if (!s || isNaN(s)) return "0:00";
@@ -27,6 +28,8 @@ export default function MasteryPlayerPage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [currentStreak, setCurrentStreak] = useState(0);
   const [responses, setResponses] = useState<Record<string, string>>({});
   const [visiblePromptIds, setVisiblePromptIds] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState(false);
@@ -61,7 +64,7 @@ export default function MasteryPlayerPage() {
     }
   };
 
-  const handleAudioEnded = () => {
+  const handleAudioEnded = async () => {
     setIsPlaying(false);
     setCompleted(true);
     // Reveal all post-completion prompts
@@ -69,6 +72,25 @@ export default function MasteryPlayerPage() {
     if (postIds.length > 0) {
       setVisiblePromptIds(prev => new Set([...prev, ...postIds]));
     }
+    // Compute streak + open share card
+    if (user) {
+      const { data: pr } = await supabase
+        .from("user_progress")
+        .select("completed_date")
+        .eq("user_id", user.id)
+        .eq("completed", true);
+      const dates = new Set((pr || []).map((p: any) => p.completed_date));
+      let s = 0;
+      const today = new Date();
+      for (let i = 0; i < 365; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        if (dates.has(d.toISOString().split("T")[0])) s++;
+        else if (i > 0) break;
+      }
+      setCurrentStreak(s);
+    }
+    setShowShare(true);
   };
 
   const togglePlay = () => {
@@ -296,6 +318,16 @@ export default function MasteryPlayerPage() {
           </>
         )}
       </div>
+      <ShareCard
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        variant="session"
+        data={{
+          minutes: Math.max(1, Math.round((duration || 0) / 60)),
+          title: mc?.title || "Mastery Class",
+          streak: currentStreak,
+        }}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Search, Lock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, Lock, ChevronLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import { usePaywall } from "@/components/PaywallSheet";
 import VelumMark from "@/components/VelumMark";
 
 export default function CoursesPage() {
+  const navigate = useNavigate();
   const { user, hasAccess } = useAuth();
   const { open: openPaywall } = usePaywall();
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,6 +83,14 @@ export default function CoursesPage() {
 
   return (
     <div className="px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
+      <button
+        onClick={() => navigate("/home")}
+        className="-ml-1 mb-3 inline-flex items-center gap-1 text-muted-foreground/70 hover:text-accent text-xs tracking-wide transition-colors"
+        aria-label="Back to home"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        <span>Home</span>
+      </button>
       <div className="mb-8">
         <div className="mb-5">
           <VelumMark variant="lotus" size="sm" />

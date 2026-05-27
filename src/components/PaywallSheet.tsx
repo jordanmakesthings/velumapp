@@ -111,8 +111,8 @@ export function PaywallSheetProvider({ children }: { children: ReactNode }) {
               className="velum-card w-full p-5 text-left transition-all flex items-center justify-between disabled:opacity-70"
             >
               <div>
-                <p className="text-foreground font-sans font-medium">Annual</p>
-                <p className="text-muted-foreground text-xs mt-0.5">~$8/mo · save 57% vs monthly</p>
+                <p className="text-foreground font-sans font-medium">Annual <span className="text-accent">(Save 57%)</span></p>
+                <p className="text-muted-foreground text-xs mt-0.5">~$8/mo</p>
               </div>
               <div className="text-right">
                 <p className="text-accent text-2xl font-serif">$99</p>

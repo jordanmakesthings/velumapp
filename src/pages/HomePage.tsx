@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useEffect, useMemo } from "react";
-import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Hand, Fingerprint, Play, Pause, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Hand, Fingerprint, Play, Pause, Check, ChevronLeft, ChevronRight, Timer as TimerIcon, X as XIcon } from "lucide-react";
+import { ShareCard } from "@/components/ShareCard";
 import { useState, useRef } from "react";
 import { getTodayCheckin } from "@/lib/velumStorage";
 import { TrackCover } from "@/components/TrackCover";
@@ -575,6 +576,74 @@ export default function HomePage() {
   const completedTrackIds = new Set(progress.map((p: any) => p.track_id));
   const nextTrack = (tracks as any[]).find((t) => !completedTrackIds.has(t.id));
 
+  // ---- Weekly Share Card surface (Sundays) ----
+  const [weeklyOpen, setWeeklyOpen] = useState(false);
+  const [showWeeklyBanner, setShowWeeklyBanner] = useState(false);
+
+  const weeklyData = useMemo(() => {
+    // Window: last 7 days inclusive of today
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    const dayKeys: string[] = [];
+    const dotIndexByKey: Record<string, number> = {};
+    // Build last 7 days oldest→newest. Map to S M T W T F S using getDay()
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(todayDate);
+      d.setDate(todayDate.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      dayKeys.push(key);
+      dotIndexByKey[key] = d.getDay(); // 0=Sun..6=Sat
+    }
+    const weekDots: boolean[] = [false, false, false, false, false, false, false];
+    let sessionsThisWeek = 0;
+    let minutesThisWeek = 0;
+    (progress as any[]).forEach((p) => {
+      if (dayKeys.includes(p.completed_date)) {
+        sessionsThisWeek++;
+        minutesThisWeek += Math.round((p.progress_seconds || 0) / 60);
+        const idx = dotIndexByKey[p.completed_date];
+        if (idx != null) weekDots[idx] = true;
+      }
+    });
+    return {
+      sessionsThisWeek,
+      minutesThisWeek,
+      stressReductionPct: weeklyReductionPct,
+      weekDots,
+      streak,
+    };
+  }, [progress, weeklyReductionPct, streak]);
+
+  useEffect(() => {
+    if (!user) return;
+    const now = new Date();
+    if (now.getDay() !== 0) return; // Sunday only
+    // ISO week key: year-week
+    const tmp = new Date(now);
+    tmp.setHours(0, 0, 0, 0);
+    tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
+    const yearStart = new Date(tmp.getFullYear(), 0, 1);
+    const weekNo = Math.ceil(((tmp.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+    const key = `velum_last_weekly_card_${user.id}_${tmp.getFullYear()}_W${weekNo}`;
+    if (!localStorage.getItem(key)) {
+      setShowWeeklyBanner(true);
+      // mark on first open or dismiss, not on render — but we need to dismiss the banner once seen
+      (window as any).__velumWeeklyKey = key;
+    }
+  }, [user]);
+
+  const dismissWeeklyBanner = () => {
+    const key = (window as any).__velumWeeklyKey;
+    if (key) localStorage.setItem(key, "1");
+    setShowWeeklyBanner(false);
+  };
+  const openWeekly = () => {
+    setWeeklyOpen(true);
+    const key = (window as any).__velumWeeklyKey;
+    if (key) localStorage.setItem(key, "1");
+    setShowWeeklyBanner(false);
+  };
+
   // carousel removed
 
   const handleSaveReflection = async () => {
@@ -605,6 +674,23 @@ export default function HomePage() {
         </p>
         <p className="text-muted-foreground text-xs font-sans tracking-wide">— {todayQuote.author}</p>
       </div>
+
+      {/* Weekly share banner (Sundays only, dismissable) */}
+      {showWeeklyBanner && (
+        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-accent/35 bg-accent/10 px-4 py-3">
+          <button onClick={openWeekly} className="flex-1 text-left">
+            <p className="text-eyebrow mb-1">Your week in Velum</p>
+            <p className="text-foreground text-sm font-sans">Tap to view your shareable weekly card →</p>
+          </button>
+          <button
+            onClick={dismissWeeklyBanner}
+            aria-label="Dismiss"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-accent"
+          >
+            <XIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* HERO — Custom Track is the anchor of Today.
           Free users get a locked preview that opens the paywall sheet.
@@ -694,6 +780,7 @@ export default function HomePage() {
         <div className="grid grid-cols-2 gap-3">
           {[
             { to: "/breathe", icon: Wind, name: "Breathwork", sub: "8 techniques · voice-guided", primary: true, premium: false },
+            { to: "/timer", icon: TimerIcon, name: "Open Meditation", sub: "Set a duration and sit.", primary: true, premium: false },
             { to: "/bilateral", icon: Zap, name: "Bilateral", sub: "Visual + stereo audio", premium: true },
             { to: "/tapping", icon: Heart, name: "Tapping", sub: "EFT · Guided sequences", premium: true },
             { to: "/somatic-touch", icon: Fingerprint, name: "Somatic", sub: "Grounding sequences", premium: true },
@@ -902,6 +989,12 @@ export default function HomePage() {
       )}
 
     </div>
+    <ShareCard
+      open={weeklyOpen}
+      onClose={() => setWeeklyOpen(false)}
+      variant="weekly"
+      data={weeklyData}
+    />
     </div>);
 
 }

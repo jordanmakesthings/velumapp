@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaywall } from "@/components/PaywallSheet";
-import { Trash2, Feather, ArrowRight, Lock } from "lucide-react";
+import { Trash2, Feather, ArrowRight, Lock, ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 function formatDate(dateStr: string) {
@@ -21,6 +22,7 @@ function countWords(text: string) {
 type FilterType = "all" | "reflection" | "exercise" | "mastery" | "course";
 
 export default function JournalPage() {
+  const navigate = useNavigate();
   const { user, hasAccess } = useAuth();
   const { open: openPaywall } = usePaywall();
   const queryClient = useQueryClient();
@@ -179,6 +181,14 @@ export default function JournalPage() {
       <div className="relative z-10 px-4 lg:px-8 pt-14 pb-8 max-w-2xl mx-auto">
         {/* Header */}
         <div className="border-b border-accent/10 pb-8 mb-8">
+          <button
+            onClick={() => navigate("/home")}
+            className="-ml-1 mb-3 inline-flex items-center gap-1 text-muted-foreground/70 hover:text-accent text-xs tracking-wide transition-colors"
+            aria-label="Back to home"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>Home</span>
+          </button>
           <p className="text-accent/50 text-[10px] font-sans tracking-[3px] uppercase mb-2">Personal Archive</p>
           <div className="flex items-end justify-between flex-wrap gap-4">
             <h1 className="text-display text-4xl leading-none">

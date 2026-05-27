@@ -478,6 +478,14 @@ export default function BreathePage() {
 
         {step === "setup" && (
           <div className="mb-6">
+            <button
+              onClick={() => navigate("/home")}
+              className="-ml-1 mb-3 inline-flex items-center gap-1 text-muted-foreground/70 hover:text-accent text-xs tracking-wide transition-colors"
+              aria-label="Back to home"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Home</span>
+            </button>
             <h1 className="text-display text-4xl mb-1.5">Breathwork</h1>
             <p className="text-ui text-xs tracking-[0.05em]">Real-Time Regulation</p>
           </div>

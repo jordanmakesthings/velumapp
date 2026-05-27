@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Plus, Check, Edit2, X, Play, Pause, Rewind, FastForward, Settings2, Flame, Clock, Library, Download } from "lucide-react";
+import { Sparkles, Plus, Check, Edit2, X, Play, Pause, Rewind, FastForward, Settings2, Flame, Clock, Library, Download, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { TrackCover } from "@/components/TrackCover";
 
@@ -344,6 +344,14 @@ export default function AudiosPage() {
       <div className="mx-auto w-full max-w-3xl px-4 pt-10 pb-8 lg:px-8">
 
         {/* ── Header ── */}
+        <button
+          onClick={() => navigate("/home")}
+          className="-ml-1 mb-3 inline-flex items-center gap-1 text-muted-foreground/70 hover:text-accent text-xs tracking-wide transition-colors"
+          aria-label="Back to home"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          <span>Home</span>
+        </button>
         <header className="mb-8 flex items-end justify-between gap-4">
           <div>
             <p className="text-eyebrow text-accent mb-2">Your Library</p>

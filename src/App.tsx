@@ -38,6 +38,7 @@ import CustomTrackPage from "./pages/CustomTrackPage";
 import AudiosPage from "./pages/AudiosPage";
 import FreeTrackPage from "./pages/FreeTrackPage";
 import WelcomeBackPage from "./pages/WelcomeBackPage";
+import TimerPage from "./pages/TimerPage";
 import QuizPage from "./pages/QuizPage";
 import ProtocolQuizPage from "./pages/ProtocolQuizPage";
 import RedesigningWorkshopPage from "./pages/RedesigningWorkshopPage";
@@ -90,6 +91,7 @@ const App = () => (
               <Route path="/library" element={<LibraryPage />} />
               <Route path="/finder" element={<FinderPage />} />
               <Route path="/breathe" element={<BreathePage />} />
+              <Route path="/timer" element={<TimerPage />} />
               <Route path="/tools" element={<Gated title="Interactive Tools" description="Tapping, bilateral, somatic touch — the full real-time toolkit. Premium unlocks everything beyond breathwork."><ToolsPage /></Gated>} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/course/:id" element={<CourseDetailPage />} />
