@@ -97,11 +97,11 @@ export default function NervousSystemScore() {
         NERVOUS SYSTEM SCORE
       </p>
 
-      {/* Three stat cards */}
+      {/* Three stat cards — shown in % so the story is shareable: "I dropped 65%" beats "-5 points" */}
       <div className="grid grid-cols-3 gap-3 mb-3">
         <div className="rounded-xl p-4 text-center" style={{ background: "hsl(156 51% 12%)" }}>
           <p className="text-2xl mb-1" style={{ fontFamily: "var(--font-serif)", color: "hsl(40 24% 93%)" }}>
-            {avgBefore ?? "—"}
+            {avgBefore != null ? `${Math.round(avgBefore * 10)}%` : "—"}
           </p>
           <p className="text-[10px] tracking-wider uppercase" style={{ color: "hsl(156 13% 49%)", fontFamily: "var(--font-sans)" }}>
             Avg stress in
@@ -109,7 +109,7 @@ export default function NervousSystemScore() {
         </div>
         <div className="rounded-xl p-4 text-center" style={{ background: "hsl(156 51% 12%)" }}>
           <p className="text-2xl mb-1" style={{ fontFamily: "var(--font-serif)", color: "hsl(156 13% 49%)" }}>
-            {avgAfter ?? "—"}
+            {avgAfter != null ? `${Math.round(avgAfter * 10)}%` : "—"}
           </p>
           <p className="text-[10px] tracking-wider uppercase" style={{ color: "hsl(156 13% 49%)", fontFamily: "var(--font-sans)" }}>
             Avg stress out
@@ -117,7 +117,7 @@ export default function NervousSystemScore() {
         </div>
         <div className="rounded-xl p-4 text-center" style={{ background: "hsl(156 51% 12%)" }}>
           <p className="text-2xl mb-1" style={{ fontFamily: "var(--font-serif)", color: "hsl(42 53% 54%)" }}>
-            {avgRelief ?? "—"}
+            {weeklyReductionPct != null ? `−${weeklyReductionPct}%` : "—"}
           </p>
           <p className="text-[10px] tracking-wider uppercase" style={{ color: "hsl(156 13% 49%)", fontFamily: "var(--font-sans)" }}>
             Avg relief
