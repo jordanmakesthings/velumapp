@@ -45,6 +45,8 @@ import RedesigningWorkshopPage from "./pages/RedesigningWorkshopPage";
 import RedesigningWorkshopThanksPage from "./pages/RedesigningWorkshopThanksPage";
 import RedesigningCohortWelcomePage from "./pages/RedesigningCohortWelcomePage";
 import RedesigningCohortPage from "./pages/RedesigningCohortPage";
+import VisionLabPage from "./pages/VisionLabPage";
+import VisionPlayerPage from "./pages/VisionPlayerPage";
 import NotFound from "./pages/NotFound";
 import { captureAttribution } from "@/lib/attribution";
 
@@ -101,6 +103,7 @@ const App = () => (
               <Route path="/journal" element={<JournalPage />} />
               <Route path="/custom-track" element={<Gated title="Your Custom Rewiring Audio" description="A 60-second conversation. A personalized 10-minute Ericksonian audio in your chosen voice. The Velum moat — unlocked with Premium."><CustomTrackPage /></Gated>} />
               <Route path="/audios" element={<AudiosPage />} />
+              <Route path="/vision" element={<Gated title="Vision Lab" description="Install your future self. Build a personal Vision — your images, your affirmations, your music — and watch it daily. Premium-only."><VisionLabPage /></Gated>} />
             </Route>
 
             {/* Full-screen protected pages (no nav) */}
@@ -117,6 +120,7 @@ const App = () => (
             <Route path="/paymentsuccess" element={<ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>} />
             <Route path="/payment-success" element={<Navigate to="/paymentsuccess" replace />} />
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+            <Route path="/vision/play" element={<ProtectedRoute><Gated title="Vision Lab" description="Install your future self. Premium-only."><VisionPlayerPage /></Gated></ProtectedRoute>} />
 
             {/* Redirect old routes */}
             <Route path="/blueprint" element={<Navigate to="/profile" replace />} />

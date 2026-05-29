@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useEffect, useMemo } from "react";
-import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Hand, Play, Pause, Check, ChevronLeft, ChevronRight, Timer as TimerIcon, X as XIcon } from "lucide-react";
+import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Hand, Play, Pause, Check, ChevronLeft, ChevronRight, Timer as TimerIcon, X as XIcon, Film } from "lucide-react";
 import { ShareCard } from "@/components/ShareCard";
 import { useState, useRef } from "react";
 import { getTodayCheckin } from "@/lib/velumStorage";
@@ -783,6 +783,7 @@ export default function HomePage() {
             { to: "/timer", icon: TimerIcon, name: "Open Meditation", sub: "Set a duration and sit.", primary: true, premium: false },
             { to: "/bilateral", icon: Zap, name: "Bilateral", sub: "Visual + stereo audio", premium: true },
             { to: "/tapping", icon: Heart, name: "Tapping", sub: "EFT · Guided sequences", premium: true },
+            { to: "/vision", icon: Film, name: "Vision Lab", sub: "Install your future self.", primary: true, premium: true },
           ].map(({ to, icon: Icon, name, sub, primary, premium }) => {
             const locked = premium && !hasAccess;
             const inner = (
