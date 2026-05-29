@@ -1,14 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
-import { Sparkles, Compass, Headphones, User } from "lucide-react";
+import { Sparkles, Compass, Wind, Headphones, User } from "lucide-react";
 
-// Four-tab navigation
+// Five-tab navigation
 // - Home: today's anchor (custom track hero + check-in)
-// - Discover: library, tools, courses, mastery, journal
+// - Discover: library, courses, mastery, journal
+// - Tools: real-time regulation tools (Breathwork, Open Meditation, Tapping, Bilateral)
 // - Audios: dedicated home for the user's custom hypnosis tracks
 // - Me: profile + premium + settings
 const navItems = [
   { path: "/home",    icon: Sparkles,   label: "Home",     match: ["/home", "/"] },
-  { path: "/library", icon: Compass,    label: "Discover", match: ["/library", "/tools", "/courses", "/course", "/subcategory", "/journal", "/breathe", "/bilateral", "/tapping", "/somatic-touch"] },
+  { path: "/library", icon: Compass,    label: "Discover", match: ["/library", "/courses", "/course", "/subcategory", "/journal"] },
+  { path: "/tools",   icon: Wind,       label: "Tools",    match: ["/tools", "/breathe", "/bilateral", "/tapping", "/somatic-touch", "/timer"] },
   { path: "/audios",  icon: Headphones, label: "Audios",   match: ["/audios", "/custom-track"] },
   { path: "/profile", icon: User,       label: "Me",       match: ["/profile", "/premium"] },
 ];

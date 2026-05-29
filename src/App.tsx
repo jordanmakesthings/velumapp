@@ -94,7 +94,7 @@ const App = () => (
               <Route path="/finder" element={<FinderPage />} />
               <Route path="/breathe" element={<BreathePage />} />
               <Route path="/timer" element={<TimerPage />} />
-              <Route path="/tools" element={<Gated title="Interactive Tools" description="Tapping, bilateral, somatic touch — the full real-time toolkit. Premium unlocks everything beyond breathwork."><ToolsPage /></Gated>} />
+              <Route path="/tools" element={<ToolsPage />} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/course/:id" element={<CourseDetailPage />} />
               <Route path="/course-v2" element={<CourseExperiencePage />} />
