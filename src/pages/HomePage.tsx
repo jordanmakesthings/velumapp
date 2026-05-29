@@ -14,6 +14,7 @@ import NervousSystemScore from "@/components/profile/NervousSystemScore";
 import { usePaywall } from "@/components/PaywallSheet";
 import { Lock } from "lucide-react";
 import { MEDITATION_MADE_EASY_COURSE_ID } from "@/lib/constants";
+import { currentDripDay } from "@/lib/course-drip";
 
 const QUOTES = [
 { text: "The present moment is the only place where life exists.", author: "Eckhart Tolle" },
@@ -516,7 +517,9 @@ function MeditationMadeEasyCard() {
   if (lessons.length === 0) return null;
 
   const enrolledAt = new Date((enrollment as any).enrolled_at);
-  const daysSinceEnrollment = Math.floor((Date.now() - enrolledAt.getTime()) / 86400000) + 1;
+  // 3am-PT-anchored drip day — see src/lib/course-drip.ts. Every user globally
+  // gets new content at 3am Pacific, lined up with the email send.
+  const daysSinceEnrollment = currentDripDay(enrolledAt);
   const currentDay = Math.min(daysSinceEnrollment, 7);
 
   const completedIds = new Set(

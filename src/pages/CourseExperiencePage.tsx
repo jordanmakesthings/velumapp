@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, ChevronDown, ChevronRight, CheckCircle2, Circle, Download, Play, Pause, ChevronLeft, Lock } from "lucide-react";
 import { PaywallModal } from "@/components/PaywallModal";
 import LessonJournal from "@/components/course/LessonJournal";
+import { currentDripDay } from "@/lib/course-drip";
 import { toast } from "sonner";
 
 function AudioPlayerSimple({ src }: { src: string }) {
@@ -170,8 +171,11 @@ export default function CourseExperiencePage() {
   const daysSinceStart = anchorDate ? Math.floor((Date.now() - new Date(anchorDate).getTime()) / 86400000) : 9999;
 
   const enrolledAt = (enrollment as any)?.enrolled_at ? new Date((enrollment as any).enrolled_at) : null;
+  // 3am-PT-anchored drip day — see src/lib/course-drip.ts. Lessons unlock at
+  // 3am Pacific every day so every user globally gets new content at the same
+  // wake-up moment, lined up with the Loops email send.
   const daysSinceEnrollment = enrolledAt
-    ? Math.floor((Date.now() - enrolledAt.getTime()) / 86400000) + 1
+    ? currentDripDay(enrolledAt)
     : 9999;
 
   const lessonDripInfo = (lesson: any) => {
