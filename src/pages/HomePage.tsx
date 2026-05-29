@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import NervousSystemScore from "@/components/profile/NervousSystemScore";
 import { usePaywall } from "@/components/PaywallSheet";
 import { Lock } from "lucide-react";
+import { MEDITATION_MADE_EASY_COURSE_ID } from "@/lib/constants";
 
 const QUOTES = [
 { text: "The present moment is the only place where life exists.", author: "Eckhart Tolle" },
@@ -462,6 +463,116 @@ function CustomTrackHomeTile() {
 }
 
 
+// 7-day "Meditation Made Easy" lead-magnet CTA. Only shown to free-tier users
+// who have an enrollment row. Premium users (full library) and admin/legacy
+// users (no enrollment) don't see it.
+function MeditationMadeEasyCard() {
+  const { user, hasAccess } = useAuth();
+
+  const { data: enrollment } = useQuery({
+    queryKey: ["mme_enrollment", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("course_enrollments" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("course_id", MEDITATION_MADE_EASY_COURSE_ID)
+        .maybeSingle();
+      return data || null;
+    },
+    enabled: !!user,
+  });
+
+  const { data: lessons = [] } = useQuery({
+    queryKey: ["mme_lessons"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("lessons")
+        .select("*")
+        .eq("course_id", MEDITATION_MADE_EASY_COURSE_ID)
+        .order("day_index", { nullsFirst: false });
+      return data || [];
+    },
+  });
+
+  const { data: lessonProgress = [] } = useQuery({
+    queryKey: ["mme_progress", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from("lesson_progress")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("course_id", MEDITATION_MADE_EASY_COURSE_ID);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // Hide for premium and unenrolled users
+  if (hasAccess) return null;
+  if (!enrollment) return null;
+  if (lessons.length === 0) return null;
+
+  const enrolledAt = new Date((enrollment as any).enrolled_at);
+  const daysSinceEnrollment = Math.floor((Date.now() - enrolledAt.getTime()) / 86400000) + 1;
+  const currentDay = Math.min(daysSinceEnrollment, 7);
+
+  const completedIds = new Set(
+    (lessonProgress as any[]).filter((p) => p.completed).map((p) => p.lesson_id),
+  );
+  const allCompleted =
+    lessons.length > 0 && (lessons as any[]).every((l) => completedIds.has(l.id));
+
+  if (allCompleted) {
+    return (
+      <Link
+        to="/premium"
+        className="velum-card mb-6 block p-5 border border-accent/40 bg-gradient-to-br from-accent/15 via-accent/5 to-transparent"
+      >
+        <p className="text-eyebrow mb-1.5">You completed Meditation Made Easy</p>
+        <p className="text-display text-xl mb-1">Unlock the full Velum library</p>
+        <p className="text-muted-foreground text-xs font-sans flex items-center gap-1.5">
+          See what's next <ArrowRight className="w-3.5 h-3.5" />
+        </p>
+      </Link>
+    );
+  }
+
+  // Find today's lesson — first lesson with day_index === currentDay,
+  // falling back to the next uncompleted lesson if day_index is absent.
+  const todayLesson =
+    (lessons as any[]).find((l) => l.day_index === currentDay) ||
+    (lessons as any[]).find((l) => !completedIds.has(l.id)) ||
+    (lessons as any[])[0];
+
+  return (
+    <Link
+      to={`/course-v2?courseId=${MEDITATION_MADE_EASY_COURSE_ID}${todayLesson ? `&lessonId=${todayLesson.id}` : ""}`}
+      className="velum-card mb-6 block p-5 border border-accent/40 bg-gradient-to-br from-accent/15 via-accent/5 to-transparent active:scale-[0.99] transition-transform"
+    >
+      <p className="text-eyebrow mb-1.5">Your 7-day course is here</p>
+      <p className="text-display text-xl leading-tight mb-2.5">Meditation Made Easy</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-foreground text-sm font-sans font-medium truncate">
+            Day {currentDay} of 7 · {todayLesson?.title || "Today's lesson"}
+          </p>
+          {todayLesson?.duration_minutes ? (
+            <p className="text-muted-foreground text-[11px] font-sans mt-0.5">
+              {todayLesson.duration_minutes} min
+            </p>
+          ) : null}
+        </div>
+        <div className="w-9 h-9 rounded-full gold-gradient flex items-center justify-center shrink-0">
+          <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const [reflectionText, setReflectionText] = useState("");
@@ -674,6 +785,9 @@ export default function HomePage() {
         </p>
         <p className="text-muted-foreground text-xs font-sans tracking-wide">— {todayQuote.author}</p>
       </div>
+
+      {/* Meditation Made Easy — 7-day free course (free-tier users only) */}
+      <MeditationMadeEasyCard />
 
       {/* Weekly share banner (Sundays only, dismissable) */}
       {showWeeklyBanner && (

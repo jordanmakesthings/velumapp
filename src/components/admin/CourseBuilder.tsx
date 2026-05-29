@@ -20,6 +20,7 @@ interface LessonForm {
   thumbnail_url: string;
   thumbnail_square_url: string;
   journal_prompt: string;
+  day_index: number | null;
 }
 
 interface ModuleData {
@@ -34,6 +35,7 @@ const emptyLesson: LessonForm = {
   downloadable_files: [], lesson_type: "audio",
   thumbnail_url: "", thumbnail_square_url: "",
   journal_prompt: "",
+  day_index: null,
 };
 
 const inputClass = "w-full px-4 py-2.5 rounded-xl bg-background border border-foreground/10 text-foreground text-sm font-sans focus:outline-none focus:border-accent/40";
@@ -166,6 +168,7 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
         thumbnail_url: data.thumbnail_url || null,
         thumbnail_square_url: data.thumbnail_square_url || null,
         journal_prompt: data.journal_prompt || null,
+        day_index: data.day_index ?? null,
       };
       if (editingLesson) {
         const { error } = await supabase.from("lessons").update(saveData).eq("id", editingLesson.id);
@@ -340,6 +343,25 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                   className={inputClass} />
               </div>
 
+              <div className="md:col-span-2">
+                <label className={labelClass}>Day index (1-N, blank = no daily lock)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={lessonForm.day_index ?? ""}
+                  onChange={e => {
+                    const v = e.target.value;
+                    setLessonForm(f => ({ ...f, day_index: v === "" ? null : Math.max(1, Math.min(30, Number(v) || 1)) }));
+                  }}
+                  className={inputClass}
+                  placeholder="e.g. 1 for Day 1, blank for no drip lock"
+                />
+                <p className="text-[11px] text-muted-foreground/70 mt-1.5 font-sans">
+                  Locks this lesson until N days after the user's course enrollment. Premium users bypass this.
+                </p>
+              </div>
+
               <div className="flex items-center gap-2 pt-6">
                 <input type="checkbox" checked={lessonForm.is_free_preview}
                   onChange={e => setLessonForm(f => ({ ...f, is_free_preview: e.target.checked }))}
@@ -453,10 +475,13 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                     {typeIcon(type)}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-foreground text-sm font-sans font-medium truncate">{lesson.title}</p>
                       {lesson.is_free && (
                         <span className="inline-flex items-center rounded-full bg-accent/15 border border-accent/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-accent tracking-wider uppercase shrink-0">Free</span>
+                      )}
+                      {typeof lesson.day_index === "number" && (
+                        <span className="inline-flex items-center rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-sans font-semibold text-emerald-400 tracking-wider uppercase shrink-0">Day {lesson.day_index}</span>
                       )}
                     </div>
                     <p className="text-muted-foreground text-xs font-sans">
@@ -481,6 +506,7 @@ export default function CourseBuilder({ courseId, onClose }: { courseId: string;
                         thumbnail_url: lesson.thumbnail_url || "",
                         thumbnail_square_url: lesson.thumbnail_square_url || "",
                         journal_prompt: lesson.journal_prompt || "",
+                        day_index: typeof lesson.day_index === "number" ? lesson.day_index : null,
                       });
                       setShowLessonForm(true);
                     }} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground">

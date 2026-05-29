@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, ChevronDown, ChevronRight, CheckCircle2, Circle, Download, Play, Pause, ChevronLeft, Lock } from "lucide-react";
 import { PaywallModal } from "@/components/PaywallModal";
 import LessonJournal from "@/components/course/LessonJournal";
+import { toast } from "sonner";
 
 function AudioPlayerSimple({ src }: { src: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -111,6 +112,23 @@ export default function CourseExperiencePage() {
     enabled: !!user && !!courseId,
   });
 
+  // Course-level enrollment record drives the day_index drip schedule. If the
+  // user has no enrollment row (admin / legacy), all lessons are unlocked.
+  const { data: enrollment = null } = useQuery({
+    queryKey: ["courseEnrollment", user?.id, courseId],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("course_enrollments" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("course_id", courseId)
+        .maybeSingle();
+      return data || null;
+    },
+    enabled: !!user && !!courseId,
+  });
+
   const markCompleteMutation = useMutation({
     mutationFn: async (lessonId: string) => {
       if (!user) return;
@@ -143,19 +161,49 @@ export default function CourseExperiencePage() {
   const nextLesson = flatLessons[activeIndex + 1] || null;
   const prevLesson = flatLessons[activeIndex - 1] || null;
 
-  // Drip unlock — lessons become available on a per-day schedule since trial start
+  // Drip unlock — two systems supported:
+  //   1) Legacy: lesson.drip_day_offset against profiles.trial_started_at
+  //   2) New: lesson.day_index against course_enrollments.enrolled_at (1-indexed,
+  //      Day 1 = day of enrollment). Premium users + users with no enrollment
+  //      bypass day_index gating entirely.
   const anchorDate = (profile as any)?.trial_started_at || (user as any)?.created_at || null;
   const daysSinceStart = anchorDate ? Math.floor((Date.now() - new Date(anchorDate).getTime()) / 86400000) : 9999;
+
+  const enrolledAt = (enrollment as any)?.enrolled_at ? new Date((enrollment as any).enrolled_at) : null;
+  const daysSinceEnrollment = enrolledAt
+    ? Math.floor((Date.now() - enrolledAt.getTime()) / 86400000) + 1
+    : 9999;
+
   const lessonDripInfo = (lesson: any) => {
+    // Premium users get everything; legacy drip_day_offset still respected for free users
     const offset = typeof lesson.drip_day_offset === "number" ? lesson.drip_day_offset : 0;
-    const isLocked = offset > daysSinceStart;
-    const unlocksInDays = isLocked ? offset - daysSinceStart : 0;
+    const legacyLocked = !hasAccess && offset > daysSinceStart;
+
+    // New day_index system — only gates if user is enrolled AND not premium
+    const dayIndex = typeof lesson.day_index === "number" ? lesson.day_index : null;
+    const dayLocked =
+      !hasAccess &&
+      dayIndex !== null &&
+      enrolledAt !== null &&
+      dayIndex > daysSinceEnrollment;
+
+    const isLocked = legacyLocked || dayLocked;
+    let unlocksInDays = 0;
+    if (dayLocked && dayIndex !== null) unlocksInDays = dayIndex - daysSinceEnrollment;
+    else if (legacyLocked) unlocksInDays = offset - daysSinceStart;
     return { isLocked, unlocksInDays };
   };
 
   const openLesson = (lesson: any) => {
-    if (!hasAccess) { setShowPaywall(true); return; }
-    const { isLocked } = lessonDripInfo(lesson);
+    const { isLocked, unlocksInDays } = lessonDripInfo(lesson);
+    // Free-but-day-locked: show a toast instead of the paywall (paid wouldn't unlock it)
+    if (isLocked && lesson.is_free) {
+      const dayLabel = typeof lesson.day_index === "number" ? `Day ${lesson.day_index}` : "This lesson";
+      toast(`${dayLabel} unlocks ${unlocksInDays <= 1 ? "tomorrow" : `in ${unlocksInDays} days`}.`);
+      return;
+    }
+    // Premium-locked content: send to paywall
+    if (!hasAccess && !lesson.is_free) { setShowPaywall(true); return; }
     if (isLocked) return;
     setActiveLessonId(lesson.id);
   };
@@ -227,7 +275,7 @@ export default function CourseExperiencePage() {
                     {isOpen && (
                       <div className="pl-2">
                         {modLessons.map((lesson: any) => (
-                          <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} daysSinceStart={daysSinceStart} onClick={() => openLesson(lesson)} />
+                          <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} dripInfo={lessonDripInfo(lesson)} onClick={() => openLesson(lesson)} />
                         ))}
                         {(mod.submodules || []).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).map((sub: any) => {
                           const subLessons = (sub.lesson_ids || []).map((lid: string) => lessons.find((l: any) => l.id === lid)).filter(Boolean);
@@ -235,7 +283,7 @@ export default function CourseExperiencePage() {
                             <div key={sub.id} className="ml-2">
                               <p className="text-ui text-[10px] px-3 py-1.5 tracking-wide">{sub.title}</p>
                               {subLessons.map((lesson: any) => (
-                                <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} daysSinceStart={daysSinceStart} onClick={() => openLesson(lesson)} />
+                                <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} dripInfo={lessonDripInfo(lesson)} onClick={() => openLesson(lesson)} />
                               ))}
                             </div>
                           );
@@ -245,7 +293,7 @@ export default function CourseExperiencePage() {
                   </div>
                 );
               }) : lessons.map((lesson: any) => (
-                <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} daysSinceStart={daysSinceStart} onClick={() => openLesson(lesson)} />
+                <SidebarLesson key={lesson.id} lesson={lesson} isActive={activeLesson?.id === lesson.id} isCompleted={completedIds.has(lesson.id)} dripInfo={lessonDripInfo(lesson)} onClick={() => openLesson(lesson)} />
               ))}
             </div>
           </aside>
@@ -344,10 +392,8 @@ export default function CourseExperiencePage() {
   );
 }
 
-function SidebarLesson({ lesson, isActive, isCompleted, daysSinceStart, onClick }: { lesson: any; isActive: boolean; isCompleted: boolean; daysSinceStart: number; onClick: () => void }) {
-  const offset = typeof lesson.drip_day_offset === "number" ? lesson.drip_day_offset : 0;
-  const isLocked = offset > daysSinceStart;
-  const unlocksInDays = isLocked ? offset - daysSinceStart : 0;
+function SidebarLesson({ lesson, isActive, isCompleted, dripInfo, onClick }: { lesson: any; isActive: boolean; isCompleted: boolean; dripInfo: { isLocked: boolean; unlocksInDays: number }; onClick: () => void }) {
+  const { isLocked, unlocksInDays } = dripInfo;
   return (
     <button onClick={onClick}
       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left mb-0.5 transition-all ${

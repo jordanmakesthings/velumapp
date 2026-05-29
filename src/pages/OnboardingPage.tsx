@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { MEDITATION_MADE_EASY_COURSE_ID } from "@/lib/constants";
 
 // ── Step 0 — what brought them here ────────────────────────────────────────
 const GOALS = [
@@ -132,6 +133,31 @@ export default function OnboardingPage() {
       onboarding_answers: { goals, experience, tried, vision },
     }).eq("id", user.id);
     await refreshProfile();
+
+    // Auto-enroll in the free 7-day "Meditation Made Easy" course and fire the
+    // Loops `course_enrolled` event so the email drip sequence kicks off in
+    // parallel with the in-app daily unlocks. Non-fatal — never blocks /home.
+    try {
+      await supabase.from("course_enrollments" as any).insert({
+        user_id: user.id,
+        course_id: MEDITATION_MADE_EASY_COURSE_ID,
+      });
+    } catch { /* unique-violation is fine; user already enrolled */ }
+    try {
+      if (user.email) {
+        await supabase.functions.invoke("loops-event", {
+          body: {
+            email: user.email,
+            eventName: "course_enrolled",
+            eventProperties: {
+              course_name: "Meditation Made Easy",
+              course_id: MEDITATION_MADE_EASY_COURSE_ID,
+            },
+          },
+        });
+      }
+    } catch { /* non-fatal */ }
+
     // Freemium: everyone lands on /home. No forced paywall after signup.
     navigate("/home");
   };
