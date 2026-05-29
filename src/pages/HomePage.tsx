@@ -783,7 +783,8 @@ export default function HomePage() {
             { to: "/timer", icon: TimerIcon, name: "Open Meditation", sub: "Set a duration and sit.", primary: true, premium: false },
             { to: "/bilateral", icon: Zap, name: "Bilateral", sub: "Visual + stereo audio", premium: true },
             { to: "/tapping", icon: Heart, name: "Tapping", sub: "EFT · Guided sequences", premium: true },
-            { to: "/vision", icon: Film, name: "Vision Lab", sub: "Install your future self.", primary: true, premium: true },
+            // Vision Lab — hidden from the public Home grid until launch.
+            // Route still exists at /vision for testing via direct URL.
           ].map(({ to, icon: Icon, name, sub, primary, premium }) => {
             const locked = premium && !hasAccess;
             const inner = (
