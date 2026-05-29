@@ -245,11 +245,46 @@ export default function BreathePage() {
   }, [musicEnabled, step]);
 
   useEffect(() => {
-    if (step === "done" || step === "checkin_after") {
+    // Only force-pause on "done" — the "checkin_after" path is handled by the
+    // fade-out helper so we don't slam the audio to silence mid-fade.
+    if (step === "done") {
       if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; setMusicPlaying(false); }
       try { window.speechSynthesis?.cancel(); } catch { /* no-op */ }
     }
   }, [step]);
+
+  // Fade-out tail: when a session ends (timer hits zero, or user taps End),
+  // glide the ambient music to silence over ~12s so the experience settles
+  // instead of cutting from peaceful to dead-silent.
+  const fadeOutThenTransition = useCallback(() => {
+    try { window.speechSynthesis?.cancel(); } catch { /* no-op */ }
+    const audio = audioRef.current;
+    if (!audio || audio.paused) {
+      // No music to fade — transition immediately.
+      setStep("checkin_after");
+      return;
+    }
+    const startVolume = audio.volume;
+    const fadeDurationMs = 12000;
+    const fadeStart = performance.now();
+    const tick = () => {
+      const elapsed = performance.now() - fadeStart;
+      const progress = Math.min(1, elapsed / fadeDurationMs);
+      // Ease-out curve so the fade feels natural, not linear-mechanical.
+      const eased = 1 - Math.pow(1 - progress, 2);
+      audio.volume = startVolume * (1 - eased);
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = startVolume; // restore so the next session starts at normal volume
+        setMusicPlaying(false);
+        setStep("checkin_after");
+      }
+    };
+    requestAnimationFrame(tick);
+  }, []);
 
   // Keep a ref of voiceEnabled so the rAF loop reads the latest value without
   // re-creating the animation callback on every toggle. When on, spin up a Web
@@ -351,7 +386,8 @@ export default function BreathePage() {
       if (totalElapsedRef.current >= totalSeconds) {
         sessionRunningRef.current = false;
         setTotalElapsed(totalSeconds);
-        setStep("checkin_after");
+        // Soft landing: fade the ambient music to silence over ~12s, then move on.
+        fadeOutThenTransition();
         return;
       }
     }
@@ -645,7 +681,7 @@ export default function BreathePage() {
                 {Math.floor(totalElapsed / 60)}:{(totalElapsed % 60).toString().padStart(2, "0")} / {Math.floor(totalSeconds / 60)}:{(totalSeconds % 60).toString().padStart(2, "0")}
               </div>
 
-              <button onClick={() => { sessionRunningRef.current = false; cancelAnimationFrame(animFrameRef.current); setStep("checkin_after"); }}
+              <button onClick={() => { sessionRunningRef.current = false; cancelAnimationFrame(animFrameRef.current); fadeOutThenTransition(); }}
                 className="px-8 py-3 rounded-full border border-muted-foreground/25 text-muted-foreground text-sm font-sans hover:border-accent/40 hover:text-foreground transition-all">
                 End Session
               </button>
