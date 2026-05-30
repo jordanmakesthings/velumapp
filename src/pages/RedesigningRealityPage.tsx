@@ -177,32 +177,32 @@ export default function RedesigningRealityPage() {
           <div className="space-y-6">
             <div>
               <p className="font-semibold mb-1">What if I can't make a live session?</p>
-              <p className="text-[#3d3a36]">Every session is recorded and lands in your inbox the same day. You can submit questions in advance and I'll cover them on the call. You won't fall behind.</p>
+              <p className="text-[#3d3a36]">If you miss a session, you have lifetime access to the recording and access to the group for the entirety of the cohort.</p>
             </div>
 
             <div>
               <p className="font-semibold mb-1">Do I need experience with meditation or breathwork?</p>
-              <p className="text-[#3d3a36]">No. The practices are designed to work whether it's your first time sitting with yourself or your thousandth. If you've done years of inner work, this will still go places you haven't been — the lens is identity and self-concept, not technique.</p>
+              <p className="text-[#3d3a36]">YES — this is a cohort for people who have done a lot of surface-level work but either can't break through to what they want or can't hold their results long-term.</p>
             </div>
 
             <div>
               <p className="font-semibold mb-1">Is this therapy?</p>
-              <p className="text-[#3d3a36]">No. This is identity work — practical, daily, repeatable. If you're in active crisis or working through significant trauma, please keep your therapist in the loop. This is a complement to clinical care, not a replacement.</p>
+              <p className="text-[#3d3a36]">This is not therapy, nor is it a replacement for therapy. The modalities taught in this cohort are scientifically proven on many fronts to change the way you think, feel and act, but this is not a replacement for professional help.</p>
             </div>
 
             <div>
               <p className="font-semibold mb-1">What's the actual time commitment?</p>
-              <p className="text-[#3d3a36]">One 90-minute live session per week, plus ~15 minutes a day on your morning and evening identity audios + Daily Three. If you can find 15 minutes for your phone, you can find 15 minutes for this.</p>
+              <p className="text-[#3d3a36]">One hour per week for six weeks, 20 minutes per day during your identity installation audios. If you cannot commit 20 minutes per day then I cannot help you.</p>
             </div>
 
             <div>
               <p className="font-semibold mb-1">How is this different from the Velum app?</p>
-              <p className="text-[#3d3a36]">The app is your daily nervous system gym. The cohort is the deep identity install you can't get from solo practice — live integration, group field, custom audios built around your specific blocks. App = maintenance. Cohort = rewrite.</p>
+              <p className="text-[#3d3a36]">Velum is a tool for you to use on your own accord. Redesigning Reality is a high-touch experience.</p>
             </div>
 
             <div>
               <p className="font-semibold mb-1">I've already done a lot of mindset work. Will this be different?</p>
-              <p className="text-[#3d3a36]">Most mindset work fails because it tries to install new beliefs on top of an unregulated nervous system and an old self-concept. We do it in the right order: regulate first, then rewrite identity, then let new beliefs take root. That's why it sticks.</p>
+              <p className="text-[#3d3a36]">So have millions of other people who can't figure out why they temporarily feel good and then default back to their habitual, familiar patterns. This goes beyond "mindset work".</p>
             </div>
           </div>
         </div>
