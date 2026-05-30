@@ -22,7 +22,7 @@ function CTAStack({ id }: { id?: string }) {
         href={FULL_PAY}
         className="flex-1 text-center rounded-full bg-[#2a2724] text-[#f7f4ee] px-8 py-4 text-[15px] font-semibold tracking-wide hover:bg-[#b08d57] transition-colors"
       >
-        Claim Your Spot — $600
+        Claim Your Spot — $599 (one-time)
       </a>
       <a
         href={SPLIT_PAY}
@@ -151,7 +151,7 @@ export default function RedesigningRealityPage() {
           <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">The details:</h2>
           <p className="mb-1.5">📅&nbsp;&nbsp;6 Thursdays, 6pm PT — June 18 → July 23</p>
           <p className="mb-1.5">👥&nbsp;&nbsp;10 founding spots (7 remaining)</p>
-          <p>💰&nbsp;&nbsp;US $600 (or 2× $300)</p>
+          <p>💰&nbsp;&nbsp;US $599 one-time (or 2× $300)</p>
         </div>
 
         {/* Final CTA */}
@@ -172,7 +172,7 @@ export default function RedesigningRealityPage() {
             href={FULL_PAY}
             className="flex-1 text-center rounded-full bg-[#2a2724] text-[#f7f4ee] px-4 py-3 text-[13px] font-semibold tracking-wide"
           >
-            Claim — $600
+            Claim — $599
           </a>
           <a
             href={SPLIT_PAY}
