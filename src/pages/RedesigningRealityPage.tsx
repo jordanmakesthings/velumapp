@@ -39,6 +39,20 @@ export default function RedesigningRealityPage() {
     <div className="min-h-screen w-full bg-[#f7f4ee] text-[#2a2724]">
       <article className="mx-auto w-full max-w-[660px] px-6 py-16 lg:py-24 text-[17px] leading-[1.7]">
 
+        {/* Intro VSL — Jordan's cohort hello, sits above the fold so the human shows up before the offer */}
+        <div className="not-prose mb-10 rounded-lg overflow-hidden border border-[#e3ddd1] shadow-sm bg-black">
+          <video
+            controls
+            playsInline
+            preload="metadata"
+            poster="/video/redesigning-intro-poster.jpg"
+            className="w-full h-auto block"
+          >
+            <source src="/video/redesigning-intro.mp4" type="video/mp4" />
+            Your browser doesn't support embedded video. <a href="/video/redesigning-intro.mp4" className="text-[#b08d57] underline">Download the intro</a>.
+          </video>
+        </div>
+
         {/* Eyebrow — date conflict fixed (was 6/11 in the original), spot count cleaned */}
         <p className="text-[12px] tracking-[0.28em] uppercase text-[#b08d57] font-semibold mb-6">
           7 of 10 founding spots remaining · Session 1 begins 6/18
