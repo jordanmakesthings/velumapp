@@ -55,7 +55,7 @@ export default function RedesigningRealityPage() {
 
         {/* Eyebrow — date conflict fixed (was 6/11 in the original), spot count cleaned */}
         <p className="text-[12px] tracking-[0.28em] uppercase text-[#b08d57] font-semibold mb-6">
-          7 of 10 founding spots remaining · Session 1 begins 6/18
+          5 of 10 founding spots remaining · Session 1 begins 6/18
         </p>
 
         {/* Headline */}
@@ -164,7 +164,7 @@ export default function RedesigningRealityPage() {
         <div className="border-t border-[#e3ddd1] pt-8 mb-6">
           <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">The details:</h2>
           <p className="mb-1.5">📅&nbsp;&nbsp;6 Thursdays, 6pm PT (60 min) — June 18 → July 23</p>
-          <p className="mb-1.5">👥&nbsp;&nbsp;10 founding spots (7 remaining)</p>
+          <p className="mb-1.5">👥&nbsp;&nbsp;10 founding spots (5 remaining)</p>
           <p>💰&nbsp;&nbsp;US $599 one-time (or 2× $300)</p>
         </div>
 
