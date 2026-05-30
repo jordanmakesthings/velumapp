@@ -81,7 +81,43 @@ export default function RedesigningRealityPage() {
           This is for people who've already done "the work" in the form of books, meditations, retreats and hours of chanting affirmations, but still default to old, familiar behaviours when it counts. This isn't due to a lack of knowledge, it's because <strong>identity is what you default to under pressure</strong>.
         </p>
 
-        {/* OUTCOMES — moved above framework so reader sees the dream first */}
+        {/* ITINERARY — moved above outcomes per Jordan's restructure, expanded with full week-by-week descriptions */}
+        <p className="text-[11px] tracking-[0.32em] uppercase text-[#b08d57] font-semibold mb-3">Week by Week</p>
+        <h2 style={serif} className="text-[28px] md:text-[32px] mb-6">The Itinerary</h2>
+
+        <div className="mb-12 space-y-7">
+          <div>
+            <h3 style={serif} className="text-[20px] md:text-[22px] mb-2"><strong>Week 1 — Perception of Self and Reality</strong></h3>
+            <p>Your "reality" is a filter through which you see the world — hard stop. And much of how you see the world, has to do with how you see yourself. If we are going to build a castle (new self-concept), we're going to first have to bulldoze the rickety old shack that's taking up space.</p>
+          </div>
+
+          <div>
+            <h3 style={serif} className="text-[20px] md:text-[22px] mb-2"><strong>Week 2 — Self-Regulation and Emotional Home Base</strong></h3>
+            <p>You do not create your dream life from a state of survival. One more time for the people in the back, your deepest desires do not come from running on adrenaline and cortisol. And if they somehow land? Good luck holding them for any period of time. Mastering the art of emotional self-regulation before taking action leads to life-changing actions.</p>
+          </div>
+
+          <div>
+            <h3 style={serif} className="text-[20px] md:text-[22px] mb-2"><strong>Week 3 — The Identity Map</strong></h3>
+            <p>You know that version of you that has it all? What thoughts and feelings are they firing and wiring on a daily basis? What emotions do they live from? I'll roll the dice and assume it isn't fear, anger, urgency. The Identity Map is about the internal self-concepts and beliefs that your future self lives by, and how to wire those into your nervous system through the daily Identity Installation Audio and The Daily 3.</p>
+          </div>
+
+          <div>
+            <h3 style={serif} className="text-[20px] md:text-[22px] mb-2"><strong>Week 4 — Micro-Action Magic</strong></h3>
+            <p>When you declare something about yourself, your brain goes looking for one thing: evidence. If you do not have some receipts to back your Identity Statements (affirmations that actually work), your subconscious mind is going to slide in with a quick "thanks, but no thanks". Micro-Actions are the small behavioural shifts that teach your subconscious mind that you actually are the type of person you say you are. This is the foundation of a human being that truly believes they can handle anything.</p>
+          </div>
+
+          <div>
+            <h3 style={serif} className="text-[20px] md:text-[22px] mb-2"><strong>Week 5 — Life Architecture</strong></h3>
+            <p>Most "build your dream life" teaching has people sticking pictures of luxury vacations on a vision board while their body is stuck in a state of unworthiness. This is where you build the roadmap to the type of experiences (internally and externally), the type of possessions (yes, having nice things is good), and the type of actions you create when you come from an identity of wholeness.</p>
+          </div>
+
+          <div>
+            <h3 style={serif} className="text-[20px] md:text-[22px] mb-2"><strong>Week 6 — Living Beyond Belief</strong></h3>
+            <p>This is where the deep work truly starts showing evidence in your external world. You wake up feeling differently, you carry yourself differently, and you have a little giggle inside when you think about the sh*t you used to tolerate because it felt "normal". The "3 E's" of week 6 are Embodiment, Embodiment and Embodiment. You're going to learn how to do the deep work to actually hold and enjoy the results you start creating.</p>
+          </div>
+        </div>
+
+        {/* OUTCOMES — sits right after itinerary so reader sees the path then the destination */}
         <p className="text-[11px] tracking-[0.32em] uppercase text-[#b08d57] font-semibold mb-3">After Six Weeks</p>
         <h2 style={serif} className="text-[28px] md:text-[32px] mb-5">You'll walk away with…</h2>
         <ul className="list-disc pl-5 mb-10 space-y-3">
@@ -93,23 +129,6 @@ export default function RedesigningRealityPage() {
 
         {/* First CTA placement — peak-desire moment, right after outcomes */}
         <CTAStack />
-
-        {/* HOW WE'LL DO IT */}
-        <p className="text-[11px] tracking-[0.32em] uppercase text-[#b08d57] font-semibold mb-3">The Process</p>
-        <h2 style={serif} className="text-[28px] md:text-[32px] mb-5">Here's how we'll do it…</h2>
-
-        <p className="mb-5">
-          <strong>First, we Regulate.</strong> You can't architect from survival. You'll learn a multitude of techniques to get you out of fight-or-flight and turn on your brain's "genius centers" — so calm is your baseline, not a place you visit.
-        </p>
-        <p className="mb-5">
-          <strong>Then, we Rewire.</strong> What are the current perceptions, beliefs and self-concepts that are holding you anchored to the past? We bring them to the surface and begin to re-write the script.
-        </p>
-        <p className="mb-5">
-          <strong>Then, we Become.</strong> We redesign the identity you default to under pressure — and install the version of you your goals require. This is not a process of "doing more" it's about installing an identity of someone who doesn't have to try so hard.
-        </p>
-        <p className="mb-10">
-          <strong>Then, we Build.</strong> We turn it into a life — architecting your reality and the aligned action that makes it real. You're going to have to trim out a lot of things that don't fit your desired future, but it will be worth it.
-        </p>
 
         {/* FIT */}
         <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">This is for you if you:</h2>
@@ -126,17 +145,6 @@ export default function RedesigningRealityPage() {
           <li>A small, committed group to build alongside</li>
           <li>Lifetime recording access as well as access to the audios created during the cohort</li>
         </ul>
-
-        {/* ITINERARY */}
-        <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">The Itinerary:</h2>
-        <ol className="list-decimal pl-5 mb-10 space-y-2">
-          <li>Week 1 — Perception of Self and Reality</li>
-          <li>Week 2 — Self-Regulation and Emotional Home Base</li>
-          <li>Week 3 — The Identity Map</li>
-          <li>Week 4 — Micro-Action Magic</li>
-          <li>Week 5 — Life Architecture</li>
-          <li>Week 6 — Living Beyond Belief</li>
-        </ol>
 
         {/* DETAILS */}
         <div className="border-t border-[#e3ddd1] pt-8 mb-6">
