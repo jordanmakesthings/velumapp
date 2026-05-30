@@ -154,8 +154,58 @@ export default function RedesigningRealityPage() {
           <p>💰&nbsp;&nbsp;US $599 one-time (or 2× $300)</p>
         </div>
 
+        {/* RISK REVERSAL — sits right before the final CTA so the close lands without friction */}
+        <div className="border border-[#b08d57]/40 bg-[#fbf8f1] rounded-lg p-6 my-10">
+          <p className="text-[12px] tracking-[0.24em] uppercase text-[#b08d57] font-semibold mb-3">
+            Zero-risk guarantee
+          </p>
+          <p className="mb-3">
+            Show up to the first session. Do the work. If by the end of it you can't see a single way this could change your life — email me and I'll refund every dollar.
+          </p>
+          <p className="text-[15px] text-[#6f675c] italic">
+            No forms, no hoops, no awkward back-and-forth. The only thing I ask is that you actually show up.
+          </p>
+        </div>
+
         {/* Final CTA */}
         <CTAStack />
+
+        {/* FAQ */}
+        <div className="border-t border-[#e3ddd1] pt-8 mb-10">
+          <h2 style={serif} className="text-[26px] md:text-[28px] mb-6">Questions you might be asking:</h2>
+
+          <div className="space-y-6">
+            <div>
+              <p className="font-semibold mb-1">What if I can't make a live session?</p>
+              <p className="text-[#3d3a36]">Every session is recorded and lands in your inbox the same day. You can submit questions in advance and I'll cover them on the call. You won't fall behind.</p>
+            </div>
+
+            <div>
+              <p className="font-semibold mb-1">Do I need experience with meditation or breathwork?</p>
+              <p className="text-[#3d3a36]">No. The practices are designed to work whether it's your first time sitting with yourself or your thousandth. If you've done years of inner work, this will still go places you haven't been — the lens is identity and self-concept, not technique.</p>
+            </div>
+
+            <div>
+              <p className="font-semibold mb-1">Is this therapy?</p>
+              <p className="text-[#3d3a36]">No. This is identity work — practical, daily, repeatable. If you're in active crisis or working through significant trauma, please keep your therapist in the loop. This is a complement to clinical care, not a replacement.</p>
+            </div>
+
+            <div>
+              <p className="font-semibold mb-1">What's the actual time commitment?</p>
+              <p className="text-[#3d3a36]">One 90-minute live session per week, plus ~15 minutes a day on your morning and evening identity audios + Daily Three. If you can find 15 minutes for your phone, you can find 15 minutes for this.</p>
+            </div>
+
+            <div>
+              <p className="font-semibold mb-1">How is this different from the Velum app?</p>
+              <p className="text-[#3d3a36]">The app is your daily nervous system gym. The cohort is the deep identity install you can't get from solo practice — live integration, group field, custom audios built around your specific blocks. App = maintenance. Cohort = rewrite.</p>
+            </div>
+
+            <div>
+              <p className="font-semibold mb-1">I've already done a lot of mindset work. Will this be different?</p>
+              <p className="text-[#3d3a36]">Most mindset work fails because it tries to install new beliefs on top of an unregulated nervous system and an old self-concept. We do it in the right order: regulate first, then rewrite identity, then let new beliefs take root. That's why it sticks.</p>
+            </div>
+          </div>
+        </div>
 
         {/* CLOSING */}
         <p className="italic text-[#6f675c] mb-3">If you're reading this, you have been invited to this cohort.</p>
