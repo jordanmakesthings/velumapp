@@ -45,6 +45,7 @@ import RedesigningWorkshopPage from "./pages/RedesigningWorkshopPage";
 import RedesigningWorkshopThanksPage from "./pages/RedesigningWorkshopThanksPage";
 import RedesigningCohortWelcomePage from "./pages/RedesigningCohortWelcomePage";
 import RedesigningCohortPage from "./pages/RedesigningCohortPage";
+import RedesigningRealityPage from "./pages/RedesigningRealityPage";
 import VisionLabPage from "./pages/VisionLabPage";
 import VisionPlayerPage from "./pages/VisionPlayerPage";
 import NotFound from "./pages/NotFound";
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="/redesigning-workshop" element={<RedesigningWorkshopPage />} />
             <Route path="/redesigning-workshop/thanks" element={<RedesigningWorkshopThanksPage />} />
             <Route path="/redesigning-cohort" element={<RedesigningCohortPage />} />
+            <Route path="/redesigning-reality" element={<RedesigningRealityPage />} />
             <Route path="/redesigning-cohort/welcome" element={<RedesigningCohortWelcomePage />} />
             <Route path="/login" element={<AuthPage />} />
             <Route path="/signin" element={<Navigate to="/login" replace />} />
