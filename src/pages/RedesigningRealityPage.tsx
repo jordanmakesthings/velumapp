@@ -37,7 +37,7 @@ function CTAStack({ id }: { id?: string }) {
 export default function RedesigningRealityPage() {
   return (
     <div className="min-h-screen w-full bg-[#f7f4ee] text-[#2a2724]">
-      <article className="mx-auto w-full max-w-[660px] px-6 py-16 lg:py-24 pb-32 lg:pb-24 text-[17px] leading-[1.7]">
+      <article className="mx-auto w-full max-w-[660px] px-6 py-16 lg:py-24 text-[17px] leading-[1.7]">
 
         {/* Eyebrow — date conflict fixed (was 6/11 in the original), spot count cleaned */}
         <p className="text-[12px] tracking-[0.28em] uppercase text-[#b08d57] font-semibold mb-6">
@@ -164,24 +164,6 @@ export default function RedesigningRealityPage() {
         <p style={serif} className="text-[22px] italic">Jordan</p>
 
       </article>
-
-      {/* Sticky CTA bar — only visible on mobile when the inline CTAs aren't on screen */}
-      <div className="fixed bottom-0 inset-x-0 z-50 bg-[#f7f4ee] border-t border-[#e3ddd1] px-4 py-3 lg:hidden">
-        <div className="flex gap-2 max-w-[660px] mx-auto">
-          <a
-            href={FULL_PAY}
-            className="flex-1 text-center rounded-full bg-[#2a2724] text-[#f7f4ee] px-4 py-3 text-[13px] font-semibold tracking-wide"
-          >
-            Claim — $599
-          </a>
-          <a
-            href={SPLIT_PAY}
-            className="flex-1 text-center rounded-full border border-[#2a2724]/30 px-4 py-3 text-[13px] font-semibold tracking-wide"
-          >
-            Split 2 × $300
-          </a>
-        </div>
-      </div>
     </div>
   );
 }
