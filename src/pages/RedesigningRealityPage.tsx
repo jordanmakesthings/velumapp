@@ -141,7 +141,7 @@ export default function RedesigningRealityPage() {
         {/* WHAT YOU GET */}
         <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">What you get:</h2>
         <ul className="list-disc pl-5 mb-10 space-y-2">
-          <li>6 weekly live sessions, beginning June 18th at 6pm PT</li>
+          <li>6 weekly live sessions (60 minutes each), beginning June 18th at 6pm PT</li>
           <li>A small, committed group to build alongside</li>
           <li>Lifetime recording access as well as access to the audios created during the cohort</li>
         </ul>
@@ -149,7 +149,7 @@ export default function RedesigningRealityPage() {
         {/* DETAILS */}
         <div className="border-t border-[#e3ddd1] pt-8 mb-6">
           <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">The details:</h2>
-          <p className="mb-1.5">📅&nbsp;&nbsp;6 Thursdays, 6pm PT — June 18 → July 23</p>
+          <p className="mb-1.5">📅&nbsp;&nbsp;6 Thursdays, 6pm PT (60 min) — June 18 → July 23</p>
           <p className="mb-1.5">👥&nbsp;&nbsp;10 founding spots (7 remaining)</p>
           <p>💰&nbsp;&nbsp;US $599 one-time (or 2× $300)</p>
         </div>
