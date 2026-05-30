@@ -122,7 +122,7 @@ export default function RedesigningRealityPage() {
         {/* WHAT YOU GET */}
         <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">What you get:</h2>
         <ul className="list-disc pl-5 mb-10 space-y-2">
-          <li>6 live sessions each week, beginning June 18th at 6pm PT</li>
+          <li>6 weekly live sessions, beginning June 18th at 6pm PT</li>
           <li>A small, committed group to build alongside</li>
           <li>Lifetime recording access as well as access to the audios created during the cohort</li>
         </ul>
