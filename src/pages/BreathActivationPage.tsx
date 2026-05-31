@@ -3,9 +3,10 @@
 // Set BOOKING_URL to a Cal.com event URL once Jordan creates it
 // (cal.com/jordanoelrich/breath-activation with Stripe + Zoom + Google Calendar wired).
 
-// Direct Stripe Payment Link. After payment, Jordan emails the buyer within 24 hrs
-// to schedule the Zoom session manually. Cal.com integration comes after move-in.
-const BOOKING_URL = "https://buy.stripe.com/6oUfZiacjeyW2bU7bI7ss09";
+// Cal.com handles booking + Stripe checkout in one flow. Stripe is wired inside
+// Cal.com (Settings → Apps → Stripe → connect, then enable on the Breath event).
+// Standalone Stripe link from earlier (buy.stripe.com/6oUfZi…) still works as a backup.
+const BOOKING_URL = "https://cal.com/velum/breath";
 
 const serif = { fontFamily: "'Cormorant Garamond', Georgia, serif" } as const;
 
@@ -53,7 +54,7 @@ export default function BreathActivationPage() {
         <BookButton />
 
         <p className="text-[14px] text-[#6f675c] italic mt-3 mb-6">
-          After you book, I'll email you within 24 hours to schedule your session.
+          Pick your time, pay, and you'll get a confirmation with the Zoom link.
         </p>
 
         {/* What it is */}
