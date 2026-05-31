@@ -5,7 +5,7 @@
 
 // Direct Stripe Payment Link. After payment, Jordan emails the buyer within 24 hrs
 // to schedule the Zoom session manually. Cal.com integration comes after move-in.
-const BOOKING_URL = "https://buy.stripe.com/REPLACE_WITH_STRIPE_LINK";
+const BOOKING_URL = "https://buy.stripe.com/6oUfZiacjeyW2bU7bI7ss09";
 
 const serif = { fontFamily: "'Cormorant Garamond', Georgia, serif" } as const;
 
