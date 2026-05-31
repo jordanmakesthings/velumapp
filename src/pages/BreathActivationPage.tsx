@@ -3,7 +3,9 @@
 // Set BOOKING_URL to a Cal.com event URL once Jordan creates it
 // (cal.com/jordanoelrich/breath-activation with Stripe + Zoom + Google Calendar wired).
 
-const BOOKING_URL = "https://cal.com/jordanoelrich/breath-activation";
+// Direct Stripe Payment Link. After payment, Jordan emails the buyer within 24 hrs
+// to schedule the Zoom session manually. Cal.com integration comes after move-in.
+const BOOKING_URL = "https://buy.stripe.com/REPLACE_WITH_STRIPE_LINK";
 
 const serif = { fontFamily: "'Cormorant Garamond', Georgia, serif" } as const;
 
@@ -49,6 +51,10 @@ export default function BreathActivationPage() {
 
         {/* CTA top */}
         <BookButton />
+
+        <p className="text-[14px] text-[#6f675c] italic mt-3 mb-6">
+          After you book, I'll email you within 24 hours to schedule your session.
+        </p>
 
         {/* What it is */}
         <h2 style={serif} className="text-[26px] md:text-[28px] mt-14 mb-4">What this actually is:</h2>
