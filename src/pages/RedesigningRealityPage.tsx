@@ -135,7 +135,6 @@ export default function RedesigningRealityPage() {
         <ul className="list-disc pl-5 mb-10 space-y-3">
           <li>A clear, embodied recognition of when you're operating from survival vs. when you're not — so you stop confusing the two.</li>
           <li>The <strong>daily breathwork and self-hypnosis practices</strong> that let you drop out of survival in minutes, not months.</li>
-          <li>A <strong>custom 10-minute hypnosis track</strong> recorded in your chosen voice, designed around your specific patterns.</li>
           <li>Lifetime recordings of every session, plus the audios created during the cohort.</li>
           <li>A small group of humans walking the same path who you can return to — for the cohort and beyond.</li>
           <li>The end of "I should be doing more inner work" — because you'll know what the actual work is, and you'll be doing it daily without needing to be reminded.</li>
@@ -158,7 +157,6 @@ export default function RedesigningRealityPage() {
           <li>6 weekly live sessions (60 minutes each), beginning June 18th at 6pm PT</li>
           <li>A small, committed group to walk it with</li>
           <li>Lifetime recording access plus the audios created during the cohort</li>
-          <li>A custom hypnosis track recorded for you</li>
         </ul>
 
         {/* DETAILS */}
