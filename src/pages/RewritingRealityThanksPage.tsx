@@ -1,11 +1,10 @@
 // Post-checkout thank-you page for the Rewriting Reality workshop.
 // Lives at /rewriting-reality/thanks — set this as the success URL on the Stripe Payment Link.
-// Swap MEETING_URL once Jordan has Zoom Pro or Cal Video meeting set up.
+// Workshop link is emailed 72 hours before the session; not shown on this page.
 
-const MEETING_URL = "https://zoom.us/REPLACE_WITH_MEETING_URL";
 const WORKSHOP_DATETIME_ISO = "20260607T100000/20260607T120000"; // for calendar add links
 const WORKSHOP_TITLE = "Rewriting Reality Workshop with Jordan";
-const WORKSHOP_DETAILS = "Live 2-hour workshop. Drop the survival self, install identity statements in trance, leave acting FROM not TO. Meeting link: " + MEETING_URL;
+const WORKSHOP_DETAILS = "Live 2-hour workshop. Drop the survival self, install identity statements in trance, leave acting FROM not TO. Zoom link will be emailed 72 hours before the workshop.";
 
 const serif = { fontFamily: "'Cormorant Garamond', Georgia, serif" } as const;
 
@@ -33,29 +32,20 @@ export default function RewritingRealityThanksPage() {
         </p>
 
         <h1 style={serif} className="text-[40px] md:text-[52px] leading-[1.05] mb-1">
-          See you Saturday.
+          You're in.
         </h1>
         <p style={serif} className="text-[22px] md:text-[26px] italic text-[#6f675c] mb-10">
-          A few details so you're ready.
+          See you Saturday.
         </p>
 
-        {/* The link card — most important thing on the page */}
+        {/* The details card */}
         <div className="border border-[#b08d57]/40 bg-[#fbf8f1] rounded-lg p-6 mb-10">
           <p className="text-[12px] tracking-[0.24em] uppercase text-[#b08d57] font-semibold mb-3">
             The workshop
           </p>
           <p className="mb-1.5"><strong>📅 Saturday, June 7</strong></p>
           <p className="mb-1.5"><strong>🕙 10:00am – 12:00pm PT</strong></p>
-          <p className="mb-5"><strong>💻 Zoom link below — same link every session</strong></p>
-          <a
-            href={MEETING_URL}
-            className="not-prose inline-block w-full sm:w-auto text-center rounded-full bg-[#2a2724] text-[#f7f4ee] px-10 py-4 text-[15px] font-semibold tracking-wide hover:bg-[#b08d57] transition-colors"
-          >
-            Join the workshop →
-          </a>
-          <p className="text-[13px] text-[#6f675c] italic mt-4 mb-0">
-            Bookmark this link. I'll also email it to you with a reminder before the session.
-          </p>
+          <p className="mb-0"><strong>💻 Zoom link emailed to you 72 hours before the workshop</strong></p>
         </div>
 
         {/* Add to calendar */}
