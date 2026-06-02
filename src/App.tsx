@@ -46,6 +46,7 @@ import RedesigningWorkshopThanksPage from "./pages/RedesigningWorkshopThanksPage
 import RedesigningCohortWelcomePage from "./pages/RedesigningCohortWelcomePage";
 import RedesigningCohortPage from "./pages/RedesigningCohortPage";
 import RedesigningRealityPage from "./pages/RedesigningRealityPage";
+import RewritingRealityPage from "./pages/RewritingRealityPage";
 import BreathActivationPage from "./pages/BreathActivationPage";
 import SundaySessionPage from "./pages/SundaySessionPage";
 import VisionLabPage from "./pages/VisionLabPage";
@@ -83,6 +84,7 @@ const App = () => (
             <Route path="/redesigning-workshop/thanks" element={<RedesigningWorkshopThanksPage />} />
             <Route path="/redesigning-cohort" element={<RedesigningCohortPage />} />
             <Route path="/redesigning-reality" element={<RedesigningRealityPage />} />
+            <Route path="/rewriting-reality" element={<RewritingRealityPage />} />
             <Route path="/breath-activation" element={<BreathActivationPage />} />
             <Route path="/sunday-session" element={<SundaySessionPage />} />
             <Route path="/redesigning-cohort/welcome" element={<RedesigningCohortWelcomePage />} />
