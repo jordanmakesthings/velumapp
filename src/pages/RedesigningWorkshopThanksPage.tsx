@@ -58,22 +58,12 @@ export default function RedesigningWorkshopThanksPage() {
         {/* How to prepare */}
         <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">How to show up:</h2>
         <ul className="list-disc pl-5 mb-10 space-y-2">
-          <li><strong>Quiet space</strong> — ideally a room you can close the door on for two hours</li>
-          <li><strong>Headphones</strong> — better audio = deeper trance</li>
-          <li><strong>Notebook + pen</strong> — you'll be writing identity statements live</li>
-          <li><strong>Water</strong> — breath and trance work dehydrates faster than you'd think</li>
-          <li><strong>Don't eat heavy beforehand</strong> — lighter body, deeper drop</li>
+          <li><strong>Quiet space</strong></li>
+          <li><strong>Headphones</strong></li>
+          <li><strong>Notebook + pen</strong></li>
+          <li><strong>Water</strong></li>
+          <li><strong>Don't eat heavy beforehand</strong></li>
         </ul>
-
-        {/* What we'll cover */}
-        <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">What we're doing in the 2 hours:</h2>
-        <ol className="list-decimal pl-5 mb-10 space-y-2">
-          <li>The 5-step self-induction protocol — I'll teach it, then we'll run it together</li>
-          <li>Writing identity statements that actually hold (not affirmations that bounce off)</li>
-          <li>A live group hypnosis session — your first install</li>
-          <li>The FROM not TO framework with real examples</li>
-          <li>Q&A on your specific patterns</li>
-        </ol>
 
         <p className="mb-10">
           The recording + a 20-minute take-home hypnosis audio will be emailed to you within 48 hours after the workshop ends.
