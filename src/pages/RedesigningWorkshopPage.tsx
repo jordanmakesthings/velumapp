@@ -1,6 +1,6 @@
 // The Redesigning Reality Workshop — live $45 workshop at /redesigning-workshop.
 // Low-ticket entry point into the offer ladder: workshop → cohort → small-group MRR → $20K 1:1.
-// Built June 2 2026 — pure black-on-white brand. No cream, no gold.
+// Copy is Jordan's verbatim (June 2 2026). Pure black-on-white brand. No cream, no gold.
 
 const PAY_URL = "https://buy.stripe.com/00w3cw5W32QedUC7bI7ss0a";
 
@@ -28,62 +28,68 @@ export default function RedesigningWorkshopPage() {
         </p>
 
         {/* Headline */}
-        <h1 style={serif} className="text-[40px] md:text-[52px] leading-[1.05] mb-1">
+        <h1 style={serif} className="text-[40px] md:text-[52px] leading-[1.05] mb-8">
           The Redesigning Reality Workshop
         </h1>
-        <p style={serif} className="text-[22px] md:text-[26px] italic text-neutral-600 mb-10">
-          A 2-hour live workshop to drop the survival self — and act from the identity underneath.
-        </p>
 
-        {/* Opening — the actual thesis */}
-        <p className="mb-6">
-          Most entrepreneurs run themselves into the ground chasing the next milestone <em>from</em> survival — adrenaline, urgency, "I have to make this work or else." They get there, briefly, then revert.
+        {/* Opening — Jordan's verbatim copy */}
+        <p style={serif} className="text-[20px] md:text-[22px] italic text-neutral-700 mb-8 leading-[1.5]">
+          A 2-hour live workshop designed to snap you out of your survival identity, overwrite the BS (belief systems) that keep you from actualizing your potential, and dismantle your current perception of what you think is possible.
         </p>
 
         <p className="mb-6">
-          The fix isn't more discipline. It's not better strategy. It's not a new morning routine.
+          This workshop is built upon the principle that you have absolutely no clue what's possible for you, and the only thing standing in your way is a) your current perception of self and b) your model of what feels like "reality".
         </p>
 
         <p className="mb-6">
-          It's installing the identity statements that let you stop performing the survival version of yourself — and start acting <strong>FROM</strong> the version of you that's already underneath. The version that creates from interest, not need.
+          Redesigning Reality is going to teach you how to go beneath the conscious mind and rewrite the scripts silently running your life to make identity-level changes in the subconscious mind.
+        </p>
+
+        <p className="mb-6">
+          As much free will as you feel like you have, 95% of your daily thoughts, feelings and behaviours are being driven by a subconscious program. If you can't enter the operating system, you'll still rely on slow-lane methods like motivation and willpower (neither of which are there when you need them).
+        </p>
+
+        <p className="mb-6">
+          While everybody tells you to move towards your next level, they don't tell you that moving towards it from your current self-concept is like driving a supercar that's jammed in first gear.
         </p>
 
         <p className="mb-10">
-          In two hours, I'll teach you exactly how I do this for myself — and how you can run the protocol daily after the workshop is over.
+          When you learn to think, feel and make decisions FROM the identity of your future self, the heavy lifting has already been done on a subconscious level.
         </p>
 
         {/* CTA top */}
         <CTAButton />
 
-        {/* What we'll do */}
-        <h2 style={serif} className="text-[26px] md:text-[28px] mt-14 mb-4">What we'll do in the 2 hours:</h2>
-        <ul className="list-disc pl-5 mb-10 space-y-2">
-          <li>The fastest self-induction I know — the 5-step protocol I use daily to drop into trance in under 3 minutes</li>
-          <li>How to write identity statements that actually hold (most affirmations fail because they're written from the wrong layer of self)</li>
-          <li>A live group hypnosis session where you install your first set of statements with me guiding you</li>
-          <li>The "FROM not TO" framework — the difference between chasing your dreams from survival vs. moving from the new identity, with practical examples</li>
-          <li>Q&A — your specific patterns, your specific blocks</li>
+        {/* What we cover */}
+        <h2 style={serif} className="text-[26px] md:text-[28px] mt-14 mb-4">In Redesigning Reality we cover:</h2>
+        <ul className="list-disc pl-5 mb-10 space-y-3">
+          <li>How to find your hidden nervous system "set points" that act like a thermostat — pulling you back into the familiarity trap when it matters most</li>
+          <li>How to set goals and targets so big they disturb you and others around you — and actually watch yourself achieve them.</li>
+          <li>The illusion of self-sabotage and how to land into your next level without feeling the need to blow it up.</li>
+          <li>How to combine self-hypnosis with "Identity Statements" that produce immediate, lasting changes on a nervous system level.</li>
+          <li>Why taking 70% of what you do on a daily basis and throwing them in the garbage makes room for magic</li>
+          <li>How to toggle off the "Survival Switch" in your brain and take action from your Creative Identity</li>
+          <li>How to identify and dismantle your current "Ceiling of Perceived Possibility" and finally break past it with the OBL Method</li>
         </ul>
 
-        {/* What you walk away with */}
-        <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">What you walk away with:</h2>
+        {/* Plus you'll walk away with */}
+        <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">Plus you'll walk away with:</h2>
         <ul className="list-disc pl-5 mb-10 space-y-2">
-          <li>A repeatable daily practice you can run anywhere in 10-15 minutes</li>
-          <li>Your first set of identity statements, written and installed</li>
-          <li>The recording of the entire session, yours forever</li>
-          <li>A 20-minute audio of the live hypnosis I lead so you can re-run it whenever</li>
+          <li>The Redesigning Reality Workbook</li>
+          <li>Morning & Evening "Identity Upgrade" Hypnosis Audios</li>
+          <li>Lifetime access to the Redesigning Reality workshop recording</li>
         </ul>
 
-        {/* Who it's for */}
-        <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">This is for you if you:</h2>
+        {/* This is for you if */}
+        <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">This is for you if:</h2>
         <ul className="list-disc pl-5 mb-10 space-y-2">
-          <li>Are an entrepreneur, founder, or operator who knows the inner game is the bottleneck</li>
-          <li>Have done the surface work (books, courses, retreats) and want the actual mechanism, not more theory</li>
-          <li>Are willing to be in trance with a small group of humans for an hour</li>
-          <li>Can show up live on June 13 — or are okay with the replay if life happens</li>
+          <li>You're an entrepreneur, found or creator who knows your results are downstream results of your identity and inner world, and are ready to level up fast</li>
+          <li>You've scratched the surface with "mindset" work (ew) but keep hitting the same invisible ceilings when things start going well</li>
+          <li>You are willing to take powerful action in a live event setting</li>
+          <li>You're ready to "slow down to speed up" and set down your hustle identity temporarily (you can always pick it back up after if you need…)</li>
         </ul>
 
-        {/* DETAILS */}
+        {/* DETAILS — kept */}
         <div className="border-t border-neutral-200 pt-8 mb-6">
           <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">The details:</h2>
           <p className="mb-1.5">📅&nbsp;&nbsp;Saturday, June 13 · 10am–12pm PT</p>
@@ -92,26 +98,15 @@ export default function RedesigningWorkshopPage() {
           <p>💰&nbsp;&nbsp;$45 USD · one-time</p>
         </div>
 
-        {/* CTA mid */}
-        <CTAButton />
-
-        {/* What comes after — soft cohort/coaching mention */}
-        <h2 style={serif} className="text-[26px] md:text-[28px] mt-14 mb-4">If you want to go deeper:</h2>
-        <p className="mb-6">
-          The workshop is the entry point. If what we do on June 13 resonates, the next step is the 6-week <strong>Redesigning Reality</strong> cohort — same methodology, deeper integration, small group, live for 90 minutes a week. You'll get the link at the end of the workshop.
-        </p>
-        <p className="mb-10">
-          No pressure either way. The workshop stands on its own.
-        </p>
-
-        {/* Bio */}
-        <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">Who I am:</h2>
-        <p className="mb-6">
-          I'm Jordan. I built Velum (the breathwork and meditation app), and I've spent the last decade studying hypnosis, breathwork, NLP, and identity work — most recently going deep on the Mike Mandel Hypnosis Academy curriculum.
-        </p>
-        <p className="mb-10">
-          What I teach is the synthesis: how to use breath and trance to drop the survival self at the nervous-system level, and how to install the identity that runs your life when you're not bracing. Most of what I've learned came from years of doing it on myself, badly and then slowly less badly. This workshop is the 2-hour version.
-        </p>
+        {/* GUARANTEE — new */}
+        <div className="border border-black/15 bg-neutral-50 rounded-lg p-6 my-10">
+          <p className="text-[12px] tracking-[0.24em] uppercase text-black font-semibold mb-3">
+            Guarantee
+          </p>
+          <p className="mb-0">
+            If you show up for the full workshop, complete the workbook, and feel like it was not worth your $45 — I'll happily ship your money right back to you.
+          </p>
+        </div>
 
         {/* Final CTA */}
         <CTAButton />
