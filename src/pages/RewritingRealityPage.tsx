@@ -3,7 +3,7 @@
 // Built June 2 2026 under Jordan's "Jord" identity / locked direction (project_jordan_business_v3).
 // Replace REPLACE_WITH_STRIPE_LINK below after creating the $45 USD payment link in Stripe.
 
-const PAY_URL = "https://buy.stripe.com/REPLACE_WITH_STRIPE_LINK";
+const PAY_URL = "https://buy.stripe.com/00w3cw5W32QedUC7bI7ss0a";
 
 const serif = { fontFamily: "'Cormorant Garamond', Georgia, serif" } as const;
 
