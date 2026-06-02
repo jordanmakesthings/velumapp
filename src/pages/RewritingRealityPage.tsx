@@ -25,7 +25,7 @@ export default function RewritingRealityPage() {
 
         {/* Eyebrow */}
         <p className="text-[12px] tracking-[0.28em] uppercase text-[#b08d57] font-semibold mb-6">
-          Live · Saturday June 7 · 10am PT · 2 hours
+          Live · Saturday June 13 · 10am PT · 2 hours
         </p>
 
         {/* Headline */}
@@ -81,7 +81,7 @@ export default function RewritingRealityPage() {
           <li>Are an entrepreneur, founder, or operator who knows the inner game is the bottleneck</li>
           <li>Have done the surface work (books, courses, retreats) and want the actual mechanism, not more theory</li>
           <li>Are willing to be in trance with a small group of humans for an hour</li>
-          <li>Can show up live on June 7 — or are okay with the replay if life happens</li>
+          <li>Can show up live on June 13 — or are okay with the replay if life happens</li>
         </ul>
 
         {/* DETAILS */}
@@ -99,7 +99,7 @@ export default function RewritingRealityPage() {
         {/* What comes after — soft cohort/coaching mention */}
         <h2 style={serif} className="text-[26px] md:text-[28px] mt-14 mb-4">If you want to go deeper:</h2>
         <p className="mb-6">
-          The workshop is the entry point. If what we do on June 7 resonates, the next step is the 6-week <strong>Redesigning Reality cohort</strong> — same methodology, deeper integration, small group, live for 90 minutes a week. You'll get the link at the end of the workshop.
+          The workshop is the entry point. If what we do on June 13 resonates, the next step is the 6-week <strong>Redesigning Reality cohort</strong> — same methodology, deeper integration, small group, live for 90 minutes a week. You'll get the link at the end of the workshop.
         </p>
         <p className="mb-10">
           No pressure either way. The workshop stands on its own.

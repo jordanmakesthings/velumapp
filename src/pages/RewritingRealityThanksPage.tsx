@@ -2,7 +2,7 @@
 // Lives at /rewriting-reality/thanks — set this as the success URL on the Stripe Payment Link.
 // Workshop link is emailed 72 hours before the session; not shown on this page.
 
-const WORKSHOP_DATETIME_ISO = "20260607T100000/20260607T120000"; // for calendar add links
+const WORKSHOP_DATETIME_ISO = "20260613T100000/20260613T120000"; // for calendar add links
 const WORKSHOP_TITLE = "Rewriting Reality Workshop with Jordan";
 const WORKSHOP_DETAILS = "Live 2-hour workshop. Drop the survival self, install identity statements in trance, leave acting FROM not TO. Zoom link will be emailed 72 hours before the workshop.";
 
@@ -12,9 +12,9 @@ function calendarLinks() {
   const title = encodeURIComponent(WORKSHOP_TITLE);
   const details = encodeURIComponent(WORKSHOP_DETAILS);
   const google = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${WORKSHOP_DATETIME_ISO}&details=${details}&ctz=America/Los_Angeles`;
-  const outlook = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&body=${details}&startdt=2026-06-07T10:00:00-07:00&enddt=2026-06-07T12:00:00-07:00`;
+  const outlook = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&body=${details}&startdt=2026-06-13T10:00:00-07:00&enddt=2026-06-13T12:00:00-07:00`;
   // ICS as a data URL — works for Apple Calendar / any ICS-aware app
-  const ics = `BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ASUMMARY:${title}%0ADTSTART:20260607T170000Z%0ADTEND:20260607T190000Z%0ADESCRIPTION:${details}%0AEND:VEVENT%0AEND:VCALENDAR`;
+  const ics = `BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ASUMMARY:${title}%0ADTSTART:20260613T170000Z%0ADTEND:20260613T190000Z%0ADESCRIPTION:${details}%0AEND:VEVENT%0AEND:VCALENDAR`;
   const apple = `data:text/calendar;charset=utf-8,${ics}`;
   return { google, outlook, apple };
 }
@@ -43,7 +43,7 @@ export default function RewritingRealityThanksPage() {
           <p className="text-[12px] tracking-[0.24em] uppercase text-[#b08d57] font-semibold mb-3">
             The workshop
           </p>
-          <p className="mb-1.5"><strong>📅 Saturday, June 7</strong></p>
+          <p className="mb-1.5"><strong>📅 Saturday, June 13</strong></p>
           <p className="mb-1.5"><strong>🕙 10:00am – 12:00pm PT</strong></p>
           <p className="mb-0"><strong>💻 Zoom link emailed to you 72 hours before the workshop</strong></p>
         </div>
