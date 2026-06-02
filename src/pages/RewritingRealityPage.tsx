@@ -87,7 +87,7 @@ export default function RewritingRealityPage() {
         {/* DETAILS */}
         <div className="border-t border-[#e3ddd1] pt-8 mb-6">
           <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">The details:</h2>
-          <p className="mb-1.5">📅&nbsp;&nbsp;Saturday, June 7 · 10am–12pm PT</p>
+          <p className="mb-1.5">📅&nbsp;&nbsp;Saturday, June 13 · 10am–12pm PT</p>
           <p className="mb-1.5">💻&nbsp;&nbsp;Live on Zoom — link sent after you register</p>
           <p className="mb-1.5">🎁&nbsp;&nbsp;Replay + 20-min hypnosis audio included</p>
           <p>💰&nbsp;&nbsp;$45 USD · one-time</p>
