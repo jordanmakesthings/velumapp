@@ -98,7 +98,10 @@ export default function RedesigningWorkshopPage() {
           <p>💰&nbsp;&nbsp;$45 USD · one-time</p>
         </div>
 
-        {/* GUARANTEE — new */}
+        {/* Final CTA — sits above guarantee so the close lands then the safety net */}
+        <CTAButton />
+
+        {/* GUARANTEE */}
         <div className="border border-black/15 bg-neutral-50 rounded-lg p-6 my-10">
           <p className="text-[12px] tracking-[0.24em] uppercase text-black font-semibold mb-3">
             Guarantee
@@ -107,9 +110,6 @@ export default function RedesigningWorkshopPage() {
             If you show up for the full workshop, complete the workbook, and feel like it was not worth your $45 — I'll happily ship your money right back to you.
           </p>
         </div>
-
-        {/* Final CTA */}
-        <CTAButton />
 
         <p className="text-[15px] text-neutral-600 italic mt-10">
           Questions? Email <a href="mailto:hello@govelum.com" className="text-black underline underline-offset-2">hello@govelum.com</a>
