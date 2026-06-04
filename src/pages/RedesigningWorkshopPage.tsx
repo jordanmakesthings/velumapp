@@ -26,12 +26,12 @@ export default function RedesigningWorkshopPage() {
           Live · Saturday June 13 · 10am PT · 2 hours
         </p>
 
-        {/* HEADLINE / TAGLINE — do not change */}
+        {/* HEADLINE / TAGLINE */}
         <h1 style={serif} className="text-[40px] md:text-[52px] leading-[1.05] mb-3">
-          Your next level isn't a strategy away.
+          Why your next level “strategy” might not be a strategy at all
         </h1>
         <p style={serif} className="text-[28px] md:text-[36px] italic text-neutral-700 mb-10 leading-[1.1]">
-          It's an identity away.
+          — but an upgrade in identity
         </p>
 
         {/* INTRO */}
