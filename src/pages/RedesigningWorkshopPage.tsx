@@ -87,12 +87,11 @@ export default function RedesigningWorkshopPage() {
         </ul>
 
         {/* This Is For You If */}
-        <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">This Is For You If</h2>
-        <ul className="list-disc pl-5 mb-10 space-y-2">
-          <li>You're an entrepreneur, founder or creator who knows your results are downstream of your identity and inner world — and you're ready to move fast</li>
-          <li>You've scratched the surface of "mindset" work (ew) but keep hitting the same invisible ceiling the moment things start going well</li>
-          <li>You're willing to take real action, live, in the room</li>
-          <li>You're ready to "slow down to speed up" and set your hustle identity down for a bit (you can always pick it back up later… if you actually want it)</li>
+        <h2 style={serif} className="text-[26px] md:text-[28px] mb-4">This is for you if:</h2>
+        <ul className="list-none pl-0 mb-10 space-y-3">
+          <li>1️⃣ You've climbed multiple mountains to find yourself saying "is this all there is?"</li>
+          <li>2️⃣ You are clear on what you want but can't seem to get out of your own damn way</li>
+          <li>3️⃣ You are ready for a new level of "success" without relying on push and force — but from alignment and upgrading your identity</li>
         </ul>
 
         {/* The Details */}
