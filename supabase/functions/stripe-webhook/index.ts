@@ -97,32 +97,47 @@ Deno.serve(async (req) => {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.metadata?.supabase_user_id;
-        const plan = session.metadata?.plan;
+        let userId = session.metadata?.supabase_user_id;
+        let plan = session.metadata?.plan;
 
-        // Handle Custom Track add-on Payment Link ($9 one-time).
-        // Identified by metadata.product === "custom_track_addon" OR by client_reference_id (user id).
-        const isAddon =
-          session.mode === "payment" &&
-          (session.metadata?.product === "custom_track_addon" ||
-            session.metadata?.plan === "custom_track_addon");
-        if (isAddon) {
-          const targetUserId = userId || session.client_reference_id;
-          // metadata.quantity is set on the Payment Link (1 for single, 3 for the 3-pack)
-          const qty = parseInt(session.metadata?.quantity || "1", 10) || 1;
-          if (targetUserId) {
-            await supabaseAdmin.rpc("increment_extra_track_credits", { uid: targetUserId, add: qty });
+        // No-login Payment Link fallback: when there's no supabase_user_id in
+        // metadata (a raw Payment Link, not the in-app checkout), match the
+        // buyer's email to an existing profile and grant access automatically.
+        if (!userId) {
+          const email = session.customer_details?.email || (session.customer_email as string | null);
+          if (email) {
+            const { data: prof } = await supabaseAdmin
+              .from("profiles")
+              .select("id")
+              .ilike("email", email)
+              .maybeSingle();
+            if (prof?.id) {
+              userId = prof.id;
+              // The only one-time Payment Link today is the $199 lifetime, so a
+              // payment-mode session with no plan metadata is a lifetime buy.
+              if (!plan && session.mode === "payment") plan = "lifetime";
+            }
           }
-          break;
         }
 
         if (!userId) break;
+
         if (plan === "lifetime") {
           await updateSubscription(userId, "active", "lifetime", null);
           await creditReferrerIfEligible(userId);
         } else if (session.subscription && (plan === "monthly" || plan === "annual")) {
-          await updateSubscription(userId, "active", plan, null);
-          await creditReferrerIfEligible(userId);
+          // Read the REAL Stripe status so a 7-day-trial signup is recorded as
+          // "trialing" (with its end date), not hardcoded "active". Mirrors the
+          // customer.subscription.created/updated handler below.
+          const sub = await stripe.subscriptions.retrieve(session.subscription as string);
+          const realStatus = sub.status === "active" ? "active" : sub.status;
+          const expiresAt = sub.current_period_end
+            ? new Date(sub.current_period_end * 1000).toISOString()
+            : null;
+          await updateSubscription(userId, realStatus, plan, expiresAt);
+          if (realStatus === "active" || realStatus === "trialing") {
+            await creditReferrerIfEligible(userId);
+          }
         }
         break;
       }

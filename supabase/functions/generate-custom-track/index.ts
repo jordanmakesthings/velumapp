@@ -296,7 +296,7 @@ Deno.serve(async (req) => {
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 4000,
           system: SCRIPT_SYSTEM,
           messages: [{ role: "user", content: userMsg }],
@@ -337,106 +337,16 @@ Deno.serve(async (req) => {
     // PCM output for lossless concat (MP3 chunk-concat truncates in browsers).
     // 22050Hz mono is plenty for spoken hypnosis and ~1/2 the bytes of 44.1kHz
     // → faster downloads, no timeouts.
-    const audioParts: Uint8Array[] = [];
-    const chunkSizes: number[] = [];
     const MIN_AUDIO_BYTES = 4000;
-    // Cross-chunk prosody continuity. Without these, ElevenLabs treats each
-    // chunk as a fresh start and pacing oscillates at every boundary
-    // (the "speeds up, slows down" symptom). previous_request_ids is the
-    // strongest form of continuity; previous_text/next_text covers boundaries
-    // where a request id wasn't captured.
-    const recentRequestIds: string[] = [];
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
+    const VOICE_SETTINGS = { stability: 0.85, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 0.82 };
 
-      // Countdown chunks get a different path: ElevenLabs multilingual_v2 ignores
-      // <prosody> tags and previous_request_ids carries list-rhythm conditioning
-      // forward, which is why numbers race even when <break> tags space them out.
-      // Split at [pause:] markers, synthesize each segment in isolation (no
-      // continuity hints at all), and stitch real PCM silence between them.
-      // Don't push these request IDs into recentRequestIds either — keeps the
-      // post-countdown chunks inheriting only the slow Ericksonian prose cadence.
-      if (isCountdownChunk(chunk)) {
-        const segments = splitCountdownChunk(chunk);
-        const segPcms: Uint8Array[] = [];
-        for (let s = 0; s < segments.length; s++) {
-          const seg = segments[s];
-          let segBuf: Uint8Array | null = null;
-          let lastError = "";
-          for (let attempt = 0; attempt < 3; attempt++) {
-            const ttsRes = await fetch(
-              `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=pcm_22050`,
-              {
-                method: "POST",
-                headers: { "xi-api-key": elevenKey, "Content-Type": "application/json", Accept: "audio/pcm" },
-                body: JSON.stringify({
-                  text: seg.text,
-                  model_id: "eleven_multilingual_v2",
-                  voice_settings: { stability: 0.85, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 0.82 },
-                }),
-              },
-            );
-            const ct = ttsRes.headers.get("content-type") || "";
-            if (!ttsRes.ok) {
-              lastError = `HTTP ${ttsRes.status}: ${(await ttsRes.text()).slice(0, 200)}`;
-            } else if (!ct.includes("audio") && !ct.includes("octet-stream")) {
-              lastError = `Non-audio response (${ct})`;
-            } else {
-              const candidate = new Uint8Array(await ttsRes.arrayBuffer());
-              if (candidate.byteLength < MIN_AUDIO_BYTES) {
-                lastError = `Truncated (${candidate.byteLength} bytes)`;
-              } else {
-                segBuf = candidate;
-                break;
-              }
-            }
-            await new Promise(r => setTimeout(r, 600));
-          }
-          if (!segBuf) {
-            return json({
-              error: "Audio synthesis failed (countdown segment) after 3 retries",
-              detail: lastError,
-              failed_chunk_index: i,
-              failed_segment_index: s,
-              segment_text_preview: seg.text.slice(0, 120),
-            }, 502);
-          }
-          segPcms.push(segBuf);
-          if (seg.pauseAfter > 0) segPcms.push(silencePcm(seg.pauseAfter));
-        }
-        const totalLen = segPcms.reduce((s, b) => s + b.byteLength, 0);
-        const merged = new Uint8Array(totalLen);
-        let off = 0;
-        for (const part of segPcms) { merged.set(part, off); off += part.byteLength; }
-        chunkSizes.push(merged.byteLength);
-        audioParts.push(merged);
-        continue;
-      }
-
-      const ssmlChunk = scriptToSsml(chunk);
-      const prevRaw = i > 0 ? chunks[i - 1] : "";
-      const nextRaw = i < chunks.length - 1 ? chunks[i + 1] : "";
-      // Strip pause markers from the context strings — ElevenLabs uses these
-      // for prosody only and SSML in context can confuse it.
-      const stripPause = (s: string) =>
-        s.replace(/\[pause:[^\]]*\]/gi, "").replace(/\s+/g, " ").trim();
-      const previousText = stripPause(prevRaw).slice(-300);
-      const nextText = stripPause(nextRaw).slice(0, 300);
+    // One ElevenLabs TTS call with 3 retries. Returns PCM bytes or throws.
+    const ttsOnce = async (text: string, previousText?: string, nextText?: string): Promise<Uint8Array> => {
       let lastError = "";
-      let buf: Uint8Array | null = null;
       for (let attempt = 0; attempt < 3; attempt++) {
-        const body: Record<string, unknown> = {
-          text: ssmlChunk,
-          model_id: "eleven_multilingual_v2",
-          // stability ↑ 0.65→0.78 (steadier pacing, less drift between chunks)
-          // style ↓ 0.10→0.0 (style adds expressiveness that varies tempo)
-          // speed: noop on multilingual_v2 but harmless; preserved for forward compat
-          voice_settings: { stability: 0.85, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 0.82 },
-        };
+        const body: Record<string, unknown> = { text, model_id: "eleven_multilingual_v2", voice_settings: VOICE_SETTINGS };
         if (previousText) body.previous_text = previousText;
         if (nextText) body.next_text = nextText;
-        // Keep last 3 request ids — gives strong cross-chunk prosody lock
-        if (recentRequestIds.length) body.previous_request_ids = recentRequestIds.slice(-3);
         const ttsRes = await fetch(
           `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=pcm_22050`,
           {
@@ -445,36 +355,71 @@ Deno.serve(async (req) => {
             body: JSON.stringify(body),
           },
         );
-        const contentType = ttsRes.headers.get("content-type") || "";
+        const ct = ttsRes.headers.get("content-type") || "";
         if (!ttsRes.ok) {
           lastError = `HTTP ${ttsRes.status}: ${(await ttsRes.text()).slice(0, 200)}`;
-        } else if (!contentType.includes("audio") && !contentType.includes("octet-stream")) {
-          lastError = `Non-audio response (${contentType}): ${(await ttsRes.text()).slice(0, 200)}`;
+        } else if (!ct.includes("audio") && !ct.includes("octet-stream")) {
+          lastError = `Non-audio response (${ct})`;
         } else {
           const candidate = new Uint8Array(await ttsRes.arrayBuffer());
           if (candidate.byteLength < MIN_AUDIO_BYTES) {
             lastError = `Empty/truncated audio (${candidate.byteLength} bytes)`;
           } else {
-            const reqId = ttsRes.headers.get("request-id") || ttsRes.headers.get("x-request-id");
-            if (reqId) recentRequestIds.push(reqId);
-            buf = candidate;
-            break;
+            return candidate;
           }
         }
         await new Promise(r => setTimeout(r, 600));
       }
-      if (!buf) {
-        return json({
-          error: "Audio synthesis failed after 3 retries",
-          detail: lastError,
-          failed_chunk_index: i,
-          chunk_count: chunks.length,
-          chunk_text_preview: chunk.slice(0, 200),
-        }, 502);
+      throw new Error(lastError || "TTS failed");
+    };
+
+    const stripPause = (s: string) => s.replace(/\[pause:[^\]]*\]/gi, "").replace(/\s+/g, " ").trim();
+
+    // Render a single script chunk to PCM. Countdown chunks are split on [pause:]
+    // markers and synthesized in isolation (so list-rhythm conditioning can't leak
+    // and make numbers race), then stitched with real PCM silence.
+    const renderChunk = async (i: number): Promise<Uint8Array> => {
+      const chunk = chunks[i];
+      if (isCountdownChunk(chunk)) {
+        const segments = splitCountdownChunk(chunk);
+        const segPcms: Uint8Array[] = [];
+        for (const seg of segments) {
+          segPcms.push(await ttsOnce(seg.text));
+          if (seg.pauseAfter > 0) segPcms.push(silencePcm(seg.pauseAfter));
+        }
+        const totalLen = segPcms.reduce((s, b) => s + b.byteLength, 0);
+        const merged = new Uint8Array(totalLen);
+        let off = 0;
+        for (const part of segPcms) { merged.set(part, off); off += part.byteLength; }
+        return merged;
       }
-      chunkSizes.push(buf.byteLength);
-      audioParts.push(buf);
-    }
+      const previousText = i > 0 ? stripPause(chunks[i - 1]).slice(-300) : undefined;
+      const nextText = i < chunks.length - 1 ? stripPause(chunks[i + 1]).slice(0, 300) : undefined;
+      return await ttsOnce(scriptToSsml(chunk), previousText, nextText);
+    };
+
+    // Render chunks with bounded concurrency, preserving order. Synthesizing a
+    // 9-12 min track one chunk at a time blew past the 150s function limit (504s);
+    // a small pool keeps wall-clock well under it. We trade cross-chunk
+    // previous_request_ids conditioning for actually finishing.
+    const audioParts: Uint8Array[] = new Array(chunks.length);
+    const POOL = 3;
+    let nextIdx = 0;
+    let synthError = "";
+    const worker = async () => {
+      while (true) {
+        const i = nextIdx++;
+        if (i >= chunks.length) return;
+        try {
+          audioParts[i] = await renderChunk(i);
+        } catch (e) {
+          if (!synthError) synthError = `chunk ${i}: ${(e as Error).message}`;
+          return;
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(POOL, chunks.length) }, () => worker()));
+    if (synthError) return json({ error: "Audio synthesis failed", detail: synthError }, 502);
     // Concat all PCM chunks — straight byte concatenation, then wrap in a WAV header.
     const pcmLen = audioParts.reduce((s, b) => s + b.byteLength, 0);
     const pcm = new Uint8Array(pcmLen);
