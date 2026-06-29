@@ -546,15 +546,28 @@ export default function LibraryPage() {
               )}
             </div>
           ) : isMastery ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {masteryClasses.length === 0 ? (
-                <p className="text-muted-foreground text-sm col-span-2 text-center py-12">
-                  No mastery classes yet.
-                </p>
-              ) : (
-                masteryClasses.map((mc: any) => <MasteryCard key={mc.id} mc={mc} />)
-              )}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {masteryClasses.length === 0 ? (
+                  <p className="text-muted-foreground text-sm col-span-2 text-center py-12">
+                    No mastery classes yet.
+                  </p>
+                ) : (
+                  masteryClasses.map((mc: any) => <MasteryCard key={mc.id} mc={mc} />)
+                )}
+              </div>
+              <Link
+                to="/journal"
+                className="velum-card mt-4 p-5 flex items-center justify-between hover:border-accent/40 transition-colors"
+              >
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-accent mb-1">Journal</p>
+                  <p className="text-foreground font-serif text-lg leading-tight">Your reflections</p>
+                  <p className="text-muted-foreground text-sm mt-0.5">Write and revisit your entries.</p>
+                </div>
+                <span className="text-accent text-xl" aria-hidden>&rarr;</span>
+              </Link>
+            </>
           ) : (
             <div className="flex flex-col gap-2.5">
               {filteredCategoryTracks.length === 0 ? (
