@@ -712,21 +712,14 @@ export default function LibraryPage() {
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
-                  <div className="absolute inset-0 p-4 flex flex-col justify-between">
-                    <div className="flex justify-end">
-                      <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur border border-white/15 flex items-center justify-center">
-                        <Play className="w-3.5 h-3.5 text-foreground ml-0.5" fill="currentColor" />
-                      </div>
-                    </div>
-                    <div>
-                      <p
-                        className="text-foreground font-serif text-[1.6rem] leading-tight drop-shadow-2xl"
-                        style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-                      >
-                        {c.label}
-                      </p>
-                      <p className="text-foreground/75 text-[12px] mt-1.5 tracking-wide">{label}</p>
-                    </div>
+                  <div className="absolute inset-0 p-4 flex flex-col items-center justify-end text-center">
+                    <p
+                      className="text-foreground font-serif text-[1.6rem] leading-tight drop-shadow-2xl"
+                      style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+                    >
+                      {c.label}
+                    </p>
+                    <p className="text-foreground/75 text-[12px] mt-1.5 tracking-wide">{label}</p>
                   </div>
                 </motion.button>
               );
