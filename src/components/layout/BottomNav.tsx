@@ -4,7 +4,7 @@ import { Sparkles, Compass, Wind, Headphones, User } from "lucide-react";
 const navItems = [
   { path: "/home",    icon: Sparkles,   label: "Home",     match: ["/home", "/"] },
   { path: "/library", icon: Compass,    label: "Discover", match: ["/library", "/courses", "/course", "/subcategory", "/journal"] },
-  { path: "/tools",   icon: Wind,       label: "Tools",    match: ["/tools", "/breathe", "/bilateral", "/somatic-touch", "/timer"] },
+  { path: "/tools",   icon: Wind,       label: "Tools",    match: ["/tools", "/breathe", "/bilateral", "/timer"] },
   { path: "/audios",  icon: Headphones, label: "Audios",   match: ["/audios"] },
   { path: "/profile", icon: User,       label: "Me",       match: ["/profile", "/premium"] },
 ];

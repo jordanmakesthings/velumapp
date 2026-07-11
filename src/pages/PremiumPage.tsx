@@ -13,7 +13,7 @@ const INCLUDED_FEATURES = [
   },
   {
     title: "Interactive Breathwork",
-    desc: "A custom guided breathwork tool for real-time regulation and a nervous system reset. Rapid state changes in under 10 minutes.",
+    desc: "A guided breathwork tool for real-time state change and nervous system retraining. Rapid shifts in under 10 minutes.",
   },
   {
     title: "Quests",
@@ -219,8 +219,7 @@ export default function PremiumPage() {
                 {[
                   "Full meditation, rapid resets & journaling library",
                   "All Mastery Classes (updated monthly)",
-                  "Custom Rewiring Audios — personalized to you",
-                  "EFT tapping, bilateral & somatic tools",
+                  "EFT tapping meditations & bilateral stimulation",
                   "All Quests & multi-day Courses",
                   "Full journal history + daily check-ins",
                   "Nervous System Score & progress tracking",

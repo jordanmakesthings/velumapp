@@ -22,7 +22,6 @@ import PlayerPage from "./pages/PlayerPage";
 import MasteryPlayerPage from "./pages/MasteryPlayerPage";
 import BilateralPage from "./pages/BilateralPage";
 import ToolsPage from "./pages/ToolsPage";
-import SomaticTouchPage from "./pages/SomaticTouchPage";
 import CheckinPage from "./pages/CheckinPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import CourseExperiencePage from "./pages/CourseExperiencePage";
@@ -117,7 +116,7 @@ const App = () => (
             <Route path="/player" element={<ProtectedRoute><PlayerPage /></ProtectedRoute>} />
             <Route path="/bilateral" element={<ProtectedRoute><Gated title="Bilateral Stimulation" description="Visual + stereo audio bilateral tool. Unlock with Premium."><BilateralPage /></Gated></ProtectedRoute>} />
             <Route path="/tapping" element={<Navigate to="/courses" replace />} />
-            <Route path="/somatic-touch" element={<ProtectedRoute><Gated title="Somatic Touch" description="Grounding sequences for nervous-system regulation. Premium-only."><SomaticTouchPage /></Gated></ProtectedRoute>} />
+            <Route path="/somatic-touch" element={<Navigate to="/tools" replace />} />
             <Route path="/checkin" element={<ProtectedRoute><Gated title="Daily Check-in" description="Rate your nervous system and get a tool recommendation. Premium-only."><CheckinPage /></Gated></ProtectedRoute>} />
             <Route path="/mastery-player" element={<ProtectedRoute><MasteryPlayerPage /></ProtectedRoute>} />
             <Route path="/home-setup" element={<ProtectedRoute><HomeScreenSetupPage /></ProtectedRoute>} />

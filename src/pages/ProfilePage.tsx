@@ -756,7 +756,7 @@ function InviteFriendsCard() {
   if (!code) return null;
 
   const link = `https://govelum.com?ref=${code}`;
-  const shareText = `I've been using Velum to regulate my nervous system — breathwork, tapping, somatic tools. You get 1 free month on me: ${link}`;
+  const shareText = `I've been using Velum to retrain my nervous system — breathwork, meditations, journaling. You get 1 free month on me: ${link}`;
 
   const copy = async () => {
     try {

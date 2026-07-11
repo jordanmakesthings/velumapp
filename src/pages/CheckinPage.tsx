@@ -68,11 +68,11 @@ function getRecommendation(activation: number, sensations: string[]): Recommenda
 
   if (hasFlat || hasFog || activation <= 3) {
     return {
-      label: "Somatic Touch",
-      description: "Gentle self-soothing touch sequences",
-      rationale: `You're in a low or flat state. Somatic touch signals safety to your nervous system and gradually restores activation without overwhelming it.`,
-      path: "/somatic-touch",
-      icon: Fingerprint,
+      label: "Breathwork",
+      description: "Slow breathing to restore activation",
+      rationale: `You're in a low or flat state. Slow, rhythmic breathing gently restores energy and signals safety to your nervous system.`,
+      path: "/breathe",
+      icon: Wind,
       gradient: false,
     };
   }
