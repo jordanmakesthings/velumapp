@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useEffect, useMemo } from "react";
-import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Timer as TimerIcon, X as XIcon, Film } from "lucide-react";
+import { Wind, Flame, Heart, Sparkles, Feather, GraduationCap, ArrowRight, Zap, BookOpen, ClipboardCheck, Play, Timer as TimerIcon, X as XIcon, Film } from "lucide-react";
 import { ShareCard } from "@/components/ShareCard";
 import { useState, useRef } from "react";
 import { getTodayCheckin } from "@/lib/velumStorage";
