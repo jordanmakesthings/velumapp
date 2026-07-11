@@ -7,7 +7,6 @@ import {
   Lock,
   Check,
   X as XIcon,
-  Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -43,18 +42,16 @@ type CategoryKey =
   | "rapid_resets"
   | "journaling"
   | "quests"
-  | "mastery"
-  | "custom";
+  | "mastery";
 
 const CATEGORY_CARDS: { key: CategoryKey; label: string; coverSlug: string }[] = [
   { key: "meditation",   label: "Meditations",     coverSlug: "12-cosmic" },
-  { key: "tapping",      label: "Tapping (EFT)",   coverSlug: "09-flame" },
   { key: "breathwork",   label: "Breathwork",      coverSlug: "07-sky" },
   { key: "rapid_resets", label: "Rapid Resets",    coverSlug: "18-rain" },
+  { key: "mastery",      label: "Mastery Classes", coverSlug: "16-mountains" },
+  { key: "tapping",      label: "Tapping (EFT)",   coverSlug: "09-flame" },
   { key: "journaling",   label: "Journaling",      coverSlug: "15-feather" },
   { key: "quests",       label: "Quests",          coverSlug: "14-path" },
-  { key: "mastery",      label: "Mastery Classes", coverSlug: "16-mountains" },
-  { key: "custom",       label: "Custom Hypnosis", coverSlug: "20-moon" },
 ];
 
 const COVER_BASE =
@@ -250,10 +247,6 @@ export default function LibraryPage() {
 
   /* ----------------------------- UI ------------------------------- */
   const goToCategory = (key: CategoryKey) => {
-    if (key === "custom") {
-      navigate("/custom-track");
-      return;
-    }
     if (key === "quests") {
       setSearchParams({ category: "quests" });
       return;
@@ -718,25 +711,21 @@ export default function LibraryPage() {
                       (e.currentTarget as HTMLImageElement).style.display = "none";
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
                   <div className="absolute inset-0 p-4 flex flex-col justify-between">
                     <div className="flex justify-end">
                       <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur border border-white/15 flex items-center justify-center">
-                        {c.key === "custom" ? (
-                          <Sparkles className="w-4 h-4 text-accent" />
-                        ) : (
-                          <Play className="w-3.5 h-3.5 text-foreground ml-0.5" fill="currentColor" />
-                        )}
+                        <Play className="w-3.5 h-3.5 text-foreground ml-0.5" fill="currentColor" />
                       </div>
                     </div>
                     <div>
                       <p
-                        className="text-foreground font-serif text-[1.3rem] leading-tight uppercase tracking-wide drop-shadow-2xl"
+                        className="text-foreground font-serif text-[1.6rem] leading-tight drop-shadow-2xl"
                         style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
                       >
                         {c.label}
                       </p>
-                      <p className="text-foreground/70 text-[11px] mt-1 tracking-wide">{label}</p>
+                      <p className="text-foreground/75 text-[12px] mt-1.5 tracking-wide">{label}</p>
                     </div>
                   </div>
                 </motion.button>

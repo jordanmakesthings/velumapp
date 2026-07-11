@@ -22,7 +22,6 @@ import PlayerPage from "./pages/PlayerPage";
 import MasteryPlayerPage from "./pages/MasteryPlayerPage";
 import BilateralPage from "./pages/BilateralPage";
 import ToolsPage from "./pages/ToolsPage";
-import TappingGeneratorPage from "./pages/TappingGeneratorPage";
 import SomaticTouchPage from "./pages/SomaticTouchPage";
 import CheckinPage from "./pages/CheckinPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
@@ -34,7 +33,6 @@ import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AuthConfirmPage from "./pages/AuthConfirmPage";
 import SubcategoryPage from "./pages/SubcategoryPage";
-import CustomTrackPage from "./pages/CustomTrackPage";
 import AudiosPage from "./pages/AudiosPage";
 import FreeTrackPage from "./pages/FreeTrackPage";
 import WelcomeBackPage from "./pages/WelcomeBackPage";
@@ -107,7 +105,7 @@ const App = () => (
               <Route path="/subcategory" element={<SubcategoryPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/journal" element={<JournalPage />} />
-              <Route path="/custom-track" element={<Gated title="Your Custom Rewiring Audio" description="A 60-second conversation. A personalized 10-minute Ericksonian audio in your chosen voice. The Velum moat — unlocked with Premium."><CustomTrackPage /></Gated>} />
+              <Route path="/custom-track" element={<Navigate to="/audios" replace />} />
               <Route path="/audios" element={<AudiosPage />} />
               <Route path="/vision" element={<Gated title="Vision Lab" description="Install your future self. Build a personal Vision — your images, your affirmations, your music — and watch it daily. Premium-only."><VisionLabPage /></Gated>} />
             </Route>
@@ -118,7 +116,7 @@ const App = () => (
             <Route path="/premium" element={<ProtectedRoute><PremiumPage /></ProtectedRoute>} />
             <Route path="/player" element={<ProtectedRoute><PlayerPage /></ProtectedRoute>} />
             <Route path="/bilateral" element={<ProtectedRoute><Gated title="Bilateral Stimulation" description="Visual + stereo audio bilateral tool. Unlock with Premium."><BilateralPage /></Gated></ProtectedRoute>} />
-            <Route path="/tapping" element={<ProtectedRoute><Gated title="EFT Tapping" description="Guided tapping sequences for clearing stress and limiting beliefs. Premium-only."><TappingGeneratorPage /></Gated></ProtectedRoute>} />
+            <Route path="/tapping" element={<Navigate to="/courses" replace />} />
             <Route path="/somatic-touch" element={<ProtectedRoute><Gated title="Somatic Touch" description="Grounding sequences for nervous-system regulation. Premium-only."><SomaticTouchPage /></Gated></ProtectedRoute>} />
             <Route path="/checkin" element={<ProtectedRoute><Gated title="Daily Check-in" description="Rate your nervous system and get a tool recommendation. Premium-only."><CheckinPage /></Gated></ProtectedRoute>} />
             <Route path="/mastery-player" element={<ProtectedRoute><MasteryPlayerPage /></ProtectedRoute>} />

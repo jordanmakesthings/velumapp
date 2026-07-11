@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Wind, Zap, Hand, Timer as TimerIcon, Lock, ChevronLeft } from "lucide-react";
+import { Wind, Zap, Timer as TimerIcon, Lock, ChevronLeft } from "lucide-react";
 import VelumMark from "@/components/VelumMark";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaywall } from "@/components/PaywallSheet";
@@ -25,15 +25,6 @@ const TOOLS = [
     detail: "Custom duration · Rain, Forest, Fire, Waves · Tibetan bowl",
     icon: TimerIcon,
     premium: false,
-  },
-  {
-    path: "/tapping",
-    label: "Guided Tapping",
-    tag: "Personalised",
-    description: "Describe what you're feeling. Get a personalised EFT tapping script in seconds.",
-    detail: "3-round script · Specific to your situation · Guided step-by-step",
-    icon: Hand,
-    premium: true,
   },
   {
     path: "/bilateral",

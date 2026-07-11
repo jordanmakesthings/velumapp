@@ -181,15 +181,14 @@ export default function FinderPage() {
           </p>
         )}
 
-        {/* Fallthrough to the custom generator — the wedge */}
         <Link
-          to="/custom-track"
+          to="/library"
           className="mt-6 flex items-center gap-4 p-4 rounded-2xl border border-accent/30 bg-accent/5 hover:bg-accent/10 transition-colors"
         >
           <Wand2 className="w-5 h-5 text-accent shrink-0" />
           <div className="flex-1">
-            <p className="text-foreground font-sans">Generate a custom track</p>
-            <p className="text-muted-foreground text-xs">Made for exactly what you're working on, in ~90s</p>
+            <p className="text-foreground font-sans">Browse the library</p>
+            <p className="text-muted-foreground text-xs">Find a track for exactly what you're working on</p>
           </div>
         </Link>
       </StepShell>

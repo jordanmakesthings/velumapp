@@ -365,12 +365,6 @@ export default function AudiosPage() {
             >
               <Settings2 className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => navigate("/custom-track")}
-              className="gold-gradient text-primary-foreground rounded-full pl-3 pr-4 py-2.5 text-xs font-sans font-bold tracking-wide flex items-center gap-1.5 shadow-lg shadow-accent/20"
-            >
-              <Plus className="w-3.5 h-3.5" /> New track
-            </button>
           </div>
         </header>
 
@@ -922,29 +916,15 @@ function ArchiveTrackRow({
 }
 
 // ────────────── Empty State ──────────────
-function EmptyState({ hasAccess }: { hasAccess: boolean }) {
+function EmptyState({ hasAccess: _hasAccess }: { hasAccess: boolean }) {
   return (
-    <Link
-      to={hasAccess ? "/custom-track" : "/premium"}
-      className="velum-card-accent block p-8 md:p-10 relative overflow-hidden"
-    >
-      <div className="absolute -top-16 -right-16 w-52 h-52 rounded-full bg-accent/15 blur-3xl pointer-events-none" />
-      <div className="relative">
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-4 h-4 text-accent" />
-          <p className="text-eyebrow text-accent">Made for you · Included</p>
-        </div>
-        <p className="text-display text-3xl md:text-4xl mb-4 max-w-[440px] leading-tight">
-          Make your first<br />custom rewiring audio.
-        </p>
-        <p className="text-muted-foreground text-sm leading-relaxed mb-7 max-w-[440px]">
-          A short conversation. A 10-minute audio designed around your deepest desires, in your chosen voice. Listen daily — your nervous system rewires itself.
-        </p>
-        <span className="inline-flex items-center gap-2 rounded-full gold-gradient text-primary-foreground px-6 py-3 text-xs font-bold tracking-wide">
-          {hasAccess ? "Begin your audio →" : "Subscribe to begin →"}
-        </span>
-      </div>
-    </Link>
+    <div className="velum-card p-8 text-center">
+      <Sparkles className="w-8 h-8 text-accent mx-auto mb-4" />
+      <p className="text-foreground font-serif text-xl mb-2">Your audio library</p>
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        Your tracks will appear here once added.
+      </p>
+    </div>
   );
 }
 
