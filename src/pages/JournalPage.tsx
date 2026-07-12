@@ -158,15 +158,15 @@ export default function JournalPage() {
   const completedTrackIds = useMemo(() => new Set(allProgress.map((p: any) => p.track_id)), [allProgress]);
 
   const pastEntriesAll = filtered.filter(e => !(e.type === "reflection" && e.date === today));
-  // Free tier: cap history to the last 30 days.
-  const thirtyDaysAgoStr = (() => {
+  // Free tier: cap history to the last 7 days.
+  const sevenDaysAgoStr = (() => {
     const d = new Date();
-    d.setDate(d.getDate() - 30);
+    d.setDate(d.getDate() - 7);
     return d.toISOString().split("T")[0];
   })();
   const pastEntries = hasAccess
     ? pastEntriesAll
-    : pastEntriesAll.filter(e => (e.date || "") >= thirtyDaysAgoStr);
+    : pastEntriesAll.filter(e => (e.date || "") >= sevenDaysAgoStr);
   const truncatedForFree = !hasAccess && pastEntriesAll.length > pastEntries.length;
   const isLoading = loadingReflections || !user;
 
@@ -399,7 +399,7 @@ export default function JournalPage() {
               <Lock className="w-4 h-4 text-accent" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-foreground text-sm font-sans font-medium">30-day limit · upgrade for full history</p>
+              <p className="text-foreground text-sm font-sans font-medium">7-day limit · upgrade for full history</p>
               <p className="text-muted-foreground text-[11px]">Unlock Premium to read every entry you've ever written.</p>
             </div>
             <ArrowRight className="w-4 h-4 text-accent shrink-0" />
