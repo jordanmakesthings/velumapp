@@ -368,7 +368,7 @@ export default function LibraryPage() {
           big ? "w-[260px] shrink-0" : "w-full"
         }`}
       >
-        <div className={big ? "aspect-[4/5]" : "aspect-[16/9]"}>
+        <div className={big ? "aspect-[4/5]" : "aspect-[4/3]"}>
           {course.cover_image_url ? (
             <img
               src={course.cover_image_url}
@@ -529,7 +529,7 @@ export default function LibraryPage() {
           )}
 
           {isQuests ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
               {courses.length === 0 ? (
                 <p className="text-muted-foreground text-sm col-span-2 text-center py-12">
                   No quests yet.
