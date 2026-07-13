@@ -35,6 +35,7 @@ const TITLE_OVERRIDES: { match: RegExp; slug: string }[] = [
   { match: /pillars?\b.*\b4\b|\bmultiply\b/i,              slug: "04-forest" },
   { match: /pillars?\b.*\b5\b|\benjoy\b/i,                 slug: "20-moon" },
   { match: /pillars?\b.*\b6\b|\bcirculate\b|\bgive\b/i,    slug: "10-mist" },
+  { match: /interview method/i,                             slug: "17-orb" },
 ];
 
 // FNV-1a 32-bit hash — fast + good distribution
