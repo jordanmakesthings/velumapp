@@ -368,7 +368,7 @@ export default function LibraryPage() {
           big ? "w-[260px] shrink-0" : "w-full"
         }`}
       >
-        <div className={big ? "aspect-[4/5]" : "aspect-square"}>
+        <div className={big ? "aspect-[4/5]" : "aspect-[16/9]"}>
           {course.cover_image_url ? (
             <img
               src={course.cover_image_url}
@@ -529,7 +529,7 @@ export default function LibraryPage() {
           )}
 
           {isQuests ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {courses.length === 0 ? (
                 <p className="text-muted-foreground text-sm col-span-2 text-center py-12">
                   No quests yet.
@@ -705,13 +705,13 @@ export default function LibraryPage() {
                   <img
                     src={coverUrl}
                     alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover mix-blend-luminosity"
                     loading="lazy"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).style.display = "none";
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
                   <div className="absolute inset-0 p-4 flex flex-col items-center justify-end text-center">
                     <p
                       className="text-foreground font-serif text-[1.6rem] leading-tight drop-shadow-2xl"
