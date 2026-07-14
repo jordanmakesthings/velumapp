@@ -517,8 +517,7 @@ export default function HomePage() {
             { to: "/breathe", icon: Wind, name: "Breathwork", sub: "8 techniques · voice-guided", primary: true, premium: false },
             { to: "/timer", icon: TimerIcon, name: "Open Meditation", sub: "Set a duration and sit.", primary: true, premium: false },
             { to: "/bilateral", icon: Zap, name: "Bilateral", sub: "Visual + stereo audio", premium: true },
-            // Vision Lab — hidden from the public Home grid until launch.
-            // Route still exists at /vision for testing via direct URL.
+            { to: "/journal", icon: Feather, name: "Journal", sub: "Daily prompt + guided exercises", premium: false },
           ].map(({ to, icon: Icon, name, sub, primary, premium }) => {
             const locked = premium && !hasAccess;
             const inner = (

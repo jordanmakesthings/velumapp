@@ -1,11 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { Sparkles, Compass, Wind, Headphones, User } from "lucide-react";
+import { Sparkles, Compass, Wind, User } from "lucide-react";
 
 const navItems = [
   { path: "/home",    icon: Sparkles,   label: "Home",     match: ["/home", "/"] },
-  { path: "/library", icon: Compass,    label: "Discover", match: ["/library", "/courses", "/course", "/subcategory", "/journal"] },
+  { path: "/library", icon: Compass,    label: "Library",  match: ["/library", "/courses", "/course", "/subcategory", "/journal"] },
   { path: "/tools",   icon: Wind,       label: "Tools",    match: ["/tools", "/breathe", "/bilateral", "/timer"] },
-  { path: "/audios",  icon: Headphones, label: "Audios",   match: ["/audios"] },
   { path: "/profile", icon: User,       label: "Me",       match: ["/profile", "/premium"] },
 ];
 

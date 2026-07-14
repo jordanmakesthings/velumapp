@@ -1,11 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { Sparkles, Compass, Headphones, User } from "lucide-react";
+import { Sparkles, Compass, User } from "lucide-react";
 
 const navItems = [
-  { path: "/home",    icon: Sparkles,   label: "Home",     match: ["/home", "/"] },
-  { path: "/library", icon: Compass,    label: "Discover", match: ["/library", "/tools", "/courses", "/course", "/subcategory", "/journal", "/breathe", "/bilateral"] },
-  { path: "/audios",  icon: Headphones, label: "Audios",   match: ["/audios"] },
-  { path: "/profile", icon: User,       label: "Me",       match: ["/profile", "/premium"] },
+  { path: "/home",    icon: Sparkles,   label: "Home",    match: ["/home", "/"] },
+  { path: "/library", icon: Compass,    label: "Library", match: ["/library", "/tools", "/courses", "/course", "/subcategory", "/journal", "/breathe", "/bilateral"] },
+  { path: "/profile", icon: User,       label: "Me",      match: ["/profile", "/premium"] },
 ];
 
 export function DesktopSidebar() {
