@@ -705,7 +705,7 @@ export default function LibraryPage() {
                   <img
                     src={coverUrl}
                     alt=""
-                    className="absolute inset-0 w-full h-full object-cover mix-blend-luminosity"
+                    className="absolute inset-0 w-full h-full object-cover"
                     loading="lazy"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).style.display = "none";
