@@ -50,7 +50,7 @@ const CATEGORY_CARDS: { key: CategoryKey; label: string; coverSlug: string }[] =
   { key: "rapid_resets", label: "Rapid Resets",    coverSlug: "18-rain" },
   { key: "mastery",      label: "Mastery Classes", coverSlug: "16-mountains" },
   { key: "tapping",      label: "Tapping (EFT)",   coverSlug: "09-flame" },
-  { key: "journaling",   label: "Journaling",      coverSlug: "15-feather" },
+  { key: "journaling",   label: "Journaling",      coverSlug: "11-leaves" },
   { key: "quests",       label: "Quests",          coverSlug: "14-path" },
 ];
 
